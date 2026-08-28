@@ -24,6 +24,7 @@ export interface FocusFlowDSL {
     boxes: ElementBox[];
     paths: ElementPath[];
     dots?: ElementDot[];
+    images?: ElementImage[];
   };
   scenes: SceneStep[];
 }
@@ -72,6 +73,22 @@ export interface ElementDot {
   };
 }
 
+export interface ElementImage {
+  id: string;
+  url: string;        // 覆盖图片相对路径、绝对路径或 Base64
+  x: number;          // 在画布绝对逻辑坐标系下的 X
+  y: number;          // 在画布绝对逻辑坐标系下的 Y
+  width: number;      // 宽度
+  height: number;     // 高度
+  style?: {
+    borderRadius?: number; // 圆角大小 (像素)
+    boxShadow?: boolean | string;   // 是否启用悬浮立体投影或自定义投影
+    animation?: 'fade' | 'zoom-fade' | 'slide-up'; // 出现动效
+    border?: string;      // 发光边框
+    opacity?: number;     // 目标不透明度 (默认 1.0)
+  };
+}
+
 export interface CalloutItem {
   id: string;
   targetBoxId?: string;
@@ -94,6 +111,7 @@ export interface SceneStep {
     boxes?: string[];
     paths?: string[];
     dots?: string[];
+    images?: string[];  // 当前场景激活的覆盖图片 ID 列表
     callouts?: CalloutItem[];
   };
 }

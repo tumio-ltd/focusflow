@@ -585,25 +585,25 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
 ---
 
 ### 🖼️ Stage 6: 动态覆盖图层与局部下钻动效 (Dynamic Image Overlays & Deep-Dive)
-- [ ] **6.1 类型与契约扩展 (`src/types/dsl.d.ts`)**
-  - [ ] 6.1.1 定义 `ElementImage` 接口（`id`, `url`, `x`, `y`, `width`, `height`, `style`）
-  - [ ] 6.1.2 扩展 `FocusFlowDSL.elements.images` 与 `SceneStep.activeElements.images`
-- [ ] **6.2 覆盖图层 DOM 装配与资产解析 (`src/core/player.js`)**
-  - [ ] 6.2.1 在底图上方、SVG 矢量下方插入 `.focusflow-overlay-images` 容器
-  - [ ] 6.2.2 循环实例化 `<img>` 覆盖图元，挂载绝对定位、圆角及悬浮投影
-  - [ ] 6.2.3 自动解析相对 `basePath` 资源路径
-- [ ] **6.3 覆盖图生命周期与动效编排 (`src/motion/animator.js` & `src/styles/focusflow.css`)**
-  - [ ] 6.3.1 实现 `activate` 时的平滑淡入（Fade-In）与弹性缩放弹入（Zoom-In Spring）
-  - [ ] 6.3.2 实现场景切换/离开时的自动平滑淡出（Fade-Out）与图层隐藏
-- [ ] **6.4 实战示例与测试验收 (`examples/overlay-demo/` 或演进示例)**
-  - [ ] 6.4.1 在 `examples/` 中构建 5 场景完整闭环演示项目：
+- [x] **6.1 类型与契约扩展 (`src/types/dsl.d.ts`)**
+  - [x] 6.1.1 定义 `ElementImage` 接口（`id`, `url`, `x`, `y`, `width`, `height`, `style`）
+  - [x] 6.1.2 扩展 `FocusFlowDSL.elements.images` 与 `SceneStep.activeElements.images`
+- [x] **6.2 覆盖图层 DOM 装配与资产解析 (`src/core/player.js`)**
+  - [x] 6.2.1 在底图上方、SVG 矢量下方插入 `.focusflow-overlay-images` 容器
+  - [x] 6.2.2 循环实例化 `<img>` 覆盖图元，挂载绝对定位、圆角及悬浮投影
+  - [x] 6.2.3 自动解析相对 `basePath` 资源路径
+- [x] **6.3 覆盖图生命周期与动效编排 (`src/motion/animator.js` & `src/styles/focusflow.css`)**
+  - [x] 6.3.1 实现 `activate` 时的平滑淡入（Fade-In）与弹性缩放弹入（Zoom-In Spring）
+  - [x] 6.3.2 实现场景切换/离开时的自动平滑淡出（Fade-Out）与图层隐藏
+- [x] **6.4 实战示例与测试验收 (`examples/overlay-demo/` 或演进示例)**
+  - [x] 6.4.1 在 `examples/` 中构建 5 场景完整闭环演示项目：
     - **Scene 1 (全景开场)**：LuxeHMS 全局架构拓扑总览
     - **Scene 2 (数据层聚焦)**：运镜聚焦右侧，对 Redis 7 (High-Speed Cache) 与 PostgreSQL 区域进行高亮描边引导
     - **Scene 3 (业务下钻与图片叠加)**：动态加载引入 `@examples/02_tape_chart_timeline_mockup.png`（带动效平滑弹入/展开覆盖在指定区域）
     - **Scene 4 (图片淡出与鉴权聚焦)**：自动平滑淡出并移除该图片，镜头平移至左侧并在 CASL role-based permissions 区域进行高亮引导
     - **Scene 5 (全景归位)**：运镜平滑回到最初的 LuxeHMS 架构拓扑图完整总览
-  - [ ] 6.4.2 验证前后场景切换时图片的优雅进场（Zoom-Fade）与退场（Fade-Out），无样式竞争、无残影与内存泄漏
-  - [ ] 6.4.3 首页导航入口同步集成该新演示项目，支持一键切换预览
+  - [x] 6.4.2 验证前后场景切换时图片的优雅进场（Zoom-Fade）与退场（Fade-Out），无样式竞争、无残影与内存泄漏
+  - [x] 6.4.3 首页导航入口同步集成该新演示项目，支持一键切换预览
 
 ---
 
@@ -617,4 +617,4 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
 | **4. 模式二 (边缘吸附)** | 标定模式下点击卡片内部任一点 | 50ms 内自动吸附锁定卡片 4 条物理边界并生成矩形框 | ✅ 已通过 |
 | **5. 镜头与动效流畅度** | 场景切换 (Scene 1 ➔ 2 ➔ 3 ➔ 4) | 主流设备保持 60fps，GPU 硬件加速无掉帧，无样式竞争闪烁 | ✅ 已通过 |
 | **6. 交互功能完整性** | 键盘（方向键/空格/Home/End）、自动轮播（播放/暂停）、进度条 | 各项控制响应即时，状态机时钟准确，循环播放无内存泄漏 | ✅ 已通过 |
-| **7. 动态覆盖图生命周期** | 在场景中声明 `activeElements.images`，后续场景移除 | 声明时平滑淡入/弹入展开；后续未声明时自动平滑淡出并卸载 | ⏳ 待实现 (Stage 6) |
+| **7. 动态覆盖图生命周期** | 在场景中声明 `activeElements.images`，后续场景移除 | 声明时平滑淡入/弹入展开；后续未声明时自动平滑淡出并卸载 | ✅ 已通过 |

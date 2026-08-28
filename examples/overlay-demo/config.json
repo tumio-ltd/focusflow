@@ -1,0 +1,244 @@
+{
+  "$schema": "https://focusflow.io/schema/v1.json",
+  "meta": {
+    "title": "LuxeHMS Architecture - Dynamic Image Overlay & Deep-Dive Showcase",
+    "viewport": {
+      "width": 5120,
+      "height": 2880
+    },
+    "theme": {
+      "bg": "#0a0e17",
+      "accent": "#38bdf8",
+      "warn": "#f472b6",
+      "green": "#34d399",
+      "amber": "#fbbf24",
+      "rose": "#fb7185"
+    }
+  },
+  "asset": {
+    "url": "./system_architecture.png"
+  },
+  "elements": {
+    "boxes": [
+      {
+        "id": "box-postgres",
+        "type": "rect",
+        "x": 3636,
+        "y": 628,
+        "width": 1297,
+        "height": 332,
+        "rx": 18,
+        "style": {
+          "stroke": "#34d399",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-redis",
+        "type": "rect",
+        "x": 3636,
+        "y": 992,
+        "width": 1297,
+        "height": 260,
+        "rx": 18,
+        "style": {
+          "stroke": "#fb7185",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-auth-casl",
+        "type": "rect",
+        "x": 1664,
+        "y": 780,
+        "width": 886,
+        "height": 200,
+        "rx": 16,
+        "style": {
+          "stroke": "#f472b6",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      }
+    ],
+    "paths": [],
+    "dots": [],
+    "images": [
+      {
+        "id": "img-tape-chart",
+        "url": "./02_tape_chart_timeline_mockup.png",
+        "x": 1400,
+        "y": 560,
+        "width": 2320,
+        "height": 1305,
+        "style": {
+          "borderRadius": 20,
+          "boxShadow": true,
+          "border": "2px solid rgba(56, 189, 248, 0.4)",
+          "animation": "zoom-fade"
+        }
+      }
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "全局架构拓扑总览",
+      "camera": {
+        "zoom": 1.0,
+        "x": 0,
+        "y": 0,
+        "duration": 1.0
+      },
+      "activeElements": {
+        "boxes": [],
+        "paths": [],
+        "dots": [],
+        "images": [],
+        "callouts": [
+          {
+            "id": "co-arch-overview",
+            "position": {
+              "left": "8%",
+              "top": "12%"
+            },
+            "theme": "blue",
+            "title": "LuxeHMS Cloud Topology",
+            "desc": "Enterprise hotel management system · High concurrency microservice architecture"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-2",
+      "title": "数据层与缓存集群聚焦",
+      "camera": {
+        "zoom": 1.45,
+        "x": -13.0,
+        "y": 5.0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": [
+          "box-postgres",
+          "box-redis"
+        ],
+        "paths": [],
+        "dots": [],
+        "images": [],
+        "callouts": [
+          {
+            "id": "co-pg-cluster",
+            "position": {
+              "left": "68%",
+              "top": "24%"
+            },
+            "theme": "green",
+            "title": "PostgreSQL 16 High-Availability",
+            "desc": "Primary-replica cluster · Streaming replication · 99.99% reliability"
+          },
+          {
+            "id": "co-redis-cache",
+            "position": {
+              "left": "68%",
+              "top": "46%"
+            },
+            "theme": "amber",
+            "title": "Redis 7 High-Speed Cache",
+            "desc": "In-memory rate limiting · Distributed session lock · Microsecond latency"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-3",
+      "title": "业务时间线实景下钻 (画中画特写)",
+      "camera": {
+        "zoom": 1.35,
+        "x": 0,
+        "y": 0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": [],
+        "paths": [],
+        "dots": [],
+        "images": [
+          "img-tape-chart"
+        ],
+        "callouts": [
+          {
+            "id": "co-timeline-deepdive",
+            "position": {
+              "left": "28%",
+              "top": "14%"
+            },
+            "theme": "blue",
+            "title": "Tape Chart Visual Timeline",
+            "desc": "Real-time room occupancy grid · Drag-and-drop assignment · Live WebSocket sync"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-4",
+      "title": "图片淡出与 CASL 鉴权聚焦",
+      "camera": {
+        "zoom": 1.5,
+        "x": 20.0,
+        "y": 10.0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": [
+          "box-auth-casl"
+        ],
+        "paths": [],
+        "dots": [],
+        "images": [],
+        "callouts": [
+          {
+            "id": "co-casl-auth",
+            "position": {
+              "left": "33%",
+              "top": "26%"
+            },
+            "theme": "pink",
+            "title": "CASL Role-Based Permissions",
+            "desc": "Fine-grained ABAC/RBAC · Multi-tenant isolation · Dynamic ability factory"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-5",
+      "title": "全景拓扑归位",
+      "camera": {
+        "zoom": 1.0,
+        "x": 0,
+        "y": 0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": [],
+        "paths": [],
+        "dots": [],
+        "images": [],
+        "callouts": [
+          {
+            "id": "co-final-summary",
+            "position": {
+              "left": "8%",
+              "top": "12%"
+            },
+            "theme": "blue",
+            "title": "System Topology Ready",
+            "desc": "All 4 tiers synchronized · Ready for production deployment"
+          }
+        ]
+      }
+    }
+  ]
+}

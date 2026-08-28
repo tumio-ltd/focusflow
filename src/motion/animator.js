@@ -27,6 +27,9 @@ export class MotionAnimator {
         el.style.opacity = '0';
       } else if (meta.type === 'dot') {
         el.style.opacity = '0';
+      } else if (meta.type === 'image') {
+        el.style.opacity = '0';
+        el.classList.remove('active');
       }
     });
 
@@ -41,10 +44,10 @@ export class MotionAnimator {
 
   /**
    * Activates elements for the current scene step
-   * @param {Object} activeElements - { boxes?: string[], paths?: string[], dots?: string[], callouts?: Object[] }
+   * @param {Object} activeElements - { boxes?: string[], paths?: string[], dots?: string[], images?: string[], callouts?: Object[] }
    */
   activate(activeElements = {}) {
-    const { boxes = [], paths = [], dots = [], callouts = [] } = activeElements;
+    const { boxes = [], paths = [], dots = [], images = [], callouts = [] } = activeElements;
 
     // 1. Animate Active Boxes
     boxes.forEach((boxId, index) => {
@@ -93,7 +96,20 @@ export class MotionAnimator {
       }
     });
 
-    // 4. Staggered Callouts Arrival
+    // 4. Animate Active Dynamic Images
+    images.forEach((imgId, index) => {
+      const meta = this.elementsMap.get(imgId);
+      if (meta && meta.dom) {
+        const el = meta.dom;
+        const delay = 0.25 + index * 0.15;
+        const targetOpacity = meta.data.style?.opacity ?? 1.0;
+        el.style.transition = `opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
+        el.classList.add('active');
+        el.style.opacity = `${targetOpacity}`;
+      }
+    });
+
+    // 5. Staggered Callouts Arrival
     callouts.forEach((calloutData, index) => {
       const meta = this.calloutsMap.get(calloutData.id);
       if (meta && meta.dom) {

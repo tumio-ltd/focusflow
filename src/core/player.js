@@ -100,8 +100,11 @@ export class FocusFlowPlayer {
 
         <!-- 3-Layer Visual Stack -->
         <div class="focusflow-wrap" id="_ff_wrap">
-          <!-- Layer 0: Image -->
+          <!-- Layer 0: Base Image -->
           <img class="focusflow-img" id="_ff_img" src="${assetUrl}" alt="${this.dsl.meta?.title || 'Architecture'}" />
+
+          <!-- Layer 0.5: Dynamic Image Overlays -->
+          <div class="focusflow-overlay-images" id="_ff_overlay_images"></div>
 
           <!-- Layer 1: SVG Vector Motion Overlay -->
           <svg class="focusflow-svg" id="_ff_svg" viewBox="0 0 ${this.viewportWidth} ${this.viewportHeight}" preserveAspectRatio="xMidYMid meet">
@@ -138,6 +141,7 @@ export class FocusFlowPlayer {
     this.stageEl = this.container.querySelector('.focusflow-stage');
     this.wrapEl = this.container.querySelector('#_ff_wrap');
     this.imgEl = this.container.querySelector('#_ff_img');
+    this.overlayImagesLayerEl = this.container.querySelector('#_ff_overlay_images');
     this.svgEl = this.container.querySelector('#_ff_svg');
     this.calloutLayerEl = this.container.querySelector('#_ff_callouts');
     this.progressFillEl = this.container.querySelector('#_ff_progress');
@@ -255,7 +259,42 @@ export class FocusFlowPlayer {
       this.elementsMap.set(dotData.id, { data: dotData, dom: circleEl, type: 'dot' });
     });
 
-    // 4. Render Callouts
+    // 4. Render Dynamic Overlay Images (<img>)
+    (elements.images || []).forEach(imgData => {
+      const overlayImg = document.createElement('img');
+      overlayImg.setAttribute('id', imgData.id);
+      overlayImg.setAttribute('class', `ff-overlay-img ${imgData.style?.animation || 'zoom-fade'}`);
+      overlayImg.src = this.getAssetUrl(imgData.url);
+      overlayImg.alt = imgData.id;
+
+      // Coordinate mapping relative to logical viewport
+      const leftPct = ((imgData.x / this.viewportWidth) * 100).toFixed(4);
+      const topPct = ((imgData.y / this.viewportHeight) * 100).toFixed(4);
+      const widthPct = ((imgData.width / this.viewportWidth) * 100).toFixed(4);
+      const heightPct = ((imgData.height / this.viewportHeight) * 100).toFixed(4);
+
+      overlayImg.style.left = `${leftPct}%`;
+      overlayImg.style.top = `${topPct}%`;
+      overlayImg.style.width = `${widthPct}%`;
+      overlayImg.style.height = `${heightPct}%`;
+
+      if (imgData.style?.borderRadius) {
+        overlayImg.style.borderRadius = `${imgData.style.borderRadius}px`;
+      }
+      if (imgData.style?.border) {
+        overlayImg.style.border = imgData.style.border;
+      }
+      if (imgData.style?.boxShadow === true) {
+        overlayImg.style.boxShadow = '0 24px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(56, 189, 248, 0.2)';
+      } else if (typeof imgData.style?.boxShadow === 'string') {
+        overlayImg.style.boxShadow = imgData.style.boxShadow;
+      }
+
+      this.overlayImagesLayerEl.appendChild(overlayImg);
+      this.elementsMap.set(imgData.id, { data: imgData, dom: overlayImg, type: 'image' });
+    });
+
+    // 5. Render Callouts
     (this.dsl.scenes || []).forEach(scene => {
       (scene.activeElements?.callouts || []).forEach(callout => {
         if (!this.calloutsMap.has(callout.id)) {
