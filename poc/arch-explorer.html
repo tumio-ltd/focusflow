@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture Deep Dive | LuxeHMS Cloud Topology</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; font-family: 'Inter', -apple-system, sans-serif; background: #0a0e17; color: #e5e7eb; }
+
+  :root {
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.35);
+    --warn: #f472b6;
+    --pink: #f472b6;
+    --green: #34d399;
+    --amber: #fbbf24;
+  }
+
+  /* ── TOP BAR ────────────────────────────────────── */
+  .top-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px;
+    background: linear-gradient(180deg, rgba(10,14,23,0.97), transparent);
+    font-size: 13px; color: #6b7280; pointer-events: none;
+  }
+  .top-bar .brand { font-weight: 700; color: #e5e7eb; letter-spacing: 0.02em; }
+  .top-bar .brand span { color: var(--accent); }
+
+  /* ── PROGRESS ────────────────────────────────────── */
+  .progress-track {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+    height: 3px; background: rgba(255,255,255,0.06);
+  }
+  .progress-fill {
+    height: 100%; background: var(--accent);
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+
+  /* ── STAGE ──────────────────────────────────────── */
+  .stage {
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+
+  .image-wrap {
+    position: relative;
+    transform-origin: center center;
+    transition: transform 1s cubic-bezier(.4,0,.2,1);
+  }
+  .image-wrap img {
+    display: block;
+    width: min(92vw, 1400px);
+    border-radius: 10px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+
+  /* ── SVG OVERLAY ────────────────────────────────── */
+  .svg-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  .svg-overlay path, .svg-overlay rect, .svg-overlay circle {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .glow-box {
+    filter: drop-shadow(0 0 12px currentColor);
+  }
+
+  /* ── CALLOUT ────────────────────────────────────── */
+  .callout {
+    position: absolute;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s, transform 0.5s;
+    pointer-events: none;
+    z-index: 50;
+  }
+  .callout.show { opacity: 1; transform: none; }
+  .callout-label {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+  }
+  .callout-label.blue   { background: rgba(56,189,248,0.15); color: var(--accent); border: 1px solid rgba(56,189,248,0.25); }
+  .callout-label.pink   { background: rgba(244,114,182,0.12); color: var(--warn); border: 1px solid rgba(244,114,182,0.22); }
+  .callout-label.green  { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.22); }
+  .callout-label.amber  { background: rgba(251,191,36,0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.22); }
+  .callout-sub {
+    margin-top: 4px; font-size: 11px; color: #9ca3af;
+    font-weight: 400; letter-spacing: 0.01em;
+  }
+
+  /* ── STEP INDICATOR ─────────────────────────────── */
+  .step-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: center; gap: 0;
+    padding: 18px 28px;
+    background: linear-gradient(0deg, rgba(10,14,23,0.97), transparent);
+  }
+  .step-btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    background: transparent; color: #6b7280; font-size: 13px;
+    font-family: inherit; font-weight: 600; cursor: pointer;
+    transition: all 0.25s; letter-spacing: 0.02em;
+  }
+  .step-btn:hover { color: #e5e7eb; background: rgba(255,255,255,0.06); }
+  .step-btn.active { color: var(--accent); background: rgba(56,189,248,0.1); }
+  .step-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+
+  .play-btn {
+    position: fixed; bottom: 18px; right: 28px; z-index: 200;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    color: #9ca3af; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .play-btn:hover { background: rgba(255,255,255,0.12); color: #e5e7eb; }
+  .play-btn.playing { color: var(--accent); border-color: rgba(56,189,248,0.3); }
+
+  .hint {
+    position: fixed; bottom: 22px; left: 28px; z-index: 200;
+    font-size: 11px; color: rgba(255,255,255,0.2);
+  }
+  kbd {
+    font-family: inherit; font-size: 10px;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 3px;
+    padding: 1px 5px; color: rgba(255,255,255,0.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand"><span>&#9654;</span> LuxeHMS Architecture Explorer</div>
+  <div>Topology &amp; Layer Deep Dive</div>
+</div>
+<div class="progress-track"><div class="progress-fill" id="progress" style="width:0%"></div></div>
+
+<div class="stage" id="stage">
+  <div class="image-wrap" id="imageWrap">
+    <img id="archImg" src="01-system_architecture_dark.png" alt="System Architecture">
+
+    <!-- SVG overlay for pixel-accurate animations -->
+    <svg class="svg-overlay" id="svgOverlay" viewBox="0 0 5120 2880" preserveAspectRatio="xMidYMid meet">
+      <!-- ── SCENE 2: PART 1 ELEMENTS ──────────────────────────────── -->
+      <!-- 1. PostgreSQL 16 Target Box (only PostgreSQL card in Data tier) -->
+      <rect id="box-data-persistence" class="glow-box" x="3636" y="628" width="1297" height="332" rx="18"
+            stroke="var(--green)" stroke-width="6" opacity="0"
+            stroke-dasharray="3300" stroke-dashoffset="3300"/>
+
+      <!-- 2. Middle Modules: Folio & Cashier Box -->
+      <rect id="box-folio" class="glow-box" x="1664" y="980" width="883" height="240" rx="18"
+            stroke="var(--accent)" stroke-width="6" opacity="0"
+            stroke-dasharray="2300" stroke-dashoffset="2300"/>
+
+      <!-- 3. Middle Modules: Cron Scheduler Daemon Box -->
+      <rect id="box-cron" class="glow-box" x="1664" y="1324" width="1791" height="205" rx="18"
+            stroke="var(--amber)" stroke-width="6" opacity="0"
+            stroke-dasharray="4000" stroke-dashoffset="4000"/>
+
+      <!-- Connecting Data Flows for Scene 2 -->
+      <!-- Folio & Cashier -> PostgreSQL 16 (Upper entrance) -->
+      <path id="line-folio-pg" d="M 2547 1100 C 3100 1100, 3100 760, 3636 760"
+            stroke="var(--accent)" stroke-width="5" opacity="0"
+            stroke-dasharray="1600" stroke-dashoffset="1600"/>
+
+      <!-- Cron Scheduler -> PostgreSQL 16 (Lower entrance) -->
+      <path id="line-cron-pg" d="M 3455 1426 C 3560 1426, 3560 820, 3636 820"
+            stroke="var(--amber)" stroke-width="5" opacity="0"
+            stroke-dasharray="1200" stroke-dashoffset="1200"/>
+
+      <!-- Connection Dots for Scene 2 -->
+      <circle id="dot-folio-out" cx="2547" cy="1100" r="14" fill="var(--accent)" opacity="0"/>
+      <circle id="dot-cron-out" cx="3455" cy="1426" r="14" fill="var(--amber)" opacity="0"/>
+      <circle id="dot-pg-in-folio" cx="3636" cy="760" r="14" fill="var(--accent)" opacity="0"/>
+      <circle id="dot-pg-in-cron" cx="3636" cy="820" r="14" fill="var(--amber)" opacity="0"/>
+
+      <!-- ── SCENE 3: PART 2 ELEMENTS ──────────────────────────────── -->
+      <!-- 1. Middle Top-Left: Auth & CASL RBAC Card -->
+      <rect id="box-auth-casl" class="glow-box" x="1664" y="780" width="886" height="200" rx="16"
+            stroke="var(--warn)" stroke-width="6" opacity="0"
+            stroke-dasharray="2200" stroke-dashoffset="2200"/>
+
+      <!-- 2. Left Bottom: Core Internal Libraries Card -->
+      <rect id="box-core-internal" class="glow-box" x="186" y="1300" width="1297" height="187" rx="16"
+            stroke="var(--accent)" stroke-width="6" opacity="0"
+            stroke-dasharray="3000" stroke-dashoffset="3000"/>
+
+      <!-- 3. Left Bottom Badge: lib-core (CASL RBAC & Auth) Badge -->
+      <rect id="box-badge-lib-core" class="glow-box" x="856" y="1406" width="335" height="43" rx="10"
+            stroke="var(--green)" stroke-width="4" opacity="0"
+            stroke-dasharray="800" stroke-dashoffset="800"/>
+    </svg>
+
+    <!-- ── Callouts ─────────────────────────────────────────────── -->
+    <!-- Scene 2 Callouts -->
+    <div class="callout" id="co-folio" style="left:33%; top:33%;">
+      <div class="callout-label blue">Folio &amp; Cashier</div>
+      <div class="callout-sub">Double-entry ledger &middot; Shift balance &middot; Real-time sync</div>
+    </div>
+    <div class="callout" id="co-cron" style="left:33%; top:54%;">
+      <div class="callout-label amber">Cron Scheduler Daemon</div>
+      <div class="callout-sub">5-Stage Night Audit Engine &middot; Automated Posting &middot; Date Rollover</div>
+    </div>
+    <div class="callout" id="co-data" style="left:72%; top:22%;">
+      <div class="callout-label green">PostgreSQL 16</div>
+      <div class="callout-sub">Primary Transactional DB &middot; Folios &middot; ACID Consistency</div>
+    </div>
+
+    <!-- Scene 3 Callouts -->
+    <div class="callout" id="co-auth-casl" style="left:33%; top:26%;">
+      <div class="callout-label pink">Auth &amp; CASL RBAC</div>
+      <div class="callout-sub">Subject-action matrix &middot; Audit logs</div>
+    </div>
+    <div class="callout" id="co-core-internal" style="left:4%; top:44%;">
+      <div class="callout-label blue">Core Internal Libraries</div>
+      <div class="callout-sub">Type-safe shared contracts &middot; Monorepo</div>
+    </div>
+    <div class="callout" id="co-badge-lib-core" style="left:17%; top:52%;">
+      <div class="callout-label green">lib-core (CASL RBAC &amp; Auth)</div>
+      <div class="callout-sub">Shared RBAC policies &amp; token validation</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Control Bar -->
+<div class="step-bar" id="stepBar">
+  <button class="step-btn active" data-step="0">Overview</button>
+  <div class="step-sep"></div>
+  <button class="step-btn" data-step="1">Data &amp; Scheduling</button>
+  <div class="step-sep"></div>
+  <button class="step-btn" data-step="2">Auth &amp; Core Libs</button>
+  <div class="step-sep"></div>
+  <button class="step-btn" data-step="3">Full Topology</button>
+</div>
+<button class="play-btn" id="playBtn" title="Auto-play">&#9654;</button>
+<div class="hint"><kbd>&#8592;</kbd> <kbd>&#8594;</kbd> navigate</div>
+
+<script>
+(() => {
+  const steps = [
+    { // 0: Scene 1 - Initial Overview (Clean original image, no borders or animations)
+      zoom: 1, x: 0, y: 0,
+      lines: [],
+      boxes: [],
+      callouts: [],
+      dots: [],
+    },
+    { // 1: Scene 2 - Part 1: PostgreSQL 16 + Folio & Cron Scheduler (Zoomed in for prominent focus)
+      zoom: 1.9, x: -14, y: 8,
+      lines: ['line-folio-pg', 'line-cron-pg'],
+      boxes: ['box-folio', 'box-cron', 'box-data-persistence'],
+      callouts: ['co-folio', 'co-cron', 'co-data'],
+      dots: ['dot-folio-out', 'dot-cron-out', 'dot-pg-in-folio', 'dot-pg-in-cron'],
+    },
+    { // 2: Scene 3 - Part 2: Auth & CASL RBAC + Core Internal Libraries + lib-core badge (Zoomed in for prominent focus)
+      zoom: 1.9, x: 23, y: 10,
+      lines: [],
+      boxes: ['box-auth-casl', 'box-core-internal', 'box-badge-lib-core'],
+      callouts: ['co-auth-casl', 'co-core-internal', 'co-badge-lib-core'],
+      dots: [],
+    },
+    { // 3: Scene 4 - Return to Clean Overview (No SVG lines or animations)
+      zoom: 1, x: 0, y: 0,
+      lines: [],
+      boxes: [],
+      callouts: [],
+      dots: [],
+    }
+  ];
+
+  let cur = 0;
+  let playing = false;
+  let timer = null;
+
+  const wrap = document.getElementById('imageWrap');
+  const progress = document.getElementById('progress');
+  const btns = Array.from(document.querySelectorAll('.step-btn'));
+  const playBtn = document.getElementById('playBtn');
+
+  function resetAll() {
+    document.querySelectorAll('.svg-overlay path, .svg-overlay rect, .svg-overlay circle').forEach(el => {
+      el.style.transition = 'none';
+      if (el.tagName === 'rect') {
+        el.setAttribute('opacity', '0');
+        el.style.strokeDashoffset = el.getAttribute('stroke-dasharray');
+      } else if (el.tagName === 'circle') {
+        el.setAttribute('opacity', '0');
+      } else {
+        el.setAttribute('opacity', '0');
+        el.style.strokeDashoffset = el.getAttribute('stroke-dasharray');
+      }
+    });
+    document.querySelectorAll('.callout').forEach(c => c.classList.remove('show'));
+  }
+
+  function applyStep(i) {
+    const s = steps[i];
+    resetAll();
+
+    // zoom & pan with smooth physics
+    wrap.style.transform = `scale(${s.zoom}) translate(${s.x}%, ${s.y}%)`;
+
+    // trigger animations on the next frame
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // Draw boxes
+        s.boxes.forEach((id, idx) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.setAttribute('opacity', '0.95');
+          el.style.transition = `stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1) ${idx * 0.15}s, opacity 0.3s ease`;
+          el.style.strokeDashoffset = '0';
+        });
+
+        // Draw flow lines
+        s.lines.forEach((id, idx) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.setAttribute('opacity', '0.85');
+          el.style.transition = `stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1) ${0.3 + idx * 0.2}s, opacity 0.3s ease`;
+          el.style.strokeDashoffset = '0';
+        });
+
+        // Show connection dots
+        s.dots.forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.style.transition = 'opacity 0.4s ease 0.8s';
+          el.setAttribute('opacity', '1');
+        });
+
+        // Show callout cards staggered
+        s.callouts.forEach((id, idx) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          setTimeout(() => el.classList.add('show'), 400 + idx * 250);
+        });
+      });
+    });
+
+    // update progress and button states
+    progress.style.width = ((i + 1) / steps.length * 100) + '%';
+    btns.forEach((b, k) => b.classList.toggle('active', k === i));
+  }
+
+  function go(i) {
+    cur = Math.max(0, Math.min(steps.length - 1, i));
+    applyStep(cur);
+  }
+
+  btns.forEach(b => b.addEventListener('click', () => go(+b.dataset.step)));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End') go(steps.length - 1);
+    if (e.key === 'p' || e.key === 'P') togglePlay();
+  });
+
+  function togglePlay() {
+    playing = !playing;
+    playBtn.classList.toggle('playing', playing);
+    playBtn.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    if (playing) {
+      autoNext();
+    } else {
+      clearTimeout(timer);
+    }
+  }
+
+  function autoNext() {
+    if (!playing) return;
+    timer = setTimeout(() => {
+      if (cur < steps.length - 1) { go(cur + 1); autoNext(); }
+      else { togglePlay(); }
+    }, 3800);
+  }
+
+  playBtn.addEventListener('click', togglePlay);
+
+  // Initial load
+  resetAll();
+  applyStep(0);
+})();
+</script>
+</body>
+</html>
