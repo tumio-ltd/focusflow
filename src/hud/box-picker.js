@@ -49,9 +49,17 @@ export class BoxPicker {
     const canvasX = Math.round(ratioX * baseW);
     const canvasY = Math.round(ratioY * baseH);
 
+    const clampedX = Math.max(0, Math.min(baseW, canvasX));
+    const clampedY = Math.max(0, Math.min(baseH, canvasY));
+
+    const percentX = `${((clampedX / baseW) * 100).toFixed(1)}%`;
+    const percentY = `${((clampedY / baseH) * 100).toFixed(1)}%`;
+
     return {
-      x: Math.max(0, Math.min(baseW, canvasX)),
-      y: Math.max(0, Math.min(baseH, canvasY))
+      x: clampedX,
+      y: clampedY,
+      percentX,
+      percentY
     };
   }
 
@@ -70,7 +78,7 @@ export class BoxPicker {
 
   onMouseMove(e) {
     const coords = this.screenToCanvas(e.clientX, e.clientY);
-    this.hud.updateCoordsDisplay(coords.x, coords.y);
+    this.hud.updateCoordsDisplay(coords.x, coords.y, coords.percentX, coords.percentY);
 
     if (!this.isDragging || !this.tempRectEl) return;
 

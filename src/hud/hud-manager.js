@@ -40,16 +40,18 @@ export class HUDManager {
           <span>🎯 FocusFlow 标定助手</span>
           <span style="font-size:10px; color:#94a3b8;">ESC 退出</span>
         </div>
-        <div class="ff-hud-coords">坐标: <span id="_ff_hud_coords">X: 0, Y: 0</span></div>
-        <div style="font-size:11px; color:#94a3b8; line-height:1.4;">
-          • 滚轮：实时微调镜头缩放<br/>
-          • Shift+拖拽：微调镜头平移<br/>
-          • 鼠标拖拽：拉框生成选区<br/>
-          • Alt+单击：智能吸附卡片
+        <div class="ff-hud-coords" style="display:flex; flex-direction:column; gap:2px;">
+          <div>📐 像素: <span id="_ff_hud_pixel_val" style="color:#38bdf8;">X: 0, Y: 0</span></div>
+          <div>📍 百分比: <span id="_ff_hud_percent_val" style="color:#34d399;">L: 0.0%, T: 0.0%</span></div>
         </div>
-        <div class="ff-hud-actions">
-          <button class="ff-hud-btn" id="_ff_btn_copy_box">📋 复制选框 JSON</button>
-          <button class="ff-hud-btn" id="_ff_btn_copy_cam">📷 捕获镜头</button>
+        <div style="font-size:11px; color:#94a3b8; line-height:1.4;">
+          • 滚轮：微调缩放 / Shift+拖拽：平移<br/>
+          • 鼠标拖拽：拉框 / Alt+单击：吸附
+        </div>
+        <div class="ff-hud-actions" style="display:flex; flex-wrap:wrap; gap:6px;">
+          <button class="ff-hud-btn" id="_ff_btn_copy_box" title="复制矩形选框 JSON">🔲 复制选框</button>
+          <button class="ff-hud-btn" id="_ff_btn_copy_callout" title="复制当前光标位置气泡 JSON">💬 复制气泡</button>
+          <button class="ff-hud-btn" id="_ff_btn_copy_cam" title="捕获当前镜头矩阵">📷 捕获镜头</button>
         </div>
       </div>
 
@@ -58,7 +60,8 @@ export class HUDManager {
 
     this.player.stageEl.appendChild(this.overlayEl);
 
-    this.coordsDisplayEl = this.overlayEl.querySelector('#_ff_hud_coords');
+    this.pixelDisplayEl = this.overlayEl.querySelector('#_ff_hud_pixel_val');
+    this.percentDisplayEl = this.overlayEl.querySelector('#_ff_hud_percent_val');
     this.crossXEl = this.overlayEl.querySelector('#_ff_cross_x');
     this.crossYEl = this.overlayEl.querySelector('#_ff_cross_y');
     this.toastEl = this.overlayEl.querySelector('#_ff_toast');
@@ -67,6 +70,11 @@ export class HUDManager {
     this.overlayEl.querySelector('#_ff_btn_copy_box').addEventListener('click', (e) => {
       e.stopPropagation();
       this.copyLastBoxJSON();
+    });
+
+    this.overlayEl.querySelector('#_ff_btn_copy_callout').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.copyCalloutJSON();
     });
 
     this.overlayEl.querySelector('#_ff_btn_copy_cam').addEventListener('click', (e) => {
@@ -165,9 +173,13 @@ export class HUDManager {
     }
   }
 
-  updateCoordsDisplay(x, y) {
-    if (this.coordsDisplayEl) {
-      this.coordsDisplayEl.textContent = `X: ${x}, Y: ${y}`;
+  updateCoordsDisplay(x, y, percentX, percentY) {
+    this.lastCoords = { x, y, percentX, percentY };
+    if (this.pixelDisplayEl) {
+      this.pixelDisplayEl.textContent = `X: ${x}px, Y: ${y}px`;
+    }
+    if (this.percentDisplayEl) {
+      this.percentDisplayEl.textContent = `L: ${percentX}, T: ${percentY}`;
     }
   }
 
@@ -194,6 +206,29 @@ export class HUDManager {
     }).catch(() => {
       console.log('[FocusFlow] Box DSL:', jsonStr);
       this.showToast('📋 JSON 已输出到控制台 Console');
+    });
+  }
+
+  copyCalloutJSON() {
+    const coords = this.lastCoords || { percentX: '33.0%', percentY: '33.0%' };
+    const calloutObj = {
+      id: `co-${Date.now().toString().slice(-4)}`,
+      position: {
+        left: coords.percentX,
+        top: coords.percentY
+      },
+      theme: "blue",
+      title: "模块标题 (Title)",
+      desc: "在此输入解说文本或功能特性..."
+    };
+
+    const jsonStr = JSON.stringify(calloutObj, null, 2);
+    navigator.clipboard.writeText(jsonStr).then(() => {
+      this.showToast(`💬 气泡 JSON 已复制: [${coords.percentX}, ${coords.percentY}]`);
+      console.log('[FocusFlow] Callout DSL:\n', jsonStr);
+    }).catch(() => {
+      console.log('[FocusFlow] Callout DSL:', jsonStr);
+      this.showToast('💬 气泡 JSON 已输出到控制台 Console');
     });
   }
 
