@@ -76,9 +76,11 @@
       fetch(configPath)
         .then(res => res.json())
         .then(dsl => {
+          const basePath = configPath.substring(0, configPath.lastIndexOf('/') + 1);
           currentPlayer = new FocusFlowPlayer({
             container: '#player-container',
             dsl: dsl,
+            basePath: basePath,
             debug: false // 随时按 Ctrl+Shift+D 唤醒 HUD 标定工具
           });
           window.player = currentPlayer;

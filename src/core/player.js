@@ -27,6 +27,7 @@ export class FocusFlowPlayer {
 
     this.dsl = options.dsl;
     this.options = options;
+    this.basePath = options.basePath || '';
     this.debug = !!options.debug || window.location.search.includes('debug=1');
 
     this.viewportWidth = this.dsl.meta?.viewport?.width || 5120;
@@ -36,6 +37,19 @@ export class FocusFlowPlayer {
     this.calloutsMap = new Map(); // id -> DOM Element
 
     this.init();
+  }
+
+  getAssetUrl() {
+    const rawUrl = this.dsl.asset?.url || '';
+    if (!rawUrl || rawUrl.startsWith('data:') || rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('/')) {
+      return rawUrl;
+    }
+    if (this.basePath) {
+      const cleanBase = this.basePath.endsWith('/') ? this.basePath : this.basePath + '/';
+      const cleanRelative = rawUrl.startsWith('./') ? rawUrl.slice(2) : rawUrl;
+      return cleanBase + cleanRelative;
+    }
+    return rawUrl;
   }
 
   init() {
@@ -75,6 +89,7 @@ export class FocusFlowPlayer {
   }
 
   buildDOM() {
+    const assetUrl = this.getAssetUrl();
     this.container.classList.add('focusflow-container');
     this.container.innerHTML = `
       <div class="focusflow-stage">
@@ -86,7 +101,7 @@ export class FocusFlowPlayer {
         <!-- 3-Layer Visual Stack -->
         <div class="focusflow-wrap" id="_ff_wrap">
           <!-- Layer 0: Image -->
-          <img class="focusflow-img" id="_ff_img" src="${this.dsl.asset.url}" alt="${this.dsl.meta?.title || 'Architecture'}" />
+          <img class="focusflow-img" id="_ff_img" src="${assetUrl}" alt="${this.dsl.meta?.title || 'Architecture'}" />
 
           <!-- Layer 1: SVG Vector Motion Overlay -->
           <svg class="focusflow-svg" id="_ff_svg" viewBox="0 0 ${this.viewportWidth} ${this.viewportHeight}" preserveAspectRatio="xMidYMid meet">
