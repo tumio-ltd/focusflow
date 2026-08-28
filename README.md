@@ -7,6 +7,7 @@
 
 ## 📚 文档专区 (Documentation)
 
+* 📖 [**USAGE_GUIDE.md (使用与镜头标定实战指南)**](./docs/USAGE_GUIDE.md) - 3 步新图制作流程、镜头参数与 HUD 调镜实战
 * 📄 [**PRODUCT_DESIGN.md (主产品方案与 PRD)**](./design/PRODUCT_DESIGN.md) - 宏观定位、用户画像、React 选型与产品演进 Roadmap
 * 🚀 [**MVP_SPEC.md (Phase 1 研发执行与 HUD 标定手册)**](./design/MVP_SPEC.md) - MVP 核心播放器架构、HUD 标定工具（拉框/吸附）与验收清单
 * 📐 [**MOTION_ENGINE_SPEC.md (动效数学与渲染规格)**](./design/MOTION_ENGINE_SPEC.md) - 坐标空间逆投影、三次贝塞尔路由推导、几何测长与发光滤镜
