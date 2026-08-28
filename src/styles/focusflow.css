@@ -126,6 +126,7 @@
 /* Pulse Anchor Dots */
 .ff-dot {
   opacity: 0;
+  transform-box: fill-box;
   transform-origin: center;
   transition: opacity 0.5s ease;
 }
