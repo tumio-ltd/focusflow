@@ -69,14 +69,14 @@
       {
         "id": "img-tape-chart",
         "url": "./02_tape_chart_timeline_mockup.png",
-        "x": 1400,
-        "y": 560,
-        "width": 2320,
-        "height": 1305,
+        "x": 800,
+        "y": 360,
+        "width": 3520,
+        "height": 1980,
         "style": {
-          "borderRadius": 20,
+          "borderRadius": 24,
           "boxShadow": true,
-          "border": "2px solid rgba(56, 189, 248, 0.4)",
+          "border": "3px solid rgba(56, 189, 248, 0.6)",
           "animation": "zoom-fade"
         }
       }
@@ -172,8 +172,8 @@
           {
             "id": "co-timeline-deepdive",
             "position": {
-              "left": "28%",
-              "top": "14%"
+              "left": "18%",
+              "top": "6%"
             },
             "theme": "blue",
             "title": "Tape Chart Visual Timeline",
