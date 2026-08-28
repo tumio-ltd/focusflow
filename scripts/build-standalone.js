@@ -151,21 +151,29 @@ ${bundledJs}
 </body>
 </html>`;
 
-  // 7. Output File
+  // 7. Output Files
   const defaultOutName = `${path.basename(exampleDir)}-standalone.html`;
-  const outPath = outputFileArg
+  const distOutPath = outputFileArg
     ? path.resolve(projectRoot, outputFileArg)
     : path.join(projectRoot, 'dist', defaultOutName);
 
-  const outDir = path.dirname(outPath);
-  if (!fs.existsSync(outDir)) {
-    fs.mkdirSync(outDir, { recursive: true });
+  const localOutPath = path.join(exampleDir, 'standalone.html');
+
+  const distDir = path.dirname(distOutPath);
+  if (!fs.existsSync(distDir)) {
+    fs.mkdirSync(distDir, { recursive: true });
   }
 
-  fs.writeFileSync(outPath, standaloneHtml, 'utf-8');
+  // Write to dist/
+  fs.writeFileSync(distOutPath, standaloneHtml, 'utf-8');
+
+  // Also write to examples/[name]/standalone.html for easy access
+  fs.writeFileSync(localOutPath, standaloneHtml, 'utf-8');
+
   console.log(`\n🎉 Success! Standalone single-file HTML generated:`);
-  console.log(`   👉 ${path.relative(projectRoot, outPath)} (${(fs.statSync(outPath).size / 1024).toFixed(1)} KB)`);
-  console.log(`   💡 You can double-click this file to run completely offline in any browser!\n`);
+  console.log(`   👉 产物 1: ${path.relative(projectRoot, distOutPath)} (${(fs.statSync(distOutPath).size / 1024).toFixed(1)} KB)`);
+  console.log(`   👉 产物 2: ${path.relative(projectRoot, localOutPath)} (${(fs.statSync(localOutPath).size / 1024).toFixed(1)} KB)`);
+  console.log(`   💡 双击上面任一 HTML 文件，即可在任何没有 Node 环境/无网的浏览器中直接运行！\n`);
 }
 
 // CLI args
