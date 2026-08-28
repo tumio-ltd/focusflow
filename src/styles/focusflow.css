@@ -256,11 +256,13 @@
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 20;
+  max-width: min(92vw, 1100px);
 }
 
 .ff-play-btn {
   width: 34px;
   height: 34px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: rgba(56, 189, 248, 0.15);
   border: 1px solid rgba(56, 189, 248, 0.35);
@@ -281,9 +283,20 @@
 .ff-step-tabs {
   display: flex;
   gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 100%;
+  padding: 2px 0;
+}
+
+.ff-step-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .ff-tab-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
   background: transparent;
   border: 1px solid transparent;
   color: var(--ff-text-muted);

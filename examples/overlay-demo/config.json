@@ -13,6 +13,13 @@
       "green": "#34d399",
       "amber": "#fbbf24",
       "rose": "#fb7185"
+    },
+    "controls": {
+      "autoplay": false,
+      "interval": 4000,
+      "showPlayBtn": true,
+      "showProgress": true,
+      "showHUDButton": true
     }
   },
   "asset": {

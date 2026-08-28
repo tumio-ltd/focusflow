@@ -29,7 +29,14 @@ export class FocusFlowPlayer {
     this.options = options;
     this.basePath = options.basePath || '';
     this.debug = !!options.debug || window.location.search.includes('debug=1');
-    this.showHUDButton = options.showHUDButton !== undefined ? !!options.showHUDButton : true;
+
+    // Controls configurations (Options override meta.controls)
+    const metaControls = this.dsl.meta?.controls || {};
+    this.autoplay = options.autoplay !== undefined ? !!options.autoplay : (metaControls.autoplay ?? false);
+    this.autoplayInterval = options.autoPlayInterval || options.interval || metaControls.interval || 3800;
+    this.showPlayBtn = options.showPlayBtn !== undefined ? !!options.showPlayBtn : (metaControls.showPlayBtn ?? true);
+    this.showProgress = options.showProgress !== undefined ? !!options.showProgress : (metaControls.showProgress ?? true);
+    this.showHUDButton = options.showHUDButton !== undefined ? !!options.showHUDButton : (metaControls.showHUDButton ?? true);
 
     this.viewportWidth = this.dsl.meta?.viewport?.width || 5120;
     this.viewportHeight = this.dsl.meta?.viewport?.height || 2880;
@@ -68,7 +75,7 @@ export class FocusFlowPlayer {
 
     // State machine initialization
     this.stateMachine = new StateMachine(this.dsl.scenes, {
-      autoPlayInterval: this.options.autoPlayInterval || 3800,
+      autoPlayInterval: this.autoplayInterval,
       onStepChange: (index, scene, animate) => this.applyScene(index, scene, animate),
       onPlayStateChange: (isPlaying) => this.updatePlayButton(isPlaying)
     });
@@ -83,6 +90,11 @@ export class FocusFlowPlayer {
 
     // Go to step 0 immediately
     this.goToStep(0, false);
+
+    // Trigger autoplay if enabled
+    if (this.autoplay) {
+      this.stateMachine.togglePlay();
+    }
   }
 
   get isDebugActive() {
@@ -150,7 +162,16 @@ export class FocusFlowPlayer {
     this.tabsContainerEl = this.container.querySelector('#_ff_tabs');
     this.hudToggleBtnEl = this.container.querySelector('#_ff_hud_toggle_btn');
 
-    // Hide HUD button if showHUDButton is false
+    // Controls visibility switches
+    if (!this.showProgress) {
+      const progressTrack = this.container.querySelector('.focusflow-progress-track');
+      if (progressTrack) progressTrack.style.display = 'none';
+    }
+
+    if (!this.showPlayBtn && this.playBtnEl) {
+      this.playBtnEl.style.display = 'none';
+    }
+
     if (!this.showHUDButton) {
       if (this.hudToggleBtnEl) this.hudToggleBtnEl.style.display = 'none';
       const divider = this.container.querySelector('.ff-controls-divider');
@@ -350,12 +371,18 @@ export class FocusFlowPlayer {
   updateControlsUI(activeIdx) {
     const total = this.dsl.scenes.length;
     const progress = total > 1 ? (activeIdx / (total - 1)) * 100 : 100;
-    this.progressFillEl.style.width = `${progress}%`;
+    if (this.progressFillEl) {
+      this.progressFillEl.style.width = `${progress}%`;
+    }
 
     const tabs = this.tabsContainerEl.querySelectorAll('.ff-tab-btn');
     tabs.forEach((tab, idx) => {
       if (idx === activeIdx) {
         tab.classList.add('active');
+        // Smoothly scroll active tab into view when many scenes exist
+        if (typeof tab.scrollIntoView === 'function') {
+          tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
       } else {
         tab.classList.remove('active');
       }

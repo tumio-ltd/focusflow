@@ -12,6 +12,13 @@
       "warn": "#f472b6",
       "green": "#34d399",
       "amber": "#fbbf24"
+    },
+    "controls": {
+      "autoplay": false,
+      "interval": 3800,
+      "showPlayBtn": true,
+      "showProgress": true,
+      "showHUDButton": true
     }
   },
   "asset": {
