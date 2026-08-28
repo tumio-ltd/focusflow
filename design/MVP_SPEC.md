@@ -595,9 +595,15 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
 - [ ] **6.3 覆盖图生命周期与动效编排 (`src/motion/animator.js` & `src/styles/focusflow.css`)**
   - [ ] 6.3.1 实现 `activate` 时的平滑淡入（Fade-In）与弹性缩放弹入（Zoom-In Spring）
   - [ ] 6.3.2 实现场景切换/离开时的自动平滑淡出（Fade-Out）与图层隐藏
-- [ ] **6.4 实战示例与测试验收**
-  - [ ] 6.4.1 在 `examples/` 中补充动态图片覆盖与自动移除的实战演示
-  - [ ] 6.4.2 验证前后场景切换时图片的优雅进场与退场，无样式竞争与内存泄漏
+- [ ] **6.4 实战示例与测试验收 (`examples/overlay-demo/` 或演进示例)**
+  - [ ] 6.4.1 在 `examples/` 中构建 5 场景完整闭环演示项目：
+    - **Scene 1 (全景开场)**：LuxeHMS 全局架构拓扑总览
+    - **Scene 2 (数据层聚焦)**：运镜聚焦右侧，对 Redis 7 (High-Speed Cache) 与 PostgreSQL 区域进行高亮描边引导
+    - **Scene 3 (业务下钻与图片叠加)**：动态加载引入 `@examples/02_tape_chart_timeline_mockup.png`（带动效平滑弹入/展开覆盖在指定区域）
+    - **Scene 4 (图片淡出与鉴权聚焦)**：自动平滑淡出并移除该图片，镜头平移至左侧并在 CASL role-based permissions 区域进行高亮引导
+    - **Scene 5 (全景归位)**：运镜平滑回到最初的 LuxeHMS 架构拓扑图完整总览
+  - [ ] 6.4.2 验证前后场景切换时图片的优雅进场（Zoom-Fade）与退场（Fade-Out），无样式竞争、无残影与内存泄漏
+  - [ ] 6.4.3 首页导航入口同步集成该新演示项目，支持一键切换预览
 
 ---
 
