@@ -262,6 +262,75 @@
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
 }
 
+.ff-controls-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.16);
+  margin: 0 4px;
+}
+
+.ff-hud-toggle-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  color: var(--ff-accent);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.ff-hud-toggle-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
+}
+
+.ff-hud-toggle-btn.active {
+  background: #f43f5e;
+  border-color: #f43f5e;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(244, 63, 94, 0.55);
+}
+
+.ff-hud-toggle-btn .ff-btn-icon {
+  font-size: 13px;
+}
+
+.ff-hud-toggle-btn .ff-shortcut-badge {
+  display: inline-block;
+  font-family: var(--ff-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #cbd5e1;
+  letter-spacing: -0.02em;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+}
+
+.ff-hud-toggle-btn:hover .ff-shortcut-badge {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+}
+
+.ff-hud-toggle-btn.active .ff-shortcut-badge {
+  background: rgba(0, 0, 0, 0.3);
+  color: #ffe4e6;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 /* Progress Track Top Bar */
 .focusflow-progress-track {
   position: absolute;

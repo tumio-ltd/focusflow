@@ -120,6 +120,12 @@ export class HUDManager {
     this.overlayEl.style.display = 'block';
     this.overlayEl.classList.add('active');
 
+    if (this.player.hudToggleBtnEl) {
+      this.player.hudToggleBtnEl.classList.add('active');
+      const textEl = this.player.hudToggleBtnEl.querySelector('.ff-btn-text');
+      if (textEl) textEl.textContent = '退出标定';
+    }
+
     this.overlayEl.addEventListener('wheel', this.onWheel, { passive: false });
     this.overlayEl.addEventListener('mousedown', this.onPanStart);
     window.addEventListener('mousemove', this.onPanMove);
@@ -134,6 +140,12 @@ export class HUDManager {
     this.isActive = false;
     this.overlayEl.style.display = 'none';
     this.overlayEl.classList.remove('active');
+
+    if (this.player.hudToggleBtnEl) {
+      this.player.hudToggleBtnEl.classList.remove('active');
+      const textEl = this.player.hudToggleBtnEl.querySelector('.ff-btn-text');
+      if (textEl) textEl.textContent = '标定助手';
+    }
 
     this.overlayEl.removeEventListener('wheel', this.onWheel);
     this.overlayEl.removeEventListener('mousedown', this.onPanStart);

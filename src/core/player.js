@@ -123,8 +123,14 @@ export class FocusFlowPlayer {
 
         <!-- Floating Bottom Controls -->
         <div class="focusflow-controls">
-          <button class="ff-play-btn" id="_ff_play_btn" title="播放 / 暂停 (P)">▶</button>
+          <button class="ff-play-btn" id="_ff_play_btn" title="播放 / 暂停 (快捷键: P)">▶</button>
           <div class="ff-step-tabs" id="_ff_tabs"></div>
+          <div class="ff-controls-divider"></div>
+          <button class="ff-hud-toggle-btn" id="_ff_hud_toggle_btn" title="点击打开/关闭标定助手 (快捷键: Ctrl+Shift+D / ⌘+Shift+D)">
+            <span class="ff-btn-icon">🎯</span>
+            <span class="ff-btn-text">标定助手</span>
+            <span class="ff-shortcut-badge">Ctrl+Shift+D</span>
+          </button>
         </div>
       </div>
     `;
@@ -137,6 +143,7 @@ export class FocusFlowPlayer {
     this.progressFillEl = this.container.querySelector('#_ff_progress');
     this.playBtnEl = this.container.querySelector('#_ff_play_btn');
     this.tabsContainerEl = this.container.querySelector('#_ff_tabs');
+    this.hudToggleBtnEl = this.container.querySelector('#_ff_hud_toggle_btn');
 
     // Build Tabs
     this.tabsContainerEl.innerHTML = (this.dsl.scenes || []).map((scene, idx) => `
@@ -158,6 +165,13 @@ export class FocusFlowPlayer {
     this.playBtnEl.addEventListener('click', () => {
       this.togglePlay();
     });
+
+    // HUD toggle button click
+    if (this.hudToggleBtnEl) {
+      this.hudToggleBtnEl.addEventListener('click', () => {
+        this.toggleDebugMode();
+      });
+    }
   }
 
   renderElements() {
