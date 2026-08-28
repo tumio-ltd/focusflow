@@ -8,6 +8,8 @@
 
 ## 目录 (Table of Contents)
 - [1. 快速上手与项目运行](#1-快速上手与项目运行)
+  - [1.1 启动本地开发服务器](#11-启动本地开发服务器)
+  - [1.2 生成 100% 独立的离线单文件 HTML (build-standalone)](#12-生成-100-独立的离线单文件-html-build-standalone)
 - [2. 新项目制作标准化工作流 (3 步流)](#2-新项目制作标准化工作流-3-步流)
 - [3. FocusFlow 完整动效体系全景与效果说明 (6 大动效)](#3-focusflow-完整动效体系全景与效果说明-6-大动效)
   - [3.1 动效细节与视觉表现](#31-动效细节与视觉表现)
@@ -48,7 +50,30 @@ pnpm dev
 ```
 
 * 默认访问地址：`http://localhost:5173/`
-* 页面顶部提供 **LuxeHMS 拓扑图 (4K实战)** 和 **极简 2 节点示例** 的一键切换导航。
+* 页面顶部提供 **LuxeHMS 拓扑图 (4K实战)**、**动态多图下钻实战 (5场景)** 和 **极简 2 节点示例** 的一键切换导航。
+
+---
+
+### 1.2 生成 100% 独立的离线单文件 HTML (`scripts/build-standalone.js`)
+
+如果你需要将制作好的交互式架构图导出为单个独立的 `.html` 文件发给客户、领导或嵌入离线生产环境：
+
+```bash
+# 方式 1：默认打包当前实战示例 (overlay-demo)
+pnpm build:standalone
+
+# 方式 2：通过脚本指定任意示例目录与自定义输出路径
+node scripts/build-standalone.js examples/overlay-demo dist/overlay-demo-standalone.html
+node scripts/build-standalone.js examples/luxehms dist/luxehms-standalone.html
+```
+
+* **打包机理与特性**：
+  1. **图片全量内联**：自动读取主底图与第二张画中画实景图片，并转为 `Base64 Data URI` 嵌入；
+  2. **样式全量内联**：自动将 [`src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/src/styles/focusflow.css) 压入 `<style>` 标签；
+  3. **引擎全量内联**：自动通过 Vite 将播放器引擎打包为自执行 IIFE 注入；
+  4. **双向自动同步**：打包脚本会自动在 `dist/` 目录以及示例自身目录（如 [`examples/overlay-demo/standalone.html`](file:///Users/xt/WebstormProjects/focusflow/examples/overlay-demo/standalone.html)）各自生成一份副本；
+  5. **纯净演示模式**：在导出的单文件中自动隐藏“标定助手”调试按钮，呈现最专业纯粹的展示效果；
+  6. **离线双击秒开**：无需 Node.js、无需本地 Web 服务器、无需网络，在任意电脑双击即可在浏览器中全屏满帧流畅运行！
 
 ---
 
