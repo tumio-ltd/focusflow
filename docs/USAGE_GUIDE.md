@@ -19,7 +19,11 @@
   - [5.1 鼠标拖拽拉框 (Drag-to-Box)](#51-鼠标拖拽拉框-drag-to-box)
   - [5.2 Alt+单击智能边缘吸附 (Pixel Snap)](#52-alt单击智能边缘吸附-pixel-snap)
   - [5.3 8 向吸附锚点与流光连线配置](#53-8-向吸附锚点与流光连线配置)
-- [6. 快捷键一览与常见问题 (FAQ)](#6-快捷键一览与常见问题-faq)
+- [6. 毛玻璃气泡阶梯弹入动效定制指南 (Callouts)](#6-毛玻璃气泡阶梯弹入动效定制指南-callouts)
+  - [6.1 调整弹入时序与出场节奏 (JS 调度器)](#61-调整弹入时序与出场节奏-js-调度器)
+  - [6.2 调整物理弹跳手感、滑入方向与毛玻璃质感 (CSS 样式)](#62-调整物理弹跳手感滑入方向与毛玻璃质感-css-样式)
+  - [6.3 调整气泡内容、位置、色彩主题与先后顺序 (JSON DSL)](#63-调整气泡内容位置色彩主题与先后顺序-json-dsl)
+- [7. 快捷键一览与常见问题 (FAQ)](#7-快捷键一览与常见问题-faq)
 
 ---
 
@@ -172,7 +176,7 @@ pnpm dev
 
 ---
 
-### 3.2 调整方法 A：HUD 可视化实时调镜 (推荐 · 所见即所得)
+### 4.2 调整方法 A：HUD 可视化实时调镜 (推荐 · 所见即所得)
 
 无需手动猜测数值，可以在浏览器中边看边调：
 
@@ -184,7 +188,7 @@ pnpm dev
 
 ---
 
-### 3.3 调整方法 B：直接修改 JSON 配置文件 (精准数值控制)
+### 4.3 调整方法 B：直接修改 JSON 配置文件 (精准数值控制)
 
 打开对应的 `config.json` 文件（如 `examples/luxehms/config.json`）：
 1. 找到对应的场景 ID（例如 `scene-1`）；
@@ -196,7 +200,7 @@ pnpm dev
 
 ---
 
-### 3.4 镜头取景最佳实践与经验参考值
+### 4.4 镜头取景最佳实践与经验参考值
 
 | 场景类型 | 推荐 Zoom | 推荐 X 偏移 | 推荐 Y 偏移 | 适用视觉目标 |
 | :--- | :--- | :--- | :--- | :--- |
@@ -207,11 +211,11 @@ pnpm dev
 
 ---
 
-## 4. 高亮选框与流光连线标定指南
+## 5. 高亮选框与流光连线标定指南
 
 在标定助手激活状态下（`Ctrl + Shift + D`），可以秒级提取卡片与连线配置：
 
-### 4.1 鼠标拖拽拉框 (Drag-to-Box)
+### 5.1 鼠标拖拽拉框 (Drag-to-Box)
 1. 鼠标在目标卡片上按住左键拖拽出一个矩形框；
 2. 松开鼠标，画面自动生成发光虚线预览；
 3. 点击右下角 **“📋 复制选框 JSON”**，剪贴板即可得到：
@@ -228,12 +232,12 @@ pnpm dev
    ```
 4. 将其加入 `elements.boxes` 数组即可。
 
-### 4.2 Alt+单击智能边缘吸附 (Pixel Snap)
+### 5.2 Alt+单击智能边缘吸附 (Pixel Snap)
 1. 按住键盘 **`Alt`** 键（Mac 为 `Option` 键）；
 2. 鼠标在卡片内部任意空白处**单点一下**；
 3. 底层离屏 Canvas 会自动向 4 个方向投射光线，根据色差跃变自动吸附出卡片的精准边界并高亮框选，直接点击复制即可。
 
-### 4.3 8 向吸附锚点与流光连线配置
+### 5.3 8 向吸附锚点与流光连线配置
 配置跨模块数据连线时，**无需手动计算复杂的贝塞尔曲线坐标**，只需声明起点与终点锚点：
 
 ```json
@@ -255,9 +259,96 @@ pnpm dev
 
 ---
 
-## 5. 快捷键一览与常见问题 (FAQ)
+## 6. 毛玻璃气泡阶梯弹入动效定制指南 (Callouts)
 
-### 5.1 全局快捷键速查表
+解说气泡的弹入效果可以从 **出场节奏 (JS)**、**物理弹跳手感与视觉质感 (CSS)** 以及 **内容与顺序 (JSON DSL)** 三个层面灵活定制：
+
+### 6.1 调整弹入时序与出场节奏 (JS 调度器)
+* **源码位置**：[`src/motion/animator.js`](file:///Users/xt/WebstormProjects/focusflow/src/motion/animator.js)
+* **核心公式**：
+  ```javascript
+  // 阶梯延迟公式: T_delay = 基础延迟 (T_base) + 序号 * 递增间隔 (Δt)
+  const delay = 0.45 + index * 0.25;
+  ```
+* **常见节奏调整**：
+  * **快速连弹（紧凑节奏）**：改为 `const delay = 0.2 + index * 0.12;`（0.2s 启动，每个间隔 0.12s 快速连弹）；
+  * **沉稳登场（镜头停稳后再弹）**：改为 `const delay = 1.0 + index * 0.35;`（1.0s 运镜结束后逐个展开）。
+
+### 6.2 调整物理弹跳手感、滑入方向与毛玻璃质感 (CSS 样式)
+* **源码位置**：[`src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/src/styles/focusflow.css)
+
+```css
+.ff-callout {
+  /* 1. 初始隐藏态 (可修改出现方向与缩放比例) */
+  opacity: 0;
+  transform: translateY(12px) scale(0.96); /* 默认: 从下方 12px 处微缩放弹入 */
+  
+  /* 2. 动画时长与缓动曲线 (Spring 弹性手感) */
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* 3. 毛玻璃背景与视觉质感 */
+  background: rgba(13, 20, 36, 0.88);     /* 深色半透明底色 */
+  backdrop-filter: blur(12px);            /* 毛玻璃模糊半径 (建议 8px ~ 20px) */
+  border: 1px solid rgba(255, 255, 255, 0.12); /* 边框高光 */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6),
+              0 0 15px rgba(56, 189, 248, 0.1); /* 投影与边缘外发光 */
+}
+
+/* 4. 激活呈现态 */
+.ff-callout.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+```
+
+* **变体 A：更强烈的 Q 弹果冻感 (Bouncy Spring)**：
+  ```css
+  /* 产生轻微回弹超调效果 */
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+  ```
+* **变体 B：从左侧横向滑入 (Slide from Left)**：
+  ```css
+  .ff-callout {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.95);
+  }
+  .ff-callout.active {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  ```
+* **变体 C：通透高亮轻拟态 (Frosted Glass 增强)**：
+  ```css
+  .ff-callout {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+  ```
+
+### 6.3 调整气泡内容、位置、色彩主题与先后顺序 (JSON DSL)
+在 `config.json` 中直接编辑 `callouts` 数组：
+```json
+{
+  "callouts": [
+    {
+      "id": "co-folio",
+      "position": { "left": "33%", "top": "33%" },  // 📍 气泡在画布上的百分比位置
+      "theme": "blue",                              // 🎨 主题色徽章: "blue" | "pink" | "green" | "amber"
+      "title": "Folio & Cashier",                   // 🏷️ 顶部高亮徽章标题
+      "desc": "Double-entry ledger · Shift balance"  // 📝 正文说明文本
+    }
+  ]
+}
+```
+* **出场先后顺序**：气泡弹入的先后顺序严格按照 `callouts` 数组中的前后顺序（第 1 个 ➔ 第 2 个 ➔ 第 3 个）。调换数组中的元素顺序即可改变出场顺序。
+
+---
+
+## 7. 快捷键一览与常见问题 (FAQ)
+
+### 7.1 全局快捷键速查表
 
 | 按键 | 功能 | 说明 |
 | :--- | :--- | :--- |
@@ -271,7 +362,7 @@ pnpm dev
 
 ---
 
-### 5.2 常见问题排查 (FAQ)
+### 7.2 常见问题排查 (FAQ)
 
 #### Q1：更换底图后，图片显示破损或无法加载？
 * **排查**：确认 `config.json` 中的 `"asset": { "url": "./xxx.png" }` 路径与文件名正确无误。
