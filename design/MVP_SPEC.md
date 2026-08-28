@@ -182,6 +182,8 @@ export interface FocusFlowDSL {
   elements: {
     boxes: ElementBox[];
     paths: ElementPath[];
+    dots?: ElementDot[];
+    images?: ElementImage[]; // ✨ 动态覆盖图元池
   };
   scenes: SceneStep[];
 }
@@ -213,6 +215,31 @@ export interface ElementPath {
   };
 }
 
+export interface ElementDot {
+  id: string;
+  cx: number;
+  cy: number;
+  r?: number;
+  style?: {
+    fill?: string;
+    glow?: boolean;
+  };
+}
+
+export interface ElementImage {
+  id: string;
+  url: string;        // 图片路径 (支持相对路径、绝对路径或 base64)
+  x: number;          // 5120x2880 坐标系 X 坐标
+  y: number;          // 5120x2880 坐标系 Y 坐标
+  width: number;      // 宽度
+  height: number;     // 高度
+  style?: {
+    borderRadius?: number; // 圆角
+    boxShadow?: boolean;   // 是否启用悬浮立体投影
+    animation?: 'fade' | 'zoom-fade'; // 弹入动效模式
+  };
+}
+
 export interface CalloutItem {
   id: string;
   targetBoxId?: string;
@@ -235,6 +262,7 @@ export interface SceneStep {
     boxes?: string[];     // 当前场景激活的高亮框 ID 列表
     paths?: string[];     // 当前场景激活的流动连线 ID 列表
     dots?: string[];      // 当前场景激活的脉冲点 ID 列表
+    images?: string[];    // ✨ 当前场景激活的动态覆盖图片 ID 列表
     callouts?: CalloutItem[]; // 当前场景展示的解说气泡列表
   };
 }
@@ -556,6 +584,23 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
 
 ---
 
+### 🖼️ Stage 6: 动态覆盖图层与局部下钻动效 (Dynamic Image Overlays & Deep-Dive)
+- [ ] **6.1 类型与契约扩展 (`src/types/dsl.d.ts`)**
+  - [ ] 6.1.1 定义 `ElementImage` 接口（`id`, `url`, `x`, `y`, `width`, `height`, `style`）
+  - [ ] 6.1.2 扩展 `FocusFlowDSL.elements.images` 与 `SceneStep.activeElements.images`
+- [ ] **6.2 覆盖图层 DOM 装配与资产解析 (`src/core/player.js`)**
+  - [ ] 6.2.1 在底图上方、SVG 矢量下方插入 `.focusflow-overlay-images` 容器
+  - [ ] 6.2.2 循环实例化 `<img>` 覆盖图元，挂载绝对定位、圆角及悬浮投影
+  - [ ] 6.2.3 自动解析相对 `basePath` 资源路径
+- [ ] **6.3 覆盖图生命周期与动效编排 (`src/motion/animator.js` & `src/styles/focusflow.css`)**
+  - [ ] 6.3.1 实现 `activate` 时的平滑淡入（Fade-In）与弹性缩放弹入（Zoom-In Spring）
+  - [ ] 6.3.2 实现场景切换/离开时的自动平滑淡出（Fade-Out）与图层隐藏
+- [ ] **6.4 实战示例与测试验收**
+  - [ ] 6.4.1 在 `examples/` 中补充动态图片覆盖与自动移除的实战演示
+  - [ ] 6.4.2 验证前后场景切换时图片的优雅进场与退场，无样式竞争与内存泄漏
+
+---
+
 ## 7. MVP 研发测试与验收标准 (Acceptance Criteria)
 
 | 验收项 | 验收指标与测试标准 | 预期结果 | 实际状态 |
@@ -566,3 +611,4 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
 | **4. 模式二 (边缘吸附)** | 标定模式下点击卡片内部任一点 | 50ms 内自动吸附锁定卡片 4 条物理边界并生成矩形框 | ✅ 已通过 |
 | **5. 镜头与动效流畅度** | 场景切换 (Scene 1 ➔ 2 ➔ 3 ➔ 4) | 主流设备保持 60fps，GPU 硬件加速无掉帧，无样式竞争闪烁 | ✅ 已通过 |
 | **6. 交互功能完整性** | 键盘（方向键/空格/Home/End）、自动轮播（播放/暂停）、进度条 | 各项控制响应即时，状态机时钟准确，循环播放无内存泄漏 | ✅ 已通过 |
+| **7. 动态覆盖图生命周期** | 在场景中声明 `activeElements.images`，后续场景移除 | 声明时平滑淡入/弹入展开；后续未声明时自动平滑淡出并卸载 | ⏳ 待实现 (Stage 6) |
