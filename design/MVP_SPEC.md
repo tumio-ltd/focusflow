@@ -483,86 +483,86 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
   - [x] 1.1.1 初始化 Git 仓库，配置默认 `main` 分支与标准 `.gitignore`
   - [x] 1.1.2 初始化 pnpm 项目，配置 `package.json` 元数据与脚本 (`dev`, `build`, `preview`)
   - [x] 1.1.3 安装并验证极速开发服务器 `vite`
-- [ ] **1.2 目录骨架与类型声明**
-  - [ ] 1.2.1 创建 `src/core/`, `src/motion/`, `src/hud/`, `src/styles/` 目录
-  - [ ] 1.2.2 创建 `src/types/dsl.d.ts` 提供完整的 TypeScript 数据结构类型提示
-- [ ] **1.3 核心 CSS 动效与发光滤镜库**
-  - [ ] 1.3.1 编写 `src/styles/focusflow.css`（Stage 视口、毛玻璃 Callout、控制栏与进度条样式）
-  - [ ] 1.3.2 配置 SVG Drop-shadow 与 Neon Glow 滤镜矩阵
+- [x] **1.2 目录骨架与类型声明**
+  - [x] 1.2.1 创建 `src/core/`, `src/motion/`, `src/hud/`, `src/styles/` 目录
+  - [x] 1.2.2 创建 `src/types/dsl.d.ts` 提供完整的 TypeScript 数据结构类型提示
+- [x] **1.3 核心 CSS 动效与发光滤镜库**
+  - [x] 1.3.1 编写 `src/styles/focusflow.css`（Stage 视口、毛玻璃 Callout、控制栏与进度条样式）
+  - [x] 1.3.2 配置 SVG Drop-shadow 与 Neon Glow 滤镜矩阵
 
 ---
 
 ### 🚀 Stage 2: 消费端播放器核心与状态机 (Player Core & Lifecycle Engine)
-- [ ] **2.1 `FocusFlowPlayer` 基础类封装与 DOM 动态装配 (`src/core/player.js`)**
-  - [ ] 2.1.1 构造函数参数校验（`container`, `dsl`, `options`）与默认值填充
-  - [ ] 2.1.2 动态构建 3 层视觉叠加体系（`.stage > .image-wrap`、`<svg class="svg-overlay">`、`.callout-container`）
-  - [ ] 2.1.3 底图资源预加载与解码状态监听（`img.decode()` 骨架屏保护）
-- [ ] **2.2 GPU 镜头运动学与安全边界算法 (`src/core/camera.js`)**
-  - [ ] 2.2.1 实现 `applyCamera(cameraConfig, animate)` 硬件加速变换 (`scale` + `translate`)
-  - [ ] 2.2.2 实现安全视口边界钳位算法（$|T_x|, |T_y| \le \frac{Z-1}{2Z} \times 100\%$）
-- [ ] **2.3 场景状态机与双重 RAF 防抖调度 (`src/core/state-machine.js`)**
-  - [ ] 2.3.1 实现 `goToStep(index)`、`next()`、`prev()` 状态流转
-  - [ ] 2.3.2 实现双重 `requestAnimationFrame` 延迟激活机制，杜绝 CSS Transition 样式竞争与闪烁
-  - [ ] 2.3.3 实现自动轮播定时器、末尾智能归位与暂停/恢复逻辑 (`togglePlay`)
-- [ ] **2.4 全维交互控制系统 (`src/core/events.js`)**
-  - [ ] 2.4.1 键盘快捷键监听（`ArrowLeft/Right`, `Space`, `P`, `Home`, `End`, `Ctrl+Shift+D`）
-  - [ ] 2.4.2 底部控制栏动态生成（场景切换按钮、进度条动态同步、播放/暂停按钮）
-  - [ ] 2.4.3 窗口 `resize` 弹性视口自适应重算
+- [x] **2.1 `FocusFlowPlayer` 基础类封装与 DOM 动态装配 (`src/core/player.js`)**
+  - [x] 2.1.1 构造函数参数校验（`container`, `dsl`, `options`）与默认值填充
+  - [x] 2.1.2 动态构建 3 层视觉叠加体系（`.stage > .image-wrap`、`<svg class="svg-overlay">`、`.callout-container`）
+  - [x] 2.1.3 底图资源预加载与解码状态监听（`img.decode()` 骨架屏保护）
+- [x] **2.2 GPU 镜头运动学与安全边界算法 (`src/core/camera.js`)**
+  - [x] 2.2.1 实现 `applyCamera(cameraConfig, animate)` 硬件加速变换 (`scale` + `translate`)
+  - [x] 2.2.2 实现安全视口边界钳位算法（$|T_x|, |T_y| \le \frac{Z-1}{2Z} \times 100\%$）
+- [x] **2.3 场景状态机与双重 RAF 防抖调度 (`src/core/state-machine.js`)**
+  - [x] 2.3.1 实现 `goToStep(index)`、`next()`、`prev()` 状态流转
+  - [x] 2.3.2 实现双重 `requestAnimationFrame` 延迟激活机制，杜绝 CSS Transition 样式竞争与闪烁
+  - [x] 2.3.3 实现自动轮播定时器、末尾智能归位与暂停/恢复逻辑 (`togglePlay`)
+- [x] **2.4 全维交互控制系统 (`src/core/events.js`)**
+  - [x] 2.4.1 键盘快捷键监听（`ArrowLeft/Right`, `Space`, `P`, `Home`, `End`, `Ctrl+Shift+D`）
+  - [x] 2.4.2 底部控制栏动态生成（场景切换按钮、进度条动态同步、播放/暂停按钮）
+  - [x] 2.4.3 窗口 `resize` 弹性视口自适应重算
 
 ---
 
 ### 📐 Stage 3: 矢量动效与拓扑几何子引擎 (Vector & Motion Sub-Engines)
-- [ ] **3.1 自动几何测长与选框生成器 (`src/motion/geometry.js`)**
-  - [ ] 3.1.1 实现圆角矩形闭合周长精准推导算法（$P = 2(w+h) - 1.7168 \cdot r_x$）
-  - [ ] 3.1.2 实现通用 SVG 图元动态挂载与 `getTotalLength()` 自动弧长获取
-  - [ ] 3.1.3 自动设置 `strokeDasharray` 与 `strokeDashoffset` 初始隐藏态
-- [ ] **3.2 拓扑流向与三次贝塞尔路由推导 (`src/motion/bezier-router.js`)**
-  - [ ] 3.2.1 实现 8 向标准吸附锚点坐标计算函数 `getAnchorCoord(cardRect, anchorName)`
-  - [ ] 3.2.2 实现起终点三次贝塞尔控制点自动推导算法（自动生成 `M x1 y1 C cp1x cp1y, cp2x cp2y, x2 y2`）
-- [ ] **3.3 动效管线与解说气泡编排器 (`src/motion/animator.js`)**
-  - [ ] 3.3.1 实现选框描边生长（Draw-in）与发光激活管线
-  - [ ] 3.3.2 实现持续流动跑马灯（Streaming Dash）与脉冲圆点呼吸动画
-  - [ ] 3.3.3 实现解说气泡阶梯延迟弹入调度算法（$T_{delay} = T_{base} + i \cdot \Delta t$）
-  - [ ] 3.3.4 实现气泡视口边缘碰撞检测与自适应水平翻转（防截断）
+- [x] **3.1 自动几何测长与选框生成器 (`src/motion/geometry.js`)**
+  - [x] 3.1.1 实现圆角矩形闭合周长精准推导算法（$P = 2(w+h) - 1.7168 \cdot r_x$）
+  - [x] 3.1.2 实现通用 SVG 图元动态挂载与 `getTotalLength()` 自动弧长获取
+  - [x] 3.1.3 自动设置 `strokeDasharray` 与 `strokeDashoffset` 初始隐藏态
+- [x] **3.2 拓扑流向与三次贝塞尔路由推导 (`src/motion/bezier-router.js`)**
+  - [x] 3.2.1 实现 8 向标准吸附锚点坐标计算函数 `getAnchorCoord(cardRect, anchorName)`
+  - [x] 3.2.2 实现起终点三次贝塞尔控制点自动推导算法（自动生成 `M x1 y1 C cp1x cp1y, cp2x cp2y, x2 y2`）
+- [x] **3.3 动效管线与解说气泡编排器 (`src/motion/animator.js`)**
+  - [x] 3.3.1 实现选框描边生长（Draw-in）与发光激活管线
+  - [x] 3.3.2 实现持续流动跑马灯（Streaming Dash）与脉冲圆点呼吸动画
+  - [x] 3.3.3 实现解说气泡阶梯延迟弹入调度算法（$T_{delay} = T_{base} + i \cdot \Delta t$）
+  - [x] 3.3.4 实现气泡视口边缘碰撞检测与自适应水平翻转（防截断）
 
 ---
 
 ### 🎯 Stage 4: 内置开发者 HUD 标定工具层 (In-Player HUD Calibration Tooling)
-- [ ] **4.1 HUD 标定管理器与调试层挂载 (`src/hud/hud-manager.js`)**
-  - [ ] 4.1.1 `?debug=1` 与 `Ctrl+Shift+D` 调试模式无缝切换与 HUD UI 挂载
-  - [ ] 4.1.2 实现屏幕像素 ➔ Canvas 绝对逻辑像素的逆投影转换算法
-  - [ ] 4.1.3 实现实时鼠标十字准星（Crosshair）与浮动逻辑坐标指示器
-- [ ] **4.2 模式一：鼠标拖拽拉框与实时 JSON 生成 (`src/hud/box-picker.js`)**
-  - [ ] 4.2.1 监听 `mousedown / mousemove / mouseup`，实时绘制临时 SVG 虚线高亮选框
-  - [ ] 4.2.2 自动格式化标准 JSON DSL 片段并一键写入系统剪贴板
-- [ ] **4.3 模式二：单点点击像素边缘智能吸附 (`src/hud/edge-snapper.js`)**
-  - [ ] 4.3.1 离屏 Canvas 底图颜色像素数据采样（`offscreenCtx.getImageData`）
-  - [ ] 4.3.2 实现 4 向光线投射（Ray Casting）与色彩梯度跃变边界探测
-  - [ ] 4.3.3 自动拟合矩形包围盒并在画面实时高亮预览
-- [ ] **4.4 模式三：一键捕获当前镜头矩阵参数 (`src/hud/camera-capturer.js`)**
-  - [ ] 4.4.1 提取当前视口平移与缩放矩阵参数
-  - [ ] 4.4.2 一键复制 `camera: { zoom, x, y, duration }` 配置到剪贴板
+- [x] **4.1 HUD 标定管理器与调试层挂载 (`src/hud/hud-manager.js`)**
+  - [x] 4.1.1 `?debug=1` 与 `Ctrl+Shift+D` 调试模式无缝切换与 HUD UI 挂载
+  - [x] 4.1.2 实现屏幕像素 ➔ Canvas 绝对逻辑像素的逆投影转换算法
+  - [x] 4.1.3 实现实时鼠标十字准星（Crosshair）与浮动逻辑坐标指示器
+- [x] **4.2 模式一：鼠标拖拽拉框与实时 JSON 生成 (`src/hud/box-picker.js`)**
+  - [x] 4.2.1 监听 `mousedown / mousemove / mouseup`，实时绘制临时 SVG 虚线高亮选框
+  - [x] 4.2.2 自动格式化标准 JSON DSL 片段并一键写入系统剪贴板
+- [x] **4.3 模式二：单点点击像素边缘智能吸附 (`src/hud/edge-snapper.js`)**
+  - [x] 4.3.1 离屏 Canvas 底图颜色像素数据采样（`offscreenCtx.getImageData`）
+  - [x] 4.3.2 实现 4 向光线投射（Ray Casting）与色彩梯度跃变边界探测
+  - [x] 4.3.3 自动拟合矩形包围盒并在画面实时高亮预览
+- [x] **4.4 模式三：一键捕获当前镜头矩阵参数 (`src/hud/camera-capturer.js`)**
+  - [x] 4.4.1 提取当前视口平移与缩放矩阵参数
+  - [x] 4.4.2 一键复制 `camera: { zoom, x, y, duration }` 配置到剪贴板
 
 ---
 
 ### 💡 Stage 5: 官方示例、验收测试与文档交付 (Examples & Acceptance)
-- [ ] **5.1 构建官方实战示例 `examples/luxehms/`**
-  - [ ] 5.1.1 将 `01-system_architecture_dark.png` 提取为完整的标准 `config.json`
-  - [ ] 5.1.2 编写 `examples/luxehms/index.html`，验证数据驱动运行
-  - [ ] 5.1.3 与 POC `arch-explorer.html` 进行像素级与动效对比测试，确保 100% 复刻并超越
-- [ ] **5.2 构建极简双模块快速验证示例 `examples/simple-demo/`**
-- [ ] **5.3 全量 6 大验收指标自动化与人工核验**
-- [ ] **5.4 编写源码使用说明与根目录 `README.md` 更新**
+- [x] **5.1 构建官方实战示例 `examples/luxehms/`**
+  - [x] 5.1.1 将 `01-system_architecture_dark.png` 提取为完整的标准 `config.json`
+  - [x] 5.1.2 编写 `examples/luxehms/index.html`，验证数据驱动运行
+  - [x] 5.1.3 与 POC `arch-explorer.html` 进行像素级与动效对比测试，确保 100% 复刻并超越
+- [x] **5.2 构建极简双模块快速验证示例 `examples/simple-demo/`**
+- [x] **5.3 全量 6 大验收指标自动化与人工核验**
+- [x] **5.4 编写源码使用说明与根目录 `README.md` 更新**
 
 ---
 
 ## 7. MVP 研发测试与验收标准 (Acceptance Criteria)
 
-| 验收项 | 验收指标与测试标准 | 预期结果 |
-| :--- | :--- | :--- |
-| **1. 纯数据解耦** | 修改 `config.json` 替换图片、图形、线条与文字气泡 | 页面完全由 JSON 驱动重绘，无需修改任何 JS/CSS 源码 |
-| **2. 自动几何测长** | 在 DSL 中只需声明矩形宽高与连线锚点 | 引擎自动推算 `stroke-dasharray`，描边动画平滑无断裂 |
-| **3. 标定模式一 (拉框)** | 按 `Ctrl+Shift+D` 出现十字准星，鼠标拖拽拉框 | 松开鼠标后，剪贴板获得精准的 `{"id":..., "x":..., "y":..., ...}` JSON |
-| **4. 模式二 (边缘吸附)** | 标定模式下点击卡片内部任一点 | 50ms 内自动吸附锁定卡片 4 条物理边界并生成矩形框 |
-| **5. 镜头与动效流畅度** | 场景切换 (Scene 1 ➔ 2 ➔ 3 ➔ 4) | 主流设备保持 60fps，GPU 硬件加速无掉帧，无样式竞争闪烁 |
-| **6. 交互功能完整性** | 键盘（方向键/空格/Home/End）、自动轮播（播放/暂停）、进度条 | 各项控制响应即时，状态机时钟准确，循环播放无内存泄漏 |
+| 验收项 | 验收指标与测试标准 | 预期结果 | 实际状态 |
+| :--- | :--- | :--- | :--- |
+| **1. 纯数据解耦** | 修改 `config.json` 替换图片、图形、线条与文字气泡 | 页面完全由 JSON 驱动重绘，无需修改任何 JS/CSS 源码 | ✅ 已通过 |
+| **2. 自动几何测长** | 在 DSL 中只需声明矩形宽高与连线锚点 | 引擎自动推算 `stroke-dasharray`，描边动画平滑无断裂 | ✅ 已通过 |
+| **3. 标定模式一 (拉框)** | 按 `Ctrl+Shift+D` 出现十字准星，鼠标拖拽拉框 | 松开鼠标后，剪贴板获得精准的 `{"id":..., "x":..., "y":..., ...}` JSON | ✅ 已通过 |
+| **4. 模式二 (边缘吸附)** | 标定模式下点击卡片内部任一点 | 50ms 内自动吸附锁定卡片 4 条物理边界并生成矩形框 | ✅ 已通过 |
+| **5. 镜头与动效流畅度** | 场景切换 (Scene 1 ➔ 2 ➔ 3 ➔ 4) | 主流设备保持 60fps，GPU 硬件加速无掉帧，无样式竞争闪烁 | ✅ 已通过 |
+| **6. 交互功能完整性** | 键盘（方向键/空格/Home/End）、自动轮播（播放/暂停）、进度条 | 各项控制响应即时，状态机时钟准确，循环播放无内存泄漏 | ✅ 已通过 |

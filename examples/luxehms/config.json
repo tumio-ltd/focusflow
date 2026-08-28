@@ -1,0 +1,318 @@
+{
+  "$schema": "https://focusflow.io/schema/v1.json",
+  "meta": {
+    "title": "LuxeHMS Cloud Topology - Interactive Showcase",
+    "viewport": {
+      "width": 5120,
+      "height": 2880
+    },
+    "theme": {
+      "bg": "#0a0e17",
+      "accent": "#38bdf8",
+      "warn": "#f472b6",
+      "green": "#34d399",
+      "amber": "#fbbf24"
+    }
+  },
+  "asset": {
+    "url": "./system_architecture.png"
+  },
+  "elements": {
+    "boxes": [
+      {
+        "id": "box-postgres",
+        "type": "rect",
+        "x": 3636,
+        "y": 628,
+        "width": 1297,
+        "height": 332,
+        "rx": 18,
+        "style": {
+          "stroke": "#34d399",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-folio",
+        "type": "rect",
+        "x": 1664,
+        "y": 980,
+        "width": 883,
+        "height": 240,
+        "rx": 18,
+        "style": {
+          "stroke": "#38bdf8",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-cron",
+        "type": "rect",
+        "x": 1664,
+        "y": 1324,
+        "width": 1791,
+        "height": 205,
+        "rx": 18,
+        "style": {
+          "stroke": "#fbbf24",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-auth-casl",
+        "type": "rect",
+        "x": 1664,
+        "y": 780,
+        "width": 886,
+        "height": 200,
+        "rx": 16,
+        "style": {
+          "stroke": "#f472b6",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-core-internal",
+        "type": "rect",
+        "x": 186,
+        "y": 1300,
+        "width": 1297,
+        "height": 187,
+        "rx": 16,
+        "style": {
+          "stroke": "#38bdf8",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-badge-lib-core",
+        "type": "rect",
+        "x": 856,
+        "y": 1406,
+        "width": 335,
+        "height": 43,
+        "rx": 10,
+        "style": {
+          "stroke": "#34d399",
+          "strokeWidth": 5,
+          "glow": true
+        }
+      }
+    ],
+    "paths": [
+      {
+        "id": "line-folio-pg",
+        "from": "box-folio.right",
+        "to": "box-postgres.left-top",
+        "d": "M 2547 1100 C 3100 1100, 3100 760, 3636 760",
+        "style": {
+          "stroke": "#38bdf8",
+          "strokeWidth": 5,
+          "mode": "stream"
+        }
+      },
+      {
+        "id": "line-cron-pg",
+        "from": "box-cron.right",
+        "to": "box-postgres.left-bottom",
+        "d": "M 3455 1426 C 3560 1426, 3560 820, 3636 820",
+        "style": {
+          "stroke": "#fbbf24",
+          "strokeWidth": 5,
+          "mode": "stream"
+        }
+      }
+    ],
+    "dots": [
+      {
+        "id": "dot-folio-out",
+        "cx": 2547,
+        "cy": 1100,
+        "r": 10,
+        "style": {
+          "fill": "#38bdf8",
+          "glow": true
+        }
+      },
+      {
+        "id": "dot-cron-out",
+        "cx": 3455,
+        "cy": 1426,
+        "r": 10,
+        "style": {
+          "fill": "#fbbf24",
+          "glow": true
+        }
+      },
+      {
+        "id": "dot-pg-in-folio",
+        "cx": 3636,
+        "cy": 760,
+        "r": 10,
+        "style": {
+          "fill": "#38bdf8",
+          "glow": true
+        }
+      },
+      {
+        "id": "dot-pg-in-cron",
+        "cx": 3636,
+        "cy": 820,
+        "r": 10,
+        "style": {
+          "fill": "#fbbf24",
+          "glow": true
+        }
+      }
+    ]
+  },
+  "scenes": [
+    {
+      "id": "scene-0",
+      "title": "全局总览",
+      "camera": {
+        "zoom": 1.0,
+        "x": 0,
+        "y": 0,
+        "duration": 1.0
+      },
+      "activeElements": {
+        "boxes": [],
+        "paths": [],
+        "dots": [],
+        "callouts": []
+      }
+    },
+    {
+      "id": "scene-1",
+      "title": "数据持久化与夜审引擎",
+      "camera": {
+        "zoom": 1.75,
+        "x": -14,
+        "y": 8,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": [
+          "box-postgres",
+          "box-folio",
+          "box-cron"
+        ],
+        "paths": [
+          "line-folio-pg",
+          "line-cron-pg"
+        ],
+        "dots": [
+          "dot-folio-out",
+          "dot-cron-out",
+          "dot-pg-in-folio",
+          "dot-pg-in-cron"
+        ],
+        "callouts": [
+          {
+            "id": "co-folio",
+            "position": {
+              "left": "33%",
+              "top": "33%"
+            },
+            "theme": "blue",
+            "title": "Folio & Cashier",
+            "desc": "Double-entry ledger · Shift balance · Real-time sync"
+          },
+          {
+            "id": "co-cron",
+            "position": {
+              "left": "33%",
+              "top": "54%"
+            },
+            "theme": "amber",
+            "title": "Cron Scheduler Daemon",
+            "desc": "5-Stage Night Audit Engine · Automated Posting · Date Rollover"
+          },
+          {
+            "id": "co-data",
+            "position": {
+              "left": "72%",
+              "top": "22%"
+            },
+            "theme": "green",
+            "title": "PostgreSQL 16",
+            "desc": "Primary Transactional DB · Folios · ACID Consistency"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-2",
+      "title": "鉴权系统与基础核心库",
+      "camera": {
+        "zoom": 1.75,
+        "x": 23,
+        "y": 10,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": [
+          "box-auth-casl",
+          "box-core-internal",
+          "box-badge-lib-core"
+        ],
+        "paths": [],
+        "dots": [],
+        "callouts": [
+          {
+            "id": "co-auth-casl",
+            "position": {
+              "left": "33%",
+              "top": "26%"
+            },
+            "theme": "pink",
+            "title": "Auth & CASL RBAC",
+            "desc": "Subject-action matrix · Audit logs"
+          },
+          {
+            "id": "co-core-internal",
+            "position": {
+              "left": "4%",
+              "top": "44%"
+            },
+            "theme": "blue",
+            "title": "Core Internal Libraries",
+            "desc": "Type-safe shared contracts · Monorepo"
+          },
+          {
+            "id": "co-badge-lib-core",
+            "position": {
+              "left": "17%",
+              "top": "52%"
+            },
+            "theme": "green",
+            "title": "lib-core (CASL RBAC & Auth)",
+            "desc": "Shared RBAC policies & token validation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-3",
+      "title": "全景拓扑归位",
+      "camera": {
+        "zoom": 1.0,
+        "x": 0,
+        "y": 0,
+        "duration": 1.0
+      },
+      "activeElements": {
+        "boxes": [],
+        "paths": [],
+        "dots": [],
+        "callouts": []
+      }
+    }
+  ]
+}

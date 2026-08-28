@@ -1,0 +1,384 @@
+/**
+ * FocusFlow Core Stylesheet
+ * Includes Stage Container, 3-Layer Overlay Stack, Neon Glow, Callouts, Controls & HUD Overlay
+ */
+
+:root {
+  --ff-bg: #0a0e17;
+  --ff-panel-bg: rgba(13, 20, 36, 0.85);
+  --ff-panel-border: rgba(56, 189, 248, 0.2);
+  --ff-accent: #38bdf8;
+  --ff-warn: #f472b6;
+  --ff-green: #34d399;
+  --ff-amber: #fbbf24;
+  --ff-text: #f1f5f9;
+  --ff-text-muted: #94a3b8;
+  --ff-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ==========================================================================
+   1. Player Stage & Viewport Container
+   ========================================================================== */
+.focusflow-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
+  background: var(--ff-bg);
+  color: var(--ff-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.focusflow-stage {
+  position: relative;
+  width: min(94vw, 1440px);
+  aspect-ratio: 16 / 9;
+  background: #000000;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8),
+              0 0 40px rgba(56, 189, 248, 0.05);
+}
+
+/* Base Fit Wrapper (Handles Scale & Pan Transform) */
+.focusflow-wrap {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  transition: transform 1.2s cubic-bezier(0.4, 0.0, 0.2, 1.0);
+  will-change: transform;
+}
+
+/* Layer 0: Image Layer */
+.focusflow-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+/* Layer 1: SVG Vector Motion Overlay */
+.focusflow-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Layer 2: Callout Text Floating Overlay */
+.focusflow-callout-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   2. SVG Vector Elements & Motion Styles
+   ========================================================================== */
+.ff-box {
+  fill: transparent;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: stroke-dashoffset 1.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s ease;
+}
+
+.ff-box.active {
+  opacity: 0.95;
+}
+
+.ff-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s ease;
+}
+
+.ff-path.active {
+  opacity: 0.95;
+}
+
+/* Streaming Dashed Flow Animation */
+.ff-stream {
+  stroke-dasharray: 14, 10;
+  animation: ffStreamMotion 1.5s linear infinite;
+}
+
+@keyframes ffStreamMotion {
+  to {
+    stroke-dashoffset: -48;
+  }
+}
+
+/* Pulse Anchor Dots */
+.ff-dot {
+  opacity: 0;
+  transform-origin: center;
+  transition: opacity 0.5s ease;
+}
+
+.ff-dot.active {
+  opacity: 1;
+  animation: ffDotPulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes ffDotPulse {
+  0% { transform: scale(0.85); opacity: 0.7; }
+  100% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 8px currentColor); }
+}
+
+/* ==========================================================================
+   3. Glassmorphism Callout Cards
+   ========================================================================== */
+.ff-callout {
+  position: absolute;
+  background: rgba(13, 20, 36, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ff-text);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6),
+              0 0 15px rgba(56, 189, 248, 0.1);
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  max-width: 320px;
+  z-index: 10;
+}
+
+.ff-callout.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ff-callout .ff-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+.ff-badge.blue  { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); }
+.ff-badge.pink  { background: rgba(244, 114, 182, 0.2); color: #f472b6; border: 1px solid rgba(244, 114, 182, 0.4); }
+.ff-badge.green { background: rgba(52, 211, 153, 0.2); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.4); }
+.ff-badge.amber { background: rgba(251, 191, 36, 0.2); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+
+.ff-callout .ff-desc {
+  font-size: 12px;
+  color: var(--ff-text-muted);
+}
+
+/* ==========================================================================
+   4. Control Bar & Navigation
+   ========================================================================== */
+.focusflow-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+
+.ff-play-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: var(--ff-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.ff-play-btn:hover {
+  background: rgba(56, 189, 248, 0.3);
+  transform: scale(1.05);
+}
+
+.ff-step-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.ff-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ff-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.ff-tab-btn:hover {
+  color: var(--ff-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ff-tab-btn.active {
+  color: #0f172a;
+  background: #38bdf8;
+  font-weight: 600;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+}
+
+/* Progress Track Top Bar */
+.focusflow-progress-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  z-index: 30;
+}
+
+.focusflow-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
+  transition: width 0.4s ease;
+}
+
+/* ==========================================================================
+   5. In-Player HUD Calibration Tooling Overlay
+   ========================================================================== */
+.ff-hud-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+}
+
+.ff-hud-overlay.active {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.ff-crosshair-line-x,
+.ff-crosshair-line-y {
+  position: absolute;
+  background: rgba(56, 189, 248, 0.4);
+  pointer-events: none;
+}
+
+.ff-crosshair-line-x { height: 1px; left: 0; right: 0; }
+.ff-crosshair-line-y { width: 1px; top: 0; bottom: 0; }
+
+.ff-hud-panel {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(10, 14, 23, 0.94);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-family: var(--ff-font-mono);
+  font-size: 12px;
+  color: var(--ff-text);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8),
+              0 0 20px rgba(56, 189, 248, 0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 280px;
+}
+
+.ff-hud-header {
+  font-weight: 700;
+  color: var(--ff-accent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ff-hud-coords {
+  color: #34d399;
+}
+
+.ff-hud-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ff-hud-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--ff-accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ff-hud-btn:hover {
+  background: rgba(56, 189, 248, 0.3);
+}
+
+/* Toast Notifications */
+.ff-toast {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid #34d399;
+  color: #34d399;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 150;
+  pointer-events: none;
+}
+
+.ff-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(10px);
+}
