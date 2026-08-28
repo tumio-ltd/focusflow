@@ -17,6 +17,12 @@ export class HUDManager {
     this.edgeSnapper = new EdgeSnapper(this);
     this.cameraCapturer = new CameraCapturer(this);
 
+    this.onWheel = this.onWheel.bind(this);
+    this.onPanStart = this.onPanStart.bind(this);
+    this.onPanMove = this.onPanMove.bind(this);
+    this.onPanEnd = this.onPanEnd.bind(this);
+    this.isPanning = false;
+
     this.createHUDDOM();
   }
 
@@ -36,8 +42,10 @@ export class HUDManager {
         </div>
         <div class="ff-hud-coords">坐标: <span id="_ff_hud_coords">X: 0, Y: 0</span></div>
         <div style="font-size:11px; color:#94a3b8; line-height:1.4;">
-          • 鼠标拖拽：自由拉框<br/>
-          • Alt + 单击：智能吸附卡片
+          • 滚轮：实时微调镜头缩放<br/>
+          • Shift+拖拽：微调镜头平移<br/>
+          • 鼠标拖拽：拉框生成选区<br/>
+          • Alt+单击：智能吸附卡片
         </div>
         <div class="ff-hud-actions">
           <button class="ff-hud-btn" id="_ff_btn_copy_box">📋 复制选框 JSON</button>
@@ -67,10 +75,55 @@ export class HUDManager {
     });
   }
 
+  onWheel(e) {
+    e.preventDefault();
+    const current = this.player.camera.getCurrentCamera();
+    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    const nextZoom = Math.max(1.0, Math.min(3.0, current.zoom + delta));
+    this.player.camera.apply({ zoom: nextZoom, x: current.x, y: current.y, duration: 0.1 }, true);
+    this.showToast(`🔍 缩放: ${nextZoom.toFixed(2)}x [X: ${current.x}%, Y: ${current.y}%]`);
+  }
+
+  onPanStart(e) {
+    if (!e.shiftKey && e.button !== 1 && e.button !== 2) return;
+    this.isPanning = true;
+    this.panStartX = e.clientX;
+    this.panStartY = e.clientY;
+    this.cameraStart = this.player.camera.getCurrentCamera();
+  }
+
+  onPanMove(e) {
+    if (!this.isPanning) return;
+    const dx = e.clientX - this.panStartX;
+    const dy = e.clientY - this.panStartY;
+
+    const wrapRect = this.player.wrapEl.getBoundingClientRect();
+    const shiftPercentX = (dx / wrapRect.width) * 100;
+    const shiftPercentY = (dy / wrapRect.height) * 100;
+
+    const nextX = Number((this.cameraStart.x + shiftPercentX).toFixed(1));
+    const nextY = Number((this.cameraStart.y + shiftPercentY).toFixed(1));
+
+    this.player.camera.apply({ zoom: this.cameraStart.zoom, x: nextX, y: nextY, duration: 0 }, false);
+  }
+
+  onPanEnd() {
+    if (this.isPanning) {
+      this.isPanning = false;
+      const current = this.player.camera.getCurrentCamera();
+      this.showToast(`📷 视口平移: [X: ${current.x}%, Y: ${current.y}%]`);
+    }
+  }
+
   activate() {
     this.isActive = true;
     this.overlayEl.style.display = 'block';
     this.overlayEl.classList.add('active');
+
+    this.overlayEl.addEventListener('wheel', this.onWheel, { passive: false });
+    this.overlayEl.addEventListener('mousedown', this.onPanStart);
+    window.addEventListener('mousemove', this.onPanMove);
+    window.addEventListener('mouseup', this.onPanEnd);
 
     this.boxPicker.attach(this.overlayEl);
     this.edgeSnapper.attach(this.overlayEl);
@@ -81,6 +134,11 @@ export class HUDManager {
     this.isActive = false;
     this.overlayEl.style.display = 'none';
     this.overlayEl.classList.remove('active');
+
+    this.overlayEl.removeEventListener('wheel', this.onWheel);
+    this.overlayEl.removeEventListener('mousedown', this.onPanStart);
+    window.removeEventListener('mousemove', this.onPanMove);
+    window.removeEventListener('mouseup', this.onPanEnd);
 
     this.boxPicker.detach();
     this.edgeSnapper.detach();

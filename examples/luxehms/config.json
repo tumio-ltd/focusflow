@@ -192,9 +192,9 @@
       "id": "scene-1",
       "title": "数据持久化与夜审引擎",
       "camera": {
-        "zoom": 1.75,
-        "x": -14,
-        "y": 8,
+        "zoom": 1.42,
+        "x": -11,
+        "y": 6,
         "duration": 1.2
       },
       "activeElements": {
