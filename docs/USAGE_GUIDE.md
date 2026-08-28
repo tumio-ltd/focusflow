@@ -10,6 +10,8 @@
 - [1. 快速上手与项目运行](#1-快速上手与项目运行)
 - [2. 新项目制作标准化工作流 (3 步流)](#2-新项目制作标准化工作流-3-步流)
 - [3. FocusFlow 完整动效体系全景与效果说明 (6 大动效)](#3-focusflow-完整动效体系全景与效果说明-6-大动效)
+  - [3.1 动效细节与视觉表现](#31-动效细节与视觉表现)
+  - [3.2 在 config.json 中如何声明与区分这 6 种动效](#32-在-configjson-中如何声明与区分这-6-种动效)
 - [4. 镜头运镜参数详解与两种调整方法 (核心)](#4-镜头运镜参数详解与两种调整方法-核心)
   - [4.1 镜头参数 (Camera) 物理意义与坐标系](#41-镜头参数-camera-物理意义与坐标系)
   - [4.2 调整方法 A：HUD 可视化实时调镜 (推荐 · 所见即所得)](#42-调整方法-a-hud-可视化实时调镜-推荐--所见即所得)
@@ -141,6 +143,119 @@ pnpm dev
 | **4. 端口脉冲呼吸点 (Pulse Dots)** | 连线出入端点的小圆点周期性微呼吸放大并伴随光晕 | `transform: scale()` 呼吸循环配合 `drop-shadow` 辉光 | `elements.dots` + `activeElements.dots` |
 | **5. 毛玻璃气泡阶梯弹入 (Callouts)** | 解说卡片带毛玻璃背景，按时序依次弹跳滑入 (0.45s ➔ 0.70s ➔ 0.95s) | Double-RAF 状态隔离 + 阶梯延时公式 $T = T_{base} + i \cdot \Delta t$，自带视口防遮挡翻转 | `scenes[i].activeElements.callouts` |
 | **6. 顶栏进度与控制器过渡** | 顶部进度条平滑生长，底部 Tab 按钮高亮平移过渡 | 宽度百分比 Transition 与 Active Class 状态机流转 | 播放器底层状态机自动驱动 |
+
+---
+
+### 3.2 在 `config.json` 中如何声明与区分这 6 种动效
+
+`config.json` 采用高度解耦的结构设计，分为 **【全局图元池 (`elements`)】** 和 **【场景驱动列表 (`scenes`)】** 两大部分：
+
+#### 1. 字段区分对照速查表
+
+| 动效类型 | 在 `config.json` 中的关键区分字段 | 所属作用域 | 核心特征标识 |
+| :--- | :--- | :--- | :--- |
+| **1. 🎥 电影级运镜** | `"camera": { "zoom", "x", "y", "duration" }` | `scenes[i]` | 声明该场景的目标缩放倍率和平移坐标 |
+| **2. 🔲 卡片边框描边生长** | `elements.boxes` + `scenes[i].activeElements.boxes` | 图元池 + 场景 | 包含 `x, y, width, height, rx` 几何参数，在场景中引用 ID 即激活生长 |
+| **3. ⚡ 拓扑数据流向跑马灯** | `elements.paths` (`"mode": "stream"`) + `activeElements.paths` | 图元池 + 场景 | 包含 `from / to` 锚点，带有 **`"mode": "stream"`**（持续流动）或 `"draw"`（单次绘制） |
+| **4. 🔴 接口端点脉冲呼吸点** | `elements.dots` + `scenes[i].activeElements.dots` | 图元池 + 场景 | 包含 `cx, cy, r` 圆心坐标，在场景中引用 ID 即激活脉冲微动 |
+| **5. 💬 毛玻璃气泡阶梯弹入** | `scenes[i].activeElements.callouts` | 场景内部 | 数组内包含 `position: { left, top }`、`theme`、`title`、`desc` |
+| **6. 📊 顶栏进度与底栏切换** | `scenes: [ { "id", "title" }, ... ]` | 全局场景列表 | **隐式自动驱动**：由 `scenes` 数组长度和 `title` 自动计算分段与生成按钮 |
+
+---
+
+#### 2. 带完整标注的 `config.json` 结构剖析
+
+```json
+{
+  "meta": { "viewport": { "width": 5120, "height": 2880 } },
+  "asset": { "url": "./system_architecture.png" },
+
+  // ==========================================
+  // 【全局图元池】：预先声明可动元素
+  // ==========================================
+  "elements": {
+    // 🔲 动效 2：矩形高亮框
+    "boxes": [
+      {
+        "id": "box-postgres",
+        "type": "rect",
+        "x": 3636, "y": 628, "width": 1297, "height": 332, "rx": 18,
+        "style": { "stroke": "#34d399", "glow": true }
+      }
+    ],
+
+    // ⚡ 动效 3：流动连线 (通过 mode: "stream" 标识持续跑马灯)
+    "paths": [
+      {
+        "id": "line-folio-pg",
+        "from": "box-folio.right",      // 自动计算起点锚点
+        "to": "box-postgres.left-top",  // 自动计算终点锚点
+        "style": {
+          "stroke": "#38bdf8",
+          "mode": "stream"              // 关键字段：持续跑马灯流动
+        }
+      }
+    ],
+
+    // 🔴 动效 4：接口端点脉冲呼吸点
+    "dots": [
+      {
+        "id": "dot-folio-out",
+        "cx": 2547, "cy": 1100, "r": 10,
+        "style": { "fill": "#38bdf8", "glow": true }
+      }
+    ]
+  },
+
+  // ==========================================
+  // 【场景驱动列表】：时序编排与动效激活
+  // ==========================================
+  "scenes": [
+    {
+      "id": "scene-1",
+      // 📊 动效 6：场景标题，自动生成底部第 2 个 Tab 按钮
+      "title": "数据持久化与夜审引擎",
+
+      // 🎥 动效 1：电影级运镜目标矩阵
+      "camera": {
+        "zoom": 1.42,
+        "x": -11,
+        "y": 6,
+        "duration": 1.2
+      },
+
+      "activeElements": {
+        // 🔲 激活动效 2：当前场景要顺时针生长发光的框
+        "boxes": ["box-postgres"],
+
+        // ⚡ 激活动效 3：当前场景要启动跑马灯流动的连线
+        "paths": ["line-folio-pg"],
+
+        // 🔴 激活动效 4：当前场景要开启呼吸脉冲的点
+        "dots": ["dot-folio-out"],
+
+        // 💬 动效 5：当前场景要按时序阶梯弹出的毛玻璃气泡
+        "callouts": [
+          {
+            "id": "co-folio",
+            "position": { "left": "33%", "top": "33%" },
+            "theme": "blue",
+            "title": "Folio & Cashier",
+            "desc": "Double-entry ledger · Shift balance"
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+---
+
+#### 3. 核心配置口诀
+1. **运镜看 `camera`**（控制画面的缩放倍率与平移取景）；
+2. **气泡看 `callouts`**（直接写在场景里，按数组顺序依次弹入）；
+3. **选框、流线、光点看 `activeElements` 里的引用 ID**（在 `elements` 里定义形状，在场景里点名激活）！
 
 ---
 
