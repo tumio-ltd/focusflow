@@ -710,6 +710,7 @@ node scripts/build-standalone.js examples/luxehms dist/luxehms-standalone.html
       "autoplay": false,       // 页面加载后是否默认自动循环播放 (默认: false)
       "interval": 4000,        // 自动轮播每屏停留时长 (毫秒，默认: 3800ms)
       "showPlayBtn": true,     // 是否展示左侧 ▶ 播放/暂停按钮 (默认: true)
+      "showCounter": true,     // 是否展示当前场景页码指示器如 01/05 (默认: true)
       "showProgress": true,    // 是否展示顶部线性进度条 (默认: true)
       "showHUDButton": true    // 是否展示右侧 🎯 标定助手按钮 (默认: true, standalone 导出时自动为 false)
     }

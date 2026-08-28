@@ -20,6 +20,7 @@ export interface FocusFlowDSL {
       autoplay?: boolean;      // 页面加载后是否默认自动循环播放 (默认 false)
       interval?: number;      // 自动轮播每屏停留时长 (毫秒，默认 3800ms)
       showPlayBtn?: boolean;  // 是否展示播放/暂停按钮 (默认 true)
+      showCounter?: boolean;  // 是否展示场景序号指示器如 01/05 (默认 true)
       showProgress?: boolean; // 是否展示顶部进度条 (默认 true)
       showHUDButton?: boolean;// 是否在控制栏展示标定助手按钮 (默认 true)
     };

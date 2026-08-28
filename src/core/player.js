@@ -35,6 +35,7 @@ export class FocusFlowPlayer {
     this.autoplay = options.autoplay !== undefined ? !!options.autoplay : (metaControls.autoplay ?? false);
     this.autoplayInterval = options.autoPlayInterval || options.interval || metaControls.interval || 3800;
     this.showPlayBtn = options.showPlayBtn !== undefined ? !!options.showPlayBtn : (metaControls.showPlayBtn ?? true);
+    this.showCounter = options.showCounter !== undefined ? !!options.showCounter : (metaControls.showCounter ?? true);
     this.showProgress = options.showProgress !== undefined ? !!options.showProgress : (metaControls.showProgress ?? true);
     this.showHUDButton = options.showHUDButton !== undefined ? !!options.showHUDButton : (metaControls.showHUDButton ?? true);
 
@@ -140,6 +141,11 @@ export class FocusFlowPlayer {
         <!-- Floating Bottom Controls -->
         <div class="focusflow-controls">
           <button class="ff-play-btn" id="_ff_play_btn" title="播放 / 暂停 (快捷键: P)">▶</button>
+          <div class="ff-scene-counter" id="_ff_scene_counter" title="当前场景进度">
+            <span class="ff-counter-cur">01</span>
+            <span class="ff-counter-sep">/</span>
+            <span class="ff-counter-total">01</span>
+          </div>
           <div class="ff-step-tabs" id="_ff_tabs"></div>
           <div class="ff-controls-divider"></div>
           <button class="ff-hud-toggle-btn" id="_ff_hud_toggle_btn" title="点击打开/关闭标定助手 (快捷键: Ctrl+Shift+D / ⌘+Shift+D)">
@@ -159,8 +165,17 @@ export class FocusFlowPlayer {
     this.calloutLayerEl = this.container.querySelector('#_ff_callouts');
     this.progressFillEl = this.container.querySelector('#_ff_progress');
     this.playBtnEl = this.container.querySelector('#_ff_play_btn');
+    this.sceneCounterEl = this.container.querySelector('#_ff_scene_counter');
+    this.counterCurEl = this.container.querySelector('.ff-counter-cur');
+    this.counterTotalEl = this.container.querySelector('.ff-counter-total');
     this.tabsContainerEl = this.container.querySelector('#_ff_tabs');
     this.hudToggleBtnEl = this.container.querySelector('#_ff_hud_toggle_btn');
+
+    // Initialize total count in counter
+    const totalCount = (this.dsl.scenes || []).length;
+    if (this.counterTotalEl) {
+      this.counterTotalEl.textContent = String(totalCount).padStart(2, '0');
+    }
 
     // Controls visibility switches
     if (!this.showProgress) {
@@ -170,6 +185,10 @@ export class FocusFlowPlayer {
 
     if (!this.showPlayBtn && this.playBtnEl) {
       this.playBtnEl.style.display = 'none';
+    }
+
+    if (!this.showCounter && this.sceneCounterEl) {
+      this.sceneCounterEl.style.display = 'none';
     }
 
     if (!this.showHUDButton) {
@@ -373,6 +392,10 @@ export class FocusFlowPlayer {
     const progress = total > 1 ? (activeIdx / (total - 1)) * 100 : 100;
     if (this.progressFillEl) {
       this.progressFillEl.style.width = `${progress}%`;
+    }
+
+    if (this.counterCurEl) {
+      this.counterCurEl.textContent = String(activeIdx + 1).padStart(2, '0');
     }
 
     const tabs = this.tabsContainerEl.querySelectorAll('.ff-tab-btn');

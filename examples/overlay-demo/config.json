@@ -18,6 +18,7 @@
       "autoplay": false,
       "interval": 4000,
       "showPlayBtn": true,
+      "showCounter": true,
       "showProgress": true,
       "showHUDButton": true
     }
