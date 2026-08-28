@@ -141,7 +141,8 @@ ${bundledJs}
           container: '#app',
           dsl: dsl,
           basePath: './',
-          debug: false
+          debug: false,
+          showHUDButton: false
         });
       } else {
         console.error('[FocusFlow] FocusFlowPlayer class not found in window.');

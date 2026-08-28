@@ -29,6 +29,7 @@ export class FocusFlowPlayer {
     this.options = options;
     this.basePath = options.basePath || '';
     this.debug = !!options.debug || window.location.search.includes('debug=1');
+    this.showHUDButton = options.showHUDButton !== undefined ? !!options.showHUDButton : true;
 
     this.viewportWidth = this.dsl.meta?.viewport?.width || 5120;
     this.viewportHeight = this.dsl.meta?.viewport?.height || 2880;
@@ -148,6 +149,13 @@ export class FocusFlowPlayer {
     this.playBtnEl = this.container.querySelector('#_ff_play_btn');
     this.tabsContainerEl = this.container.querySelector('#_ff_tabs');
     this.hudToggleBtnEl = this.container.querySelector('#_ff_hud_toggle_btn');
+
+    // Hide HUD button if showHUDButton is false
+    if (!this.showHUDButton) {
+      if (this.hudToggleBtnEl) this.hudToggleBtnEl.style.display = 'none';
+      const divider = this.container.querySelector('.ff-controls-divider');
+      if (divider) divider.style.display = 'none';
+    }
 
     // Build Tabs
     this.tabsContainerEl.innerHTML = (this.dsl.scenes || []).map((scene, idx) => `

@@ -555,7 +555,7 @@
     `,this.player.stageEl.appendChild(this.overlayEl),this.pixelDisplayEl=this.overlayEl.querySelector(`#_ff_hud_pixel_val`),this.percentDisplayEl=this.overlayEl.querySelector(`#_ff_hud_percent_val`),this.crossXEl=this.overlayEl.querySelector(`#_ff_cross_x`),this.crossYEl=this.overlayEl.querySelector(`#_ff_cross_y`),this.toastEl=this.overlayEl.querySelector(`#_ff_toast`),this.overlayEl.querySelector(`#_ff_btn_copy_box`).addEventListener(`click`,e=>{e.stopPropagation(),this.copyLastBoxJSON()}),this.overlayEl.querySelector(`#_ff_btn_copy_callout`).addEventListener(`click`,e=>{e.stopPropagation(),this.copyCalloutJSON()}),this.overlayEl.querySelector(`#_ff_btn_copy_cam`).addEventListener(`click`,e=>{e.stopPropagation(),this.copyCameraJSON()})}onWheel(e){e.preventDefault();let t=this.player.camera.getCurrentCamera(),n=e.deltaY>0?-.05:.05,r=Math.max(1,Math.min(3,t.zoom+n));this.player.camera.apply({zoom:r,x:t.x,y:t.y,duration:.1},!0),this.showToast(`🔍 缩放: ${r.toFixed(2)}x [X: ${t.x}%, Y: ${t.y}%]`)}onPanStart(e){!e.shiftKey&&e.button!==1&&e.button!==2||(this.isPanning=!0,this.panStartX=e.clientX,this.panStartY=e.clientY,this.cameraStart=this.player.camera.getCurrentCamera())}onPanMove(e){if(!this.isPanning)return;let t=e.clientX-this.panStartX,n=e.clientY-this.panStartY,r=this.player.wrapEl.getBoundingClientRect(),i=t/r.width*100,a=n/r.height*100,o=Number((this.cameraStart.x+i).toFixed(1)),s=Number((this.cameraStart.y+a).toFixed(1));this.player.camera.apply({zoom:this.cameraStart.zoom,x:o,y:s,duration:0},!1)}onPanEnd(){if(this.isPanning){this.isPanning=!1;let e=this.player.camera.getCurrentCamera();this.showToast(`📷 视口平移: [X: ${e.x}%, Y: ${e.y}%]`)}}activate(){if(this.isActive=!0,this.overlayEl.style.display=`block`,this.overlayEl.classList.add(`active`),this.player.hudToggleBtnEl){this.player.hudToggleBtnEl.classList.add(`active`);let e=this.player.hudToggleBtnEl.querySelector(`.ff-btn-text`);e&&(e.textContent=`退出标定`)}this.overlayEl.addEventListener(`wheel`,this.onWheel,{passive:!1}),this.overlayEl.addEventListener(`mousedown`,this.onPanStart),window.addEventListener(`mousemove`,this.onPanMove),window.addEventListener(`mouseup`,this.onPanEnd),this.boxPicker.attach(this.overlayEl),this.edgeSnapper.attach(this.overlayEl),this.showToast(`🎯 开发者标定模式已激活 (Ctrl+Shift+D 切换)`)}deactivate(){if(this.isActive=!1,this.overlayEl.style.display=`none`,this.overlayEl.classList.remove(`active`),this.player.hudToggleBtnEl){this.player.hudToggleBtnEl.classList.remove(`active`);let e=this.player.hudToggleBtnEl.querySelector(`.ff-btn-text`);e&&(e.textContent=`标定助手`)}this.overlayEl.removeEventListener(`wheel`,this.onWheel),this.overlayEl.removeEventListener(`mousedown`,this.onPanStart),window.removeEventListener(`mousemove`,this.onPanMove),window.removeEventListener(`mouseup`,this.onPanEnd),this.boxPicker.detach(),this.edgeSnapper.detach()}toggle(e){(e===void 0?!this.isActive:e)?this.activate():this.deactivate()}updateCoordsDisplay(e,t,n,r){this.lastCoords={x:e,y:t,percentX:n,percentY:r},this.pixelDisplayEl&&(this.pixelDisplayEl.textContent=`X: ${e}px, Y: ${t}px`),this.percentDisplayEl&&(this.percentDisplayEl.textContent=`L: ${n}, T: ${r}`)}updateBounds(){this.edgeSnapper&&this.edgeSnapper.prepareCanvas()}setLastBox(e){this.lastBox=e}copyLastBoxJSON(){if(!this.lastBox){this.showToast(`⚠️ 请先拉框或 Alt+点击 选中一个区域`);return}let e=JSON.stringify(this.lastBox,null,2);navigator.clipboard.writeText(e).then(()=>{this.showToast(`📋 选框 JSON 已复制到剪贴板！`),console.log(`[FocusFlow] Extracted Box DSL:
 `,e)}).catch(()=>{console.log(`[FocusFlow] Box DSL:`,e),this.showToast(`📋 JSON 已输出到控制台 Console`)})}copyCalloutJSON(){let e=this.lastCoords||{percentX:`33.0%`,percentY:`33.0%`},t={id:`co-${Date.now().toString().slice(-4)}`,position:{left:e.percentX,top:e.percentY},theme:`blue`,title:`模块标题 (Title)`,desc:`在此输入解说文本或功能特性...`},n=JSON.stringify(t,null,2);navigator.clipboard.writeText(n).then(()=>{this.showToast(`💬 气泡 JSON 已复制: [${e.percentX}, ${e.percentY}]`),console.log(`[FocusFlow] Callout DSL:
 `,n)}).catch(()=>{console.log(`[FocusFlow] Callout DSL:`,n),this.showToast(`💬 气泡 JSON 已输出到控制台 Console`)})}copyCameraJSON(){let e=this.cameraCapturer.capture(),t=JSON.stringify({camera:e},null,2);navigator.clipboard.writeText(t).then(()=>{this.showToast(`📷 镜头配置已复制: zoom ${e.zoom}x [${e.x}%, ${e.y}%]`),console.log(`[FocusFlow] Captured Camera DSL:
-`,t)}).catch(()=>{console.log(`[FocusFlow] Camera DSL:`,t),this.showToast(`📷 镜头配置已输出到 Console`)})}showToast(e){this.toastEl&&(this.toastEl.textContent=e,this.toastEl.classList.add(`show`),clearTimeout(this.toastTimer),this.toastTimer=setTimeout(()=>{this.toastEl.classList.remove(`show`)},2400))}destroy(){this.deactivate(),this.overlayEl&&this.overlayEl.parentNode&&this.overlayEl.parentNode.removeChild(this.overlayEl)}},d=class{constructor(e){if(!e||!e.dsl)throw Error("[FocusFlow] Player requires a valid options object with a `dsl` configuration.");if(this.container=typeof e.container==`string`?document.querySelector(e.container):e.container,!this.container)throw Error(`[FocusFlow] Container "${e.container}" not found in DOM.`);this.dsl=e.dsl,this.options=e,this.basePath=e.basePath||``,this.debug=!!e.debug||window.location.search.includes(`debug=1`),this.viewportWidth=this.dsl.meta?.viewport?.width||5120,this.viewportHeight=this.dsl.meta?.viewport?.height||2880,this.elementsMap=new Map,this.calloutsMap=new Map,this.init()}getAssetUrl(e){let t=e||this.dsl.asset?.url||``;return!t||t.startsWith(`data:`)||t.startsWith(`http://`)||t.startsWith(`https://`)||t.startsWith(`/`)?t:this.basePath?(this.basePath.endsWith(`/`)?this.basePath:this.basePath+`/`)+(t.startsWith(`./`)?t.slice(2):t):t}init(){this.buildDOM(),this.camera=new t(this.wrapEl,this.viewportWidth,this.viewportHeight),this.geometry=new i(this.svgEl,this.viewportWidth,this.viewportHeight),this.router=new a(this.elementsMap),this.animator=new o(this.elementsMap,this.calloutsMap),this.events=new r(this),this.renderElements(),this.stateMachine=new n(this.dsl.scenes,{autoPlayInterval:this.options.autoPlayInterval||3800,onStepChange:(e,t,n)=>this.applyScene(e,t,n),onPlayStateChange:e=>this.updatePlayButton(e)}),this.events.bind(),this.hud=new u(this),this.debug&&this.hud.activate(),this.goToStep(0,!1)}get isDebugActive(){return this.hud?this.hud.isActive:!1}buildDOM(){let e=this.getAssetUrl();this.container.classList.add(`focusflow-container`),this.container.innerHTML=`
+`,t)}).catch(()=>{console.log(`[FocusFlow] Camera DSL:`,t),this.showToast(`📷 镜头配置已输出到 Console`)})}showToast(e){this.toastEl&&(this.toastEl.textContent=e,this.toastEl.classList.add(`show`),clearTimeout(this.toastTimer),this.toastTimer=setTimeout(()=>{this.toastEl.classList.remove(`show`)},2400))}destroy(){this.deactivate(),this.overlayEl&&this.overlayEl.parentNode&&this.overlayEl.parentNode.removeChild(this.overlayEl)}},d=class{constructor(e){if(!e||!e.dsl)throw Error("[FocusFlow] Player requires a valid options object with a `dsl` configuration.");if(this.container=typeof e.container==`string`?document.querySelector(e.container):e.container,!this.container)throw Error(`[FocusFlow] Container "${e.container}" not found in DOM.`);this.dsl=e.dsl,this.options=e,this.basePath=e.basePath||``,this.debug=!!e.debug||window.location.search.includes(`debug=1`),this.showHUDButton=e.showHUDButton===void 0||!!e.showHUDButton,this.viewportWidth=this.dsl.meta?.viewport?.width||5120,this.viewportHeight=this.dsl.meta?.viewport?.height||2880,this.elementsMap=new Map,this.calloutsMap=new Map,this.init()}getAssetUrl(e){let t=e||this.dsl.asset?.url||``;return!t||t.startsWith(`data:`)||t.startsWith(`http://`)||t.startsWith(`https://`)||t.startsWith(`/`)?t:this.basePath?(this.basePath.endsWith(`/`)?this.basePath:this.basePath+`/`)+(t.startsWith(`./`)?t.slice(2):t):t}init(){this.buildDOM(),this.camera=new t(this.wrapEl,this.viewportWidth,this.viewportHeight),this.geometry=new i(this.svgEl,this.viewportWidth,this.viewportHeight),this.router=new a(this.elementsMap),this.animator=new o(this.elementsMap,this.calloutsMap),this.events=new r(this),this.renderElements(),this.stateMachine=new n(this.dsl.scenes,{autoPlayInterval:this.options.autoPlayInterval||3800,onStepChange:(e,t,n)=>this.applyScene(e,t,n),onPlayStateChange:e=>this.updatePlayButton(e)}),this.events.bind(),this.hud=new u(this),this.debug&&this.hud.activate(),this.goToStep(0,!1)}get isDebugActive(){return this.hud?this.hud.isActive:!1}buildDOM(){let e=this.getAssetUrl();if(this.container.classList.add(`focusflow-container`),this.container.innerHTML=`
       <div class="focusflow-stage">
         <!-- Top Progress Track -->
         <div class="focusflow-progress-track">
@@ -600,7 +600,7 @@
           </button>
         </div>
       </div>
-    `,this.stageEl=this.container.querySelector(`.focusflow-stage`),this.wrapEl=this.container.querySelector(`#_ff_wrap`),this.imgEl=this.container.querySelector(`#_ff_img`),this.overlayImagesLayerEl=this.container.querySelector(`#_ff_overlay_images`),this.svgEl=this.container.querySelector(`#_ff_svg`),this.calloutLayerEl=this.container.querySelector(`#_ff_callouts`),this.progressFillEl=this.container.querySelector(`#_ff_progress`),this.playBtnEl=this.container.querySelector(`#_ff_play_btn`),this.tabsContainerEl=this.container.querySelector(`#_ff_tabs`),this.hudToggleBtnEl=this.container.querySelector(`#_ff_hud_toggle_btn`),this.tabsContainerEl.innerHTML=(this.dsl.scenes||[]).map((e,t)=>`
+    `,this.stageEl=this.container.querySelector(`.focusflow-stage`),this.wrapEl=this.container.querySelector(`#_ff_wrap`),this.imgEl=this.container.querySelector(`#_ff_img`),this.overlayImagesLayerEl=this.container.querySelector(`#_ff_overlay_images`),this.svgEl=this.container.querySelector(`#_ff_svg`),this.calloutLayerEl=this.container.querySelector(`#_ff_callouts`),this.progressFillEl=this.container.querySelector(`#_ff_progress`),this.playBtnEl=this.container.querySelector(`#_ff_play_btn`),this.tabsContainerEl=this.container.querySelector(`#_ff_tabs`),this.hudToggleBtnEl=this.container.querySelector(`#_ff_hud_toggle_btn`),!this.showHUDButton){this.hudToggleBtnEl&&(this.hudToggleBtnEl.style.display=`none`);let e=this.container.querySelector(`.ff-controls-divider`);e&&(e.style.display=`none`)}this.tabsContainerEl.innerHTML=(this.dsl.scenes||[]).map((e,t)=>`
       <button class="ff-tab-btn ${t===0?`active`:``}" data-index="${t}">
         ${t+1}. ${e.title}
       </button>
@@ -700,7 +700,7 @@
   "scenes": [
     {
       "id": "scene-1",
-      "title": "全局架构拓扑总览",
+      "title": "Overview",
       "camera": {
         "zoom": 1,
         "x": 0,
@@ -728,7 +728,7 @@
     },
     {
       "id": "scene-2",
-      "title": "数据层与缓存集群聚焦",
+      "title": "Data & Cache",
       "camera": {
         "zoom": 1.45,
         "x": -13,
@@ -769,7 +769,7 @@
     },
     {
       "id": "scene-3",
-      "title": "业务时间线实景下钻 (画中画特写)",
+      "title": "Live Timeline",
       "camera": {
         "zoom": 1.35,
         "x": 0,
@@ -787,8 +787,8 @@
           {
             "id": "co-timeline-deepdive",
             "position": {
-              "left": "18%",
-              "top": "6%"
+              "left": "55%",
+              "top": "55%"
             },
             "theme": "blue",
             "title": "Tape Chart Visual Timeline",
@@ -799,7 +799,7 @@
     },
     {
       "id": "scene-4",
-      "title": "图片淡出与 CASL 鉴权聚焦",
+      "title": "CASL Auth",
       "camera": {
         "zoom": 1.5,
         "x": 20,
@@ -829,7 +829,7 @@
     },
     {
       "id": "scene-5",
-      "title": "全景拓扑归位",
+      "title": "Summary",
       "camera": {
         "zoom": 1,
         "x": 0,
@@ -863,7 +863,8 @@
           container: '#app',
           dsl: dsl,
           basePath: './',
-          debug: false
+          debug: false,
+          showHUDButton: false
         });
       } else {
         console.error('[FocusFlow] FocusFlowPlayer class not found in window.');

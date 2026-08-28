@@ -174,7 +174,7 @@
   "scenes": [
     {
       "id": "scene-0",
-      "title": "全局总览",
+      "title": "Overview",
       "camera": {
         "zoom": 1.0,
         "x": 0,
@@ -190,7 +190,7 @@
     },
     {
       "id": "scene-1",
-      "title": "数据持久化与夜审引擎",
+      "title": "Data & Night Audit",
       "camera": {
         "zoom": 1.42,
         "x": -11,
@@ -249,7 +249,7 @@
     },
     {
       "id": "scene-2",
-      "title": "鉴权系统与基础核心库",
+      "title": "Auth & Core Libs",
       "camera": {
         "zoom": 1.75,
         "x": 23,
@@ -300,7 +300,7 @@
     },
     {
       "id": "scene-3",
-      "title": "全景拓扑归位",
+      "title": "Summary",
       "camera": {
         "zoom": 1.0,
         "x": 0,

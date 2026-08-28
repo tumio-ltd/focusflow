@@ -85,7 +85,7 @@
   "scenes": [
     {
       "id": "scene-1",
-      "title": "全局架构拓扑总览",
+      "title": "Overview",
       "camera": {
         "zoom": 1.0,
         "x": 0,
@@ -113,7 +113,7 @@
     },
     {
       "id": "scene-2",
-      "title": "数据层与缓存集群聚焦",
+      "title": "Data & Cache",
       "camera": {
         "zoom": 1.45,
         "x": -13.0,
@@ -154,7 +154,7 @@
     },
     {
       "id": "scene-3",
-      "title": "业务时间线实景下钻 (画中画特写)",
+      "title": "Live Timeline",
       "camera": {
         "zoom": 1.35,
         "x": 0,
@@ -172,8 +172,8 @@
           {
             "id": "co-timeline-deepdive",
             "position": {
-              "left": "18%",
-              "top": "6%"
+              "left": "55%",
+              "top": "55%"
             },
             "theme": "blue",
             "title": "Tape Chart Visual Timeline",
@@ -184,7 +184,7 @@
     },
     {
       "id": "scene-4",
-      "title": "图片淡出与 CASL 鉴权聚焦",
+      "title": "CASL Auth",
       "camera": {
         "zoom": 1.5,
         "x": 20.0,
@@ -214,7 +214,7 @@
     },
     {
       "id": "scene-5",
-      "title": "全景拓扑归位",
+      "title": "Summary",
       "camera": {
         "zoom": 1.0,
         "x": 0,
