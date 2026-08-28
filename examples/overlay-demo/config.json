@@ -52,9 +52,9 @@
         "id": "box-auth-casl",
         "type": "rect",
         "x": 1664,
-        "y": 780,
+        "y": 840,
         "width": 886,
-        "height": 200,
+        "height": 160,
         "rx": 16,
         "style": {
           "stroke": "#f472b6",
@@ -132,8 +132,8 @@
           {
             "id": "co-pg-cluster",
             "position": {
-              "left": "68%",
-              "top": "24%"
+              "left": "45%",
+              "top": "18%"
             },
             "theme": "green",
             "title": "PostgreSQL 16 High-Availability",
@@ -145,7 +145,7 @@
               "left": "68%",
               "top": "46%"
             },
-            "theme": "amber",
+            "theme": "pink",
             "title": "Redis 7 High-Speed Cache",
             "desc": "In-memory rate limiting · Distributed session lock · Microsecond latency"
           }
@@ -203,7 +203,7 @@
             "id": "co-casl-auth",
             "position": {
               "left": "33%",
-              "top": "26%"
+              "top": "35%"
             },
             "theme": "pink",
             "title": "CASL Role-Based Permissions",

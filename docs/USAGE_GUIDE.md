@@ -648,5 +648,15 @@ pnpm dev
 * **排查**：若图片来自外部第三方域名（如 `https://external.com/img.png`），浏览器 Canvas 会因同源安全策略（CORS）禁止读取像素数据。
 * **解决**：建议将图片保存在本地项目目录中，以本地相对路径加载。
 
-#### Q3：导出的离线单文件 HTML 如何独立运行？
-* 生产构建运行 `pnpm run build` 后，`dist/` 目录下的产物不依赖任何 Node 环境或外部网络，双击直接在任意离线浏览器中秒开播放。
+#### Q3：如何生成 100% 独立的离线单文件 HTML（双击即开，零依赖）？
+* **一键打包命令**：
+  ```bash
+  # 默认打包 examples/overlay-demo
+  pnpm build:standalone
+
+  # 或指定任意示例目录与输出路径
+  node scripts/build-standalone.js examples/overlay-demo dist/overlay-demo-standalone.html
+  node scripts/build-standalone.js examples/luxehms dist/luxehms-standalone.html
+  ```
+* **打包机理**：打包脚本会自动将 **CSS 样式表**、**JS 核心播放器引擎**、**JSON DSL 配置** 以及 **所有图片资源（自动转 Base64 内联）** 压入单个 `.html` 文件中。
+* **运行方式**：生成的单文件大小约几 MB，**无需 Node 环境、无需本地 Web 服务器、无需联网**，直接双击或通过邮件/U 盘发给任何人即可在 Chrome/Safari/Edge/Firefox 中秒级播放！

@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:standalone": "node scripts/build-standalone.js",
     "preview": "vite preview"
   },
   "keywords": [
