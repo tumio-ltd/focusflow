@@ -29,6 +29,7 @@
   - [6.2 调整物理弹跳手感、滑入方向与毛玻璃质感 (CSS 样式)](#62-调整物理弹跳手感滑入方向与毛玻璃质感-css-样式)
   - [6.3 调整气泡内容、位置、色彩主题与先后顺序 (JSON DSL)](#63-调整气泡内容位置色彩主题与先后顺序-json-dsl)
   - [6.4 为什么 Callout 定义中没有 width 和 height (内容自适应设计哲学)](#64-为什么-callout-定义中没有-width-和-height-内容自适应设计哲学)
+  - [6.5 标题框徽章配色规范与自定义扩展 (theme)](#65-标题框徽章配色规范与自定义扩展-theme)
 - [7. 快捷键一览与常见问题 (FAQ)](#7-快捷键一览与常见问题-faq)
 
 ---
@@ -572,6 +573,52 @@ pnpm dev
 1. **宽度上限保护**：CSS 设置了 `max-width: 320px`，超过上限自动优雅折行，绝不会无限拉伸遮挡架构图；
 2. **高度流式计算**：`height: auto` 搭配 `padding: 10px 16px`，卡片高度由标题与描述文字字数自然撑开；
 3. **创作者心智解脱**：创作者只需指定**“锚定在哪个位置（left / top）”**和**“要表达什么内容（title / desc）”**，复杂的排版自适应工作全部由渲染器自动完成。
+
+---
+
+### 6.5 标题框徽章配色规范与自定义扩展 (theme)
+
+气泡顶部的标题框（Badge 徽章）配色是通过 **JSON DSL 中的 `theme` 字段 ➔ CSS 预设调色板** 进行映射驱动的：
+
+```json
+{
+  "id": "co-folio",
+  "position": { "left": "33%", "top": "24%" },
+  "theme": "blue",         // 🎨 声明标题配色: "blue" | "green" | "amber" | "pink"
+  "title": "Folio & Cashier",
+  "desc": "Double-entry ledger · Shift balance"
+}
+```
+
+#### 1. 内置 4 大预设调色板（暗色模式工业设计规范）
+源码位于 [`src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/src/styles/focusflow.css#L223-L239)，遵循 **“20% 半透底色 + 100% 高亮文字 + 40% 同色半透描边”** 的设计范式：
+
+| `theme` 名称 | 视觉意向与适用模块 | CSS 底层配色规则 |
+| :--- | :--- | :--- |
+| **`"blue"`** (天青蓝) | 核心业务、基础架构、金融账务 | `background: rgba(56, 189, 248, 0.2);`<br/>`color: #38bdf8;`<br/>`border: 1px solid rgba(56, 189, 248, 0.4);` |
+| **`"green"`** (翡翠绿) | 数据库、持久化集群、健康服务 | `background: rgba(52, 211, 153, 0.2);`<br/>`color: #34d399;`<br/>`border: 1px solid rgba(52, 211, 153, 0.4);` |
+| **`"amber"`** (琥珀黄) | 定时任务、夜审守护进程、缓存集群 | `background: rgba(251, 191, 36, 0.2);`<br/>`color: #fbbf24;`<br/>`border: 1px solid rgba(251, 191, 36, 0.4);` |
+| **`"pink"`** (霓虹粉) | 鉴权中心、CASL 权限、安全拦截 | `background: rgba(244, 114, 182, 0.2);`<br/>`color: #f472b6;`<br/>`border: 1px solid rgba(244, 114, 182, 0.4);` |
+
+#### 2. 如何扩展新的自定义配色？（如紫色 Purple / 红色 Red）
+只需在 [`src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/src/styles/focusflow.css) 中追加对应的 CSS 类即可：
+
+```css
+/* 自定义紫色 (如: 外部三方服务 / AI 模块) */
+.ff-badge.purple {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+/* 自定义红色 (如: 告警 / 容灾降级) */
+.ff-badge.red {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+```
+保存后，在 `config.json` 中直接写 `"theme": "purple"` 或 `"theme": "red"` 即可直接生效！
 
 ---
 
