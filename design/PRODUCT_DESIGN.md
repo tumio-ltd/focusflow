@@ -1,6 +1,11 @@
 # FocusFlow (聚焦流) - 交互式架构图与视觉故事板生成引擎
 ## 工业级产品设计方案与技术规格说明书 (PRD & System Architecture)
 
+> **文档版本**：`v1.3.0`  
+> **最新更新**：`2026-08-29` (Phase 1 验收收官 & Phase 2/3 服务端演进路线图对齐)  
+> **文档状态**：🚀 **Phase 1 (MVP) 100% 达成 · 进入 Phase 2 (Studio 工作台与云端化) 规划期**  
+> **关联技术专刊**：[MVP_SPEC.md](file:///Users/xt/WebstormProjects/focusflow/design/MVP_SPEC.md) · [MOTION_ENGINE_SPEC.md](file:///Users/xt/WebstormProjects/focusflow/design/MOTION_ENGINE_SPEC.md) · [EDGE_SNAPPER_ALGORITHM.md](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)
+
 ---
 
 ## 📑 文档快速导航 (Table of Contents)

@@ -1,12 +1,16 @@
 # FocusFlow - Phase 1 (MVP) 研发执行规格与极简标定开发指南
 ## MVP Engineering & In-Player Calibration Tooling Specification
 
+> **文档版本**：`v1.3.0`  
+> **最新更新**：`2026-08-29` (Phase 1 MVP 100% 验收收官 & SaaS 服务端演进架构规划)  
+> **文档状态**：✅ **Phase 1 (MVP) 已全面交付并 100% 验收**  
 > **关联文档**：
 > - 📄 [PRODUCT_DESIGN.md (主产品方案与 PRD)](file:///Users/xt/WebstormProjects/focusflow/design/PRODUCT_DESIGN.md)
 > - 📐 [MOTION_ENGINE_SPEC.md (动效数学与渲染规格)](file:///Users/xt/WebstormProjects/focusflow/design/MOTION_ENGINE_SPEC.md)
+> - 🔍 [EDGE_SNAPPER_ALGORITHM.md (智能边缘吸附与 Auto-Refine 算法专刊)](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)
 > 
 > **适用对象**：Phase 1 核心研发工程师、前端开发  
-> **文档定位**：MVP 阶段直接落地的代码级执行手册
+> **文档定位**：MVP 阶段直接落地的代码级执行手册与演进指南
 
 ---
 
