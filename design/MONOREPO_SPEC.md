@@ -24,6 +24,7 @@
   - [2.3 为什么选用 Turborepo 而不是 Nx？(全栈 NestJS 场景深度技术选型对比)](#23-为什么选用-turborepo-而不是-nx全栈-nestjs-场景深度技术选型对比)
   - [2.4 为什么选用 Prisma 而不是 Sequelize？(ORM 核心技术选型与深度对比)](#24-为什么选用-prisma-而不是-sequelizeorm-核心技术选型与深度对比)
   - [2.5 Prisma 事务 (Transaction)、并发锁 (Lock) 与自动审计日志 (Audit Log) 实现规格](#25-prisma-事务-transaction并发锁-lock-与自动审计日志-audit-log-实现规格)
+  - [2.6 为什么选用 Oxlint + Prettier 而不是传统 ESLint？(现代化极速代码质量流选型)](#26-为什么选用-oxlint--prettier-而不是传统-eslint现代化极速代码质量流选型)
 - [3. 完整 Monorepo 工作区目录全景](#3-完整-monorepo-工作区目录全景)
   - [3.1 POC & Phase 1 (MVP) 现有代码资产与 Monorepo 映射关系对照表](#31-poc--phase-1-mvp-现有代码资产与-monorepo-映射关系对照表)
 - [4. 各子包核心职责与协同机制](#4-各子包核心职责与协同机制)
@@ -81,6 +82,9 @@
     │  🗄️ 数据持久化与 ORM: PostgreSQL 18 + Prisma ORM              │
     │  • 100% 编译期类型推导 / 声明式 Schema / 原生 JSONB 过滤支持 │
     ├───────────────────────────────────────────────────────────────┤
+    │  ⚡ 代码质检与美化: Oxlint (Rust 内核) + Prettier            │
+    │  • 50ms 极速扫描 / 零配置内置 React & TS 规则 / 自动排版格式化 │
+    ├───────────────────────────────────────────────────────────────┤
     │  📜 版本与发布协同: Changesets (@changesets/cli)              │
     │  • 多包语义化发版 (SemVer) / 自动生成 CHANGELOG               │
     └───────────────────────────────────────────────────────────────┘
@@ -93,6 +97,7 @@
 | **包管理器** | **`pnpm Workspaces`** | npm / yarn | 基于硬链接与符号链接存储，依赖安装速度最快，严格杜绝幽灵依赖，行业标配。 |
 | **任务编排** | **`Turborepo` (`turbo`)** | Nx / Lerna | Go/Rust 内核驱动，零配置学习成本低，拓扑构建与哈希缓存极快，无侵入性。 |
 | **ORM / 数据层** | **`Prisma ORM`** | Sequelize / TypeORM | 声明式 DSL 建模、Rust 查询引擎、100% 自动生成 TS 类型，原生支持 PostgreSQL 18 JSONB。 |
+| **代码质检与排版** | **`Oxlint + Prettier`** | 传统 ESLint + Prettier | Rust 极速内核（快 50~100 倍），内置 TS/React/Hooks 规则，消灭依赖地狱，排版与查错完美解耦。 |
 | **模块导出** | **Node.js ESM `"exports"`** | 传统 `main/module` | 严谨支持 Subpath Exports（如 `@focusflow/player/styles.css`），原生 ESM。 |
 | **跨包类型** | **`TS Project References`** | 单一 tsconfig | `"composite": true` 支持未构建状态下 IDE 毫秒级跨包代码跳转与类型补全。 |
 | **版本协同** | **`Changesets`** | semantic-release | 支持多包协同升级与交互式声明版本变更，自动聚合 CHANGELOG。 |
@@ -382,6 +387,40 @@ export const createAuditExtension = (cls: ClsService) => {
 
 ---
 
+### 2.6 为什么选用 Oxlint + Prettier 而不是传统 ESLint？(现代化极速代码质量流选型)
+
+在现代化 React 19 + Vite 8 + Turborepo 技术栈下，传统基于 JavaScript 解释执行的 ESLint 已成为全栈 Monorepo 最大的构建与开发瓶颈。FocusFlow 全面采用 **`Oxlint + Prettier`** 架构组合。
+
+#### 1. Oxlint + Prettier vs ESLint 8 维全方位评估矩阵
+
+```
++------------------------+------------------------------------+------------------------------------+
+| 评估维度                | 🚀 Oxlint + Prettier (FocusFlow 选定)| 🐢 ESLint + Prettier (传统老一代)   |
++------------------------+------------------------------------+------------------------------------+
+| 1. 执行速度 (500 文件) | 🏆 ~50ms (快 50~100 倍, Rust 内核) | ⚠️ 3s ~ 8s (Node.js 单线程慢)      |
+| 2. 内存与 CPU 开销     | 🏆 极低 (轻量单二进制秒级启动)     | ⚠️ 较高 (数十个 npm 插件内存开销)  |
+| 3. 插件安装与依赖数量  | 🏆 零/极少插件 (内置 TS/React/Hooks)| ❌ 繁重 (需装 15+ eslint-plugin-*) |
+| 4. 配置复杂度          | 🏆 极简 (开箱即用、零样板代码)     | ⚠️ 繁琐 (Flat Config v9 学习成本)  |
+| 5. 代码格式化支持      | ✅ 搭配 Prettier 完美分工 (查错+排版)| ⚠️ 与 Prettier 规则频繁冲突打架   |
+| 6. 类型感知检查 (Type) | ⚠️ 专注 AST 极速语法 (交由 tsc)    | ✅ 支持 typescript-eslint 深度类型推导|
+| 7. 现代生态契合度      | 🏆 与 Vite/Rolldown/VoidZero 同源  | ⚠️ 逐渐转向 Rust/Zig 现代化重构    |
+| 8. Git Pre-commit 体验 | 🏆 瞬间通过 (0 毫秒卡顿感)         | ⚠️ 提交代码时需等待数秒            |
++------------------------+------------------------------------+------------------------------------+
+```
+
+#### 2. FocusFlow 采用 Oxlint + Prettier 的 3 大核心优势
+
+1. **速度提升 50~100 倍（极致 Sub-Second 开发体验）**：
+   * Oxlint 由 Vue 核心团队成员主导的 VoidZero / OxC 团队基于 Rust 编写，500 个文件的全库扫描仅需 30~50ms，保存文件和提交代码完全零感知卡顿；
+2. **彻底消灭 15+ 个 `eslint-plugin-*` 的依赖地狱**：
+   * 原生内置了对 TypeScript、React 19、React Hooks（如 `useEffect` 依赖项检查）、JSX A11y 等全套规则的深度检查，不再需要维护复杂的 ESLint 插件树；
+3. **职责 100% 绝对解耦**：
+   * **Oxlint** 专职负责“**语法与逻辑找错（Correctness / Linting）**”；
+   * **Prettier** 专职负责“**统一代码美化排版（Formatting）**”；
+   * **TypeScript (`tsc --noEmit`)** 专职负责“**编译期深层类型推导守卫（Type-checking）**”。
+
+---
+
 ## 3. 完整 Monorepo 工作区目录全景
 
 ```text
@@ -454,7 +493,7 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   ├── 🧩 ui/                                 # 4. 【预留演进】跨端共享 UI 组件库 (Radix / Tailwind)
 │   │
 │   ├── ⚙️ config-typescript/                  # 5. 【共享配置】统一 TypeScript 配置 (tsconfig.base.json)
-│   ├── ⚙️ config-eslint/                      # 6. 【共享配置】统一 ESLint 规则与 Flat Config
+│   ├── ⚙️ config-oxlint/                      # 6. 【共享配置】💡 统一 Oxlint 极速质检规则 (.oxlintrc.json)
 │   └── ⚙️ config-tailwind/                    # 7. 【共享配置】统一 Tailwind 科技感暗黑设计 Token
 │
 ├── 💡 examples/                               # 官方实战演示示例库 (luxehms, overlay-demo, simple-demo)
@@ -464,17 +503,10 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │
 ├── 📦 legacy/                                 # 🏛️ 【历史版本物理备份库】(Historical Archives)
 │   ├── phase0-poc/                            # 🧪 Phase 0 POC 概念验证极简原型快照 (只读封存)
-│   │   ├── src/                               # 早期概念验证原型代码 (画布平移/缩放与基础连线)
-│   │   ├── index.html                         # 早期 POC 验证页面
-│   │   └── README.md
 │   └── phase1-mvp/                            # 🚀 Phase 1 MVP 完整源码与示例独立快照备份 (只读封存)
-│       ├── src/                               # 纯单体运行时完整源码 (core/, motion/, hud/, styles/)
-│       ├── examples/                          # 示例工程 (luxehms, overlay-demo, simple-demo)
-│       ├── scripts/                           # 初始打包脚本
-│       ├── index.html
-│       └── package.json
 │
 ├── .changeset/                                # Changesets 多包版本管理配置
+├── .prettierrc.json                           # 💡 全局 Prettier 统一代码排版与美化配置
 ├── package.json                               # Monorepo 根配置与聚合 scripts 命令
 ├── pnpm-workspace.yaml                        # pnpm 工作区包匹配声明
 ├── turbo.json                                 # Turborepo 构建管道与缓存规则
@@ -543,7 +575,8 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 
 ### 4.7 共享配置包 (`packages/config-*`)
 * **`@focusflow/config-typescript`**：导出 `base.json`、`react.json`、`nest.json` 等统一 TS 规则；
-* **`@focusflow/config-eslint`**：导出统一的 ESLint Flat Config，杜绝代码风格分歧；
+* **`@focusflow/config-oxlint`**：导出统一的 Oxlint 规则配置文件（`.oxlintrc.json`），实现全工作区毫秒级语法与逻辑查错；
+* **`.prettierrc.json`**：全局统一的 Prettier 规则，负责 TS/TSX/JSON/CSS/MD 统一排版与美化；
 * **`@focusflow/config-tailwind`**：导出暗黑科技感颜色 Token、毛玻璃模糊滤镜与动画预设。
 
 ---
@@ -575,6 +608,9 @@ packages:
     "lint": {
       "outputs": []
     },
+    "format:check": {
+      "outputs": []
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
@@ -602,12 +638,16 @@ packages:
     "create:project": "node scripts/create-project.js",
     "db:migrate": "pnpm --filter=@focusflow/database prisma migrate dev",
     "db:studio": "pnpm --filter=@focusflow/database prisma studio",
-    "lint": "turbo run lint",
+    "lint": "oxlint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "changeset": "changeset"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
+    "oxlint": "^0.15.0",
+    "prettier": "^3.3.0",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0",
     "vite": "^8.2.0"
