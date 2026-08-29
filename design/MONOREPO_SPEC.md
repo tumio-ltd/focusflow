@@ -710,7 +710,7 @@ export interface RenderJobProgressEvent {
 
 ---
 
-### 5.6 NestJS 服务端子包声明 (`apps/api/package.json`)
+### 5.8 NestJS 服务端子包声明 (`apps/api/package.json`)
 ```json
 {
   "name": "@focusflow/api",
@@ -729,7 +729,8 @@ export interface RenderJobProgressEvent {
     "@nestjs/swagger": "^11.0.0",
     "@prisma/client": "^5.18.0",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.1"
+    "class-validator": "^0.14.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
@@ -739,6 +740,138 @@ export interface RenderJobProgressEvent {
   }
 }
 ```
+
+---
+
+### 5.9 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式 (API & DTO Specifications)
+
+在 FocusFlow 项目中，所有 NestJS 端点必须严格遵循 **“Swagger 文档 100% 覆盖 + DTO 参数强校验 + 全局 ValidationPipe”** 的企业级工程标准：
+
+#### 1. 入口 `main.ts`：OpenAPI 文档与全局校验管道初始化
+```typescript
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // 1. 开启全局强参数校验与类型转换 (ValidationPipe)
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,              // 自动剔除 DTO 中未声明的非法字段 (防注入)
+      transform: true,              // 自动将入参转换为 DTO 类实例并进行基础类型强转
+      forbidNonWhitelisted: true,   // 存在非法字段时直接抛出 400 异常
+      transformOptions: { enableImplicitConversion: true }
+    })
+  );
+
+  // 2. 初始化 OpenAPI (Swagger) 交互式文档
+  const config = new DocumentBuilder()
+    .setTitle('FocusFlow Cloud API')
+    .setDescription('FocusFlow 架构图与视觉故事板 SaaS 核心 RESTful 服务')
+    .setVersion('1.0.0')
+    .addTag('项目管理 (Projects)', '项目 CRUD、DSL 版本快照与状态同步')
+    .addTag('静态资产 (Assets)', '底图与覆盖图直传、尺寸探测与 CDN 托管')
+    .addTag('单文件导出 (Exporter)', '独立 HTML 离线单文件动态内联打包')
+    .addTag('视频渲染 (Render)', '4K 60fps MP4/GIF 异步转码与任务队列')
+    .addTag('云端分享 (Share)', '只读演示短链路由与 iframe 嵌入分发')
+    .addBearerAuth()
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document); // 访问路径: http://localhost:3000/api/docs
+
+  await app.listen(3000);
+}
+bootstrap();
+```
+
+#### 2. DTO 层：参数校验与 OpenAPI 属性声明范式 (`create-project.dto.ts`)
+```typescript
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsOptional, IsInt, Min, Max, IsBoolean, IsObject } from 'class-validator';
+
+export class CreateProjectDto {
+  @ApiProperty({ description: '项目名称', example: 'LuxeHMS 核心系统架构图' })
+  @IsNotEmpty({ message: '项目名称不能为空' })
+  @IsString({ message: '项目名称必须为字符串' })
+  title: string;
+
+  @ApiPropertyOptional({ description: '项目详细描述', example: '用于向架构委员会汇报的 4K 全景演示' })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({ description: '视口设计物理基准宽度 (px)', default: 5120, example: 5120 })
+  @IsInt()
+  @Min(800)
+  @Max(16384)
+  viewportW: number;
+
+  @ApiProperty({ description: '视口设计物理基准高度 (px)', default: 2880, example: 2880 })
+  @IsInt()
+  @Min(600)
+  @Max(16384)
+  viewportH: number;
+
+  @ApiProperty({ description: '主底图访问 URL / S3 Key', example: 'https://cdn.focusflow.io/assets/arch.png' })
+  @IsNotEmpty()
+  @IsString()
+  bgImageUrl: string;
+
+  @ApiProperty({ description: '初始 FocusFlow DSL 完整 JSON 结构', type: 'object' })
+  @IsNotEmpty()
+  @IsObject()
+  dslJson: Record<string, any>;
+}
+```
+
+#### 3. Controller 层：Swagger 路由注解与响应模型规范 (`projects.controller.ts`)
+```typescript
+import { Controller, Post, Get, Put, Param, Body, ParseUUIDPipe, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ProjectsService } from './projects.service';
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+
+@ApiTags('项目管理 (Projects)')
+@Controller('api/projects')
+export class ProjectsController {
+  constructor(private readonly projectsService: ProjectsService) {}
+
+  @Post()
+  @ApiOperation({ summary: '创建新项目', description: '初始化 FocusFlow 项目并持久化 DSL' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: '项目创建成功', schema: { example: { id: 'uuid', slug: 'luxehms' } } })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: '入参格式校验未通过 (DTO Validation Failed)' })
+  async createProject(@Body() dto: CreateProjectDto) {
+    return this.projectsService.create(dto);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: '获取项目详情与完整 DSL', description: '根据项目 UUID 查询完整场景与资产信息' })
+  @ApiParam({ name: 'id', description: '项目 UUID', example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' })
+  @ApiResponse({ status: HttpStatus.OK, description: '获取成功' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: '项目不存在' })
+  async getProjectById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.projectsService.findById(id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '实时保存项目 DSL 与版本快照', description: 'Studio 工作台触发全量或增量 DSL 状态同步' })
+  @ApiParam({ name: 'id', description: '项目 UUID' })
+  @ApiResponse({ status: HttpStatus.OK, description: '保存成功并生成版本记录' })
+  async updateProject(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProjectDto
+  ) {
+    return this.projectsService.update(id, dto);
+  }
+}
+```
+
+---
 
 ---
 
