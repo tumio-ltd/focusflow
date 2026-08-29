@@ -16,6 +16,8 @@ export class HUDManager {
     // Detect OS platform
     this.isMac = typeof navigator !== 'undefined' && (/Mac|iPod|iPhone|iPad/.test(navigator.platform || '') || /Macintosh|Mac OS X/.test(navigator.userAgent || ''));
     this.altKeyLabel = this.isMac ? 'Option' : 'Alt';
+    this.cmdKeyLabel = this.isMac ? '⌘' : 'Ctrl';
+    this.bypassKeyLabel = this.isMac ? '⌘ / Option' : 'Ctrl / Alt';
     this.shortcutKeyLabel = this.isMac ? '⌘+Shift+D' : 'Ctrl+Shift+D';
 
     this.boxPicker = new BoxPicker(this);
@@ -53,9 +55,15 @@ export class HUDManager {
         </div>
         <div style="font-size:11px; color:#94a3b8; line-height:1.4;">
           • 滚轮：微调缩放 / Shift+拖拽：平移<br/>
-          • 鼠标拖拽：拉框 / ${this.altKeyLabel}+单击：吸附
+          • 鼠标拖拽：拉框 (按住 ${this.bypassKeyLabel} 纯手动) / ${this.altKeyLabel}+单击：吸附
         </div>
-        <div class="ff-hud-actions" style="display:flex; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding-top:4px; border-top:1px solid rgba(255,255,255,0.08);">
+          <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:#cbd5e1; cursor:pointer; user-select:none;" title="开启后，拉框松手自动微调至卡片物理边缘。按住 ${this.bypassKeyLabel} 拖拽可临时禁用">
+            <input type="checkbox" id="_ff_toggle_smart_snap" checked style="cursor:pointer; accent-color:#38bdf8;" />
+            <span>✨ 智能像素贴合 (Auto-Refine)</span>
+          </label>
+        </div>
+        <div class="ff-hud-actions" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:2px;">
           <button class="ff-hud-btn" id="_ff_btn_copy_box" title="复制矩形选框 JSON">🔲 复制选框</button>
           <button class="ff-hud-btn" id="_ff_btn_copy_callout" title="复制当前光标位置气泡 JSON">💬 复制气泡</button>
           <button class="ff-hud-btn" id="_ff_btn_copy_cam" title="捕获当前镜头矩阵">📷 捕获镜头</button>
@@ -72,6 +80,15 @@ export class HUDManager {
     this.crossXEl = this.overlayEl.querySelector('#_ff_cross_x');
     this.crossYEl = this.overlayEl.querySelector('#_ff_cross_y');
     this.toastEl = this.overlayEl.querySelector('#_ff_toast');
+
+    // Smart snap toggle checkbox
+    const snapCheckbox = this.overlayEl.querySelector('#_ff_toggle_smart_snap');
+    if (snapCheckbox) {
+      snapCheckbox.addEventListener('change', (e) => {
+        this.boxPicker.isSmartSnapEnabled = e.target.checked;
+        this.showToast(e.target.checked ? '✨ 智能像素贴合已开启 (随手粗拉自动咬合)' : '🎯 纯手动拉框已开启 (100% 原始坐标)');
+      });
+    }
 
     // Event listeners
     this.overlayEl.querySelector('#_ff_btn_copy_box').addEventListener('click', (e) => {

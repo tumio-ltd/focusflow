@@ -10,8 +10,13 @@ export class BoxPicker {
     this.hud = hud;
     this.player = hud.player;
     this.isDragging = false;
+    this.hasMovedSignificantly = false;
+    this.isSmartSnapEnabled = true;
     this.startX = 0;
     this.startY = 0;
+    this.dragStartClientX = 0;
+    this.dragStartClientY = 0;
+    this.bypassSnap = false;
     this.currentBox = null;
     this.tempRectEl = null;
 
@@ -66,11 +71,14 @@ export class BoxPicker {
   }
 
   onMouseDown(e) {
-    // If Option / Alt key is pressed, let EdgeSnapper handle it
-    if (e.altKey) return;
     if (e.button !== 0) return; // Left mouse button only
 
     this.isDragging = true;
+    this.hasMovedSignificantly = false;
+    this.dragStartClientX = e.clientX;
+    this.dragStartClientY = e.clientY;
+    this.bypassSnap = e.metaKey || e.ctrlKey || e.altKey || !this.isSmartSnapEnabled;
+
     const coords = this.screenToCanvas(e.clientX, e.clientY);
     this.startX = coords.x;
     this.startY = coords.y;
@@ -83,6 +91,10 @@ export class BoxPicker {
     this.hud.updateCoordsDisplay(coords.x, coords.y, coords.percentX, coords.percentY);
 
     if (!this.isDragging || !this.tempRectEl) return;
+
+    if (Math.hypot(e.clientX - this.dragStartClientX, e.clientY - this.dragStartClientY) > 5) {
+      this.hasMovedSignificantly = true;
+    }
 
     const curX = coords.x;
     const curY = coords.y;
@@ -104,12 +116,19 @@ export class BoxPicker {
     if (!this.isDragging) return;
     this.isDragging = false;
 
-    if (this.currentBox && this.currentBox.width > 24 && this.currentBox.height > 20) {
-      // Execute Smart Snap on Drag (Narrow-Band Sobel Auto-Refinement)
-      const refinedBox = this.autoRefineBox(this.currentBox);
-      const isRefined = refinedBox && (refinedBox.x !== this.currentBox.x || refinedBox.y !== this.currentBox.y || refinedBox.width !== this.currentBox.width || refinedBox.height !== this.currentBox.height);
+    if (this.currentBox && this.currentBox.width > 20 && this.currentBox.height > 16 && this.hasMovedSignificantly) {
+      const isBypassed = this.bypassSnap || e.metaKey || e.ctrlKey || e.altKey || !this.isSmartSnapEnabled;
 
-      const finalBox = refinedBox || this.currentBox;
+      let finalBox = this.currentBox;
+      let isRefined = false;
+
+      if (!isBypassed) {
+        // Execute Smart Snap on Drag (Narrow-Band Sobel Auto-Refinement)
+        const refinedBox = this.autoRefineBox(this.currentBox);
+        isRefined = refinedBox && (refinedBox.x !== this.currentBox.x || refinedBox.y !== this.currentBox.y || refinedBox.width !== this.currentBox.width || refinedBox.height !== this.currentBox.height);
+        if (refinedBox) finalBox = refinedBox;
+      }
+
       this.currentBox = finalBox;
 
       // Update visually on canvas
@@ -122,7 +141,9 @@ export class BoxPicker {
 
       this.hud.setLastBox(finalBox);
 
-      if (isRefined) {
+      if (isBypassed) {
+        this.hud.showToast(`🎯 纯手动选框: [${finalBox.x}, ${finalBox.y}, ${finalBox.width}×${finalBox.height}] (100% 原始坐标)`);
+      } else if (isRefined) {
         this.hud.showToast(`✨ 智能像素贴合: [${finalBox.x}, ${finalBox.y}, ${finalBox.width}×${finalBox.height}] (已自动咬合边缘)`);
       } else {
         this.hud.showToast(`✅ 选框已就绪: [${finalBox.x}, ${finalBox.y}, ${finalBox.width}×${finalBox.height}]`);

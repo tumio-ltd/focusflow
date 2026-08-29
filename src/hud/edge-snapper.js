@@ -64,6 +64,11 @@ export class EdgeSnapper {
   onClick(e) {
     if (!e.altKey) return; // Option / Alt+Click triggers smart snap
 
+    // If user dragged with Option/Alt key to create a manual box, do not trigger single click snap
+    if (this.hud.boxPicker && this.hud.boxPicker.hasMovedSignificantly) {
+      return;
+    }
+
     const coords = this.hud.boxPicker.screenToCanvas(e.clientX, e.clientY);
     const box = this.snap(coords.x, coords.y);
 
