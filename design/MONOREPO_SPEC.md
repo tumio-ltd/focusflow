@@ -35,6 +35,7 @@
   - [4.5 `apps/render-worker` (NestJS 4K 视频渲染工作节点)](#45-appsrender-worker-nestjs-4k-视频渲染工作节点)
   - [4.6 `packages/database` (纯粹数据层 · 零 NestJS 依赖)](#46-packagesdatabase-纯粹数据层--零-nestjs-依赖)
   - [4.7 共享配置包 (`packages/config-*`)](#47-共享配置包-packagesconfig-)
+  - [4.8 全局跨端 Dark / Light 双主题配色系统设计规范 (Semantic Tokens & Dual-Theme Architecture)](#48-全局跨端-dark--light-双主题配色系统设计规范-semantic-tokens--dual-theme-architecture)
 - [5. 核心配置文件工程标准与原型 (Configuration Blueprints)](#5-核心配置文件工程标准与原型-configuration-blueprints)
   - [5.1 `pnpm-workspace.yaml` 工作区定义](#51-pnpm-workspaceyaml-工作区定义)
   - [5.2 `turbo.json` 拓扑任务与构建缓存配置](#52-turbojson-拓扑任务与构建缓存配置)
@@ -559,10 +560,10 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 
 | 功能领域 | 核心规划软件库 | 作用与实现业务功能 |
 | :--- | :--- | :--- |
-| **1. UI 组件与设计系统** | `shadcn/ui` + `@radix-ui/*` + `TailwindCSS` | 暗黑科技风三栏工作台布局、属性调节滑块 (`Slider`)、导出下拉菜单 (`DropdownMenu`)、模态弹窗 (`Dialog`) |
+| **1. UI 组件与双主题系统** | `shadcn/ui` + `@radix-ui/*` + `next-themes` | 暗黑科技风/极简亮白双主题三栏工作台、属性调节滑块 (`Slider`)、导出下拉菜单 (`DropdownMenu`) |
 | **2. 全局状态与撤销/重做** | `zustand` (v5) + `zundo` | 毫秒级 DSL 响应式状态树、无限步 `Ctrl/⌘ + Z` 历史时间旅行 (Undo/Redo) 撤销重做栈 |
 | **3. 场景时间轴拖拽编排** | `@dnd-kit/core` + `@dnd-kit/sortable` | 底部水平时间轴轨道上场景卡片的流畅拖拽重排与顺序重组 |
-| **4. 无限画布手势与交互** | `@use-gesture/react` + `lucide-react` | 鼠标滚轮中心缩放 (Zoom-to-cursor)、抓手平移手势 (Pan/Drag) 与全套极简暗黑矢量图标库 |
+| **4. 无限画布手势与交互** | `@use-gesture/react` + `lucide-react` | 鼠标滚轮中心缩放 (Zoom-to-cursor)、抓手平移手势 (Pan/Drag) 与全套极简暗黑/明亮矢量图标库 |
 | **5. 路由与深链接状态** | `@tanstack/react-router` (v1) | 100% 编译期类型安全路由导航、URL Search Params 状态双向同步与无缝恢复 |
 | **6. 服务端请求与 SDK** | `@tanstack/react-query` (v5) + `orval` | 自动化生成的强类型 API Client Hooks、数据缓存、网络重试与右侧面板属性修改的乐观更新 |
 | **7. 纯前端离线压缩打包** | `jszip` | 纯前端在浏览器内存中直接将底图、覆盖图与 `config.json` 压缩打包为 `.zip` 离线工程包 |
@@ -592,6 +593,7 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
     "@use-gesture/react": "^10.3.1",
     "zustand": "^5.0.0",
     "zundo": "^2.1.0",
+    "next-themes": "^0.3.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.0",
     "lucide-react": "^0.400.0",
@@ -642,7 +644,76 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 * **`@focusflow/config-typescript`**：导出 `base.json`、`react.json`、`nest.json` 等统一 TS 规则；
 * **`@focusflow/config-oxlint`**：导出统一的 Oxlint 规则配置文件（`.oxlintrc.json`），实现全工作区毫秒级语法与逻辑查错；
 * **`.prettierrc.json`**：全局统一的 Prettier 规则，负责 TS/TSX/JSON/CSS/MD 统一排版与美化；
-* **`@focusflow/config-tailwind`**：导出暗黑科技感颜色 Token、毛玻璃模糊滤镜与动画预设。
+* **`@focusflow/config-tailwind`**：导出暗黑/明亮双主题颜色 Token、毛玻璃模糊滤镜与动画预设。
+
+---
+
+### 4.8 全局跨端 Dark / Light 双主题配色系统设计规范 (Semantic Tokens & Dual-Theme Architecture)
+
+FocusFlow 旗下所有前端应用（包括 `apps/studio`、独立导出的单文件 HTML 以及底层播放器 `packages/player`）必须 **100% 严格支持 Dark（暗黑宇宙）与 Light（极简明亮）双套配色体系**，杜绝硬编码颜色值。
+
+#### 1. 语义化 CSS 变量 Token 映射矩阵 (`packages/config-tailwind/tokens.css`)
+
+```css
+:root {
+  /* ☀️ Light 主题: 极简纯净演播室风格 (Clean Studio White) */
+  --bg-app: #F8FAFC;
+  --bg-canvas: #EEF2F6;
+  --bg-panel: rgba(255, 255, 255, 0.92);
+  --bg-card: #FFFFFF;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --accent-cyan: #0284C7;        /* 亮色饱和科技蓝 */
+  --accent-indigo: #4F46E5;      /* 亮色深邃紫 */
+  --stream-glow: rgba(2, 132, 199, 0.35);
+  --hud-glass-bg: rgba(255, 255, 255, 0.90);
+  --hud-glass-border: rgba(15, 23, 42, 0.10);
+  --shadow-hud: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+}
+
+.dark, [data-theme="dark"] {
+  /* 🌙 Dark 主题: 深邃暗黑科技风 (Deep Space Neon) */
+  --bg-app: #0B0F17;
+  --bg-canvas: #07090E;
+  --bg-panel: rgba(15, 23, 42, 0.85);
+  --bg-card: #131B2E;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --accent-cyan: #06B6D4;        /* 暗黑高亮荧光青 */
+  --accent-indigo: #6366F1;      /* 暗黑霓虹紫 */
+  --stream-glow: rgba(6, 182, 212, 0.55);
+  --hud-glass-bg: rgba(15, 23, 42, 0.82);
+  --hud-glass-border: rgba(255, 255, 255, 0.12);
+  --shadow-hud: 0 10px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.15);
+}
+```
+
+#### 2. React 工作台无缝主题切换 (`next-themes` 驱动)
+* 在根路由 `src/routes/__root.tsx` 注入 `ThemeProvider`：
+  ```tsx
+  import { ThemeProvider } from 'next-themes';
+
+  export function RootLayout({ children }: { children: React.ReactNode }) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        {children}
+      </ThemeProvider>
+    );
+  }
+  ```
+* 顶部栏提供 `Light ☀️ / Dark 🌙 / System 💻` 三态一键切换开关，实时响应操作系统外观设置，并通过 `localStorage` 自动持久化！
+
+#### 3. 独立离线单文件 HTML 与 Player 内核的主题自适应
+* 导出的独立单文件 HTML 亦内置轻量主题切换器；
+* FocusFlow DSL 支持显式声明 `theme: 'dark' | 'light' | 'auto'`，无论底图是白底还是黑底，HUD 气泡与流光动效均能达到最佳视觉对比度！
+
+---
 
 ---
 
