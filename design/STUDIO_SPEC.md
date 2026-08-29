@@ -244,6 +244,12 @@ flowchart TB
 apps/studio/
 ├── public/templates/            # 预置官方架构图模板
 ├── src/
+│   ├── routes/                  # 🚦 TanStack Router 强类型文件路由
+│   │   ├── __root.tsx           # 根路由布局 (QueryClientProvider & Toaster)
+│   │   ├── index.tsx            # / (项目大厅与模板中心)
+│   │   ├── project.new.tsx      # /project/new (底图拖拽创建向导)
+│   │   ├── project.$projectId.tsx # /project/:projectId (三栏可视化工作台)
+│   │   └── share.$slug.tsx      # /share/:slug (云端只读分享视图)
 │   ├── api/                     # 🌐 Orval 自动化生成的类型安全客户端 SDK
 │   │   ├── generated/           # 自动生成的 React Query Hooks (useGetProjectById, useUpdateProject)
 │   │   ├── model/               # 自动生成的 TypeScript DTO 契约模型
@@ -274,7 +280,7 @@ apps/studio/
 │   └── main.tsx
 ├── orval.config.ts              # ⚙️ Orval 自动化 OpenAPI 代码生成配置文件
 ├── package.json
-└── vite.config.ts
+└── vite.config.ts               # Vite 8 配置文件 (集成 @tanstack/router-plugin)
 ```
 
 ---

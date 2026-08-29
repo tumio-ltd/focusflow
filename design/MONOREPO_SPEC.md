@@ -430,6 +430,12 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   ├── 🖥️ studio/                             # 【前端 App】React 19 可视化创作工作台
 │   │   ├── public/templates/                  # 官方预置架构图模板
 │   │   ├── src/                               # Studio 前端源码 (React 19 + Tailwind + shadcn/ui)
+│   │   │   ├── routes/                        # 🚦 TanStack Router 强类型文件路由体系
+│   │   │   │   ├── __root.tsx                 # 根路由布局 (全局 QueryClientProvider & Toaster)
+│   │   │   │   ├── index.tsx                  # / (项目大厅与模板中心)
+│   │   │   │   ├── project.new.tsx            # /project/new (底图拖拽创建向导)
+│   │   │   │   ├── project.$projectId.tsx     # /project/:projectId (三栏可视化工作台)
+│   │   │   │   └── share.$slug.tsx            # /share/:slug (云端只读分享视图)
 │   │   │   ├── api/                           # 🌐 Orval 自动化生成的类型安全客户端 SDK
 │   │   │   │   ├── generated/                 # 自动生成的 React Query Hooks (useGetProjectById, useUpdateProject)
 │   │   │   │   ├── model/                     # 自动生成的 TypeScript DTO 契约模型
@@ -441,9 +447,9 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   │   │   ├── App.tsx                        # 工作台根组件
 │   │   │   └── main.tsx                       # 入口挂载
 │   │   ├── orval.config.ts                    # ⚙️ Orval 自动化 OpenAPI 代码生成配置文件
-│   │   ├── package.json                       # 依赖 @focusflow/player, @focusflow/dsl, @tanstack/react-query
+│   │   ├── package.json                       # 依赖 @focusflow/player, @tanstack/react-router, @tanstack/react-query
 │   │   ├── tsconfig.json                      # 继承 @focusflow/config-typescript/base.json
-│   │   └── vite.config.ts                     # Vite 8 配置文件 (端口: 5174)
+│   │   └── vite.config.ts                     # Vite 8 配置文件 (集成 TanStackRouterVite 插件)
 │   │
 │   ├── ⚡ api/                                # 【后端 App 1】主 RESTful API 服务 (NestJS)
 │   │   ├── src/                               # I/O 密集型 API 源码
@@ -557,10 +563,11 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 | **2. 全局状态与撤销/重做** | `zustand` (v5) + `zundo` | 毫秒级 DSL 响应式状态树、无限步 `Ctrl/⌘ + Z` 历史时间旅行 (Undo/Redo) 撤销重做栈 |
 | **3. 场景时间轴拖拽编排** | `@dnd-kit/core` + `@dnd-kit/sortable` | 底部水平时间轴轨道上场景卡片的流畅拖拽重排与顺序重组 |
 | **4. 无限画布手势与交互** | `@use-gesture/react` + `lucide-react` | 鼠标滚轮中心缩放 (Zoom-to-cursor)、抓手平移手势 (Pan/Drag) 与全套极简暗黑矢量图标库 |
-| **5. 服务端请求与 SDK** | `@tanstack/react-query` (v5) + `orval` | 自动化生成的强类型 API Client Hooks、数据缓存、网络重试与右侧面板属性修改的乐观更新 |
-| **6. 纯前端离线压缩打包** | `jszip` | 纯前端在浏览器内存中直接将底图、覆盖图与 `config.json` 压缩打包为 `.zip` 离线工程包 |
-| **7. 优雅用户反馈与通知** | `sonner` | 高颜值毛玻璃悬浮通知 (如 `✨ 智能像素贴合完成`、`🚀 单文件 HTML 导出成功`、`🔗 短链已复制`) |
-| **8. 底层内核与领域契约** | `@focusflow/player` + `@focusflow/dsl` | 画布中央 60fps 实时渲染播放视口与共享 TypeScript DSL 语法树类型契约 |
+| **5. 路由与深链接状态** | `@tanstack/react-router` (v1) | 100% 编译期类型安全路由导航、URL Search Params 状态双向同步与无缝恢复 |
+| **6. 服务端请求与 SDK** | `@tanstack/react-query` (v5) + `orval` | 自动化生成的强类型 API Client Hooks、数据缓存、网络重试与右侧面板属性修改的乐观更新 |
+| **7. 纯前端离线压缩打包** | `jszip` | 纯前端在浏览器内存中直接将底图、覆盖图与 `config.json` 压缩打包为 `.zip` 离线工程包 |
+| **8. 优雅用户反馈与通知** | `sonner` | 高颜值毛玻璃悬浮通知 (如 `✨ 智能像素贴合完成`、`🚀 单文件 HTML 导出成功`、`🔗 短链已复制`) |
+| **9. 底层内核与领域契约** | `@focusflow/player` + `@focusflow/dsl` | 画布中央 60fps 实时渲染播放视口与共享 TypeScript DSL 语法树类型契约 |
 
 #### `apps/studio/package.json` 完整配置蓝图
 ```json
@@ -572,6 +579,7 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
   "dependencies": {
     "@focusflow/player": "workspace:*",
     "@focusflow/dsl": "workspace:*",
+    "@tanstack/react-router": "^1.50.0",
     "@tanstack/react-query": "^5.50.0",
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
@@ -596,6 +604,7 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
     "@focusflow/config-typescript": "workspace:*",
     "@focusflow/config-oxlint": "workspace:*",
     "@focusflow/config-tailwind": "workspace:*",
+    "@tanstack/router-plugin": "^1.50.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@types/jszip": "^3.4.1",
