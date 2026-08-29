@@ -377,10 +377,12 @@ node scripts/build-standalone.js examples/order-system
    ```
 4. 将其加入 `elements.boxes` 数组即可。
 
-### 5.2 Alt+单击智能边缘吸附 (Pixel Snap)
-1. 按住键盘 **`Alt`** 键（Mac 为 `Option` 键）；
-2. 鼠标在卡片内部任意空白处**单点一下**；
-3. 底层离屏 Canvas 会自动向 4 个方向投射光线，根据色差跃变自动吸附出卡片的精准边界并高亮框选，直接点击复制即可。
+### 5.2 Option/Alt+单击智能边缘吸附 (Pixel Snap)
+1. 按住键盘 **`Option`** 键（macOS）或 **`Alt`** 键（Windows）；
+2. 鼠标在卡片内部空白处**单点一下**；
+3. 底层离屏 Canvas 会自动向外投射光线，根据色差跃变自动吸附出卡片的边界并高亮框选，直接点击复制即可。
+
+> **📖 深度技术文档**：关于边缘吸附算法的数学实现细节、失效根因与多线中位数投票等三大进阶演进方案，详见专属算法设计文档：[**`docs/EDGE_SNAPPER_ALGORITHM.md`**](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)。
 
 ### 5.3 拓扑流光连线配置 (paths) 与 8 向锚点推导
 
