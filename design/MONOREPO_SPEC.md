@@ -22,19 +22,26 @@
   - [2.1 标准体系概览](#21-标准体系概览)
   - [2.2 选型对比与决策考量](#22-选型对比与决策考量)
   - [2.3 为什么选用 Turborepo 而不是 Nx？(全栈 NestJS 场景深度技术选型对比)](#23-为什么选用-turborepo-而不是-nx全栈-nestjs-场景深度技术选型对比)
+  - [2.4 为什么选用 Prisma 而不是 Sequelize？(ORM 核心技术选型与深度对比)](#24-为什么选用-prisma-而不是-sequelizeorm-核心技术选型与深度对比)
 - [3. 完整 Monorepo 工作区目录全景](#3-完整-monorepo-工作区目录全景)
+  - [3.1 POC & Phase 1 (MVP) 现有代码资产与 Monorepo 映射关系对照表](#31-poc--phase-1-mvp-现有代码资产与-monorepo-映射关系对照表)
 - [4. 各子包核心职责与协同机制](#4-各子包核心职责与协同机制)
   - [4.1 `packages/player` (底层播放器内核)](#41-packagesplayer-底层播放器内核)
   - [4.2 `apps/studio` (上层可视化创作工作台)](#42-appsstudio-上层可视化创作工作台)
-  - [4.3 `packages/dsl` (共享 DSL 类型与验证契约)](#43-packagesdsl-共享-dsl-类型与验证契约)
-  - [4.4 `apps/api` (NestJS 全栈后端与云端转码服务)](#44-appsapi-nestjs-全栈后端与云端转码服务)
+  - [4.3 `packages/dsl` (统一领域契约包)](#43-packagesdsl-统一领域契约包)
+  - [4.4 `apps/api` (NestJS 主 RESTful API 服务)](#44-appsapi-nestjs-主-restful-api-服务)
+  - [4.5 `apps/render-worker` (NestJS 4K 视频渲染工作节点)](#45-appsrender-worker-nestjs-4k-视频渲染工作节点)
+  - [4.6 `packages/database` (纯粹数据层 · 零 NestJS 依赖)](#46-packagesdatabase-纯粹数据层--零-nestjs-依赖)
+  - [4.7 共享配置包 (`packages/config-*`)](#47-共享配置包-packagesconfig-)
 - [5. 核心配置文件工程标准与原型 (Configuration Blueprints)](#5-核心配置文件工程标准与原型-configuration-blueprints)
   - [5.1 `pnpm-workspace.yaml` 工作区定义](#51-pnpm-workspaceyaml-工作区定义)
   - [5.2 `turbo.json` 拓扑任务与构建缓存配置](#52-turbojson-拓扑任务与构建缓存配置)
   - [5.3 根目录 `package.json` 统一命令调度](#53-根目录-packagejson-统一命令调度)
-  - [5.4 `tsconfig.base.json` 跨包复合类型引用](#54-tsconfigbasejson-跨包复合类型引用)
-  - [5.5 现代 ESM 子路径导出标准 (`package.json "exports"`)](#55-现代-esm-子路径导出标准-packagejson-exports)
-  - [5.6 `apps/api/package.json` NestJS 服务端子包声明](#56-appsapipackagejson-nestjs-服务端子包声明)
+  - [5.4 消息队列强类型契约原型 (`packages/dsl/src/jobs.ts`)](#54-消息队列强类型契约原型-packagesdslsrcjobsts)
+  - [5.5 纯粹数据层包声明 (`packages/database/package.json`)](#55-纯粹数据层包声明-packagesdatabasepackagejson)
+  - [5.6 `tsconfig.base.json` 跨包复合类型引用](#56-tsconfigbasejson-跨包复合类型引用)
+  - [5.7 现代 ESM 子路径导出标准 (`packages/player/package.json`)](#57-现代-esm-子路径导出标准-packagesplayerpackagejson)
+  - [5.8 NestJS 服务端子包声明 (`apps/api/package.json`)](#58-nestjs-服务端子包声明-appsapipackagejson)
 - [6. 开发与构建工作流 (Development Workflow)](#6-开发与构建工作流-development-workflow)
 - [7. 平滑无痛迁移实施路线图 (Migration Checklist)](#7-平滑无痛迁移实施路线图-migration-checklist)
 
@@ -68,6 +75,9 @@
     │  📐 类型与模块标准: TypeScript Project References + ESM Exports│
     │  • "composite": true 增量类型推导 / package.json "exports"     │
     ├───────────────────────────────────────────────────────────────┤
+    │  🗄️ 数据持久化与 ORM: PostgreSQL 18 + Prisma ORM              │
+    │  • 100% 编译期类型推导 / 声明式 Schema / 原生 JSONB 过滤支持 │
+    ├───────────────────────────────────────────────────────────────┤
     │  📜 版本与发布协同: Changesets (@changesets/cli)              │
     │  • 多包语义化发版 (SemVer) / 自动生成 CHANGELOG               │
     └───────────────────────────────────────────────────────────────┘
@@ -79,6 +89,7 @@
 | :--- | :--- | :--- | :--- |
 | **包管理器** | **`pnpm Workspaces`** | npm / yarn | 基于硬链接与符号链接存储，依赖安装速度最快，严格杜绝幽灵依赖，行业标配。 |
 | **任务编排** | **`Turborepo` (`turbo`)** | Nx / Lerna | Go/Rust 内核驱动，零配置学习成本低，拓扑构建与哈希缓存极快，无侵入性。 |
+| **ORM / 数据层** | **`Prisma ORM`** | Sequelize / TypeORM | 声明式 DSL 建模、Rust 查询引擎、100% 自动生成 TS 类型，原生支持 PostgreSQL 18 JSONB。 |
 | **模块导出** | **Node.js ESM `"exports"`** | 传统 `main/module` | 严谨支持 Subpath Exports（如 `@focusflow/player/styles.css`），原生 ESM。 |
 | **跨包类型** | **`TS Project References`** | 单一 tsconfig | `"composite": true` 支持未构建状态下 IDE 毫秒级跨包代码跳转与类型补全。 |
 | **版本协同** | **`Changesets`** | semantic-release | 支持多包协同升级与交互式声明版本变更，自动聚合 CHANGELOG。 |
@@ -114,6 +125,66 @@
    * 根目录只需执行一行 `pnpm dev`，Turborepo 会并发同时启动 Studio 前端（`:5174`）与 NestJS 后端（`:3000`），实时监听、热重载两不误；
 4. **业界顶级开源全栈 SaaS 最佳实践背书**：
    * 国际顶级全栈开源产品矩阵（如 **Cal.com** 日程平台、**Dub.co** 短链分析、**Supabase** 云控制台）均 100% 采用 **pnpm + Turborepo** 驱动其前端与 Node/NestJS 后端服务。
+
+---
+
+### 2.4 为什么选用 Prisma 而不是 Sequelize？(ORM 核心技术选型与深度对比)
+
+在 Node.js / TypeScript 服务端生态中，ORM（对象关系映射）是连接业务逻辑与 PostgreSQL 18 数据库的核心桥梁。针对 **Prisma** 与老牌 ORM **Sequelize**，我们进行了系统性的架构解析与对比评估。
+
+#### 1. Prisma 核心架构与 4 大支柱组件
+
+Prisma 是专为现代化 TypeScript 全栈应用设计的下一代数据层框架（Next-Generation ORM），其底层由高性能 Rust 查询引擎驱动，包含 4 大核心组件：
+
+```
+                           【Prisma 现代化数据引擎 4 大核心支柱】
+
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ 📝 1. Prisma Schema (schema.prisma)                                    │
+   │    • 声明式单一真实可信源 (Single Source of Truth)                     │
+   │    • 直观人类可读 DSL: 定义数据模型、关联关系、字段约束与索引          │
+   ├────────────────────────────────────────────────────────────────────────┤
+   │ 🚀 2. Prisma Client (@prisma/client)                                   │
+   │    • 100% 自动生成的强类型查询构建器 (Auto-generated & Tailored)       │
+   │    • 零类型断言、深层嵌套查询类型推导、原生 JSONB 字段智能补全          │
+   ├────────────────────────────────────────────────────────────────────────┤
+   │ 🔄 3. Prisma Migrate (prisma migrate)                                  │
+   │    • 声明式数据库版本迁移引擎: 自动对比 Schema 生成 SQL Diff 变更脚本  │
+   ├────────────────────────────────────────────────────────────────────────┤
+   │ 🖥️ 4. Prisma Studio (npx prisma studio)                                │
+   │    • 开箱即用的零配置 Web 端可视化数据浏览器与管理控制台               │
+   └────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 2. Prisma vs Sequelize 8 维全方位对比评估矩阵
+
+```
++------------------------+------------------------------------+------------------------------------+
+| 评估维度                | Prisma (FocusFlow 选定)            | Sequelize (传统老一代)             |
++------------------------+------------------------------------+------------------------------------+
+| 1. TypeScript 原生度   | 🏆 100% 编译期类型推导 (零人工维护)| ⚠️ 需 sequelize-typescript 额外配置|
+| 2. 数据建模方式        | 🏆 声明式 DSL (schema.prisma 纯粹) | ⚠️ JS 代码级定义 (冗长分散、易脱节)|
+| 3. 关联关系查询 DX     | 🏆 include 链式推导 (返回类型精准) | ⚠️ include 数组配置繁杂，类型丢失  |
+| 4. PostgreSQL JSONB    | 🏆 原生一等公民 (支持深层 Path 过滤)| ⚠️ 基础 JSON 类型，无类型补全支持  |
+| 5. 数据库迁移自动化    | 🏆 prisma migrate 自动生成 SQL 差异| ⚠️ 需手写 up()/down() 双向迁移脚本 |
+| 6. 可视化管理后台      | 🏆 内置开箱即用 (Prisma Studio)    | ❌ 无内置 GUI (需依赖第三方 DBeaver)|
+| 7. 底层性能与引擎      | 🏆 Rust 原生高性能查询引擎 + 批处理| ⚠️ 纯 JS 构造 SQL，易掉入 N+1 陷阱 |
+| 8. 社区演进与现代规范  | 🏆 现代 TS / NestJS 黄金标准 (2026)| ⚠️ 2011 年老框架，社区活跃度衰退   |
++------------------------+------------------------------------+------------------------------------+
+```
+
+#### 3. FocusFlow 坚决选择 Prisma 的 4 大决定性理由
+
+1. **FocusFlow 核心资产 DSL 的 PostgreSQL 18 原生 JSONB 支持**：
+   * FocusFlow 项目的核心数据（镜头、视口、图层、流光连线、场景序列）以复杂 JSON DSL 形式存储；
+   * Prisma 提供了对 PostgreSQL JSONB 的**一等公民级别支持**，支持直接进行按路径筛选与类型断言，极大提升查询效率；
+2. **100% 零人工维护的编译期绝对类型安全**：
+   * 在 Sequelize 中，每当修改表结构，必须手动同步修改 TypeScript Interface，字段名一旦拼错只能在运行时报错；
+   * 在 Prisma 中，运行 `prisma generate` 会自动生成精准的 TypeScript 类型，在 IDE 中获得丝滑的自动补全，**从根源上消灭了 90% 的运行时字段类型错误**；
+3. **极度纯净的 Monorepo 跨包解耦（`packages/database`）**：
+   * 如前所述，`packages/database` 仅需维护一个 `schema.prisma` 并导出原生 `PrismaClient`，**零依赖任何上层 Web 框架**，既能供 NestJS 使用，又能供轻量 CLI 脚本直接操作数据库；
+4. **极致高效的迁移与本地调试体验**：
+   * 修改 `schema.prisma` 后，一行 `pnpm db:migrate` 自动生成标准的 SQL 迁移文件，一行 `pnpm db:studio` 立即在浏览器打开可视化控制台管理数据，开发效率比 Sequelize 提升数倍！
 
 ---
 
