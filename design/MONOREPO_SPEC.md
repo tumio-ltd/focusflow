@@ -36,7 +36,8 @@
   - [4.6 `packages/database` (纯粹数据层 · 零 NestJS 依赖)](#46-packagesdatabase-纯粹数据层--零-nestjs-依赖)
   - [4.7 共享配置包 (`packages/config-*`)](#47-共享配置包-packagesconfig-)
   - [4.8 全局跨端 Dark / Light 双主题配色系统设计规范 (Semantic Tokens & Dual-Theme Architecture)](#48-全局跨端-dark--light-双主题配色系统设计规范-semantic-tokens--dual-theme-architecture)
-  - [4.9 全栈端到端国际化 (i18n) 架构设计规范与语言代码标准](#49-全栈端到端国际化-i18n-架构设计规范与语言代码标准)
+  - [4.9 全栈端到端国际化 (i18n)架构设计规范与语言代码标准](#49-全栈端到端国际化-i18n-架构设计规范与语言代码标准)
+  - [4.10 全栈身份认证 (JWT)、CASL 细粒度权限与 Redis 基础设施](#410-全栈身份认证-jwtcasl-细粒度权限与-redis-基础设施)
 - [5. 核心配置文件工程标准与原型 (Configuration Blueprints)](#5-核心配置文件工程标准与原型-configuration-blueprints)
   - [5.1 `pnpm-workspace.yaml` 工作区定义](#51-pnpm-workspaceyaml-工作区定义)
   - [5.2 `turbo.json` 拓扑任务与构建缓存配置](#52-turbojson-拓扑任务与构建缓存配置)
@@ -516,7 +517,9 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   └── phase1-mvp/                            # 🚀 Phase 1 MVP 完整源码与示例独立快照备份 (只读封存)
 │
 ├── .changeset/                                # Changesets 多包版本管理配置
+├── .oxlintrc.json                             # 💡 全局 Oxlint 极速质检规则配置
 ├── .prettierrc.json                           # 💡 全局 Prettier 统一代码排版与美化配置
+├── docker-compose.yml                         # 🐳 本地快速拉起 PostgreSQL 18 + Redis 7 编排
 ├── package.json                               # Monorepo 根配置与聚合 scripts 命令
 ├── pnpm-workspace.yaml                        # pnpm 工作区包匹配声明
 ├── turbo.json                                 # Turborepo 构建管道与缓存规则
@@ -600,6 +603,8 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
     "next-themes": "^0.3.0",
     "i18next": "^23.12.0",
     "react-i18next": "^15.0.0",
+    "@casl/ability": "^6.7.0",
+    "@casl/react": "^4.0.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.0",
     "lucide-react": "^0.400.0",
@@ -783,6 +788,160 @@ FocusFlow 设计了贯穿 **“Studio 创作端 + Player 内核端 + API 服务�
   ```
 * **NestJS 自动解包拦截器 (`I18nTransformInterceptor`)**：后端查询输出时，自动将 JSONB 多语言对象转换为当前语言的单字符串输出给前端，业务 Service 层无感！
 * **DSL 视觉故事板多语言支持**：企业创作者可在 Studio 中为同一个气泡注解与连线说明配置双语文本（`textI18n: { zh: "鉴权中心", en: "Auth Center" }`），实现**“一份架构图，跨国汇报一键切英文演示”**！
+
+---
+
+### 4.10 全栈身份认证 (JWT)、CASL 细粒度权限与 Redis 基础设施
+
+FocusFlow SaaS 构建了**“全局 JWT 双 Token 身份鉴权 + CASL 前后端同构细粒度授权 + Redis 7 异步队列基础设施”**的安全与并发架构。
+
+```
+                              【FocusFlow 安全与权限全景流水线】
+
+   客户端请求 (携带 Authorization Bearer 或 HttpOnly Cookie)
+          │
+          ▼
+   1. JwtAuthGuard (全局守卫，@Public() 白名单放行) ──> 提取当前登录 User
+          │
+          ▼
+   2. CASL AbilityFactory (生成当前用户的动态权限能力 Ability)
+          │
+          ├─ 后端 NestJS: prisma.project.findMany({ where: accessibleBy(ability).Project })
+          └─ 前端 Studio: <Can I="update" this={project}><SaveButton /></Can>
+          │
+          ▼
+   3. Redis 7 分布式基础设施 (BullMQ 任务调度、接口限流与转码进度 Pub/Sub)
+```
+
+#### 1. JWT 双 Token 身份认证架构 (Authentication)
+* **Access Token (短效访问凭证)**：
+  * 有效期：15 分钟，载荷包含 `userId`, `email`, `role`；
+  * 传输方式：HTTP `Authorization: Bearer <token>` 请求头。
+* **Refresh Token (长效刷新凭证)**：
+  * 有效期：7 天，存储于 PostgreSQL 用户表（哈希加盐存储），并通过 `HttpOnly; Secure; SameSite=Strict` Cookie 传输；
+  * 当 Access Token 过期报 401 时，前端 Axios/Fetch 拦截器自动调用 `/api/auth/refresh` 进行无感静默续期。
+* **全局 Guard 守卫与公开端点注解**：
+  ```typescript
+  // 公开接口豁免鉴权
+  @Public()
+  @Get('share/:slug')
+  async getShareProject(@Param('slug') slug: string) { ... }
+  ```
+
+---
+
+#### 2. CASL 前后端同构细粒度权限模型 (Authorization)
+
+FocusFlow 采用 **CASL (`@casl/ability` + `@casl/prisma`)** 实现基于属性的访问控制（ABAC）：
+
+##### A. 领域权限能力工厂 (`apps/api/src/common/casl/casl-ability.factory.ts`)
+```typescript
+import { AbilityBuilder, createPrismaAbility, PrismaQuery, PureAbility } from '@casl/prisma';
+import { User, Project } from '@prisma/client';
+
+export type AppAbility = PureAbility<[string, any], PrismaQuery>;
+
+export class CaslAbilityFactory {
+  createForUser(user: User): AppAbility {
+    const { can, cannot, build } = new AbilityBuilder<AppAbility>(createPrismaAbility);
+
+    // 1. 系统管理员拥有所有权限
+    if (user.role === 'ADMIN') {
+      can('manage', 'all');
+      return build();
+    }
+
+    // 2. 项目权限：Owner 拥有全部读写删权限
+    can('manage', 'Project', { ownerId: user.id });
+
+    // 3. 项目权限：协同成员 (Editor) 可读写但不可删除
+    can(['read', 'update'], 'Project', {
+      members: { some: { userId: user.id, role: 'EDITOR' } }
+    });
+
+    // 4. 项目权限：所有用户可读取公开项目
+    can('read', 'Project', { isPublic: true });
+
+    // 5. 商业化配额控制：免费用户禁止触发 4K 渲染
+    if (user.tier === 'FREE') {
+      cannot('create', 'RenderJob', { resolution: '4K' }).because('4K 超清渲染为 Pro 会员专享特权');
+    }
+
+    return build();
+  }
+}
+```
+
+##### B. Prisma 自动生成安全 SQL (`accessibleBy`)
+```typescript
+// 自动根据 CASL 规则注入 SQL WHERE，杜绝人工漏写导致越权
+const projects = await prisma.project.findMany({
+  where: accessibleBy(userAbility).Project,
+  orderBy: { updatedAt: 'desc' }
+});
+```
+
+##### C. React Studio 前端 UI 声明式控制 (`@casl/react`)
+```tsx
+import { Can } from '@casl/react';
+import { useAbility } from '@/hooks/useAbility';
+
+export const ActionToolbar = ({ project }: { project: Project }) => {
+  return (
+    <div className="flex gap-2">
+      {/* 仅对有编辑权限者展示保存按钮 */}
+      <Can I="update" this={project}>
+        <button className="btn-primary">保存修改</button>
+      </Can>
+
+      {/* 仅对 Owner 展示删除项目按钮 */}
+      <Can I="delete" this={project}>
+        <button className="btn-danger">删除项目</button>
+      </Can>
+    </div>
+  );
+};
+```
+
+---
+
+#### 3. Redis 7 基础设施与 BullMQ 异步队列
+
+##### A. 本地一键开发编排 (`docker-compose.yml`)
+在 Monorepo 根目录提供标准 Docker 基础设施：
+```yaml
+version: '3.8'
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: focusflow-postgres
+    environment:
+      POSTGRES_DB: focusflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: focusflow-redis
+    command: redis-server --appendonly yes --requirepass redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
+```
+
+##### B. Redis 7 在 FocusFlow 中的三大职责
+1. **BullMQ 任务队列与状态机**：管理 4K 视频渲染任务的分发、重试、死信队列与单节点并发限流（Concurrency Limit = 2）；
+2. **实时转码进度广播**：Render Worker 逐帧渲染时通过 Redis Pub/Sub 广播进度，API 网关订阅后通过 WebSocket 直推 Studio 前端；
+3. **API 限流与防刷控制**：针对免费用户的导出单文件与高频接口进行滑动窗口限流（Rate Limiting）。
 
 ---
 
@@ -1007,19 +1166,28 @@ export interface RenderJobProgressEvent {
   "dependencies": {
     "@focusflow/database": "workspace:*",
     "@focusflow/dsl": "workspace:*",
+    "@casl/ability": "^6.7.0",
+    "@casl/prisma": "^1.5.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/passport": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.0.0",
     "@prisma/client": "^5.18.0",
+    "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "ioredis": "^5.4.0",
     "nestjs-cls": "^4.4.0",
     "nestjs-i18n": "^10.4.0",
+    "passport-jwt": "^4.0.1",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/passport-jwt": "^4.0.1",
     "@types/node": "^22.0.0",
     "prisma": "^5.18.0",
     "typescript": "^5.5.0"
