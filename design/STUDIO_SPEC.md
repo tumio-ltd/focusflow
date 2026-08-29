@@ -202,34 +202,62 @@ flowchart TB
 | **样式与组件库** | **Tailwind CSS + shadcn/ui** | 极具现代科技感的暗黑设计风格、高定制性、零冗余运行时开销 |
 | **全局状态管理** | **Zustand** | 极简无样板代码、支持切片（Slices）、与 Phase 1 Player 状态机天然同构 |
 | **图标与视觉系统** | **Lucide React** | 统一现代矢量图标集 |
-| **工程构建工具** | **Vite 6** | 毫秒级 HMR 热更新、极速生产打包 |
+| **工程构建工具** | **Vite 8** | 毫秒级 HMR 热更新、极速生产打包与模块热替换 |
 
-### 4.2 前端目录规划 (`focusflow-studio/`)
+### 4.2 前端目录规划与当前项目目录的架构关系 (Repository & Monorepo Architecture)
+
+#### 1. 核心定位与解耦关系
+当前 FocusFlow 根工程（`focusflow/`）与 Phase 2 的 `focusflow-studio` 采用**“内核引擎（Core Engine）与上层工作台（Editor Shell）解耦”**的现代化 Monorepo / 多包协作架构：
+
+```
+                    【FocusFlow 现代化多包协同工程全景】
+
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                    FocusFlow Workspace (Monorepo)                      │
+ ├───────────────────────────────────┬────────────────────────────────────┤
+ │ 📦 packages/player-core (当前 src/)│ 🎨 apps/studio (focusflow-studio/)  │
+ │ • 纯原生 JS / 零外部依赖运行时    │ • React 19 + Tailwind + shadcn/ui   │
+ │ • 60fps GPU 镜头运动学与安全边界  │ • 可视化无限画布与 4 大编辑工具     │
+ │ • SVG 几何测长与三次贝塞尔流光    │ • 关键帧场景时间轴与气泡实时编辑器  │
+ │ • 离线独立单文件打包器模板        │ • 导入 @focusflow/player-core 实例  │
+ ├───────────────────────────────────┴────────────────────────────────────┤
+ │ 📦 packages/dsl-schema (类型与契约): 共享 FocusFlow DSL TypeScript 声明 │
+ └────────────────────────────────────────────────────────────────────────┘
+```
+
+* **`packages/player-core`（即当前的 `src/` 核心目录）**：
+  * **角色**：底层的**纯运行时播放器内核（Runtime Renderer）**；
+  * **特性**：保持 100% 零外部大型框架依赖（~35KB 极简体积），专注于 60fps 动效渲染、镜头矩阵变换与单文件独立运行。
+* **`apps/studio`（即 `focusflow-studio/` 工作台目录）**：
+  * **角色**：上层的**可视化交互制作工具（Authoring Studio）**；
+  * **协作方式**：直接依赖并实例化 `packages/player-core` 作为画布中央的“实时渲染视口（Live Viewport）”，通过 Zustand 状态变更实时驱动播放器，实现 100% 所见即所得的双向绑定！
+
+#### 2. Studio 前端工程内部目录结构 (`apps/studio/` 或 `focusflow-studio/`)
 ```
 focusflow-studio/
 ├── src/
-│   ├── components/               # UI 组件库
-│   │   ├── canvas/              # 可视化无限画布与图层
-│   │   │   ├── InfiniteCanvas.tsx
-│   │   │   ├── CameraFrame.tsx
-│   │   │   ├── BoxLayer.tsx
-│   │   │   └── PathLayer.tsx
+│   ├── components/               # Studio 专属 UI 组件库
+│   │   ├── canvas/              # 可视化无限画布与图层控制器
+│   │   │   ├── InfiniteCanvas.tsx   # 缩放平移手势画布
+│   │   │   ├── CameraFrame.tsx      # 镜头取景安全边界框
+│   │   │   ├── BoxLayer.tsx         # 智能选框绘制图层
+│   │   │   └── PathLayer.tsx        # 贝塞尔连线吸附图层
 │   │   ├── timeline/            # 底部场景时间轴
-│   │   │   ├── TimelineTrack.tsx
-│   │   │   └── SceneCard.tsx
+│   │   │   ├── TimelineTrack.tsx    # 场景序列轨道
+│   │   │   └── SceneCard.tsx        # 单场景缩略卡片
 │   │   ├── inspector/           # 右侧属性检查器
-│   │   │   ├── CameraInspector.tsx
-│   │   │   ├── BoxInspector.tsx
-│   │   │   └── CalloutInspector.tsx
+│   │   │   ├── CameraInspector.tsx  # 镜头参数与转场时间
+│   │   │   ├── BoxInspector.tsx     # 选框样式/颜色/圆角
+│   │   │   └── CalloutInspector.tsx # 气泡文字/主题徽章
 │   │   ├── topbar/              # 顶部导航栏与导出菜单
 │   │   │   └── Topbar.tsx
-│   │   └── modals/              # 弹窗 (导出预览、模板选择等)
+│   │   └── modals/              # 弹窗 (全屏预览、模板选择等)
 │   ├── stores/                  # Zustand 状态切片
-│   │   ├── useProjectStore.ts   # 项目 DSL 与场景状态
+│   │   ├── useProjectStore.ts   # 项目 DSL 与场景序列状态
 │   │   ├── useCanvasStore.ts    # 画布平移、缩放与当前工具
 │   │   └── useHistoryStore.ts   # 撤销/重做 (Undo/Redo 栈)
 │   ├── compiler/                # 浏览器端纯前端打包编译器
-│   │   └── standalonePackager.ts # 动态内联生成单文件 HTML
+│   │   └── standalonePackager.ts # 动态内联 Base64 生成单文件 HTML
 │   ├── App.tsx
 │   └── main.tsx
 ├── package.json
@@ -240,13 +268,37 @@ focusflow-studio/
 
 ## 5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)
 
-### 5.1 服务端技术栈
-* **应用框架**：Node.js / NestJS (TypeScript)
-* **数据库**：PostgreSQL 16 + Prisma ORM
-* **对象存储**：AWS S3 / 阿里云 OSS / MinIO (底图与静态资产)
-* **视频转码服务**：Remotion Lambda / Puppeteer Worker + FFmpeg
+### 5.1 与 PRODUCT_DESIGN.md 8.3 节的关联性与边界划分 (Correlation & Boundaries)
 
-### 5.2 核心数据模型 (Prisma Schema)
+为了确保产品 PRD 与技术架构 SPEC 的严谨统一，两份文档的分工与边界定义如下：
+
+```
++---------------------------------------------------------------------------------------------------------+
+|                                  PRD 商业产品方案  vs  SPEC 技术规格落地                                  |
++----------------------+------------------------------------+---------------------------------------------+
+| 评估维度              | PRODUCT_DESIGN.md (第 8.3 节)       | STUDIO_SPEC.md (第 5 节)                    |
++----------------------+------------------------------------+---------------------------------------------+
+| 1. 文档定位与视角    | 宏观产品定位、商业价值与用户使用场景| 微观工程实现、API 契约、数据模型与转码管线   |
+| 2. 核心回答问题      | “我们要给用户提供哪 4 大核心能力？”| “我们如何用技术架构、数据库与代码实现这 4 大能力？”|
+| 3. 颗粒度与交付物    | 模块功能列表、交互流程、商业分享模式| Prisma Schema、REST API 端点签名、错误码定义|
++----------------------+------------------------------------+---------------------------------------------+
+```
+
+#### 4 大核心能力的一对一技术映射表：
+1. **PRD 模块 1【服务端项目管理与资产托管】** ➔ 映射至 **SPEC §5.2 数据模型 (`Project` & `ProjectVersion` 表)** 与 **SPEC §5.3 项目 CRUD API (`POST /api/projects`, `PUT /api/projects/:id`)**；
+2. **PRD 模块 2【服务端单文件 HTML 一键编译下载】** ➔ 映射至 **SPEC §5.3 流式下载控制器 (`GET /api/projects/:id/export/html`)** 与无状态内联打包算法；
+3. **PRD 模块 3【服务端 4K 视频 / GIF 云端渲染管线】** ➔ 映射至 **SPEC §5.3 异步转码任务系统 (`POST /api/projects/:id/render/video`)** 与 Remotion / Puppeteer Worker 集群；
+4. **PRD 模块 4【云端免部署只读分享与嵌入】** ➔ 映射至 **SPEC §5.3 短链路由 (`GET /s/:slug`)** 与 CSP / `<iframe>` 响应头配置。
+
+---
+
+### 5.2 服务端技术栈选型
+* **应用框架**：Node.js / NestJS (TypeScript，自带 Swagger 注解与 DTO class-validator 强校验)
+* **数据库**：**PostgreSQL 18** + Prisma ORM
+* **对象存储**：AWS S3 / 阿里云 OSS / MinIO (底图、画中画覆盖图与静态资产托管)
+* **视频转码服务**：Remotion Lambda / Puppeteer Worker + FFmpeg 硬件加速集群
+
+### 5.3 核心数据模型 (Prisma Schema)
 ```prisma
 model Project {
   id          String   @id @default(uuid())
@@ -274,7 +326,7 @@ model ProjectVersion {
 }
 ```
 
-### 5.3 核心 RESTful API 契约
+### 5.4 核心 RESTful API 契约
 | 方法 | 端点 | 功能说明 | 核心入参 / 返回 |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/projects` | 创建新项目并上传底图 | `multipart/form-data (image, title)` ➔ `{ id, slug, dslJson }` |
@@ -291,7 +343,7 @@ model ProjectVersion {
 
 ### 🎨 Stage 1: Studio 前端工程基建与无限画布容器 (Studio Foundation & Canvas)
 - [ ] **1.1 项目脚手架与 UI 组件库搭建**
-  - [ ] 1.1.1 初始化 React 19 + TypeScript + Vite 6 工程，集成 Tailwind CSS 与 shadcn/ui
+  - [ ] 1.1.1 初始化 React 19 + TypeScript + Vite 8 工程，集成 Tailwind CSS 与 shadcn/ui
   - [ ] 1.1.2 搭建暗黑科技感三栏工作台布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
 - [ ] **1.2 可视化无限画布核心 (`InfiniteCanvas`)**
   - [ ] 1.2.1 实现鼠标滚轮缩放（Zoom-to-Cursor）与平滑平移（Pan/Grab）
@@ -342,7 +394,7 @@ model ProjectVersion {
 
 ### ☁️ Stage 6: 服务端 SaaS 平台、云端短链与视频渲染管线 (Full-Stack Cloud SaaS)
 - [ ] **6.1 服务端 API 与项目云端存储**
-  - [ ] 6.1.1 使用 NestJS + PostgreSQL + Prisma 构建项目管理 RESTful API
+  - [ ] 6.1.1 使用 NestJS + PostgreSQL 18 + Prisma 构建项目管理 RESTful API
   - [ ] 6.1.2 集成 S3/OSS 对象存储，实现大图直传与 CDN 加速
 - [ ] **6.2 云端免部署只读分享与嵌入**
   - [ ] 6.2.1 动态生成 `https://focusflow.io/s/:slug` 沉浸式只读演示页
