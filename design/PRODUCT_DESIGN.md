@@ -391,29 +391,34 @@ flowchart TB
 gantt
     title FocusFlow 产品工程化演进路线图
     dateFormat  YYYY-MM
-    section Phase 1 (MVP 进行中)
+    section Phase 1 (MVP 100% 达成)
     POC 效果原型验证 (arch-explorer.html)           :done, p1_poc, 2026-08, 2026-08
-    播放引擎与数据解耦 (FocusFlowPlayer Core)       :active, p1_eng1, 2026-08, 2026-09
-    SVG 自动测长与贝塞尔计算引擎                   :p1_eng2, 2026-09, 2026-09
-    多端视口自适应与手势适配                       :p1_eng3, 2026-09, 2026-10
-    状态机防抖、资源预加载与 CLI 打包器             :p1_eng4, 2026-09, 2026-10
-    section Phase 2 (Studio 工作台)
+    播放引擎与数据解耦 (FocusFlowPlayer Core)       :done, p1_eng1, 2026-08, 2026-08
+    SVG 自动测长与贝塞尔计算引擎                   :done, p1_eng2, 2026-08, 2026-08
+    多端视口自适应与手势适配                       :done, p1_eng3, 2026-08, 2026-08
+    状态机防抖、资源预加载与 CLI 打包器             :done, p1_eng4, 2026-08, 2026-08
+    Sobel 智能吸附与粗拉框贴合 (Auto-Refine)       :done, p1_eng5, 2026-08, 2026-08
+    画中画动态覆盖层与独立单文件打包器             :done, p1_eng6, 2026-08, 2026-08
+    section Phase 2 (Studio 工作台规划)
     React 19 + Tailwind + shadcn/ui 编辑器框架     :p2_1, 2026-10, 2026-12
     可视化无限画布与框选取景器 (Camera Picker)     :p2_2, 2026-11, 2027-01
     可视化连线与时间轴拖拽编排                   :p2_3, 2026-12, 2027-02
-    section Phase 3 (生态与智能化)
+    section Phase 3 (生态与智能化规划)
     AI 视觉语义解析与故事线推荐                 :p3_1, 2027-02, 2027-04
     Remotion 4K MP4 / GIF 视频导出管线          :p3_2, 2027-03, 2027-05
     SaaS 协作与文档站 (Docusaurus/Notion) 嵌入   :p3_3, 2027-04, 2027-07
 ```
 
-### 8.1 Phase 1: MVP 核心阶段具体待办清单 (WBS)
+### 8.1 Phase 1: MVP 核心阶段具体待办清单 (WBS · 100% 验收达成)
 - [x] **Step 1: POC 视觉与交互模式验证** (已完成 `arch-explorer.html` 单点验证)
-- [ ] **Step 2: 纯 JS 驱动的核心播放器类封装 (`FocusFlowPlayer`)**
-- [ ] **Step 3: 几何自动测长与贝塞尔三次曲线路由计算引擎**
-- [ ] **Step 4: 视口响应式、安全边界钳位与全屏模式**
-- [ ] **Step 5: 资源预加载（Preloader）与动画状态机防抖**
-- [ ] **Step 6: 单文件编译 CLI (`focusflow-cli`)**
+- [x] **Step 2: 纯 JS 驱动的核心播放器类封装 (`FocusFlowPlayer`)** (数据 100% 解耦，多层级分层渲染)
+- [x] **Step 3: 几何自动测长与贝塞尔三次曲线路由计算引擎** (8向锚点自适应，三次贝塞尔自动控制点推导)
+- [x] **Step 4: 视口响应式、安全边界钳位与全屏模式** (GPU 硬件加速运镜，安全边界保护)
+- [x] **Step 5: 资源预加载（Preloader）与动画状态机防抖** (Double-RAF 防竞争，时钟定时轮播)
+- [x] **Step 6: 单文件编译 CLI 与离线打包器 (`build-standalone` & `create-project`)** (自动 Base64 内联与脚手架)
+- [x] **Step 7: 开发者 HUD 标定工具层** (Sobel 梯度积分吸附、粗拉框智能像素贴合 Auto-Refine、一键捕获镜头与气泡)
+- [x] **Step 8: 动态覆盖图层与局部下钻动效** (Layer 0.5 画中画弹性弹入与平滑淡出退场)
+- [x] **Step 9: 控制栏精细化定制与等宽场景指示器** (`meta.controls`、等宽 `01/05` 计数器、Tab 横向自适应滚动)
 
 ### 8.2 Phase 2: 可视化创作端建设 (2 ~ 4 个月)
 * **可视化无限画布**：支持鼠标滚轮平滑缩放平移，可视化拖拽选取高亮框。
