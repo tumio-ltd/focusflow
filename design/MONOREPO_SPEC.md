@@ -188,16 +188,37 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   └── ⚙️ config-tailwind/                    # 7. 【共享配置】统一 Tailwind 科技感暗黑设计 Token
 │
 ├── 💡 examples/                               # 官方实战演示示例库 (luxehms, overlay-demo, simple-demo)
-├── 🛠️ scripts/                                 # 离线单文件打包器与脚手架 CLI
-├── 📚 docs/                                   # 创作者指南与算法技术专刊
-├── 📐 design/                                 # PRD、架构与研发规格体系
+├── 🛠️ scripts/                                 # 离线单文件打包器与脚手架 CLI (build-standalone.js, create-project.js)
+├── 📚 docs/                                   # 创作者指南与算法技术专刊 (USAGE_GUIDE.md, EDGE_SNAPPER_ALGORITHM.md)
+├── 📐 design/                                 # PRD、架构与研发规格体系 (PRODUCT_DESIGN.md, MONOREPO_SPEC.md, STUDIO_SPEC.md)
 │
 ├── .changeset/                                # Changesets 多包版本管理配置
 ├── package.json                               # Monorepo 根配置与聚合 scripts 命令
 ├── pnpm-workspace.yaml                        # pnpm 工作区包匹配声明
 ├── turbo.json                                 # Turborepo 构建管道与缓存规则
+├── index.html                                 # 根目录本地多示例预览门户 (Vite 8 驱动)
 └── README.md
 ```
+
+---
+
+### 3.1 POC & Phase 1 (MVP) 现有代码资产与 Monorepo 映射关系对照表
+
+在改造为 Monorepo 后，**POC 与 MVP 阶段沉淀的 100% 全部代码资产不会有任何丢弃或浪费**，而是被清晰归位到最适合的模块中：
+
+| 现有 MVP / POC 目录与文件 | 改造后归宿位置 | 处理策略与角色定位 |
+| :--- | :--- | :--- |
+| **`src/`** (core/, motion/, hud/, styles/) | **`packages/player/src/`** | **【100% 完整平移保留】**：MVP 沉淀的 60fps GPU 镜头运动学、贝塞尔流光、气泡动效、Sobel 智能吸附与标定 HUD，完整平移为底层独立运行时内核（`@focusflow/player`）。 |
+| **`src/types/dsl.d.ts`** | **`packages/dsl/src/schema.ts`** | **【提取与类型增强】**：将原 TypeScript 类型定义提取为共享契约包，供 Player、Studio、API 三方共同引用。 |
+| **`examples/luxehms/`** | **`examples/luxehms/`** | **【原地保留】**：作为官方 4K 复杂架构图黄金基准工程（Golden Regression Testbed）与演示模板。 |
+| **`examples/overlay-demo/`** | **`examples/overlay-demo/`** | **【原地保留】**：作为画中画多图层动态覆盖下钻的官方实战用例。 |
+| **`examples/simple-demo/`** | **`examples/simple-demo/`** | **【原地保留】**：作为双节点极简冒烟测试用例。 |
+| **`scripts/build-standalone.js`** | **`scripts/build-standalone.js`** | **【原地保留 & 路径适配】**：更新内部 import 路径，继续作为命令行一键内联打包工具。 |
+| **`scripts/create-project.js`** | **`scripts/create-project.js`** | **【原地保留】**：继续作为快速创建本地项目的 CLI 脚手架。 |
+| **`index.html`** (根门户入口) | **`index.html`** | **【原地保留】**：作为本地多示例聚合导航页，支持一键切换预览各个实战案例。 |
+| **`docs/`** & **`design/`** | **`docs/`** & **`design/`** | **【原地保留 & 持续更新】**：作为 FocusFlow 统一的全局技术专刊与架构规范中心。 |
+
+---
 
 ---
 
