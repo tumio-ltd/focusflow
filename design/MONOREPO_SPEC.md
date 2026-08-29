@@ -41,8 +41,9 @@
   - [5.4 消息队列强类型契约原型 (`packages/dsl/src/jobs.ts`)](#54-消息队列强类型契约原型-packagesdslsrcjobsts)
   - [5.5 纯粹数据层包声明 (`packages/database/package.json`)](#55-纯粹数据层包声明-packagesdatabasepackagejson)
   - [5.6 `tsconfig.base.json` 跨包复合类型引用](#56-tsconfigbasejson-跨包复合类型引用)
-  - [5.7 现代 ESM 子路径导出标准 (`packages/player/package.json`)](#57-现代-esm-子路径导出标准-packagesplayerpackagejson)
   - [5.8 NestJS 服务端子包声明 (`apps/api/package.json`)](#58-nestjs-服务端子包声明-appsapipackagejson)
+  - [5.9 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式](#59-nestjs-swagger--openapi-接口文档与参数强校验规范范式-api--dto-specifications)
+  - [5.10 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + React Query)](#510-前后端全链路类型安全自动化-openapi-客户端-sdk-生成-orval--react-query)
 - [6. 开发与构建工作流 (Development Workflow)](#6-开发与构建工作流-development-workflow)
 - [7. 平滑无痛迁移实施路线图 (Migration Checklist)](#7-平滑无痛迁移实施路线图-migration-checklist)
 
@@ -872,6 +873,95 @@ export class ProjectsController {
 ```
 
 ---
+
+### 5.10 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + TanStack React Query)
+
+在现代全栈 Monorepo 体系中，**严禁前端开发者手工手写 API 请求函数与 Interface 类型**。FocusFlow 采用业界最高效的 **`Orval`** 工具链，实现从 NestJS Swagger 规范到 React Query Hooks 的 **100% 全自动零代码生成**！
+
+```
+                      【前后端全链路类型安全闭环 (End-to-End Type Safety)】
+
+   NestJS Controller (带 @ApiOperation & DTO 校验)
+          │
+          ▼
+   生成 OpenAPI 3.0 JSON 规范 (apps/api/openapi.json)
+          │
+          ▼
+   Orval 极速编译器 (pnpm generate:api)
+          │
+          ├─ 1. 自动生成 100% 强类型 TypeScript DTO 接口
+          ├─ 2. 自动生成 Axios / Fetch 底层 HTTP 请求客户端
+          └─ 3. 自动生成 TanStack React Query (v5) Hooks (useGetProject, useCreateProject)
+          │
+          ▼
+   React Studio 组件中零手写直接调用: const { mutate, data } = useCreateProject();
+   (一旦后端字段变动，前端 IDE 编译期红线立即预警，根绝联调 Bug 🚀)
+```
+
+#### 1. Orval 配置文件 (`apps/studio/orval.config.ts`)
+```typescript
+import { defineConfig } from 'orval';
+
+export default defineConfig({
+  focusflowApi: {
+    input: {
+      target: '../api/openapi.json', // 读取 NestJS 导出的 OpenAPI 规范
+    },
+    output: {
+      mode: 'tags-split',          // 按 Controller @ApiTags 自动拆分生成不同模块
+      target: 'src/api/generated', // 生成的目标目录
+      schemas: 'src/api/model',    // 生成的 TypeScript DTO 类型目录
+      client: 'react-query',       // 🏆 自动生成 TanStack React Query v5 Hooks
+      httpClient: 'fetch',         // 原生轻量 Fetch 客户端 (零 Axios 体积负担)
+      override: {
+        mutator: {
+          path: 'src/api/custom-fetch.ts', // 自定义全局鉴权与 BaseURL 拦截器
+          name: 'customFetch',
+        },
+      },
+    },
+  },
+});
+```
+
+#### 2. React Studio 业务组件中的极致优雅调用示范 (`apps/studio/src/components/topbar/ProjectTitle.tsx`)
+```tsx
+import React from 'react';
+import { useGetProjectById, useUpdateProject } from '@/api/generated/projects';
+
+interface ProjectTitleProps {
+  projectId: string;
+}
+
+export const ProjectTitle: React.FC<ProjectTitleProps> = ({ projectId }) => {
+  // 1. 自动生成的 Query Hook: 拥有自动缓存、加载态、类型推导
+  const { data: project, isLoading, error } = useGetProjectById(projectId);
+
+  // 2. 自动生成的 Mutation Hook: 拥有强类型入参补全与乐观更新回调
+  const { mutate: updateProject, isPending } = useUpdateProject();
+
+  if (isLoading) return <div>加载中...</div>;
+
+  const handleTitleChange = (newTitle: string) => {
+    // 这里的入参自动与后端 UpdateProjectDto 100% 强校验绑定，字段拼错编译期直接飘红！
+    updateProject({
+      id: projectId,
+      data: {
+        title: newTitle,
+      },
+    });
+  };
+
+  return (
+    <input
+      className="font-bold bg-transparent border-b border-transparent hover:border-slate-700"
+      defaultValue={project?.title}
+      onBlur={(e) => handleTitleChange(e.target.value)}
+      disabled={isPending}
+    />
+  );
+};
+```
 
 ---
 
