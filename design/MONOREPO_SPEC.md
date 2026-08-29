@@ -23,7 +23,7 @@
   - [2.2 选型对比与决策考量](#22-选型对比与决策考量)
   - [2.3 为什么选用 Turborepo 而不是 Nx？(全栈 NestJS 场景深度技术选型对比)](#23-为什么选用-turborepo-而不是-nx全栈-nestjs-场景深度技术选型对比)
   - [2.4 为什么选用 Prisma 而不是 Sequelize？(ORM 核心技术选型与深度对比)](#24-为什么选用-prisma-而不是-sequelizeorm-核心技术选型与深度对比)
-- [2.5 Prisma 事务 (Transaction)、并发锁 (Lock) 与自动审计日志 (Audit Log) 实现规格](#25-prisma-事务-transaction并发锁-lock-与自动审计日志-audit-log-实现规格)
+  - [2.5 Prisma 事务 (Transaction)、并发锁 (Lock) 与自动审计日志 (Audit Log) 实现规格](#25-prisma-事务-transaction并发锁-lock-与自动审计日志-audit-log-实现规格)
 - [3. 完整 Monorepo 工作区目录全景](#3-完整-monorepo-工作区目录全景)
   - [3.1 POC & Phase 1 (MVP) 现有代码资产与 Monorepo 映射关系对照表](#31-poc--phase-1-mvp-现有代码资产与-monorepo-映射关系对照表)
 - [4. 各子包核心职责与协同机制](#4-各子包核心职责与协同机制)
@@ -41,9 +41,10 @@
   - [5.4 消息队列强类型契约原型 (`packages/dsl/src/jobs.ts`)](#54-消息队列强类型契约原型-packagesdslsrcjobsts)
   - [5.5 纯粹数据层包声明 (`packages/database/package.json`)](#55-纯粹数据层包声明-packagesdatabasepackagejson)
   - [5.6 `tsconfig.base.json` 跨包复合类型引用](#56-tsconfigbasejson-跨包复合类型引用)
+  - [5.7 现代 ESM 子路径导出标准 (`packages/player/package.json`)](#57-现代-esm-子路径导出标准-packagesplayerpackagejson)
   - [5.8 NestJS 服务端子包声明 (`apps/api/package.json`)](#58-nestjs-服务端子包声明-appsapipackagejson)
-  - [5.9 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式](#59-nestjs-swagger--openapi-接口文档与参数强校验规范范式-api--dto-specifications)
-  - [5.10 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + React Query)](#510-前后端全链路类型安全自动化-openapi-客户端-sdk-生成-orval--react-query)
+  - [5.9 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式 (API & DTO Specifications)](#59-nestjs-swagger--openapi-接口文档与参数强校验规范范式-api--dto-specifications)
+  - [5.10 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + TanStack React Query)](#510-前后端全链路类型安全自动化-openapi-客户端-sdk-生成-orval--tanstack-react-query)
 - [6. 开发与构建工作流 (Development Workflow)](#6-开发与构建工作流-development-workflow)
 - [7. 平滑无痛迁移实施路线图 (Migration Checklist)](#7-平滑无痛迁移实施路线图-migration-checklist)
 
@@ -668,7 +669,7 @@ export interface RenderJobProgressEvent {
 
 ---
 
-### 5.4 `tsconfig.base.json` 跨包复合类型引用
+### 5.6 `tsconfig.base.json` 跨包复合类型引用
 ```json
 {
   "compilerOptions": {
@@ -688,7 +689,7 @@ export interface RenderJobProgressEvent {
 
 ---
 
-### 5.5 现代 ESM 子路径导出标准 (`packages/player/package.json`)
+### 5.7 现代 ESM 子路径导出标准 (`packages/player/package.json`)
 ```json
 {
   "name": "@focusflow/player",
