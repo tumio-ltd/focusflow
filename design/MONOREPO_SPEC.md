@@ -548,8 +548,64 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 
 ### 4.2 `apps/studio` (上层可视化创作工作台)
 * **职责**：面向创作者的现代化 Web 工作台，负责底图拖拽建项目、无限画布平移缩放、镜头取景器、时间轴拖拽排序、一键导出；
-* **依赖**：通过 `"@focusflow/player": "workspace:*"` 引入播放器内核，在画布中央实时挂载 Player 实例；
-* **技术栈**：React 19 + TypeScript + Vite 8 + Tailwind CSS + shadcn/ui + Zustand。
+* **依赖机制**：通过 `"@focusflow/player": "workspace:*"` 引入播放器内核，在画布中央实时挂载 Player 实例；
+* **核心技术栈与 8 大功能域必要库包选型清单**：
+
+| 功能领域 | 核心规划软件库 | 作用与实现业务功能 |
+| :--- | :--- | :--- |
+| **1. UI 组件与设计系统** | `shadcn/ui` + `@radix-ui/*` + `TailwindCSS` | 暗黑科技风三栏工作台布局、属性调节滑块 (`Slider`)、导出下拉菜单 (`DropdownMenu`)、模态弹窗 (`Dialog`) |
+| **2. 全局状态与撤销/重做** | `zustand` (v5) + `zundo` | 毫秒级 DSL 响应式状态树、无限步 `Ctrl/⌘ + Z` 历史时间旅行 (Undo/Redo) 撤销重做栈 |
+| **3. 场景时间轴拖拽编排** | `@dnd-kit/core` + `@dnd-kit/sortable` | 底部水平时间轴轨道上场景卡片的流畅拖拽重排与顺序重组 |
+| **4. 无限画布手势与交互** | `@use-gesture/react` + `lucide-react` | 鼠标滚轮中心缩放 (Zoom-to-cursor)、抓手平移手势 (Pan/Drag) 与全套极简暗黑矢量图标库 |
+| **5. 服务端请求与 SDK** | `@tanstack/react-query` (v5) + `orval` | 自动化生成的强类型 API Client Hooks、数据缓存、网络重试与右侧面板属性修改的乐观更新 |
+| **6. 纯前端离线压缩打包** | `jszip` | 纯前端在浏览器内存中直接将底图、覆盖图与 `config.json` 压缩打包为 `.zip` 离线工程包 |
+| **7. 优雅用户反馈与通知** | `sonner` | 高颜值毛玻璃悬浮通知 (如 `✨ 智能像素贴合完成`、`🚀 单文件 HTML 导出成功`、`🔗 短链已复制`) |
+| **8. 底层内核与领域契约** | `@focusflow/player` + `@focusflow/dsl` | 画布中央 60fps 实时渲染播放视口与共享 TypeScript DSL 语法树类型契约 |
+
+#### `apps/studio/package.json` 完整配置蓝图
+```json
+{
+  "name": "@focusflow/studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@focusflow/player": "workspace:*",
+    "@focusflow/dsl": "workspace:*",
+    "@tanstack/react-query": "^5.50.0",
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-slider": "^1.2.0",
+    "@radix-ui/react-tooltip": "^1.1.2",
+    "@radix-ui/react-popover": "^1.1.1",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@use-gesture/react": "^10.3.1",
+    "zustand": "^5.0.0",
+    "zundo": "^2.1.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.0",
+    "lucide-react": "^0.400.0",
+    "sonner": "^1.5.0",
+    "jszip": "^3.10.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@focusflow/config-typescript": "workspace:*",
+    "@focusflow/config-oxlint": "workspace:*",
+    "@focusflow/config-tailwind": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/jszip": "^3.4.1",
+    "orval": "^7.0.0",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0",
+    "vite": "^8.2.0"
+  }
+}
+```
 
 ### 4.3 `packages/dsl` (统一领域契约包：DSL Schema + 消息队列 Job Contracts)
 * **职责**：
