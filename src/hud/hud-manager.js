@@ -13,6 +13,11 @@ export class HUDManager {
     this.isActive = false;
     this.lastBox = null;
 
+    // Detect OS platform
+    this.isMac = typeof navigator !== 'undefined' && (/Mac|iPod|iPhone|iPad/.test(navigator.platform || '') || /Macintosh|Mac OS X/.test(navigator.userAgent || ''));
+    this.altKeyLabel = this.isMac ? 'Option' : 'Alt';
+    this.shortcutKeyLabel = this.isMac ? '⌘+Shift+D' : 'Ctrl+Shift+D';
+
     this.boxPicker = new BoxPicker(this);
     this.edgeSnapper = new EdgeSnapper(this);
     this.cameraCapturer = new CameraCapturer(this);
@@ -21,6 +26,8 @@ export class HUDManager {
     this.onPanStart = this.onPanStart.bind(this);
     this.onPanMove = this.onPanMove.bind(this);
     this.onPanEnd = this.onPanEnd.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
+    this.onKeyUp = this.onKeyUp.bind(this);
     this.isPanning = false;
 
     this.createHUDDOM();
@@ -38,7 +45,7 @@ export class HUDManager {
       <div class="ff-hud-panel">
         <div class="ff-hud-header">
           <span>🎯 FocusFlow 标定助手</span>
-          <span style="font-size:10px; color:#94a3b8;">ESC 退出</span>
+          <span style="font-size:10px; color:#94a3b8;">ESC 退出 (${this.shortcutKeyLabel})</span>
         </div>
         <div class="ff-hud-coords" style="display:flex; flex-direction:column; gap:2px;">
           <div>📐 像素: <span id="_ff_hud_pixel_val" style="color:#38bdf8;">X: 0, Y: 0</span></div>
@@ -46,7 +53,7 @@ export class HUDManager {
         </div>
         <div style="font-size:11px; color:#94a3b8; line-height:1.4;">
           • 滚轮：微调缩放 / Shift+拖拽：平移<br/>
-          • 鼠标拖拽：拉框 / Alt+单击：吸附
+          • 鼠标拖拽：拉框 / ${this.altKeyLabel}+单击：吸附
         </div>
         <div class="ff-hud-actions" style="display:flex; flex-wrap:wrap; gap:6px;">
           <button class="ff-hud-btn" id="_ff_btn_copy_box" title="复制矩形选框 JSON">🔲 复制选框</button>
@@ -92,9 +99,28 @@ export class HUDManager {
     this.showToast(`🔍 缩放: ${nextZoom.toFixed(2)}x [X: ${current.x}%, Y: ${current.y}%]`);
   }
 
+  onKeyDown(e) {
+    if (e.key === 'Shift') {
+      if (!this.boxPicker.isDrawing) {
+        this.overlayEl.classList.add('is-panning-ready');
+      }
+    }
+  }
+
+  onKeyUp(e) {
+    if (e.key === 'Shift') {
+      this.overlayEl.classList.remove('is-panning-ready');
+      if (!this.isPanning) {
+        this.overlayEl.classList.remove('is-panning');
+      }
+    }
+  }
+
   onPanStart(e) {
     if (!e.shiftKey && e.button !== 1 && e.button !== 2) return;
     this.isPanning = true;
+    this.overlayEl.classList.add('is-panning');
+    this.overlayEl.classList.remove('is-panning-ready');
     this.panStartX = e.clientX;
     this.panStartY = e.clientY;
     this.cameraStart = this.player.camera.getCurrentCamera();
@@ -115,9 +141,13 @@ export class HUDManager {
     this.player.camera.apply({ zoom: this.cameraStart.zoom, x: nextX, y: nextY, duration: 0 }, false);
   }
 
-  onPanEnd() {
+  onPanEnd(e) {
     if (this.isPanning) {
       this.isPanning = false;
+      this.overlayEl.classList.remove('is-panning');
+      if (e && e.shiftKey) {
+        this.overlayEl.classList.add('is-panning-ready');
+      }
       const current = this.player.camera.getCurrentCamera();
       this.showToast(`📷 视口平移: [X: ${current.x}%, Y: ${current.y}%]`);
     }
@@ -138,16 +168,20 @@ export class HUDManager {
     this.overlayEl.addEventListener('mousedown', this.onPanStart);
     window.addEventListener('mousemove', this.onPanMove);
     window.addEventListener('mouseup', this.onPanEnd);
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
 
     this.boxPicker.attach(this.overlayEl);
     this.edgeSnapper.attach(this.overlayEl);
-    this.showToast('🎯 开发者标定模式已激活 (Ctrl+Shift+D 切换)');
+    this.showToast(`🎯 开发者标定模式已激活 (${this.shortcutKeyLabel} 切换)`);
   }
 
   deactivate() {
     this.isActive = false;
     this.overlayEl.style.display = 'none';
     this.overlayEl.classList.remove('active');
+    this.overlayEl.classList.remove('is-panning-ready');
+    this.overlayEl.classList.remove('is-panning');
 
     if (this.player.hudToggleBtnEl) {
       this.player.hudToggleBtnEl.classList.remove('active');
@@ -158,6 +192,9 @@ export class HUDManager {
     this.overlayEl.removeEventListener('wheel', this.onWheel);
     this.overlayEl.removeEventListener('mousedown', this.onPanStart);
     window.removeEventListener('mousemove', this.onPanMove);
+    window.removeEventListener('mouseup', this.onPanEnd);
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('mouseup', this.onPanEnd);
 
     this.boxPicker.detach();

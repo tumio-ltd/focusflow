@@ -449,6 +449,22 @@
   cursor: crosshair;
 }
 
+/* Shift pressed / Panning Grab Hand cursor */
+.ff-hud-overlay.active.is-panning-ready {
+  cursor: grab !important;
+}
+
+.ff-hud-overlay.active.is-panning {
+  cursor: grabbing !important;
+}
+
+.ff-hud-overlay.active.is-panning-ready .ff-crosshair-line-x,
+.ff-hud-overlay.active.is-panning-ready .ff-crosshair-line-y,
+.ff-hud-overlay.active.is-panning .ff-crosshair-line-x,
+.ff-hud-overlay.active.is-panning .ff-crosshair-line-y {
+  display: none;
+}
+
 .ff-crosshair-line-x,
 .ff-crosshair-line-y {
   position: absolute;

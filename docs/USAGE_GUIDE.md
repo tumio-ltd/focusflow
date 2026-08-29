@@ -82,62 +82,57 @@ node scripts/build-standalone.js examples/luxehms dist/luxehms-standalone.html
 
 ---
 
-## 2. 新项目制作标准化工作流 (3 步流)
+## 2. 新项目制作标准化工作流 (3 步极速流)
 
-如果你想为团队的一张新架构图制作交互式演示，只需以下 3 步：
+如果你想为团队的一张新架构图制作交互式演示，推荐以下标准化工作流：
 
 ```
-+-----------------------------------------------------------------------------------+
-|                        FocusFlow 新架构图制作 3 步工作流                            |
-|                                                                                   |
-|  [ Step 1: 放置底图 ]  --->  [ Step 2: 编写 config.json ]  --->  [ Step 3: 初始化播放器 ]|
-|  (PNG / SVG / 4K 大图)       (用 HUD 标定选框与镜头)              (页面即可丝滑展示)     |
-+-----------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+|                              FocusFlow 新项目 3 步标准化工作流                           |
+|                                                                                         |
+|  [ Step 1: 脚手架一键初始化 ] ──> [ Step 2: 浏览器可视化标定 ] ──> [ Step 3: 一键离线打包导出 ] |
+|   (pnpm create:project)            (拉框 / 吸附 / 气泡 / 镜头)          (pnpm build:standalone)  |
++-----------------------------------------------------------------------------------------+
 ```
 
-### Step 1：放置图片资源
-将你的架构图复制到目标示例目录（如 `examples/my-project/my_architecture.png`）。
+### Step 1：脚手架一键生成工程与初始配置（推荐）
+在终端中执行一条命令，自动创建项目目录、复制图片、自动探测图片实际分辨率，并生成开箱即用的初始 `config.json` 与 `index.html`：
 
-### Step 2：创建配置文件 `config.json`
-```json
-{
-  "$schema": "https://focusflow.io/schema/v1.json",
-  "meta": {
-    "title": "My Service Architecture",
-    "viewport": { "width": 5120, "height": 2880 }
-  },
-  "asset": {
-    "url": "./my_architecture.png"
-  },
-  "elements": { "boxes": [], "paths": [] },
-  "scenes": [
-    {
-      "id": "scene-0",
-      "title": "全局总览",
-      "camera": { "zoom": 1.0, "x": 0, "y": 0 },
-      "activeElements": { "boxes": [], "paths": [], "callouts": [] }
-    }
-  ]
-}
+```bash
+# 语法：pnpm create:project <项目名> [底图文件路径]
+pnpm create:project order-system ./my_order_arch.png
+
+# 或无图直接生成占位模板：
+pnpm create:project payments-flow
 ```
 
-### Step 3：在 HTML 中初始化播放器
-```html
-<div id="app"></div>
-<script type="module">
-  import { FocusFlowPlayer } from '../../src/index.js';
+* 脚本会自动在 `examples/order-system/` 下生成：
+  1. `config.json`（带有标准的 `$schema`、视口宽高、深色主题、初始 3 个场景模板）；
+  2. `index.html`（标准播放器挂载脚本）；
+  3. `README.md`（项目专属调试与打包指南）。
 
-  fetch('./config.json')
-    .then(res => res.json())
-    .then(dsl => {
-      new FocusFlowPlayer({
-        container: '#app',
-        dsl: dsl,
-        basePath: './'
-      });
-    });
-</script>
+---
+
+### Step 2：浏览器内可视化标定并回填
+
+1. 启动本地开发服务：`pnpm dev`；
+2. 浏览器打开该页面，按快捷键 **`⌘+Shift+D` (macOS)** 或 **`Ctrl+Shift+D` (Windows)** 唤出标定助手：
+   * **Shift + 拖拽**：光标自动变为抓手（Grab Hand），自由拖动画布对齐取景；
+   * **滚轮**：微调缩放比例；
+   * **鼠标拖拽**：拉取矩形高亮选框；
+   * **Option + 单击 (macOS) / Alt + 单击 (Windows)**：智能边缘像素吸附；
+   * **点击“💬 复制气泡” / “📷 捕获镜头”**：一键将 DSL 片段复制到剪贴板，粘贴回 `config.json` 的对应场景即可。
+
+---
+
+### Step 3：一键打包为零依赖单文件 HTML
+
+演示制作完成后，执行独立打包命令：
+
+```bash
+node scripts/build-standalone.js examples/order-system
 ```
+即可获得 `examples/order-system/standalone.html` 与 `dist/order-system-standalone.html`，无需 Node 环境、双击直接在任意离线浏览器中全屏满帧演示！
 
 ---
 
@@ -656,14 +651,16 @@ node scripts/build-standalone.js examples/luxehms dist/luxehms-standalone.html
 
 ### 7.1 全局快捷键速查表
 
-| 按键 | 功能 | 说明 |
+| 按键 (macOS / Windows) | 功能 | 说明 |
 | :--- | :--- | :--- |
 | **`→` / `Space`** | 下一个场景 | 平滑运镜过渡到下个步骤 |
 | **`←`** | 上一个场景 | 返回上一步骤 |
 | **`P`** | 自动轮播切换 | 开始 / 暂停定时自动循环播放 |
 | **`Home`** | 跳转到首页 | 瞬间或平滑回到第 1 个总览场景 |
 | **`End`** | 跳转到末页 | 快速进入最后总结场景 |
-| **`Ctrl + Shift + D`** | 唤起/关闭标定助手 | 开发者取坐标、调镜头、抓取选框调试工具 |
+| **`⌘ + Shift + D` / `Ctrl + Shift + D`** | 唤起/关闭标定助手 | 开发者取坐标、调镜头、抓取选框调试工具 |
+| **`Shift + 拖拽`** | 视口画布平移 | 光标自动变抓手 (Grab Hand)，平移画布对齐取景 |
+| **`Option + 单击` / `Alt + 单击`** | 智能边缘像素吸附 | 50ms 自动探测并选中卡片边界包围盒 |
 | **`ESC`** | 关闭标定助手 | 退出调试状态，回到纯净演示模式 |
 
 ---

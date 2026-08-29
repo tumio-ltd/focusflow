@@ -148,10 +148,10 @@ export class FocusFlowPlayer {
           </div>
           <div class="ff-step-tabs" id="_ff_tabs"></div>
           <div class="ff-controls-divider"></div>
-          <button class="ff-hud-toggle-btn" id="_ff_hud_toggle_btn" title="点击打开/关闭标定助手 (快捷键: Ctrl+Shift+D / ⌘+Shift+D)">
+          <button class="ff-hud-toggle-btn" id="_ff_hud_toggle_btn" title="点击打开/关闭标定助手 (快捷键: ${typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad|Macintosh/.test(navigator.userAgent || navigator.platform || '') ? '⌘+Shift+D' : 'Ctrl+Shift+D'})">
             <span class="ff-btn-icon">🎯</span>
             <span class="ff-btn-text">标定助手</span>
-            <span class="ff-shortcut-badge">Ctrl+Shift+D</span>
+            <span class="ff-shortcut-badge">${typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad|Macintosh/.test(navigator.userAgent || navigator.platform || '') ? '⌘+Shift+D' : 'Ctrl+Shift+D'}</span>
           </button>
         </div>
       </div>

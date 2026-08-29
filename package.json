@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "create:project": "node scripts/create-project.js",
     "build:standalone": "node scripts/build-standalone.js",
     "preview": "vite preview"
   },
