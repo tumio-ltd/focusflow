@@ -193,9 +193,13 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 ├── 📐 design/                                 # PRD、架构与研发规格体系 (PRODUCT_DESIGN.md, MONOREPO_SPEC.md, STUDIO_SPEC.md)
 │
 ├── 📦 legacy/                                 # 🏛️ 【历史版本物理备份库】(Historical Archives)
-│   └── phase1-mvp/                            # Phase 1 MVP 完整源码与示例独立快照备份 (只读封存)
-│       ├── src/                               # 初始纯单体运行时代码
-│       ├── examples/                          # 初始示例工程
+│   ├── phase0-poc/                            # 🧪 Phase 0 POC 概念验证极简原型快照 (只读封存)
+│   │   ├── src/                               # 早期概念验证原型代码 (画布平移/缩放与基础连线)
+│   │   ├── index.html                         # 早期 POC 验证页面
+│   │   └── README.md
+│   └── phase1-mvp/                            # 🚀 Phase 1 MVP 完整源码与示例独立快照备份 (只读封存)
+│       ├── src/                               # 纯单体运行时完整源码 (core/, motion/, hud/, styles/)
+│       ├── examples/                          # 示例工程 (luxehms, overlay-demo, simple-demo)
 │       ├── scripts/                           # 初始打包脚本
 │       ├── index.html
 │       └── package.json
@@ -216,7 +220,8 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 
 | 现有 MVP / POC 目录与文件 | 改造后归宿位置 | 处理策略与角色定位 |
 | :--- | :--- | :--- |
-| **`legacy/phase1-mvp/`** | **`legacy/phase1-mvp/`** | **【🏛️ 历史物理镜像完整封存】**：将当前阶段的完整单体工程（`src/`、`examples/`、`scripts/`、`package.json`）完整复制至此，独立封存，随时可双开对照或一键启动运行。 |
+| **POC 早期验证原型** | **`legacy/phase0-poc/`** | **【🧪 POC 概念原型镜像封存】**：将早期探索验证镜头缩放与路径流光的 POC 原型独立归档，保留项目的技术探索原貌。 |
+| **MVP 完整单体工程** | **`legacy/phase1-mvp/`** | **【🏛️ MVP 完整单体镜像封存】**：将 Phase 1 收官阶段的完整单体工程（`src/`、`examples/`、`scripts/`、`package.json`）完整复制至此，独立封存，随时可双开对照或一键启动运行。 |
 | **`src/`** (core/, motion/, hud/, styles/) | **`packages/player/src/`** | **【100% 完整平移保留 · 核心基石】**：MVP 沉淀的 60fps GPU 镜头运动学、贝塞尔流光、气泡动效、Sobel 智能吸附与标定 HUD，完整平移为底层独立运行时内核（`@focusflow/player`）。 |
 | **`src/types/dsl.d.ts`** | **`packages/dsl/src/schema.ts`** | **【提取与类型增强 · 领域契约】**：将原 TypeScript 类型定义提取为共享契约包，供 Player、Studio、API 三方共同引用。 |
 | **`examples/luxehms/`** | **`examples/luxehms/`** | **【原地保留 · 黄金测试用例】**：作为官方 4K 复杂架构图黄金基准工程（Golden Regression Testbed）与演示模板。 |
