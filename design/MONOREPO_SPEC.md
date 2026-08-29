@@ -135,11 +135,47 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   │   ├── tsconfig.json                      # 继承根目录 tsconfig.base.json
 │   │   └── vite.config.ts                     # Vite 8 配置文件 (端口: 5174)
 │   │
-│   └── 🚀 api/                                # 【Phase 3】NestJS 全栈后端与云端服务
-│       ├── src/                               # NestJS 源码 (Controllers, Services, Prisma)
-│       │   ├── modules/                       # 项目管理、资产托管、视频转码模块
-│       │   └── main.ts                        # 启动入口 (端口: 3000)
-│       ├── prisma/schema.prisma               # PostgreSQL 18 数据模型
+│   └── 🚀 api/                                # 【Phase 2/3】NestJS 企业级全栈后端与云端服务
+│       ├── src/                               # NestJS 后端源码 (TypeScript)
+│       │   ├── modules/                       # 核心业务模块划分
+│       │   │   ├── projects/                  # 📦 项目管理模块 (CRUD, Viewport, DSL 状态同步)
+│       │   │   │   ├── dto/                   # CreateProjectDto, UpdateProjectDto (带 class-validator & Swagger)
+│       │   │   │   ├── projects.controller.ts # 端点配置 @ApiTags, @ApiOperation, @ApiResponse
+│       │   │   │   ├── projects.service.ts    # 业务逻辑与版本快照生成
+│       │   │   │   └── projects.module.ts
+│       │   │   ├── assets/                    # 🖼️ 静态资产与大图托管模块 (S3/OSS/本地存储)
+│       │   │   │   ├── dto/                   # UploadAssetDto, AssetResponseDto
+│       │   │   │   ├── assets.controller.ts   # 文件流直传与 CDN 代理
+│       │   │   │   ├── assets.service.ts      # 图片尺寸自动侦测与元数据落库
+│       │   │   │   └── assets.module.ts
+│       │   │   ├── exporter/                  # 📦 独立单文件 HTML 无状态编译与下载模块
+│       │   │   │   ├── exporter.controller.ts # GET /api/projects/:id/export/html 流式下载
+│       │   │   │   ├── exporter.service.ts    # 服务端 Base64 编译打包流水线
+│       │   │   │   └── exporter.module.ts
+│       │   │   ├── render/                    # 🎥 4K 60fps 视频/GIF 转码与 Remotion 调度模块
+│       │   │   │   ├── dto/                   # CreateRenderJobDto, RenderTaskStatusDto
+│       │   │   │   ├── render.controller.ts   # 异步转码任务提交与轮询
+│       │   │   │   ├── render.service.ts      # Headless Chrome 逐帧步进与 FFmpeg 合成
+│       │   │   │   └── render.module.ts
+│       │   │   └── share/                     # 🌐 云端只读短链与 iframe 嵌入分发模块
+│       │   │       ├── share.controller.ts    # GET /s/:slug 只读演示路由
+│       │   │       ├── share.service.ts       # 短链解析与 CSP 安全响应头
+│       │   │       └── share.module.ts
+│       │   ├── common/                        # 通用基础设施与全局切片
+│       │   │   ├── filters/                   # 全局 HTTP 异常捕获 (HttpExceptionFilter)
+│       │   │   ├── interceptors/              # 统一响应封装 (TransformInterceptor) 与性能日志
+│       │   │   └── pipes/                     # ValidationPipe 统一参数强校验
+│       │   ├── config/                        # 环境变量配置 (S3, DB, Port)
+│       │   ├── prisma/                        # PrismaService 数据库生命周期管理
+│       │   ├── app.module.ts                  # 全局根模块
+│       │   └── main.ts                        # 启动入口 (集成 Swagger DocumentBuilder, CORS)
+│       ├── prisma/                            # 数据库模型与迁移
+│       │   ├── schema.prisma                  # PostgreSQL 18 数据模型 (Project, ProjectVersion, Asset)
+│       │   └── migrations/                    # 数据库迁移历史
+│       ├── test/                              # 自动化测试套件
+│       │   ├── app.e2e-spec.ts                # 端到端测试 (测试逻辑抽取为独立 async helper 函数)
+│       │   └── jest-e2e.json
+│       ├── nest-cli.json                      # NestJS 官方 CLI 配置
 │       ├── package.json                       # 声明依赖 "@focusflow/dsl": "workspace:*"
 │       └── tsconfig.json
 │
@@ -205,6 +241,10 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 
 ### 4.4 `apps/api` (NestJS 全栈后端与云端转码服务)
 * **职责**：提供企业级 RESTful API、PostgreSQL 18 项目持久化、S3 资产直传、只读短链路由以及基于 Remotion / Puppeteer 的 4K 60fps 视频异步转码集群；
+* **核心规范**：
+  * **Swagger 文档全覆盖**：所有 Controller 端点严格配置 `@ApiTags`, `@ApiOperation`, `@ApiResponse`；
+  * **强类型参数校验**：所有入参 DTO 严格配置 `class-validator` 装饰器（如 `@IsNotEmpty()`, `@IsString()`, `@IsUUID()`）；
+  * **规范化自动化测试**：e2e 测试套件逻辑均提取为独立 async 函数，由 `it()` 块调用执行；
 * **依赖**：直接引入 `"@focusflow/dsl": "workspace:*"`，前后端共用同一套数据契约与 DTO 校验。
 
 ---
