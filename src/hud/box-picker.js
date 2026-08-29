@@ -1,6 +1,8 @@
 /**
- * FocusFlow Box Picker (Mode 1)
- * Handles drag-to-box on canvas and reverse-projects screen coordinates to logical 5120x2880 canvas coordinates
+ * FocusFlow Box Picker (Mode 1 & Mode 4)
+ * Handles drag-to-box on canvas and reverse-projects screen coordinates to logical canvas coordinates.
+ * Features "Smart Snap on Drag" (Auto-Refine): on mouseup, automatically executes narrow-band Sobel
+ * gradient refinement within ±24px to magnetically snap the bounding box onto the card's exact physical borders.
  */
 
 export class BoxPicker {
@@ -64,7 +66,7 @@ export class BoxPicker {
   }
 
   onMouseDown(e) {
-    // If Alt key is pressed, let EdgeSnapper handle it
+    // If Option / Alt key is pressed, let EdgeSnapper handle it
     if (e.altKey) return;
     if (e.button !== 0) return; // Left mouse button only
 
@@ -95,17 +97,168 @@ export class BoxPicker {
     this.tempRectEl.setAttribute('width', w);
     this.tempRectEl.setAttribute('height', h);
 
-    this.currentBox = { id: `box-${Date.now()}`, type: 'rect', x, y, width: w, height: h, rx: 16 };
+    this.currentBox = { id: `box-${Date.now().toString().slice(-6)}`, type: 'rect', x, y, width: w, height: h, rx: 16 };
   }
 
   onMouseUp(e) {
     if (!this.isDragging) return;
     this.isDragging = false;
 
-    if (this.currentBox && this.currentBox.width > 20 && this.currentBox.height > 20) {
-      this.hud.setLastBox(this.currentBox);
-      this.hud.showToast(`✅ 选框已生成: ${this.currentBox.width}×${this.currentBox.height}`);
+    if (this.currentBox && this.currentBox.width > 24 && this.currentBox.height > 20) {
+      // Execute Smart Snap on Drag (Narrow-Band Sobel Auto-Refinement)
+      const refinedBox = this.autoRefineBox(this.currentBox);
+      const isRefined = refinedBox && (refinedBox.x !== this.currentBox.x || refinedBox.y !== this.currentBox.y || refinedBox.width !== this.currentBox.width || refinedBox.height !== this.currentBox.height);
+
+      const finalBox = refinedBox || this.currentBox;
+      this.currentBox = finalBox;
+
+      // Update visually on canvas
+      if (this.tempRectEl) {
+        this.tempRectEl.setAttribute('x', finalBox.x);
+        this.tempRectEl.setAttribute('y', finalBox.y);
+        this.tempRectEl.setAttribute('width', finalBox.width);
+        this.tempRectEl.setAttribute('height', finalBox.height);
+      }
+
+      this.hud.setLastBox(finalBox);
+
+      if (isRefined) {
+        this.hud.showToast(`✨ 智能像素贴合: [${finalBox.x}, ${finalBox.y}, ${finalBox.width}×${finalBox.height}] (已自动咬合边缘)`);
+      } else {
+        this.hud.showToast(`✅ 选框已就绪: [${finalBox.x}, ${finalBox.y}, ${finalBox.width}×${finalBox.height}]`);
+      }
     }
+  }
+
+  /**
+   * Smart Snap on Drag: Narrow-Band Sobel Auto-Refinement Algorithm
+   * Refines each of the 4 borders (Left, Right, Top, Bottom) within ±24px of the user's rough drag
+   * by finding the local maximum gradient energy line.
+   */
+  autoRefineBox(rawBox, searchRadius = 24) {
+    if (!this.hud.edgeSnapper) return null;
+    this.hud.edgeSnapper.prepareCanvas();
+    const data = this.hud.edgeSnapper.imgData;
+    if (!data) return null;
+
+    const W = this.player.viewportWidth;
+    const H = this.player.viewportHeight;
+
+    const rawX1 = rawBox.x;
+    const rawX2 = rawBox.x + rawBox.width;
+    const rawY1 = rawBox.y;
+    const rawY2 = rawBox.y + rawBox.height;
+
+    // Helper: fast grayscale calculation (0-255)
+    const getLuma = (x, y) => {
+      const px = Math.max(0, Math.min(W - 1, x));
+      const py = Math.max(0, Math.min(H - 1, y));
+      const idx = (py * W + px) * 4;
+      return (data[idx] * 299 + data[idx + 1] * 587 + data[idx + 2] * 114) / 1000;
+    };
+
+    // Helper: vertical Sobel derivative |Gx|
+    const getSobelGx = (x, y) => {
+      return Math.abs(
+        (getLuma(x + 1, y - 1) + 2 * getLuma(x + 1, y) + getLuma(x + 1, y + 1)) -
+        (getLuma(x - 1, y - 1) + 2 * getLuma(x - 1, y) + getLuma(x - 1, y + 1))
+      );
+    };
+
+    // Helper: horizontal Sobel derivative |Gy|
+    const getSobelGy = (x, y) => {
+      return Math.abs(
+        (getLuma(x - 1, y + 1) + 2 * getLuma(x, y + 1) + getLuma(x + 1, y + 1)) -
+        (getLuma(x - 1, y - 1) + 2 * getLuma(x, y - 1) + getLuma(x + 1, y - 1))
+      );
+    };
+
+    // Skip corner radius buffer (8px)
+    const yStart = Math.min(rawY1 + 10, rawY2 - 5);
+    const yEnd = Math.max(rawY1 + 5, rawY2 - 10);
+    const xStart = Math.min(rawX1 + 10, rawX2 - 5);
+    const xEnd = Math.max(rawX1 + 5, rawX2 - 10);
+
+    // 1. Refine Left Border (x1)
+    let bestLeftX = rawX1;
+    let maxLeftEnergy = 0;
+    for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+      const curX = rawX1 + dx;
+      if (curX < 2 || curX >= rawX2 - 20) continue;
+      let energy = 0;
+      for (let y = yStart; y <= yEnd; y += 4) {
+        energy += getSobelGx(curX, y);
+      }
+      if (energy > maxLeftEnergy) {
+        maxLeftEnergy = energy;
+        bestLeftX = curX;
+      }
+    }
+
+    // 2. Refine Right Border (x2)
+    let bestRightX = rawX2;
+    let maxRightEnergy = 0;
+    for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+      const curX = rawX2 + dx;
+      if (curX <= bestLeftX + 20 || curX >= W - 2) continue;
+      let energy = 0;
+      for (let y = yStart; y <= yEnd; y += 4) {
+        energy += getSobelGx(curX, y);
+      }
+      if (energy > maxRightEnergy) {
+        maxRightEnergy = energy;
+        bestRightX = curX;
+      }
+    }
+
+    // 3. Refine Top Border (y1)
+    let bestTopY = rawY1;
+    let maxTopEnergy = 0;
+    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+      const curY = rawY1 + dy;
+      if (curY < 2 || curY >= rawY2 - 15) continue;
+      let energy = 0;
+      for (let x = xStart; x <= xEnd; x += 4) {
+        energy += getSobelGy(x, curY);
+      }
+      if (energy > maxTopEnergy) {
+        maxTopEnergy = energy;
+        bestTopY = curY;
+      }
+    }
+
+    // 4. Refine Bottom Border (y2)
+    let bestBottomY = rawY2;
+    let maxBottomEnergy = 0;
+    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+      const curY = rawY2 + dy;
+      if (curY <= bestTopY + 15 || curY >= H - 2) continue;
+      let energy = 0;
+      for (let x = xStart; x <= xEnd; x += 4) {
+        energy += getSobelGy(x, curY);
+      }
+      if (energy > maxBottomEnergy) {
+        maxBottomEnergy = energy;
+        bestBottomY = curY;
+      }
+    }
+
+    const finalW = bestRightX - bestLeftX;
+    const finalH = bestBottomY - bestTopY;
+
+    if (finalW >= 24 && finalH >= 20) {
+      return {
+        id: `box-${Date.now().toString().slice(-6)}`,
+        type: 'rect',
+        x: bestLeftX,
+        y: bestTopY,
+        width: finalW,
+        height: finalH,
+        rx: 16
+      };
+    }
+
+    return rawBox;
   }
 
   createTempRect(x, y) {
