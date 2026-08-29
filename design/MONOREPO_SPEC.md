@@ -121,8 +121,9 @@
 
 ```text
 focusflow/                                     # 🏗️ FocusFlow Monorepo 根目录
-├── 🎨 apps/                                   # 上层独立应用集合
-│   ├── 🖥️ studio/                             # 【Phase 2】React 19 可视化创作工作台
+├── 🎨 apps/                                   # 业务应用层 (Applications)
+│   │
+│   ├── 🖥️ studio/                             # 【前端 App】React 19 可视化创作工作台
 │   │   ├── public/templates/                  # 官方预置架构图模板
 │   │   ├── src/                               # Studio 前端源码 (React 19 + Tailwind + shadcn/ui)
 │   │   │   ├── components/                    # 画布、时间轴、属性面板、顶部栏组件
@@ -131,82 +132,63 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   │   │   ├── hooks/                         # 快捷键与 Auto-Refine 逻辑
 │   │   │   ├── App.tsx                        # 工作台根组件
 │   │   │   └── main.tsx                       # 入口挂载
-│   │   ├── package.json                       # 声明依赖 "@focusflow/player": "workspace:*"
-│   │   ├── tsconfig.json                      # 继承根目录 tsconfig.base.json
+│   │   ├── package.json                       # 依赖 @focusflow/player, @focusflow/dsl, @focusflow/config-*
+│   │   ├── tsconfig.json                      # 继承 @focusflow/config-typescript/base.json
 │   │   └── vite.config.ts                     # Vite 8 配置文件 (端口: 5174)
 │   │
-│   └── 🚀 api/                                # 【Phase 2/3】NestJS 企业级全栈后端与云端服务
-│       ├── src/                               # NestJS 后端源码 (TypeScript)
-│       │   ├── modules/                       # 核心业务模块划分
-│       │   │   ├── projects/                  # 📦 项目管理模块 (CRUD, Viewport, DSL 状态同步)
-│       │   │   │   ├── dto/                   # CreateProjectDto, UpdateProjectDto (带 class-validator & Swagger)
-│       │   │   │   ├── projects.controller.ts # 端点配置 @ApiTags, @ApiOperation, @ApiResponse
-│       │   │   │   ├── projects.service.ts    # 业务逻辑与版本快照生成
-│       │   │   │   └── projects.module.ts
-│       │   │   ├── assets/                    # 🖼️ 静态资产与大图托管模块 (S3/OSS/本地存储)
-│       │   │   │   ├── dto/                   # UploadAssetDto, AssetResponseDto
-│       │   │   │   ├── assets.controller.ts   # 文件流直传与 CDN 代理
-│       │   │   │   ├── assets.service.ts      # 图片尺寸自动侦测与元数据落库
-│       │   │   │   └── assets.module.ts
-│       │   │   ├── exporter/                  # 📦 独立单文件 HTML 无状态编译与下载模块
-│       │   │   │   ├── exporter.controller.ts # GET /api/projects/:id/export/html 流式下载
-│       │   │   │   ├── exporter.service.ts    # 服务端 Base64 编译打包流水线
-│       │   │   │   └── exporter.module.ts
-│       │   │   ├── render/                    # 🎥 4K 60fps 视频/GIF 转码与 Remotion 调度模块
-│       │   │   │   ├── dto/                   # CreateRenderJobDto, RenderTaskStatusDto
-│       │   │   │   ├── render.controller.ts   # 异步转码任务提交与轮询
-│       │   │   │   ├── render.service.ts      # Headless Chrome 逐帧步进与 FFmpeg 合成
-│       │   │   │   └── render.module.ts
-│       │   │   └── share/                     # 🌐 云端只读短链与 iframe 嵌入分发模块
-│       │   │       ├── share.controller.ts    # GET /s/:slug 只读演示路由
-│       │   │       ├── share.service.ts       # 短链解析与 CSP 安全响应头
-│       │   │       └── share.module.ts
-│       │   ├── common/                        # 通用基础设施与全局切片
-│       │   │   ├── filters/                   # 全局 HTTP 异常捕获 (HttpExceptionFilter)
-│       │   │   ├── interceptors/              # 统一响应封装 (TransformInterceptor) 与性能日志
-│       │   │   └── pipes/                     # ValidationPipe 统一参数强校验
-│       │   ├── config/                        # 环境变量配置 (S3, DB, Port)
-│       │   ├── prisma/                        # PrismaService 数据库生命周期管理
-│       │   ├── app.module.ts                  # 全局根模块
-│       │   └── main.ts                        # 启动入口 (集成 Swagger DocumentBuilder, CORS)
-│       ├── prisma/                            # 数据库模型与迁移
-│       │   ├── schema.prisma                  # PostgreSQL 18 数据模型 (Project, ProjectVersion, Asset)
-│       │   └── migrations/                    # 数据库迁移历史
-│       ├── test/                              # 自动化测试套件
-│       │   ├── app.e2e-spec.ts                # 端到端测试 (测试逻辑抽取为独立 async helper 函数)
-│       │   └── jest-e2e.json
-│       ├── nest-cli.json                      # NestJS 官方 CLI 配置
-│       ├── package.json                       # 声明依赖 "@focusflow/dsl": "workspace:*"
-│       └── tsconfig.json
-│
-├── 📦 packages/                               # 共享核心包与底层引擎库
-│   ├── 🚀 player/                             # 底层纯运行时播放器内核 (原 src/ 目录提取)
-│   │   ├── src/                               # 零外部依赖原生 ES 源码 (~35KB)
-│   │   │   ├── core/                          # 播放器生命周期、镜头运动学、状态机
-│   │   │   ├── motion/                        # 几何自动测长、贝塞尔流光、气泡阶梯动效
-│   │   │   ├── hud/                           # 标定助手、Sobel 吸附、Auto-Refine
-│   │   │   ├── styles/focusflow.css           # 核心样式与发光滤镜
-│   │   │   └── index.js                       # 统一导出入口
-│   │   ├── dist/                              # 打包产物 (IIFE 与 ESM)
-│   │   ├── package.json                       # 声明导出 "@focusflow/player"
+│   ├── ⚡ api/                                # 【后端 App 1】主 RESTful API 服务 (NestJS)
+│   │   ├── src/                               # I/O 密集型 API 源码
+│   │   │   ├── modules/                       # 核心业务模块划分
+│   │   │   │   ├── projects/                  # 📦 项目管理模块 (CRUD, Viewport, 版本快照)
+│   │   │   │   ├── assets/                    # 🖼️ 静态资产托管模块 (S3/OSS 直传与元数据解析)
+│   │   │   │   ├── exporter/                  # 📦 独立单文件 HTML 流式导出模块
+│   │   │   │   └── share/                     # 🌐 云端只读短链与 iframe 嵌入分发模块
+│   │   │   ├── common/                        # 异常过滤器、拦截器与 PrismaService 适配
+│   │   │   ├── app.module.ts
+│   │   │   └── main.ts                        # 启动入口 (端口: 3000, Swagger 接口文档)
+│   │   ├── test/app.e2e-spec.ts               # e2e 测试 (测试逻辑提取为独立 async 函数)
+│   │   ├── package.json                       # 依赖 @focusflow/database, @focusflow/dsl
 │   │   └── tsconfig.json
 │   │
-│   └── 📜 dsl/                                # 共享 DSL 类型与 Schema 校验包
-│       ├── src/
-│       │   ├── schema.ts                      # FocusFlow DSL TypeScript 强类型定义
-│       │   └── validator.ts                   # DSL 合法性校验器
-│       ├── package.json                       # 声明导出 "@focusflow/dsl"
+│   └── 🎥 render-worker/                      # 【后端 App 2】4K 视频转码与渲染消费者 (NestJS Worker)
+│       ├── src/                               # CPU/GPU 密集型转码源码
+│       │   ├── processors/                    # 队列消费者 (BullMQ / Redis Queue)
+│       │   │   └── video-render.processor.ts  # 消费 4K 60fps 渲染任务
+│       │   ├── engine/                        # Headless Chrome 逐帧截帧与 FFmpeg 硬件加速流水线
+│       │   ├── worker.module.ts
+│       │   └── main.ts                        # 独立后台守护进程
+│       ├── package.json                       # 依赖 @focusflow/database, @focusflow/dsl, remotion
 │       └── tsconfig.json
 │
-├── 💡 examples/                               # 官方实战演示示例库
-│   ├── luxehms/                               # LuxeHMS 4K 架构拓扑示例 (config.json + standalone.html)
-│   ├── overlay-demo/                          # 画中画动态覆盖图下钻示例
-│   └── simple-demo/                           # 极简测试用例
+├── 📦 packages/                               # 共享核心库与配置包 (Shared Packages)
+│   │
+│   ├── 🚀 player/                             # 1. 播放器渲染内核 (纯原生 JS ~35KB, 零外部框架依赖)
+│   │   ├── src/ (core/, motion/, hud/)        # 60fps GPU 镜头、SVG 贝塞尔流光、Sobel 吸附
+│   │   ├── dist/                              # IIFE 与 ESM 编译产物
+│   │   └── package.json                       # 导出 @focusflow/player
+│   │
+│   ├── 📜 dsl/                                # 2. 统一领域契约包 (DSL 语法树 + 消息队列 Job 契约)
+│   │   ├── src/
+│   │   │   ├── schema.ts                      # FocusFlow DSL TypeScript 强类型定义
+│   │   │   ├── validator.ts                   # JSON Schema 结构校验器
+│   │   │   └── jobs.ts                        # 💡 BullMQ 视频转码任务与事件强类型契约
+│   │   └── package.json                       # 导出 @focusflow/dsl
+│   │
+│   ├── 🗄️ database/                           # 3. 纯粹数据层 (PostgreSQL 18 + Prisma, 💡 零 NestJS 依赖)
+│   │   ├── prisma/
+│   │   │   ├── schema.prisma                  # 唯一的数据库模型定义 (Project, Asset, RenderJob)
+│   │   │   └── migrations/                    # 统一数据库迁移历史
+│   │   ├── src/index.ts                       # 仅导出原生 PrismaClient 与自动生成类型
+│   │   └── package.json                       # 纯 TypeScript / Prisma 依赖 (无 @nestjs/*)
+│   │
+│   ├── 🧩 ui/                                 # 4. 【预留演进】跨端共享 UI 组件库 (Radix / Tailwind)
+│   │
+│   ├── ⚙️ config-typescript/                  # 5. 【共享配置】统一 TypeScript 配置 (tsconfig.base.json)
+│   ├── ⚙️ config-eslint/                      # 6. 【共享配置】统一 ESLint 规则与 Flat Config
+│   └── ⚙️ config-tailwind/                    # 7. 【共享配置】统一 Tailwind 科技感暗黑设计 Token
 │
-├── 🛠️ scripts/                                 # CLI 自动化与打包脚本
-│   ├── build-standalone.js                    # 离线单文件 HTML 打包器
-│   └── create-project.js                      # 新项目极速脚手架
-│
+├── 💡 examples/                               # 官方实战演示示例库 (luxehms, overlay-demo, simple-demo)
+├── 🛠️ scripts/                                 # 离线单文件打包器与脚手架 CLI
 ├── 📚 docs/                                   # 创作者指南与算法技术专刊
 ├── 📐 design/                                 # PRD、架构与研发规格体系
 │
@@ -214,8 +196,6 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 ├── package.json                               # Monorepo 根配置与聚合 scripts 命令
 ├── pnpm-workspace.yaml                        # pnpm 工作区包匹配声明
 ├── turbo.json                                 # Turborepo 构建管道与缓存规则
-├── tsconfig.base.json                         # 统一 TypeScript 基础配置
-├── vite.config.js                             # 根门户预览配置 (端口: 5173)
 └── README.md
 ```
 
@@ -226,26 +206,39 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 ### 4.1 `packages/player` (底层播放器内核)
 * **职责**：纯运行时播放与动效渲染引擎，负责 60fps GPU 镜头变换、SVG 贝塞尔流线动态路由、毛玻璃气泡阶梯弹入；
 * **特性**：**100% 零大型框架依赖**，保持极致轻量化（~35KB JS，~8KB CSS）；
-* **产物**：
-  * ESM 模块供 `@focusflow/studio` 直接 import 调用；
-  * IIFE 单文件包供独立 HTML 离线内联。
+* **产物**：ESM 模块供 Studio 调用，IIFE 单文件包供独立 HTML 离线内联。
 
 ### 4.2 `apps/studio` (上层可视化创作工作台)
 * **职责**：面向创作者的现代化 Web 工作台，负责底图拖拽建项目、无限画布平移缩放、镜头取景器、时间轴拖拽排序、一键导出；
 * **依赖**：通过 `"@focusflow/player": "workspace:*"` 引入播放器内核，在画布中央实时挂载 Player 实例；
 * **技术栈**：React 19 + TypeScript + Vite 8 + Tailwind CSS + shadcn/ui + Zustand。
 
-### 4.3 `packages/dsl` (共享 DSL 类型与验证契约)
-* **职责**：维护全局唯一的 FocusFlow JSON DSL TypeScript 接口定义（`SceneStep`, `CameraConfig`, `ElementBox`, `ElementPath` 等）与 JSON Schema 校验函数；
-* **价值**：确保 Studio 生成的数据、Player 消费的数据以及 CLI 编译的数据永远保持 100% 类型一致。
+### 4.3 `packages/dsl` (统一领域契约包：DSL Schema + 消息队列 Job Contracts)
+* **职责**：
+  1. 维护全局唯一的 FocusFlow JSON DSL TypeScript 接口定义与 JSON Schema 校验函数；
+  2. 维护 `src/jobs.ts`：定义 `RenderVideoJobPayload`、`RenderJobStatusEvent` 等 BullMQ 异步任务与事件的数据结构；
+* **价值**：确保 Studio 前端、Player 内核、API 生产者与 Render Worker 消费者四方永远保持 100% 类型一致。
 
-### 4.4 `apps/api` (NestJS 全栈后端与云端转码服务)
-* **职责**：提供企业级 RESTful API、PostgreSQL 18 项目持久化、S3 资产直传、只读短链路由以及基于 Remotion / Puppeteer 的 4K 60fps 视频异步转码集群；
+### 4.4 `apps/api` (NestJS 主 RESTful API 服务)
+* **职责**：I/O 密集型核心 API，负责项目 CRUD、PostgreSQL 18 数据持久化、S3/OSS 资产直传、独立 HTML 流式下载与只读短链路由；
 * **核心规范**：
-  * **Swagger 文档全覆盖**：所有 Controller 端点严格配置 `@ApiTags`, `@ApiOperation`, `@ApiResponse`；
-  * **强类型参数校验**：所有入参 DTO 严格配置 `class-validator` 装饰器（如 `@IsNotEmpty()`, `@IsString()`, `@IsUUID()`）；
-  * **规范化自动化测试**：e2e 测试套件逻辑均提取为独立 async 函数，由 `it()` 块调用执行；
-* **依赖**：直接引入 `"@focusflow/dsl": "workspace:*"`，前后端共用同一套数据契约与 DTO 校验。
+  * **Swagger 全覆盖**：所有 Controller 端点严格配置 `@ApiTags`, `@ApiOperation`, `@ApiResponse`；
+  * **强类型参数校验**：所有入参 DTO 严格配置 `class-validator` 装饰器；
+  * **e2e 测试规范**：测试逻辑均提取为独立 async 函数，由 `it()` 块调用执行；
+* **依赖**：引入 `"@focusflow/database": "workspace:*"` 与 `"@focusflow/dsl": "workspace:*"`, 并在自身 `common/prisma/` 封装轻量 NestJS `PrismaService`。
+
+### 4.5 `apps/render-worker` (NestJS 4K 视频渲染工作节点)
+* **职责**：CPU/GPU 密集型后台服务，作为 BullMQ 队列消费者，专门负责驱动 Remotion / Puppeteer 逐帧步进截帧与 FFmpeg 4K 60fps 高清转码合成；
+* **隔离价值**：重度计算负载完全与主 API 服务物理隔离，绝不因视频转码而阻塞任何用户的在线 HTTP 请求。
+
+### 4.6 `packages/database` (纯粹数据层 · 零 NestJS 依赖)
+* **职责**：专注于 PostgreSQL 18 数据库模型维护（`schema.prisma`）与迁移，仅导出原生的 `PrismaClient` 与类型定义；
+* **解耦优势**：**100% 框架无关**，不仅供 NestJS 服务使用，还可被独立的 Node.js 迁移脚本、数据清洗脚本和 CLI 工具无痛轻量引入。
+
+### 4.7 共享配置包 (`packages/config-*`)
+* **`@focusflow/config-typescript`**：导出 `base.json`、`react.json`、`nest.json` 等统一 TS 规则；
+* **`@focusflow/config-eslint`**：导出统一的 ESLint Flat Config，杜绝代码风格分歧；
+* **`@focusflow/config-tailwind`**：导出暗黑科技感颜色 Token、毛玻璃模糊滤镜与动画预设。
 
 ---
 
@@ -296,10 +289,13 @@ packages:
     "dev": "turbo run dev",
     "dev:studio": "turbo run dev --filter=@focusflow/studio",
     "dev:api": "turbo run dev --filter=@focusflow/api",
+    "dev:worker": "turbo run dev --filter=@focusflow/render-worker",
     "dev:player": "vite",
     "build": "turbo run build",
     "build:standalone": "node scripts/build-standalone.js examples/luxehms",
     "create:project": "node scripts/create-project.js",
+    "db:migrate": "pnpm --filter=@focusflow/database prisma migrate dev",
+    "db:studio": "pnpm --filter=@focusflow/database prisma studio",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "changeset": "changeset"
@@ -311,6 +307,62 @@ packages:
     "vite": "^8.2.0"
   },
   "packageManager": "pnpm@9.0.0"
+}
+```
+
+---
+
+### 5.4 消息队列强类型契约原型 (`packages/dsl/src/jobs.ts`)
+```typescript
+/**
+ * 4K 视频渲染任务负载契约 (BullMQ Job Payload)
+ */
+export interface RenderVideoJobPayload {
+  jobId: string;
+  projectId: string;
+  dslSnapshot: any; // 提交转码时刻的完整 FocusFlow DSL 快照
+  resolution: '4K' | '2K' | '1080P';
+  fps: 30 | 60;
+  outputFormat: 'mp4' | 'gif';
+  requestedBy: string;
+  createdAt: string;
+}
+
+/**
+ * 视频转码进度与完成事件
+ */
+export interface RenderJobProgressEvent {
+  jobId: string;
+  currentFrame: number;
+  totalFrames: number;
+  progressPercent: number;
+  status: 'queued' | 'rendering_frames' | 'encoding_ffmpeg' | 'completed' | 'failed';
+  downloadUrl?: string;
+  error?: string;
+}
+```
+
+---
+
+### 5.5 纯粹数据层包声明 (`packages/database/package.json`)
+```json
+{
+  "name": "@focusflow/database",
+  "version": "1.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.18.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.18.0",
+    "typescript": "^5.5.0"
+  }
 }
 ```
 

@@ -74,10 +74,16 @@ flowchart TB
     end
 
     subgraph ModeB ["☁️ 模式 B: 云端全栈 SaaS 模式 (Full-Stack Cloud SaaS)"]
-        API["Node.js / NestJS RESTful API"]
-        DB["PostgreSQL (项目数据) + S3/OSS (底图与静态资产)"]
-        RemotionWorker["Remotion / Puppeteer 4K 60fps 视频渲染集群"]
-        CloudShare["只读演示短链 (focusflow.io/s/xxx) + <iframe> 知识库嵌入"]
+        direction TB
+        API["⚡ apps/api (NestJS 主 REST API)<br/>项目管理 / S3 上传 / HTML 导出 / 短链"]
+        Worker["🎥 apps/render-worker (NestJS Worker)<br/>BullMQ 队列 / Remotion 4K 60fps 视频转码"]
+        DB["🗄️ packages/database<br/>PostgreSQL 18 + Prisma (框架无关数据层)"]
+        Jobs["📜 packages/dsl/jobs.ts<br/>BullMQ 转码任务与进度强类型契约"]
+        CloudShare["🌐 云端只读演示短链 (focusflow.io/s/xxx) + <iframe> 知识库嵌入"]
+        
+        API -->|投递任务| Jobs -->|消费任务| Worker
+        API --> DB
+        Worker --> DB
     end
 
     StudioUI -->|本地快速模式| ModeA
@@ -293,13 +299,25 @@ focusflow-studio/
 
 ---
 
-### 5.2 服务端技术栈选型
-* **应用框架**：Node.js / NestJS (TypeScript，自带 Swagger 注解与 DTO class-validator 强校验)
-* **数据库**：**PostgreSQL 18** + Prisma ORM
-* **对象存储**：AWS S3 / 阿里云 OSS / MinIO (底图、画中画覆盖图与静态资产托管)
-* **视频转码服务**：Remotion Lambda / Puppeteer Worker + FFmpeg 硬件加速集群
+### 5.2 服务端全栈多服务架构与选型 (Multi-App Backend Architecture)
 
-### 5.3 核心数据模型 (Prisma Schema)
+为了杜绝 4K 视频转码重度消耗 CPU/GPU 导致主 Web API 卡死，服务端采用 **“主 API 服务与转码工作节点物理隔离”** 的多应用架构：
+
+1. **主 RESTful API 服务 (`apps/api`)**：
+   * **定位**：轻量 I/O 密集型服务，响应延迟 $<50\text{ms}$；
+   * **技术栈**：NestJS + Swagger 接口文档 + DTO `class-validator` 强参数校验；
+   * **职责**：项目 CRUD、PostgreSQL 18 数据持久化、S3/OSS 资产直传、独立 HTML 导出与只读短链路由。
+2. **4K 视频转码工作节点 (`apps/render-worker`)**：
+   * **定位**：重度计算密集型后台 Worker；
+   * **技术栈**：NestJS + BullMQ / Redis Queue + Remotion / Puppeteer + FFmpeg 硬件加速；
+   * **职责**：消费转码队列任务，无头浏览器逐帧截帧与视频合成，支持独立水平扩缩容。
+3. **框架无关数据层 (`packages/database`)**：
+   * **数据库**：**PostgreSQL 18** + Prisma ORM；
+   * **零 NestJS 依赖**：保持纯粹数据模型定义，仅导出原生 `PrismaClient`，可供 API、Worker 以及离线 CLI 脚本灵活调用。
+4. **消息队列强类型契约 (`packages/dsl/src/jobs.ts`)**：
+   * 在 `@focusflow/dsl` 统一维护 `RenderVideoJobPayload` 与进度事件接口，确保生产者与消费者 100% 类型一致。
+
+### 5.3 核心数据模型 (`packages/database/prisma/schema.prisma`)
 ```prisma
 model Project {
   id          String   @id @default(uuid())
