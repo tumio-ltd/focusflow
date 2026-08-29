@@ -21,8 +21,11 @@
   * [5.4 生命周期与状态机防抖](#54-模块四生命周期与状态机防抖-lifecycle--robust-state-machine)
   * [5.5 单文件 CLI 编译与打包器](#55-模块五轻量化-cli-编译与打包器-cli-bundler)
 * [6. 核心功能矩阵 (Feature Matrix)](#6-核心功能矩阵-feature-matrix)
-* [7. 标准化数据模型设计 (JSON Schema DSL)](#7-标准化数据模型设计-json-schema-dsl)
 * [8. 产品版本规划与演进路线 (Roadmap & WBS)](#8-产品版本规划与演进路线-roadmap--work-breakdown)
+  * [8.1 Phase 1: MVP 核心阶段具体待办清单](#81-phase-1-mvp-核心阶段具体待办清单-wbs--100-验收达成)
+  * [8.2 Phase 2: 可视化创作端建设](#82-phase-2-可视化创作端建设-2--4-个月)
+  * [8.3 服务端 (SaaS / Full-Stack) 演进的 4 大核心能力模块](#83-服务端-saas--full-stack-演进的-4-大核心能力模块)
+  * [8.4 Phase 3: AI 赋能与生态集成](#84-phase-3-ai-赋能与生态集成-5--8-个月)
 * [9. 总结与商业化愿景](#9-总结)
 
 ---
@@ -399,14 +402,17 @@ gantt
     状态机防抖、资源预加载与 CLI 打包器             :done, p1_eng4, 2026-08, 2026-08
     Sobel 智能吸附与粗拉框贴合 (Auto-Refine)       :done, p1_eng5, 2026-08, 2026-08
     画中画动态覆盖层与独立单文件打包器             :done, p1_eng6, 2026-08, 2026-08
-    section Phase 2 (Studio 工作台规划)
+    section Phase 2 (Studio 工作台与云端化)
     React 19 + Tailwind + shadcn/ui 编辑器框架     :p2_1, 2026-10, 2026-12
     可视化无限画布与框选取景器 (Camera Picker)     :p2_2, 2026-11, 2027-01
     可视化连线与时间轴拖拽编排                   :p2_3, 2026-12, 2027-02
+    服务端项目管理与资产托管 (API + S3)           :p2_4, 2026-12, 2027-02
+    服务端单文件 HTML 编译与下载 API              :p2_5, 2027-01, 2027-02
     section Phase 3 (生态与智能化规划)
-    AI 视觉语义解析与故事线推荐                 :p3_1, 2027-02, 2027-04
-    Remotion 4K MP4 / GIF 视频导出管线          :p3_2, 2027-03, 2027-05
-    SaaS 协作与文档站 (Docusaurus/Notion) 嵌入   :p3_3, 2027-04, 2027-07
+    Remotion 4K MP4 / GIF 视频云端渲染管线      :p3_1, 2027-02, 2027-04
+    云端只读演示短链与知识库/iframe 嵌入         :p3_2, 2027-03, 2027-05
+    AI 视觉语义解析与故事线智能推荐             :p3_3, 2027-04, 2027-06
+    SaaS 多租户协作与文档站插件集成              :p3_4, 2027-05, 2027-07
 ```
 
 ### 8.1 Phase 1: MVP 核心阶段具体待办清单 (WBS · 100% 验收达成)
@@ -426,10 +432,48 @@ gantt
 * **点对点连线生成器**：点击两个模块锚点自动生成贝塞尔曲线与流动动效。
 * **一键导出**：一键生成 Phase 1 格式的独立 HTML 文件或下载 JSON DSL。
 
-### 8.3 Phase 3: AI 赋能与生态集成 (5 ~ 8 个月)
+### 8.3 服务端 (SaaS / Full-Stack) 演进的 4 大核心能力模块
+
+要将 FocusFlow 从“本地客户端工具”升级为“企业级在线云平台/SaaS”，服务端需平滑接入以下 **4 大核心能力模块**：
+
+```
+                       【Phase 2/3 服务端系统架构全景】
+
+               ┌──────────────────────────────────────────────┐
+               │    FocusFlow Cloud (Web 在线平台 / SaaS)     │
+               └──────────────────────┬───────────────────────┘
+                                      │
+       ┌──────────────────────────────┼──────────────────────────────┐
+       ▼                              ▼                              ▼
+【1. 服务端项目管理】         【2. 服务端一键打包下载】     【3. 视频云渲染导出】
+ • REST / GraphQL API         • POST /api/export/html       • Puppeteer / Remotion
+ • 资产云存储 (S3 / OSS)      • 服务端调用 packager         • 4K 60fps MP4 渲染
+ • 数据库存储 DSL JSON        • 浏览器直接下载 .html        • 高清动态 GIF 生成
+                                      │
+                                      ▼
+                           【4. 云端免部署在线分享】
+                            • 公开只读短链 (focusflow.io/s/xxx)
+                            • 知识库/Notion/飞书 <iframe> 嵌入
+```
+
+1. **服务端项目管理与资产托管 (Project Management & Cloud Storage)**：
+   * RESTful/GraphQL API + S3/OSS 云存储 + 数据库 DSL 存储；
+   * 用户在 Web 控制台上传底图，服务端自动探测 Viewport 宽高并初始化标准 DSL；
+   * 支持多租户权限体系（Owner / Editor / Viewer）与版本历史回滚（Version History）。
+2. **服务端无状态编译与 HTML 单文件下载 API (Headless HTML Exporter)**：
+   * 将现有的 `scripts/build-standalone.js` 封装为无状态 Node.js 编译服务；
+   * 提供 `GET /api/projects/:id/export/html`，创作者点击右上角“导出 HTML”，浏览器直接弹出独立单文件下载。
+3. **服务端 4K 视频 / GIF 云端渲染管线 (Server-side Video Rendering Pipeline)**：
+   * 基于 Remotion / Puppeteer 无头浏览器驱动 `FocusFlowPlayer` 画面，实现确定性时钟逐帧步进截帧；
+   * 结合 `ffmpeg` 服务端转码合成 60fps 4K MP4 视频与高清 GIF 供一键下载。
+4. **云端免部署只读分享短链与知识库嵌入 (Cloud Hosting & Embeds)**：
+   * 生成唯一演示短链（如 `https://focusflow.io/s/luxehms-arch`），全平台免安装即开即看；
+   * 提供 `<iframe>` 嵌入代码，支持嵌入到 Notion、飞书文档、语雀、Docusaurus 等企业知识库中。
+
+### 8.4 Phase 3: AI 赋能与生态集成 (5 ~ 8 个月)
 * **AI 架构解析**：上传架构图后，视觉模型自动识别服务模块并推荐 3~5 个最佳讲解场景。
-* **视频导出渲染管线**：集成 Remotion，一键将 Web 交互演示录制为 60fps 4K MP4 视频或高清 GIF。
-* **知识库与组件嵌入**：发布 `@focusflow/player` npm 包，支持嵌入 Notion、飞书、Docusaurus、VitePress。
+* **生态组件与 SDK**：发布 `@focusflow/player` npm 包，支持 React、Vue、Svelte、Web Component 原生引入。
+* **桌面端与离线交付**：Electron / Tauri 桌面端包装，支持离线演讲模式。
 
 ---
 
