@@ -531,24 +531,28 @@
 /* Toast Notifications */
 .ff-toast {
   position: absolute;
-  top: 24px;
+  top: 72px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(-10px);
   background: rgba(15, 23, 42, 0.95);
   border: 1px solid #34d399;
   color: #34d399;
-  padding: 8px 18px;
+  padding: 8px 20px;
   border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6),
+              0 0 20px rgba(52, 211, 153, 0.25);
   opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  z-index: 150;
+  transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 2000;
   pointer-events: none;
+  backdrop-filter: blur(12px);
+  white-space: nowrap;
 }
 
 .ff-toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(10px);
+  transform: translateX(-50%) translateY(0);
 }
