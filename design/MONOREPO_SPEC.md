@@ -36,6 +36,7 @@
   - [4.6 `packages/database` (纯粹数据层 · 零 NestJS 依赖)](#46-packagesdatabase-纯粹数据层--零-nestjs-依赖)
   - [4.7 共享配置包 (`packages/config-*`)](#47-共享配置包-packagesconfig-)
   - [4.8 全局跨端 Dark / Light 双主题配色系统设计规范 (Semantic Tokens & Dual-Theme Architecture)](#48-全局跨端-dark--light-双主题配色系统设计规范-semantic-tokens--dual-theme-architecture)
+  - [4.9 全栈端到端国际化 (i18n) 架构设计规范与语言代码标准](#49-全栈端到端国际化-i18n-架构设计规范与语言代码标准)
 - [5. 核心配置文件工程标准与原型 (Configuration Blueprints)](#5-核心配置文件工程标准与原型-configuration-blueprints)
   - [5.1 `pnpm-workspace.yaml` 工作区定义](#51-pnpm-workspaceyaml-工作区定义)
   - [5.2 `turbo.json` 拓扑任务与构建缓存配置](#52-turbojson-拓扑任务与构建缓存配置)
@@ -565,10 +566,11 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 | **3. 场景时间轴拖拽编排** | `@dnd-kit/core` + `@dnd-kit/sortable` | 底部水平时间轴轨道上场景卡片的流畅拖拽重排与顺序重组 |
 | **4. 无限画布手势与交互** | `@use-gesture/react` + `lucide-react` | 鼠标滚轮中心缩放 (Zoom-to-cursor)、抓手平移手势 (Pan/Drag) 与全套极简暗黑/明亮矢量图标库 |
 | **5. 路由与深链接状态** | `@tanstack/react-router` (v1) | 100% 编译期类型安全路由导航、URL Search Params 状态双向同步与无缝恢复 |
-| **6. 服务端请求与 SDK** | `@tanstack/react-query` (v5) + `orval` | 自动化生成的强类型 API Client Hooks、数据缓存、网络重试与右侧面板属性修改的乐观更新 |
-| **7. 纯前端离线压缩打包** | `jszip` | 纯前端在浏览器内存中直接将底图、覆盖图与 `config.json` 压缩打包为 `.zip` 离线工程包 |
-| **8. 优雅用户反馈与通知** | `sonner` | 高颜值毛玻璃悬浮通知 (如 `✨ 智能像素贴合完成`、`🚀 单文件 HTML 导出成功`、`🔗 短链已复制`) |
-| **9. 底层内核与领域契约** | `@focusflow/player` + `@focusflow/dsl` | 画布中央 60fps 实时渲染播放视口与共享 TypeScript DSL 语法树类型契约 |
+| **6. 多语言国际化 (i18n)** | `i18next` + `react-i18next` | 中英双语 (zh/en) 毫秒级热切换、TS 编译期词条 Key 自动联想补全与防拼错强校验 |
+| **7. 服务端请求与 SDK** | `@tanstack/react-query` (v5) + `orval` | 自动化生成的强类型 API Client Hooks、数据缓存、网络重试与右侧面板属性修改的乐观更新 |
+| **8. 纯前端离线压缩打包** | `jszip` | 纯前端在浏览器内存中直接将底图、覆盖图与 `config.json` 压缩打包为 `.zip` 离线工程包 |
+| **9. 优雅用户反馈与通知** | `sonner` | 高颜值毛玻璃悬浮通知 (如 `✨ 智能像素贴合完成`、`🚀 单文件 HTML 导出成功`、`🔗 短链已复制`) |
+| **10. 底层内核与领域契约** | `@focusflow/player` + `@focusflow/dsl` | 画布中央 60fps 实时渲染播放视口与共享 TypeScript DSL 语法树类型契约 |
 
 #### `apps/studio/package.json` 完整配置蓝图
 ```json
@@ -594,6 +596,8 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
     "zustand": "^5.0.0",
     "zundo": "^2.1.0",
     "next-themes": "^0.3.0",
+    "i18next": "^23.12.0",
+    "react-i18next": "^15.0.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.0",
     "lucide-react": "^0.400.0",
@@ -714,6 +718,69 @@ FocusFlow 旗下所有前端应用（包括 `apps/studio`、独立导出的单�
 * FocusFlow DSL 支持显式声明 `theme: 'dark' | 'light' | 'auto'`，无论底图是白底还是黑底，HUD 气泡与流光动效均能达到最佳视觉对比度！
 
 ---
+
+### 4.9 全栈端到端国际化 (i18n) 架构设计规范与语言代码标准
+
+FocusFlow 设计了贯穿 **“Studio 创作端 + Player 内核端 + API 服务端 + 数据库存储层”** 的 4 层协同国际化架构。
+
+```
+                        【FocusFlow 全栈 i18n 协同流水线】
+
+ 🖥️ Studio 创作端 ──> i18next + react-i18next (100% 强类型 Key 智能补全与热切换)
+          │
+ 🚀 Player 渲染端 ──> 轻量内置双语字典 (零外部依赖, 运行时体积增加 < 0.5KB)
+          │
+ ⚡ NestJS API 端 ──> nestjs-i18n (按 Accept-Language 返回多语言错误响应与校验文案)
+          │
+ 🗄️ PostgreSQL 18 ──> 原生 JSONB 多语言存储 (如 title: {"zh": "微服务", "en": "Microservices"})
+```
+
+#### 1. 语言代码选型深度对比：Short Code (`zh` / `en`) vs BCP-47 (`zh-CN` / `en-US`)
+
+| 评估维度 | 🏆 方案 A: Short Code (`zh` / `en`) | 方案 B: BCP-47 Code (`zh-CN` / `en-US`) |
+| :--- | :--- | :--- |
+| **数据体积与紧凑度** | 🏆 **极致紧凑**（数据库 JSONB 键名短，网络传输 Payload 更小） | ⚠️ 较冗长（每个字段多占 3~4 个字符） |
+| **URL 参数与代码心智** | 🏆 **直观简洁**（如 `?lang=zh`、`t('tools.box')`、`dict.zh`） | ⚠️ 需处理大小写规范（如 `zh-cn` vs `zh-CN` 拼写不一致） |
+| **方言/地区细分能力** | ⚠️ 适合通用简体中文与通用国际英语（不细分地区） | 🏆 原生支持繁体中文 (`zh-TW`)、美式 (`en-US`)、英式 (`en-GB`) |
+| **FocusFlow 决策与回退策略** | **主力采纳**：数据库 JSONB 字段与通用接口全面使用 **Short Code (`zh` / `en`)**。<br>同时支持**层级回退机制**：当客户端传入 `zh-CN` 时自动匹配 `zh`，传入 `zh-TW` 时优先查找 `zh-TW`，未命中则自然回退至 `zh`。 |
+
+---
+
+#### 2. Studio 创作前端实现规格 (`i18next` + `react-i18next`)
+* **目录组织**：`apps/studio/src/locales/zh/` 与 `apps/studio/src/locales/en/`（按 `toolbar.json`, `inspector.json`, `common.json` 模块化组织）；
+* **100% 编译期类型推导**：通过 `src/i18n.d.ts` 声明合并，在组件中输入 `t('...')` 时自动获得精准 IDE 补全与防拼错检查；
+* **顶部栏语言切换器**：提供 `🇨🇳 简体中文 / 🇺🇸 English` 一键无刷新热重载切换，并在 `localStorage` 自动持久化。
+
+---
+
+#### 3. Player 内核与独立单文件 HTML 规格 (零依赖微型字典)
+* 底层渲染引擎必须保持纯粹与超轻量，**严禁引入第三方 i18n 运行时库**；
+* 内核内置微型字典（约 30 行纯 TS 代码，体积 < 0.5KB），根据 `dsl.locale` 或浏览器 `navigator.language` 自动呈现“场景 1 / 4”或“Scene 1 of 4”、全屏快捷键提示等。
+
+---
+
+#### 4. NestJS API 后端与 DTO 错误响应规格 (`nestjs-i18n`)
+* 自动拦截 HTTP `Accept-Language` 请求头进行语言协商；
+* DTO 参数校验失败时自动返回当前语言的友好提示（如 `"项目名称不能为空"` vs `"Project title is required"`）。
+
+---
+
+#### 5. 数据库层规格 (PostgreSQL 18 原生 JSONB 模式)
+* **模型定义 (`schema.prisma`)**：
+  ```prisma
+  model Template {
+    id          String   @id @default(uuid())
+    slug        String   @unique
+    // 💡 采用紧凑的 Short Code JSONB 存储多语言文本
+    title       Json     @db.JsonB // {"zh": "微服务全景图", "en": "Microservices Overview"}
+    description Json     @db.JsonB
+    tags        Json     @db.JsonB // {"zh": ["架构", "SaaS"], "en": ["Architecture", "SaaS"]}
+    dslJson     Json     @db.JsonB
+    createdAt   DateTime @default(now())
+  }
+  ```
+* **NestJS 自动解包拦截器 (`I18nTransformInterceptor`)**：后端查询输出时，自动将 JSONB 多语言对象转换为当前语言的单字符串输出给前端，业务 Service 层无感！
+* **DSL 视觉故事板多语言支持**：企业创作者可在 Studio 中为同一个气泡注解与连线说明配置双语文本（`textI18n: { zh: "鉴权中心", en: "Auth Center" }`），实现**“一份架构图，跨国汇报一键切英文演示”**！
 
 ---
 
