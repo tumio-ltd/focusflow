@@ -391,13 +391,18 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 │   ├── 🖥️ studio/                             # 【前端 App】React 19 可视化创作工作台
 │   │   ├── public/templates/                  # 官方预置架构图模板
 │   │   ├── src/                               # Studio 前端源码 (React 19 + Tailwind + shadcn/ui)
+│   │   │   ├── api/                           # 🌐 Orval 自动化生成的类型安全客户端 SDK
+│   │   │   │   ├── generated/                 # 自动生成的 React Query Hooks (useGetProjectById, useUpdateProject)
+│   │   │   │   ├── model/                     # 自动生成的 TypeScript DTO 契约模型
+│   │   │   │   └── custom-fetch.ts            # 全局 Fetch 拦截器与 BaseURL 注入
 │   │   │   ├── components/                    # 画布、时间轴、属性面板、顶部栏组件
 │   │   │   ├── stores/                        # Zustand 全局响应式状态 (DSL/Canvas/History)
 │   │   │   ├── compiler/                      # 纯前端离线单文件 Base64 打包引擎
 │   │   │   ├── hooks/                         # 快捷键与 Auto-Refine 逻辑
 │   │   │   ├── App.tsx                        # 工作台根组件
 │   │   │   └── main.tsx                       # 入口挂载
-│   │   ├── package.json                       # 依赖 @focusflow/player, @focusflow/dsl, @focusflow/config-*
+│   │   ├── orval.config.ts                    # ⚙️ Orval 自动化 OpenAPI 代码生成配置文件
+│   │   ├── package.json                       # 依赖 @focusflow/player, @focusflow/dsl, @tanstack/react-query
 │   │   ├── tsconfig.json                      # 继承 @focusflow/config-typescript/base.json
 │   │   └── vite.config.ts                     # Vite 8 配置文件 (端口: 5174)
 │   │

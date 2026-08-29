@@ -240,10 +240,15 @@ flowchart TB
   * **协作方式**：直接依赖并实例化 `packages/player-core` 作为画布中央的“实时渲染视口（Live Viewport）”，通过 Zustand 状态变更实时驱动播放器，实现 100% 所见即所得的双向绑定！
 
 #### 2. Studio 前端工程内部目录结构 (`apps/studio/` 或 `focusflow-studio/`)
-```
-focusflow-studio/
+```text
+apps/studio/
+├── public/templates/            # 预置官方架构图模板
 ├── src/
-│   ├── components/               # Studio 专属 UI 组件库
+│   ├── api/                     # 🌐 Orval 自动化生成的类型安全客户端 SDK
+│   │   ├── generated/           # 自动生成的 React Query Hooks (useGetProjectById, useUpdateProject)
+│   │   ├── model/               # 自动生成的 TypeScript DTO 契约模型
+│   │   └── custom-fetch.ts      # 全局 Fetch 拦截器与 BaseURL 注入
+│   ├── components/              # Studio 专属 UI 组件库
 │   │   ├── canvas/              # 可视化无限画布与图层控制器
 │   │   │   ├── InfiniteCanvas.tsx   # 缩放平移手势画布
 │   │   │   ├── CameraFrame.tsx      # 镜头取景安全边界框
@@ -267,6 +272,7 @@ focusflow-studio/
 │   │   └── standalonePackager.ts # 动态内联 Base64 生成单文件 HTML
 │   ├── App.tsx
 │   └── main.tsx
+├── orval.config.ts              # ⚙️ Orval 自动化 OpenAPI 代码生成配置文件
 ├── package.json
 └── vite.config.ts
 ```
