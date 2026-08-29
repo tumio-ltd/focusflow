@@ -41,13 +41,15 @@
   - [5.1 `pnpm-workspace.yaml` 工作区定义](#51-pnpm-workspaceyaml-工作区定义)
   - [5.2 `turbo.json` 拓扑任务与构建缓存配置](#52-turbojson-拓扑任务与构建缓存配置)
   - [5.3 根目录 `package.json` 统一命令调度](#53-根目录-packagejson-统一命令调度)
-  - [5.4 消息队列强类型契约原型 (`packages/dsl/src/jobs.ts`)](#54-消息队列强类型契约原型-packagesdslsrcjobsts)
+  - [5.4 统一领域契约包声明与队列任务原型 (`packages/dsl/package.json` & `src/jobs.ts`)](#54-统一领域契约包声明与队列任务原型-packagesdslpackagejson--srcjobsts)
   - [5.5 纯粹数据层包声明 (`packages/database/package.json`)](#55-纯粹数据层包声明-packagesdatabasepackagejson)
   - [5.6 `tsconfig.base.json` 跨包复合类型引用](#56-tsconfigbasejson-跨包复合类型引用)
   - [5.7 现代 ESM 子路径导出标准 (`packages/player/package.json`)](#57-现代-esm-子路径导出标准-packagesplayerpackagejson)
-  - [5.8 NestJS 服务端子包声明 (`apps/api/package.json`)](#58-nestjs-服务端子包声明-appsapipackagejson)
-  - [5.9 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式 (API & DTO Specifications)](#59-nestjs-swagger--openapi-接口文档与参数强校验规范范式-api--dto-specifications)
-  - [5.10 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + TanStack React Query)](#510-前后端全链路类型安全自动化-openapi-客户端-sdk-生成-orval--tanstack-react-query)
+  - [5.8 NestJS 主服务端子包声明 (`apps/api/package.json`)](#58-nestjs-主服务端子包声明-appsapipackagejson)
+  - [5.9 NestJS 4K 视频渲染工作节点声明 (`apps/render-worker/package.json`)](#59-nestjs-4k-视频渲染工作节点声明-appsrender-workerpackagejson)
+  - [5.10 全局代码质检与排版配置原型 (`.oxlintrc.json` & `.prettierrc.json`)](#510-全局代码质检与排版配置原型-oxlintrcjson--prettierrcjson)
+  - [5.11 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式 (API & DTO Specifications)](#511-nestjs-swagger--openapi-接口文档与参数强校验规范范式-api--dto-specifications)
+  - [5.12 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + TanStack React Query)](#512-前后端全链路类型安全自动化-openapi-客户端-sdk-生成-orval--tanstack-react-query)
 - [6. 开发与构建工作流 (Development Workflow)](#6-开发与构建工作流-development-workflow)
 - [7. 平滑无痛迁移实施路线图 (Migration Checklist)](#7-平滑无痛迁移实施路线图-migration-checklist)
 
@@ -861,7 +863,38 @@ packages:
 
 ---
 
-### 5.4 消息队列强类型契约原型 (`packages/dsl/src/jobs.ts`)
+### 5.4 统一领域契约包声明与队列任务原型 (`packages/dsl/package.json` & `src/jobs.ts`)
+
+#### 1. `packages/dsl/package.json`
+```json
+{
+  "name": "@focusflow/dsl",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./jobs": {
+      "types": "./dist/jobs.d.ts",
+      "import": "./dist/jobs.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@focusflow/config-typescript": "workspace:*",
+    "typescript": "^5.5.0"
+  }
+}
+```
+
+#### 2. `packages/dsl/src/jobs.ts` (BullMQ 任务契约)
 ```typescript
 /**
  * 4K 视频渲染任务负载契约 (BullMQ Job Payload)
@@ -960,7 +993,7 @@ export interface RenderJobProgressEvent {
 
 ---
 
-### 5.8 NestJS 服务端子包声明 (`apps/api/package.json`)
+### 5.8 NestJS 主服务端子包声明 (`apps/api/package.json`)
 ```json
 {
   "name": "@focusflow/api",
@@ -972,6 +1005,7 @@ export interface RenderJobProgressEvent {
     "start:prod": "node dist/main.js"
   },
   "dependencies": {
+    "@focusflow/database": "workspace:*",
     "@focusflow/dsl": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -980,6 +1014,8 @@ export interface RenderJobProgressEvent {
     "@prisma/client": "^5.18.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "nestjs-cls": "^4.4.0",
+    "nestjs-i18n": "^10.4.0",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
@@ -993,7 +1029,72 @@ export interface RenderJobProgressEvent {
 
 ---
 
-### 5.9 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式 (API & DTO Specifications)
+### 5.9 NestJS 4K 视频渲染工作节点声明 (`apps/render-worker/package.json`)
+```json
+{
+  "name": "@focusflow/render-worker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start:prod": "node dist/main.js"
+  },
+  "dependencies": {
+    "@focusflow/database": "workspace:*",
+    "@focusflow/dsl": "workspace:*",
+    "@nestjs/bullmq": "^11.0.0",
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@remotion/bundler": "^4.0.0",
+    "@remotion/renderer": "^4.0.0",
+    "bullmq": "^5.8.0",
+    "ioredis": "^5.4.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  }
+}
+```
+
+---
+
+### 5.10 全局代码质检与排版配置原型 (`.oxlintrc.json` & `.prettierrc.json`)
+
+#### 1. 统一 Oxlint 规则配置文件 (`.oxlintrc.json`)
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "unicorn", "typescript", "oxc"],
+  "rules": {
+    "eqeqeq": "warn",
+    "no-unused-vars": "error",
+    "react/jsx-key": "error",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "legacy/**"]
+}
+```
+
+#### 2. 统一 Prettier 配置文件 (`.prettierrc.json`)
+```json
+{
+  "semi": true,
+  "trailingComma": "all",
+  "singleQuote": true,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "endOfLine": "lf"
+}
+```
+
+---
+
+### 5.11 NestJS Swagger / OpenAPI 接口文档与参数强校验规范范式 (API & DTO Specifications)
 
 在 FocusFlow 项目中，所有 NestJS 端点必须严格遵循 **“Swagger 文档 100% 覆盖 + DTO 参数强校验 + 全局 ValidationPipe”** 的企业级工程标准：
 
@@ -1123,7 +1224,7 @@ export class ProjectsController {
 
 ---
 
-### 5.10 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + TanStack React Query)
+### 5.12 前后端全链路类型安全：自动化 OpenAPI 客户端 SDK 生成 (Orval + TanStack React Query)
 
 在现代全栈 Monorepo 体系中，**严禁前端开发者手工手写 API 请求函数与 Interface 类型**。FocusFlow 采用业界最高效的 **`Orval`** 工具链，实现从 NestJS Swagger 规范到 React Query Hooks 的 **100% 全自动零代码生成**！
 
