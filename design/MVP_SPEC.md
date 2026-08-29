@@ -22,6 +22,10 @@
 - [5. MVP 核心代码骨架参考 (Reference Code)](#5-mvp-核心代码骨架参考-reference-code)
 - [6. MVP 研发任务分解与层级跟踪清单 (Hierarchical Task Checklist)](#6-mvp-研发任务分解与层级跟踪清单-hierarchical-task-checklist)
 - [7. MVP 研发测试与验收标准 (Acceptance Criteria)](#7-mvp-研发测试与验收标准-acceptance-criteria)
+- [8. 客户端形态定位考量与全栈服务端 (SaaS) 平滑演进全景](#8-客户端形态定位考量与全栈服务端-saas-平滑演进全景)
+  - [8.1 当前 MVP 客户端与本地优先 (Local-First) 的定位考量](#81-当前-mvp-客户端与本地优先-local-first-的定位考量)
+  - [8.2 服务端 (SaaS) 演进的 4 大核心能力模块](#82-服务端-saas-演进的-4-大核心能力模块)
+  - [8.3 当前 MVP 架构资产在服务端的 100% 平滑复用机制](#83-当前-mvp-架构资产在服务端的-100-平滑复用机制)
 
 ---
 
@@ -657,3 +661,90 @@ function autoSnapBoxFromPoint(clickCanvasX, clickCanvasY, offscreenCtx, baseWidt
 | **8. 动态覆盖图生命周期** | 在场景中声明 `activeElements.images`，后续场景移除 | 声明时平滑弹入/展开；后续未声明时自动平滑淡出并卸载 | ✅ 已通过 |
 | **9. 独立离线单文件导出** | 运行 `node scripts/build-standalone.js examples/luxehms` | 生成完整单文件 `.html`，全内联 Base64，双击秒开无报错 | ✅ 已通过 |
 | **10. 脚手架一键生成** | 运行 `node scripts/create-project.js my-test ./image.png` | 自动探测分辨率，生成完整工程结构与初始 `config.json` | ✅ 已通过 |
+
+---
+
+## 8. 客户端形态定位考量与全栈服务端 (SaaS) 平滑演进全景
+
+### 8.1 当前 MVP 客户端与本地优先 (Local-First) 的定位考量
+
+目前的 FocusFlow MVP 阶段在架构上是一个标准的 **“纯客户端 / 本地优先（Client-side & Local-First Engine & Toolkit）”**。在 Phase 1 中，所有的工作流（底图解析、坐标逆投影、Sobel 梯度吸附、JSON 编排、单文件打包）均运行在**本地开发环境（Localhost + 浏览器运行时 + 本地 Node.js CLI）**中。
+
+```
+               【Phase 1: 本地优先与客户端工作流全景】
+
+ ┌─────────────────┐      ┌─────────────────────────┐      ┌─────────────────────┐
+ │ 创作者本地机器  │ ──>  │ 本地浏览器 + HUD 标定   │ ──>  │ 本地生成独立单文件  │
+ │ (底图 + DSL)    │      │ (60fps GPU 播放/标定)   │      │ (.html 离线双击秒开)│
+ └─────────────────┘      └─────────────────────────┘      └─────────────────────┘
+```
+
+#### 为什么 MVP 优先做纯客户端？
+1. **核心渲染与动效内核先行**：确保 60fps 硬件加速运镜、SVG 动态路由测长、画中画覆盖层、毛玻璃气泡在浏览器端达到顶级质感，且体积极小（~35KB JS，零外部运行时依赖）；
+2. **轻量无负担与离线可用**：用户无需注册账号、无需配置远程数据库和后端服务，即可在本地秒级制作，并产出能随时离线演示的独立 `.html` 文件；
+3. **极速验证产品价值**：以最低的研发开销验证创作者制作效率与受众互动体验。
+
+---
+
+### 8.2 服务端 (SaaS) 演进的 4 大核心能力模块
+
+要将 FocusFlow 从“本地客户端工具”升级为“企业级在线云平台/SaaS”，服务端需要补齐以下 **4 大核心能力模块**：
+
+```
+                       【Phase 2/3 服务端系统架构全景】
+
+               ┌──────────────────────────────────────────────┐
+               │    FocusFlow Cloud (Web 在线平台 / SaaS)     │
+               └──────────────────────┬───────────────────────┘
+                                      │
+       ┌──────────────────────────────┼──────────────────────────────┐
+       ▼                              ▼                              ▼
+【1. 服务端项目管理】         【2. 服务端一键打包下载】     【3. 视频云渲染导出】
+ • REST / GraphQL API         • POST /api/export/html       • Puppeteer / Remotion
+ • 资产云存储 (S3 / OSS)      • 服务端调用 packager         • 4K 60fps MP4 渲染
+ • 数据库存储 DSL JSON        • 浏览器直接下载 .html        • 高清动态 GIF 生成
+                                      │
+                                      ▼
+                           【4. 云端免部署在线分享】
+                            • 公开只读短链 (focusflow.io/s/xxx)
+                            • 知识库/Notion/飞书 <iframe> 嵌入
+```
+
+#### 模块 1：服务端项目管理与资产托管 (Project Management & Cloud Storage)
+* **RESTful / GraphQL API**：提供 `POST /api/projects`、`POST /api/projects/:id/assets` 等端点；
+* **用户体验**：用户在 Web 控制台点击“新建项目” ➔ 拖拽上传底图 ➔ 服务端自动存储至 S3/OSS 并在数据库记录 Viewport 宽高，自动初始化标准 DSL；
+* **团队协同**：支持多用户权限体系（Owner / Editor / Viewer）与版本历史回滚（Version History）。
+
+#### 模块 2：服务端无状态编译与 HTML 单文件下载 API (Headless HTML Exporter)
+* **机理**：将现有的 `scripts/build-standalone.js` 封装为无状态的 Node.js 服务端编译器函数；
+* **API 示例**：
+  ```javascript
+  // 服务端 Controller: 一键下载独立 HTML 单文件
+  app.get('/api/projects/:id/export/html', async (req, res) => {
+    const { htmlBuffer, filename } = await standaloneCompiler.compile(projectId);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.type('html').send(htmlBuffer);
+  });
+  ```
+* **用户体验**：创作者在网页端编辑完成后，点击右上角 **“导出 ➔ 下载单文件 HTML”**，浏览器直接弹出文件下载对话框。
+
+#### 模块 3：服务端 4K 视频 / GIF 渲染管线 (Server-side Video Rendering Pipeline)
+* **机理**：
+  * **基于 Remotion / Puppeteer 无头浏览器**：在服务端启动 Headless Chrome，挂载 `FocusFlowPlayer`；
+  * **精准帧步进（Deterministic Frame Ticking）**：通过时钟精准控制播放器时间轴，逐帧截取高清 Canvas/WebGL 画面；
+  * **FFmpeg 编码推流**：将截帧序列经由 `ffmpeg` 合成 H.264 4K 60fps MP4 视频或高清 GIF；
+* **用户体验**：创作者点击 **“导出 ➔ 导出 4K 视频”**，服务端后台异步转码，生成后推送通知并提供下载链接。
+
+#### 模块 4：云端免部署只读分享短链与知识库嵌入 (Cloud Hosting & Embeds)
+* **只读演示短链**：每个项目生成唯一 Slug（如 `https://focusflow.io/s/luxehms-arch`），受众在任意设备打开链接即可全屏沉浸式观看；
+* **知识库嵌入**：提供 `<iframe src="...">` 嵌入代码，支持无缝嵌入到 Notion、飞书文档、语雀、Docusaurus 等企业知识库中。
+
+---
+
+### 8.3 当前 MVP 架构资产在服务端的 100% 平滑复用机制
+
+由于 MVP 阶段严格执行了 **“纯数据解耦（DSL JSON 驱动）”** 与 **“模块化 ES 架构”**：
+
+1. **核心播放器 [`src/index.js`](file:///Users/xt/WebstormProjects/focusflow/src/index.js)**：可 100% 零重构作为在线 Web Studio 预览画布与云端短链展示的渲染核心；
+2. **打包脚本 [`scripts/build-standalone.js`](file:///Users/xt/WebstormProjects/focusflow/scripts/build-standalone.js)**：只需封装一层 Express/NestJS 路由，即可直接作为服务端 HTML 导出 API；
+3. **脚手架脚本 [`scripts/create-project.js`](file:///Users/xt/WebstormProjects/focusflow/scripts/create-project.js)**：其二进制读图与 DSL 生成逻辑，可直接作为服务端创建项目的底层核心 Service。
