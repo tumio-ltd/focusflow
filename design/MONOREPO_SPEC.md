@@ -23,6 +23,7 @@
   - [2.2 选型对比与决策考量](#22-选型对比与决策考量)
   - [2.3 为什么选用 Turborepo 而不是 Nx？(全栈 NestJS 场景深度技术选型对比)](#23-为什么选用-turborepo-而不是-nx全栈-nestjs-场景深度技术选型对比)
   - [2.4 为什么选用 Prisma 而不是 Sequelize？(ORM 核心技术选型与深度对比)](#24-为什么选用-prisma-而不是-sequelizeorm-核心技术选型与深度对比)
+- [2.5 Prisma 事务 (Transaction)、并发锁 (Lock) 与自动审计日志 (Audit Log) 实现规格](#25-prisma-事务-transaction并发锁-lock-与自动审计日志-audit-log-实现规格)
 - [3. 完整 Monorepo 工作区目录全景](#3-完整-monorepo-工作区目录全景)
   - [3.1 POC & Phase 1 (MVP) 现有代码资产与 Monorepo 映射关系对照表](#31-poc--phase-1-mvp-现有代码资产与-monorepo-映射关系对照表)
 - [4. 各子包核心职责与协同机制](#4-各子包核心职责与协同机制)
@@ -185,6 +186,197 @@ Prisma 是专为现代化 TypeScript 全栈应用设计的下一代数据层框�
    * 如前所述，`packages/database` 仅需维护一个 `schema.prisma` 并导出原生 `PrismaClient`，**零依赖任何上层 Web 框架**，既能供 NestJS 使用，又能供轻量 CLI 脚本直接操作数据库；
 4. **极致高效的迁移与本地调试体验**：
    * 修改 `schema.prisma` 后，一行 `pnpm db:migrate` 自动生成标准的 SQL 迁移文件，一行 `pnpm db:studio` 立即在浏览器打开可视化控制台管理数据，开发效率比 Sequelize 提升数倍！
+
+---
+
+### 2.5 Prisma 事务 (Transaction)、并发锁 (Lock) 与自动审计日志 (Audit Log) 实现规格
+
+#### 1. Prisma 对事务 (Transaction) 的支持机制
+Prisma 提供了两种完善的事务模型，完美覆盖简单与高复杂度业务：
+
+* **A. 顺序/批量事务 (Batch Transactions)**：
+  ```typescript
+  // 所有操作在一个原子事务中并发/批量提交，任意一个失败全局回滚
+  const [project, version] = await prisma.$transaction([
+    prisma.project.create({ data: { title: 'LuxeHMS', slug: 'luxehms' } }),
+    prisma.projectVersion.create({ data: { version: 1, projectId: '...' } })
+  ]);
+  ```
+* **B. 交互式闭包事务 (Interactive Transactions - 推荐)**：
+  ```typescript
+  // 支持在事务作用域内执行动态条件判断、版本检查与隔离级别控制
+  await prisma.$transaction(async (tx) => {
+    const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
+    if (project.isLocked) throw new BusinessException('项目已锁定，禁止修改');
+    
+    await tx.project.update({ where: { id: projectId }, data: { dslJson: newDsl } });
+    await tx.projectVersion.create({ data: { projectId, dslJson: newDsl } });
+  }, {
+    maxWait: 5000,                                 // 获取连接最大等待时间 (ms)
+    timeout: 10000,                                // 事务执行最大超时时间 (ms)
+    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead // 隔离级别 (ReadCommitted, Serializable 等)
+  });
+  ```
+
+---
+
+#### 2. Prisma 对并发锁 (Lock) 的支持机制
+
+* **A. 乐观并发控制 (Optimistic Concurrency Control / 乐观锁 · 推荐主力)**：
+  * 在数据模型中维护 `version Int @default(0)`；
+  * 更新时带上版本校验并自增：
+    ```typescript
+    const updated = await prisma.project.updateMany({
+      where: { id: projectId, version: currentVersion }, // 条件匹配
+      data: { dslJson: newDsl, version: { increment: 1 } } // 版本原子递增
+    });
+    if (updated.count === 0) {
+      throw new ConflictException('数据已被他人更新，请刷新重试 (Version Conflict)');
+    }
+    ```
+* **B. 悲观行级排他锁 (Pessimistic Locking / `SELECT ... FOR UPDATE`)**：
+  * 在交互式事务闭包中直接使用 `$queryRaw` 执行带锁查询：
+    ```typescript
+    await prisma.$transaction(async (tx) => {
+      // 悲观行级排他锁: 阻止其他事务并发修改该记录
+      const [project] = await tx.$queryRaw<Project[]>`
+        SELECT * FROM "Project" WHERE id = ${projectId} FOR UPDATE
+      `;
+      // 执行后续修改
+      await tx.project.update({ where: { id: projectId }, data: { ... } });
+    });
+    ```
+
+---
+
+#### 3. 仿照 HMS-B 架构的 Prisma 自动写操作审计日志 (`audit_log`) 落地方案
+
+针对酒店 PMS 系统 (`hms-b`) 中成熟的 **“异步上下文 (CLS) + 实体拦截 + 变更差分 (Diff) + 同事务原子落盘”** 架构，Prisma 能够基于现代 **Prisma Client 扩展机制 (`$extends.query`)** 实现 **100% 同等能力且更加强类型、无侵入** 的自动审计系统！
+
+```
+                      【FocusFlow Prisma 自动审计日志流水线】
+
+ 客户端请求 ──> AuditInterceptor (nestjs-cls 提取 userId, requestId, ip)
+                      │
+                      ▼
+ 业务 Service ──> prisma.project.update(...) (零侵入业务代码)
+                      │
+                      ▼ ──(Prisma Client Extension $extends.query 自动拦截)──
+                      ├─ 1. 查询变更前原始快照 (oldRecord)
+                      ├─ 2. 执行实际更新 SQL 获得最新快照 (newRecord)
+                      ├─ 3. 字段级差分引擎比对 (computeDiff ➔ oldValues vs newValues)
+                      └─ 4. 同事务原子写入 audit_log 表 (tx.auditLog.create)
+                      │
+                      ▼
+ 统一提交事务 (业务数据与增量审计记录原子落盘 🚀)
+```
+
+#### 4. Prisma 自动审计扩展核心代码原型 (`packages/database/src/audit.extension.ts`)
+
+```typescript
+import { Prisma } from '@prisma/client';
+import { ClsService } from 'nestjs-cls';
+
+/**
+ * 字段级增量差分函数
+ */
+function computeDiff(oldObj: Record<string, any>, newObj: Record<string, any>) {
+  const oldValues: Record<string, any> = {};
+  const newValues: Record<string, any> = {};
+  const ignoredKeys = new Set(['updatedAt', 'version']);
+
+  for (const key of Object.keys(newObj)) {
+    if (ignoredKeys.has(key)) continue;
+    if (JSON.stringify(oldObj[key]) !== JSON.stringify(newObj[key])) {
+      oldValues[key] = oldObj[key];
+      newValues[key] = newObj[key];
+    }
+  }
+  return { oldValues, newValues };
+}
+
+/**
+ * Prisma 全局自动审计日志 Client Extension
+ */
+export const createAuditExtension = (cls: ClsService) => {
+  return Prisma.defineExtension({
+    name: 'AuditLogExtension',
+    query: {
+      $allModels: {
+        // 拦截全部模型的 create 操作
+        async create({ model, args, query }) {
+          const result = await query(args);
+          const ctx = cls.get('auditContext'); // 包含 userId, requestId, ip, ua
+          if (ctx) {
+            await (Prisma as any).rawClient.auditLog.create({
+              data: {
+                operId: ctx.userId,
+                requestId: ctx.requestId,
+                entity: model,
+                entityId: result.id,
+                action: 'add',
+                newValues: result,
+                more: { ip: ctx.ip, ua: ctx.ua }
+              }
+            });
+          }
+          return result;
+        },
+
+        // 拦截全部模型的 update 操作 (精准字段差分)
+        async update({ model, args, query }) {
+          const client = (Prisma as any).rawClient;
+          const oldRecord = await client[model].findUnique({ where: args.where });
+          const result = await query(args);
+          const ctx = cls.get('auditContext');
+
+          if (ctx && oldRecord) {
+            const { oldValues, newValues } = computeDiff(oldRecord, result);
+            if (Object.keys(newValues).length > 0) {
+              await client.auditLog.create({
+                data: {
+                  operId: ctx.userId,
+                  requestId: ctx.requestId,
+                  entity: model,
+                  entityId: result.id,
+                  action: 'update',
+                  oldValues,
+                  newValues,
+                  more: { ip: ctx.ip, ua: ctx.ua }
+                }
+              });
+            }
+          }
+          return result;
+        },
+
+        // 拦截全部模型的 delete 操作
+        async delete({ model, args, query }) {
+          const client = (Prisma as any).rawClient;
+          const oldRecord = await client[model].findUnique({ where: args.where });
+          const result = await query(args);
+          const ctx = cls.get('auditContext');
+
+          if (ctx && oldRecord) {
+            await client.auditLog.create({
+              data: {
+                operId: ctx.userId,
+                requestId: ctx.requestId,
+                entity: model,
+                entityId: oldRecord.id,
+                action: 'delete',
+                oldValues: oldRecord,
+                more: { ip: ctx.ip, ua: ctx.ua }
+              }
+            });
+          }
+          return result;
+        }
+      }
+    }
+  });
+};
+```
 
 ---
 
