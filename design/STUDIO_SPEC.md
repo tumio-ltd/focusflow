@@ -1,0 +1,368 @@
+# FocusFlow - Phase 2 (Studio) 可视化创作工作台与全栈工程化设计规格说明书
+## FocusFlow Studio & Full-Stack Cloud Architecture Specification
+
+> **文档版本**：`v1.0.0`  
+> **制定日期**：`2026-08-29`  
+> **文档状态**：🚀 **Phase 2 (Studio 工作台与云端化) 核心工程规格 · 规划执行中**  
+> **关联技术专刊**：
+> - 📄 [PRODUCT_DESIGN.md (主产品方案与 PRD)](file:///Users/xt/WebstormProjects/focusflow/design/PRODUCT_DESIGN.md)
+> - 📐 [MVP_SPEC.md (Phase 1 播放引擎与 HUD 执行规格)](file:///Users/xt/WebstormProjects/focusflow/design/MVP_SPEC.md)
+> - 📐 [MOTION_ENGINE_SPEC.md (动效数学与渲染规格)](file:///Users/xt/WebstormProjects/focusflow/design/MOTION_ENGINE_SPEC.md)
+> - 🔍 [EDGE_SNAPPER_ALGORITHM.md (智能边缘吸附与 Auto-Refine 算法专刊)](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)
+> 
+> **适用对象**：前端架构师、全栈工程师、UI/UX 设计师、后端开发  
+> **文档定位**：Phase 2 可视化创作工作室（FocusFlow Studio）从前端画布、时间轴到服务端项目管理、离线打包与视频渲染的端到端技术落地方案
+
+---
+
+## 目录 (Table of Contents)
+
+- [1. Phase 2 核心定位与业务使命](#1-phase-2-核心定位与业务使命)
+- [2. 系统整体架构：双模式运行体系 (Client-Only vs Cloud SaaS)](#2-系统整体架构双模式运行体系-client-only-vs-cloud-saas)
+- [3. 创作端 3 步闭环核心功能系统深度设计](#3-创作端-3-步闭环核心功能系统深度设计)
+  - [3.1 环节一：项目创建与资产导入系统 (Project Ingestion)](#31-环节一项目创建与资产导入系统-project-ingestion)
+  - [3.2 环节二：可视化无限画布与 4 大编辑工具 (Infinite Canvas & Tools)](#32-环节二可视化无限画布与-4-大编辑工具-infinite-canvas--tools)
+  - [3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)](#33-环节二-续场景关键帧时间轴编排系统-scene--sequence-timeline)
+  - [3.4 环节三：实时生成、预览与多形态导出下载 (Compilation, Preview & Exporter)](#34-环节三实时生成预览与多形态导出下载-compilation-preview--exporter)
+- [4. 前端架构与技术栈选型规范 (Frontend Architecture)](#4-前端架构与技术栈选型规范-frontend-architecture)
+- [5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)](#5-服务端全栈架构rest-api-与数据模型规范-full-stack-saas-backend)
+- [6. Phase 2 研发任务分解与层级跟踪清单 (Hierarchical Task Checklist / WBS)](#6-phase-2-研发任务分解与层级跟踪清单-hierarchical-task-checklist--wbs)
+- [7. Phase 2 验收测试标准 (Acceptance Criteria)](#7-phase-2-验收测试标准-acceptance-criteria)
+
+---
+
+## 1. Phase 2 核心定位与业务使命
+
+### 1.1 阶段演进定位
+在 **Phase 1 (MVP)** 阶段，FocusFlow 成功完成了**核心渲染引擎、动效数学、离线单文件打包与 HUD 快捷键标定工具**的建设，验证了极致的播放性能（60fps GPU 硬件加速、~35KB 极轻量体积）。但 Phase 1 仍要求创作者具备一定的代码与 JSON 编辑能力。
+
+**Phase 2 的核心使命是：**
+> **“从面向开发者的本地调试工具，全面跃迁为面向架构师、产品专家、讲师的现代化、零门槛 Web 可视化创作工作室（FocusFlow Studio）。”**
+
+### 1.2 核心价值与 3 步闭环
+创作者无需编写任何一行代码，只需 3 步即可完成顶级架构演进汇报：
+```
+       ┌────────────────────────┐      ┌──────────────────────────┐      ┌────────────────────────┐
+       │ 1. 拖拽建项目          │      │ 2. 可视化画布与时间轴    │      │ 3. 一键生成与下载导出  │
+       │ • 拖入 4K 架构大图     │ ──>  │ • 无限平移缩放取景       │ ──>  │ • 离线单文件 HTML 下载 │
+       │ • 自动解析物理分辨率   │      │ • 智能选框/连线/气泡编排 │      │ • 4K MP4 视频 / 短链   │
+       └────────────────────────┘      └──────────────────────────┘      └────────────────────────┘
+                 [输入]                            [加工]                            [输出]
+```
+
+---
+
+## 2. 系统整体架构：双模式运行体系 (Client-Only vs Cloud SaaS)
+
+为兼顾“极客开发者的零成本私密离线使用”与“商业团队的在线云端协同与视频渲染”，Phase 2 采用**双模式同构架构**：
+
+```mermaid
+flowchart TB
+    subgraph StudioUI ["🎨 FocusFlow Studio 前端工作台 (React 19 + Tailwind + shadcn/ui)"]
+        direction TB
+        TopBar["顶部栏: 项目标题 / 预设模板 / [💾 保存] / [🚀 导出 ▾]"]
+        CanvasArea["无限画布区: 缩放/平移 / 实时取景器 / 智能吸附选框 / 贝塞尔连线 / 气泡拖拽"]
+        SideInspector["右侧属性检查器: 场景配置 / 动效参数 / 气泡主题与文字"]
+        BottomTimeline["底部场景时间轴: 场景卡片流 / 拖拽排序 / 持续时间 / 轮播设置"]
+    end
+
+    subgraph ModeA ["⚡ 模式 A: 纯前端零后端离线模式 (Local / Client-Only)"]
+        LocalEngine["浏览器内存编译器 (In-Browser Packager)"]
+        LocalFile["FileReader / Blob / ObjectURL"]
+        DownloadA["直接弹出下载: standalone.html / config.json / project.zip"]
+    end
+
+    subgraph ModeB ["☁️ 模式 B: 云端全栈 SaaS 模式 (Full-Stack Cloud SaaS)"]
+        API["Node.js / NestJS RESTful API"]
+        DB["PostgreSQL (项目数据) + S3/OSS (底图与静态资产)"]
+        RemotionWorker["Remotion / Puppeteer 4K 60fps 视频渲染集群"]
+        CloudShare["只读演示短链 (focusflow.io/s/xxx) + <iframe> 知识库嵌入"]
+    end
+
+    StudioUI -->|本地快速模式| ModeA
+    StudioUI -->|云端协同模式| ModeB
+```
+
+---
+
+## 3. 创作端 3 步闭环核心功能系统深度设计
+
+### 3.1 环节一：项目创建与资产导入系统 (Project Ingestion)
+
+#### 1. 拖拽极速创建 (Drag-to-Create)
+* **交互体验**：打开 Studio 首页，直接将任意一张高分辨率 PNG、SVG、JPEG 拖入工作台；
+* **分辨率自动侦测**：前端通过 `Image.decode()` 或二进制 ArrayBuffer 快速提取底图的天然物理分辨率（如 $5120\times 2880$），自动将其初始化为 `meta.viewport.width` 与 `meta.viewport.height`；
+* **初始 DSL 生成**：自动生成 Scene 0（全局全景开场场景），立即进入编辑态。
+
+#### 2. 工程重开与导入 (Re-Open & Import)
+* 支持直接拖入历史导出的 `config.json` 或 `project.zip`，瞬间恢复所有场景、图层、气泡与镜头位置；
+* 支持多图片管理（如新增画中画覆盖图 `images` 资产）。
+
+#### 3. 预置行业模板库 (Template Gallery)
+* 内置 5 套开箱即用的标准架构图模板（微服务电商、高可用容灾、云原生 K8s、AI 训练集群、金融支付风控），供创作者一键体验与克隆修改。
+
+---
+
+### 3.2 环节二：可视化无限画布与 4 大编辑工具 (Infinite Canvas & Tools)
+
+```
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │ 🔍 [100% ▾] [✋ 抓手] [🔲 选框] [⚡ 连线] [💬 气泡] [🖼️ 覆盖图] │ 👁️ 预览  💾 保存  🚀 导出 ▾│
+ ├────────────────────────────────────────────────────────┬────────────────────────┤
+ │                                                        │ 🛠️ 属性检查器 (Inspector)│
+ │                                                        ├────────────────────────┤
+ │                                                        │ 📐 镜头与视口 (Camera)  │
+ │                   🎨 可视化无限画布                    │ • 缩放比例: 1.75x      │
+ │                                                        │ • 偏移: X:-14%, Y:8%   │
+ │              ┌ - - - - - - - - - - - ┐                 ├────────────────────────┤
+ │              ┆  [取景安全边界视口框] ┆                 │ 🔲 选中图元 (Box/Line) │
+ │              ┆    ┌──────────────┐   ┆                 │ • ID: box-postgres     │
+ │              ┆    │ PostgreSQL16 │   ┆                 │ • 描边: #34d399 (6px)  │
+ │              ┆    └──────────────┘   ┆                 │ • 发光: [✓] 霓虹光晕   │
+ │              └ - - - - - - - - - - - ┘                 ├────────────────────────┤
+ │                                                        │ 💬 解说气泡 (Callout)  │
+ │                                                        │ • 标题: PostgreSQL 16  │
+ │                                                        │ • 主题: [ 🟢 Green ▾ ] │
+ ├────────────────────────────────────────────────────────┴────────────────────────┤
+ │ 🎬 场景序列时间轴: [01 全局总览] ➔ [02 核心数据链路] ➔ [03 鉴权下钻] ➔ [+] 新增场景 │
+ └─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 工具 1：镜头取景器 (Camera Viewport Frame)
+* **交互体验**：在画布上任意缩放和平移底图，画面中央实时呈现当前场景的“受众实际可视安全窗口（Frustum）”；
+* **一键同步**：点击“捕获当前镜头”或调整右侧滑块，自动计算出精确的 `{ zoom, x, y, duration }`。
+
+#### 工具 2：智能选框工具 (Smart Box Tool)
+* **三重模式无缝融合**：
+  * **模式 A（随手粗拉 + 自动贴合）**：随手拉框，松手瞬间调用 $\pm 24\text{px}$ 窄带 Sobel 精修算法，自动咬合外框；
+  * **模式 B（纯手动精确拉框）**：按住 `⌘ / Option`（或关闭吸附开关）拖拽，100% 精确表达创作者自定义留白与局部框选；
+  * **模式 C（单点智能吸附）**：Option/Alt+单击卡片空白处，50ms 内自动识别卡片包围盒；
+* **圆角与描边可视化调整**：在右侧面板直接调节 `rx` 圆角、`stroke` 颜色、`strokeWidth` 及发光模式。
+
+#### 工具 3：拓扑流光连线生成器 (Bezier Route Tool)
+* **磁吸锚点连接**：点击源卡片的 8 向锚点（如 `box-folio.right`），鼠标拖出连线吸附至目标卡片锚点（如 `box-postgres.left-top`）；
+* **自动三次贝塞尔曲线推导**：引擎实时绘制高科技流光动效预览；
+* **模式切换**：支持一键切换 `stream`（跑马灯流动）或 `draw`（单次描边生长）。
+
+#### 工具 4：毛玻璃气泡所见即所得编辑器 (Callout Visual Editor)
+* **直接拖拽定位**：直接在画布上拖拽气泡至最佳展示位置，自动换算为自适应百分比坐标（如 `left: "33%", top: "33%"`）；
+* **富文本与主题徽章**：可视化选择 5 大预设配色主题（Blue / Green / Amber / Pink / Cyan），实时预览阶梯弹入动效。
+
+---
+
+### 3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)
+
+* **场景卡片流（Scene Sequence Track）**：
+  * 底部直观展示当前项目的全部场景步骤缩略卡片（`Scene 1 ➔ Scene 2 ➔ Scene 3`）；
+  * 支持鼠标拖拽卡片自由调整讲解先后顺序；
+  * 支持一键“复制场景”、“删除场景”与“插入过渡帧”；
+* **图元可见性开关矩阵（Active Elements Matrix）**：
+  * 选中某个场景时，画布与右侧面板列出所有已有 Boxes、Paths、Dots、Images；
+  * 创作者只需通过开关勾选，即可决定该元素在当前场景中是“激活展示”还是“平滑隐藏”。
+
+---
+
+### 3.4 环节三：实时生成、预览与多形态导出下载 (Compilation, Preview & Exporter)
+
+```
+                                【多形态一键导出矩阵】
+
+                                   [🚀 点击导出]
+                                         │
+        ┌────────────────────────────────┼────────────────────────────────┐
+        ▼                                ▼                                ▼
+【📦 独立离线单文件 HTML】        【📄 DSL 配置文件与源码包】       【🎥 4K 60fps MP4 / GIF】
+ • 0 依赖，全 Base64 内联         • config.json + 资产包           • 服务端 Remotion / Puppeteer
+ • 双击秒开，本地/内网完美演示   • 供开发者二次定制与 Git 托管    • 视频平台 / PPT 嵌入首选
+```
+
+#### 导出 1：独立离线单文件 HTML 下载 (`.html`)
+* **原理**：前端调用内置的 Standalone Packager 引擎，将 DSL、CSS 样式、IIFE JS 运行库及底图（转为 Data URI）打包成单一 `.html` 文件；
+* **体验**：浏览器点击一键弹出下载，文件大小通常仅 2~5MB，双击离线即开，无需任何环境。
+
+#### 导出 2：标准 DSL 源码与工程包 (`config.json` / `project.zip`)
+* 导出标准 FocusFlow DSL JSON 结构与图片素材压缩包，方便工程化版本控制。
+
+#### 导出 3：服务端 4K 60fps MP4 / 高清 GIF 视频渲染导出
+* **渲染管线**：服务端无头浏览器步进截帧 + FFmpeg 硬件加速转码；
+* **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频文件下载，可直接插入 Keynote、PPT 或发布到 B站/YouTube。
+
+#### 导出 4：云端只读演示短链与知识库 `<iframe>` 嵌入
+* 一键生成 `https://focusflow.io/s/[slug]` 短链；
+* 提供自适应 `<iframe>` 代码，支持嵌入 Notion、飞书文档、语雀、Docusaurus。
+
+---
+
+## 4. 前端架构与技术栈选型规范 (Frontend Architecture)
+
+### 4.1 技术栈选型
+| 模块 | 选型技术 | 核心考量依据 |
+| :--- | :--- | :--- |
+| **UI 核心框架** | **React 19 + TypeScript** | 声明式状态机、与复杂树形/时间轴组件高度契合、生态最完善 |
+| **样式与组件库** | **Tailwind CSS + shadcn/ui** | 极具现代科技感的暗黑设计风格、高定制性、零冗余运行时开销 |
+| **全局状态管理** | **Zustand** | 极简无样板代码、支持切片（Slices）、与 Phase 1 Player 状态机天然同构 |
+| **图标与视觉系统** | **Lucide React** | 统一现代矢量图标集 |
+| **工程构建工具** | **Vite 6** | 毫秒级 HMR 热更新、极速生产打包 |
+
+### 4.2 前端目录规划 (`focusflow-studio/`)
+```
+focusflow-studio/
+├── src/
+│   ├── components/               # UI 组件库
+│   │   ├── canvas/              # 可视化无限画布与图层
+│   │   │   ├── InfiniteCanvas.tsx
+│   │   │   ├── CameraFrame.tsx
+│   │   │   ├── BoxLayer.tsx
+│   │   │   └── PathLayer.tsx
+│   │   ├── timeline/            # 底部场景时间轴
+│   │   │   ├── TimelineTrack.tsx
+│   │   │   └── SceneCard.tsx
+│   │   ├── inspector/           # 右侧属性检查器
+│   │   │   ├── CameraInspector.tsx
+│   │   │   ├── BoxInspector.tsx
+│   │   │   └── CalloutInspector.tsx
+│   │   ├── topbar/              # 顶部导航栏与导出菜单
+│   │   │   └── Topbar.tsx
+│   │   └── modals/              # 弹窗 (导出预览、模板选择等)
+│   ├── stores/                  # Zustand 状态切片
+│   │   ├── useProjectStore.ts   # 项目 DSL 与场景状态
+│   │   ├── useCanvasStore.ts    # 画布平移、缩放与当前工具
+│   │   └── useHistoryStore.ts   # 撤销/重做 (Undo/Redo 栈)
+│   ├── compiler/                # 浏览器端纯前端打包编译器
+│   │   └── standalonePackager.ts # 动态内联生成单文件 HTML
+│   ├── App.tsx
+│   └── main.tsx
+├── package.json
+└── vite.config.ts
+```
+
+---
+
+## 5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)
+
+### 5.1 服务端技术栈
+* **应用框架**：Node.js / NestJS (TypeScript)
+* **数据库**：PostgreSQL 16 + Prisma ORM
+* **对象存储**：AWS S3 / 阿里云 OSS / MinIO (底图与静态资产)
+* **视频转码服务**：Remotion Lambda / Puppeteer Worker + FFmpeg
+
+### 5.2 核心数据模型 (Prisma Schema)
+```prisma
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  slug        String   @unique
+  viewportW   Int      @default(5120)
+  viewportH   Int      @default(2880)
+  bgImageUrl  String
+  dslJson     Json     // 完整 FocusFlow DSL 数据结构
+  isPublic    Boolean  @default(false)
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  versions    ProjectVersion[]
+}
+
+model ProjectVersion {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versionNo Int
+  dslJson   Json
+  createdAt DateTime @default(now())
+}
+```
+
+### 5.3 核心 RESTful API 契约
+| 方法 | 端点 | 功能说明 | 核心入参 / 返回 |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/projects` | 创建新项目并上传底图 | `multipart/form-data (image, title)` ➔ `{ id, slug, dslJson }` |
+| `GET` | `/api/projects/:id` | 获取项目完整 DSL 与资产 | ➔ `{ id, title, dslJson, bgImageUrl }` |
+| `PUT` | `/api/projects/:id` | 实时保存项目 DSL | `{ dslJson }` ➔ `{ success: true, updatedAt }` |
+| `GET` | `/api/projects/:id/export/html` | 服务端一键下载单文件 HTML | ➔ `Content-Disposition: attachment; filename="*.html"` |
+| `POST` | `/api/projects/:id/render/video` | 提交 4K 视频渲染任务 | `{ resolution: "4K"|"1080P", fps: 60 }` ➔ `{ taskId }` |
+| `GET` | `/api/tasks/:taskId` | 查询视频渲染进度与下载链接 | ➔ `{ status: "processing"|"done", downloadUrl }` |
+| `GET` | `/s/:slug` | 云端只读演示页面入口 | 返回渲染后的只读 FocusFlow Player 播放器 |
+
+---
+
+## 6. Phase 2 研发任务分解与层级跟踪清单 (Hierarchical Task Checklist / WBS)
+
+### 🎨 Stage 1: Studio 前端工程基建与无限画布容器 (Studio Foundation & Canvas)
+- [ ] **1.1 项目脚手架与 UI 组件库搭建**
+  - [ ] 1.1.1 初始化 React 19 + TypeScript + Vite 6 工程，集成 Tailwind CSS 与 shadcn/ui
+  - [ ] 1.1.2 搭建暗黑科技感三栏工作台布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
+- [ ] **1.2 可视化无限画布核心 (`InfiniteCanvas`)**
+  - [ ] 1.2.1 实现鼠标滚轮缩放（Zoom-to-Cursor）与平滑平移（Pan/Grab）
+  - [ ] 1.2.2 实现主底图自适应居中与物理像素视口坐标系统映射
+
+---
+
+### 📥 Stage 2: 资产导入、项目创建与模板系统 (Project Ingestion & Templates)
+- [ ] **2.1 极速创建项目与底图解析**
+  - [ ] 2.1.1 实现拖拽图片直接创建项目，前端自动解析分辨率并初始化 DSL
+  - [ ] 2.1.2 实现 `config.json` 与历史工程 ZIP 导入回显
+- [ ] **2.2 预置行业模板库集成**
+  - [ ] 2.2.1 内置 5 大精选场景架构图模板，支持一键克隆体验
+
+---
+
+### 🛠️ Stage 3: 可视化取景与图元标定编辑工具 (Visual Tools & Framing)
+- [ ] **3.1 镜头取景器 (Camera Viewport Frame)**
+  - [ ] 3.1.1 在画布上可视化呈现当前场景的安全可视窗口，支持拖拽推拉
+  - [ ] 3.1.2 一键捕获当前画布视角为场景镜头参数
+- [ ] **3.2 智能选框可视化绘制 (Smart Box Tool)**
+  - [ ] 3.2.1 深度集成 Phase 1 的 Sobel $\pm 24\text{px}$ 窄带智能自动贴合算法
+  - [ ] 3.2.2 支持 `⌘/Option` 纯手动绘制直通与圆角、描边、发光属性实时调整
+- [ ] **3.3 拓扑流光连线与 8 向锚点吸附 (Bezier Route Tool)**
+  - [ ] 3.3.1 实现卡片 8 向锚点可视化捕捉与三次贝塞尔流光连线拖拽生成
+- [ ] **3.4 毛玻璃气泡所见即所得编辑器 (Callout Visual Editor)**
+  - [ ] 3.4.1 支持在画布上直接拖拽放置气泡，实时配置富文本与主题徽章
+
+---
+
+### 🎬 Stage 4: 场景时间轴编排与多选图层管理 (Sequence Timeline & Layer Matrix)
+- [ ] **4.1 场景卡片流时间轴 (`TimelineTrack`)**
+  - [ ] 4.1.1 实现场景缩略卡片列表展示、拖拽排序、复制与删除
+  - [ ] 4.1.2 支持单场景持续时间（Duration）与自动轮播时序配置
+- [ ] **4.2 图层可见性矩阵管理**
+  - [ ] 4.2.1 提供当前场景激活图元（Boxes, Paths, Dots, Images）的可视化勾选面板
+
+---
+
+### 📦 Stage 5: 纯前端零后端单文件编译与下载引擎 (Browser-side Compiler)
+- [ ] **5.1 浏览器端离线打包器 (`standalonePackager.ts`)**
+  - [ ] 5.1.1 纯前端将底图与覆盖图转为 Base64 Data URI
+  - [ ] 5.1.2 动态内联 CSS 样式与 IIFE 运行时，使用 `Blob` 实现 0 延迟一键下载 `.html`
+- [ ] **5.2 实时受众全屏预览模式**
+  - [ ] 5.2.1 在工作台内提供一键全屏真实受众视角试播与翻页测试
+
+---
+
+### ☁️ Stage 6: 服务端 SaaS 平台、云端短链与视频渲染管线 (Full-Stack Cloud SaaS)
+- [ ] **6.1 服务端 API 与项目云端存储**
+  - [ ] 6.1.1 使用 NestJS + PostgreSQL + Prisma 构建项目管理 RESTful API
+  - [ ] 6.1.2 集成 S3/OSS 对象存储，实现大图直传与 CDN 加速
+- [ ] **6.2 云端免部署只读分享与嵌入**
+  - [ ] 6.2.1 动态生成 `https://focusflow.io/s/:slug` 沉浸式只读演示页
+  - [ ] 6.2.2 提供 Notion/飞书/语雀 `<iframe>` 嵌入标签
+- [ ] **6.3 服务端 Remotion / Puppeteer 4K 视频渲染集群**
+  - [ ] 6.3.1 搭建无头浏览器逐帧截帧与 FFmpeg 合成流水线，支持 4K 60fps MP4 / GIF 导出
+
+---
+
+## 7. Phase 2 验收测试标准 (Acceptance Criteria)
+
+| 验收项 | 验收指标与测试标准 | 预期结果 |
+| :--- | :--- | :--- |
+| **1. 拖拽创建项目** | 将一张 4K/8K 架构图直接拖入 Studio 工作台 | 1 秒内完成分辨率探测，自动初始化画布与 Scene 0 镜头 |
+| **2. 可视化取景与运镜** | 缩放画布至目标区域，点击“捕获镜头” | 自动换算精确的 `zoom/x/y`，在时间轴切换时精准还原运镜 |
+| **3. 智能选框绘制** | 在目标卡片外随手粗拉框 | 松手瞬间触发 $\pm 24\text{px}$ Sobel 精修，自动咬合外边框 |
+| **4. 纯手动直通拉框** | 按住 `⌘/Option` 拖拽选框 | 100% 精确保留手动画框坐标，零算法干预 |
+| **5. 贝塞尔连线吸附** | 从卡片 A 锚点拖出线条连接至卡片 B 锚点 | 自动推导平滑三次贝塞尔曲线，并实时呈现跑马灯流光预览 |
+| **6. 气泡所见即所得** | 拖拽气泡在画布任意位置并修改标题和描述 | 属性实时更新，并在演示预览时阶梯弹性弹入 |
+| **7. 纯前端离线下载** | 在无网络/纯前端模式下点击“导出单文件 HTML” | 浏览器瞬间弹出独立 `.html` 下载，离线双击完美运行 |
+| **8. 时间轴拖拽排序** | 在底部时间轴拖拽调整 Scene 1 和 Scene 2 的顺序 | 场景顺序立即更新，播放状态机按新顺序流转 |
+| **9. 云端短链只读分享** | 打开 `https://focusflow.io/s/[slug]` | 任何设备免登录直接全屏交互式观看演示 |
+| **10. 4K 视频云端渲染** | 提交 4K MP4 导出任务 | 服务端异步完成 60fps 高清转码并提供 MP4 文件下载 |

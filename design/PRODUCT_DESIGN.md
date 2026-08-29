@@ -4,7 +4,11 @@
 > **文档版本**：`v1.3.0`  
 > **最新更新**：`2026-08-29` (Phase 1 验收收官 & Phase 2/3 服务端演进路线图对齐)  
 > **文档状态**：🚀 **Phase 1 (MVP) 100% 达成 · 进入 Phase 2 (Studio 工作台与云端化) 规划期**  
-> **关联技术专刊**：[MVP_SPEC.md](file:///Users/xt/WebstormProjects/focusflow/design/MVP_SPEC.md) · [MOTION_ENGINE_SPEC.md](file:///Users/xt/WebstormProjects/focusflow/design/MOTION_ENGINE_SPEC.md) · [EDGE_SNAPPER_ALGORITHM.md](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)
+> **关联技术专刊**：
+> - 📄 [MVP_SPEC.md (Phase 1 播放引擎与 HUD 规格)](file:///Users/xt/WebstormProjects/focusflow/design/MVP_SPEC.md)
+> - 🎨 [STUDIO_SPEC.md (Phase 2 可视化创作工作室与全栈规格)](file:///Users/xt/WebstormProjects/focusflow/design/STUDIO_SPEC.md)
+> - 📐 [MOTION_ENGINE_SPEC.md (动效数学与渲染规格)](file:///Users/xt/WebstormProjects/focusflow/design/MOTION_ENGINE_SPEC.md)
+> - 🔍 [EDGE_SNAPPER_ALGORITHM.md (智能吸附算法专刊)](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)
 
 ---
 
