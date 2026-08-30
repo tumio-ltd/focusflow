@@ -13,8 +13,8 @@ Stage 2 核心使命是构筑 **FocusFlow Studio 模式 A（离线自治模式�
    - 采用轻量且高性能的 `idb-keyval` 封装 IndexedDB 操作，实现草稿的 **500ms 防抖自动写入**；
    - 实现本地多工程管理（创建、读取、更新、重命名、复制、导出、物理删除），无需注册登录即可获得完整的桌面级 IDE 存储体验；
    - 包含超大底图二进制 `Blob` 的本地独立存储与跨会话秒级复原。
-3. **5 套工业级高精架构演进预设模板 (Production Architecture Templates Library)**：
-   - 内置覆盖高并发微服务、DDD 领域驱动设计、Kubernetes 云原生、分布式事务、大模型 RAG 检索增强生成的 5 大完整 FocusFlow DSL 模板；
+3. **6 套工业级高精架构演进预设模板 (Production Architecture Templates Library)**：
+   - 内置覆盖酒店 PMS 房态调度（POC/MVP 经典升级版）、高并发微服务、DDD 领域驱动设计、Kubernetes 云原生、分布式事务、大模型 RAG 检索增强生成的 6 大完整 FocusFlow DSL 模板；
    - 提供开箱即用的一键应用与多场景镜头预览功能。
 4. **统一设计语言的模态窗与抽屉体系 (Modal & Drawer Ecosystem)**：
    - 打造 `ImageUploadModal`、`TemplatesModal` 与 `ProjectManagerModal`，完美适配 Dark / Light 双主题与中英文 i18n。
@@ -28,7 +28,7 @@ Stage 2 核心使命是构筑 **FocusFlow Studio 模式 A（离线自治模式�
            ▼                          ▼                          ▼
 ┌───────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐
 │ 1. 资产导入引擎        │  │ 2. 离线 IndexedDB 存储 │  │ 3. 模板中心           │
-│ - Drag & Drop 上传    │  │ - idb-keyval 数据库   │  │ - 5 套预置架构 DSL    │
+│ - Drag & Drop 上传    │  │ - idb-keyval 数据库   │  │ - 6 套预置架构 DSL    │
 │ - Image.decode() 解析 │  │ - 500ms 防抖自动保存  │  │ - 实时缩略图与运镜预览 │
 │ - 物理分辨率智能适配   │  │ - 项目列表 CRUD       │  │ - 一键克隆为独立工程  │
 └───────────────────────┘  └───────────────────────┘  └───────────────────────┘
@@ -140,33 +140,39 @@ sequenceDiagram
 
 ---
 
-## 4. 5 大工业级高精预设架构模板规范 (Templates Specification)
+## 4. 6 大工业级高精预设架构模板规范 (Templates Specification)
 
-Stage 2 内置 5 套工业级高精预设模板，所有模板均包含完整底图（矢量高保真绘制/高精 SVG）、图元标注矩阵、解说气泡与多幕运镜编排：
+Stage 2 内置 6 套工业级高精预设模板，所有模板均包含完整底图（矢量高保真绘制/高精 SVG）、图元标注矩阵、解说气泡与多幕运镜编排：
 
 ### 4.1 模板清单 (Templates Catalog)
 
-1. **`tpl-microservices` · 微服务高可用电商中台演进**
+1. **`tpl-hotel-pms` · LuxeHMS 酒店 PMS 房态与高并发预订核心架构 (经典示例升级版)**
+   - **核心背景**：源自 POC 与 MVP 验证阶段沉淀的经典生产级案例，经过全新 $5\text{K}$ 极清底图重构与动效全面升级；
+   - **核心内容**：多端接入层 (Web/小程序) $\rightarrow$ Nginx 动静分离网关 $\rightarrow$ NestJS 业务中台 (CASL 权限与排房引擎) $\rightarrow$ Redis 房态分布式锁集群 $\rightarrow$ PostgreSQL 多租户行级事务存储 $\rightarrow$ Tape Chart (房态甘特画卷画中画深度下钻 Overlay)；
+   - **镜头幕数**：5 幕立体推演 (01 全局总览 $\rightarrow$ 02 鉴权与调度核心 $\rightarrow$ 03 Redis 房态分布式锁 $\rightarrow$ 04 PostgreSQL 数据中枢 $\rightarrow$ 05 房态画卷画中画深度下钻)；
+   - **视觉色系与动效**：极光青 (#38bdf8)、翡翠绿 (#34d399)、霓虹粉 (#f472b6) 与琥珀金 (#fbbf24)，搭配贝塞尔流光连线与动态画中画弹窗。
+
+2. **`tpl-microservices` · 微服务高可用电商中台演进**
    - **核心内容**：API 网关集群 $\rightarrow$ 动态鉴权中心 $\rightarrow$ 订单核心微服务 $\rightarrow$ 扣减库存与防超卖 $\rightarrow$ 支付超时队列 $\rightarrow$ 分布式事务 Seata AT；
    - **镜头幕数**：5 幕连续运镜演进；
    - **视觉色系**：极光青 (#38bdf8) 与翡翠绿 (#34d399)。
 
-2. **`tpl-ddd-architecture` · DDD 领域驱动设计典型分层模型**
+3. **`tpl-ddd-architecture` · DDD 领域驱动设计典型分层模型**
    - **核心内容**：用户接口层 (Interfaces) $\rightarrow$ 应用服务层 (Application) $\rightarrow$ 领域模型层 (Domain Aggregate Root) $\rightarrow$ 基础设施层 (Infrastructure Repository)；
    - **镜头幕数**：4 幕自顶向下聚焦；
    - **视觉色系**：琥珀金 (#fbbf24) 与霓虹紫 (#c084fc)。
 
-3. **`tpl-k8s-cloudnative` · Kubernetes 云原生 GitOps 流水线**
+4. **`tpl-k8s-cloudnative` · Kubernetes 云原生 GitOps 流水线**
    - **核心内容**：GitHub Commit $\rightarrow$ ArgoCD 监听 $\rightarrow$ Ingress Controller $\rightarrow$ Service Mesh (Istio) $\rightarrow$ Pod 灰度金丝雀发布 (Canary)；
    - **镜头幕数**：5 幕流光连线追踪；
    - **视觉色系**：天空蓝 (#0ea5e9) 与科技橙 (#f97316)。
 
-4. **`tpl-distributed-tx` · 分布式事务与最终一致性可靠消息队列**
+5. **`tpl-distributed-tx` · 分布式事务与最终一致性可靠消息队列**
    - **核心内容**：本地事务提交 $\rightarrow$ 写入本地消息表 $\rightarrow$ CDC 增量捕获 (Debezium) $\rightarrow$ Kafka Topic $\rightarrow$ 消费者幂等消费 $\rightarrow$ 补偿重试机制；
    - **镜头幕数**：4 幕深度下钻；
    - **视觉色系**：玫瑰红 (#f43f5e) 与翡翠绿 (#10b981)。
 
-5. **`tpl-ai-rag-pipeline` · 大模型企业级 RAG 检索增强生成链路**
+6. **`tpl-ai-rag-pipeline` · 大模型企业级 RAG 检索增强生成链路**
    - **核心内容**：文档切片 (Chunking) $\rightarrow$ Embedding 向量化 $\rightarrow$ Milvus 混合检索 $\rightarrow$ 重排器 (Rerank) $\rightarrow$ Prompt 组装 $\rightarrow$ LLM 深度推理输出；
    - **镜头幕数**：6 幕前沿流程式推演；
    - **视觉色系**：电光紫 (#a855f7) 与赛博青 (#06b6d4)。
@@ -276,8 +282,8 @@ test.describe('FocusFlow Studio Stage 2 E2E Ingestion & Storage Suite', () => {
   - [ ] 2.2.1 引入 `idb-keyval` 并编写 `src/services/storage.ts` 数据访问层
   - [ ] 2.2.2 编写 `src/stores/useStorageStore.ts`：实现 500ms 防抖自动存盘与工程列表 CRUD
   - [ ] 2.2.3 编写 `src/components/modals/ProjectManagerModal.tsx`：提供工程列表、重命名、复制、导出与物理删除
-- [ ] **Task 2.3: 5 大工业级高精预设架构模板中心 (Templates Library)**
-  - [ ] 2.3.1 编写 `src/templates/` 5 套预置架构 DSL（微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
+- [ ] **Task 2.3: 6 大工业级高精预设架构模板中心 (Templates Library)**
+  - [ ] 2.3.1 编写 `src/templates/` 6 套预置架构 DSL（LuxeHMS 酒店 PMS 房态调度经典升级版、微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
   - [ ] 2.3.2 编写 `src/components/modals/TemplatesModal.tsx`：实现分类过滤、动态预览与一键克隆为当前工程
   - [ ] 2.3.3 在 `TopBar.tsx` 新增“模板中心”与“我的项目”触发入口
 - [ ] **Task 2.4: 国际化多语言词条扩充与类型更新 (i18n Augmentation)**
