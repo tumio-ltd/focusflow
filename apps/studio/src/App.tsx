@@ -95,7 +95,6 @@ export default function App() {
 
   // States
   const [projectTitle, setProjectTitle] = useState(initialDSL.meta.title);
-  const [locale, setLocale] = useState<'zh' | 'en'>('zh');
   const [activeTool, setActiveTool] = useState<ToolType>('select');
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -154,8 +153,6 @@ export default function App() {
         <TopBar
           title={projectTitle}
           onTitleChange={setProjectTitle}
-          locale={locale}
-          onLocaleChange={setLocale}
           canUndo={true}
           canRedo={false}
           onSave={() => alert('草稿已成功保存至本地 IndexedDB！')}

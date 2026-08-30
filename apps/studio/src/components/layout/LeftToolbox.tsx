@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   MousePointer, 
   Square, 
@@ -17,35 +18,37 @@ export interface LeftToolboxProps {
 }
 
 export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
+  const { t } = useTranslation('toolbar');
+
   const tools = [
     {
       id: 'select' as ToolType,
-      label: '选择与抓手平移',
+      label: t('select'),
       shortcut: '1 / V',
       icon: MousePointer,
     },
     {
       id: 'box' as ToolType,
-      label: '智能高亮选框 (Sobel 自动吸附)',
+      label: t('box'),
       shortcut: '2 / R',
       icon: Square,
       featured: true,
     },
     {
       id: 'path' as ToolType,
-      label: '贝塞尔流光连线 (8 向锚点)',
+      label: t('path'),
       shortcut: '3 / L',
       icon: GitCommit,
     },
     {
       id: 'dot' as ToolType,
-      label: '脉冲定位圆点',
+      label: t('dot'),
       shortcut: '4 / D',
       icon: CircleDot,
     },
     {
       id: 'callout' as ToolType,
-      label: '解说气泡与徽章',
+      label: t('callout'),
       shortcut: '5 / T',
       icon: MessageSquare,
     },
@@ -84,8 +87,8 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
 
       <div className="flex-1" />
 
-      {/* 底部 AI 辅助标定图标 (预留) */}
-      <Tooltip content="AI 智能视觉边界提取 (即将上线)" position="right">
+      {/* 底部 AI 辅助标定图标 */}
+      <Tooltip content={t('aiExtraction')} position="right">
         <div className="w-9 h-9 rounded-lg border border-dashed border-slate-800 flex items-center justify-center text-slate-600 hover:text-cyan-400 hover:border-cyan-800/60 transition cursor-help">
           <Sparkles className="w-4 h-4" />
         </div>

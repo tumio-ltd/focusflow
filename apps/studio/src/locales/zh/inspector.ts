@@ -1,0 +1,13 @@
+export default {
+  inspectorTitle: '属性检查器 (Inspector)',
+  sceneCamera: '当前场景运镜 (Camera)',
+  sceneTitle: '场景标题',
+  sceneTitlePlaceholder: '请输入场景标题',
+  cameraZoom: '运镜放大倍率 (Zoom)',
+  cameraDuration: '过渡时长 (Duration)',
+  cameraEasing: '运镜缓动曲线',
+  sceneElements: '当前场景图元',
+  palette: '图元发光调色板',
+  hideElementTip: '点击在当前场景隐藏',
+  showElementTip: '点击在当前场景激活',
+} as const;

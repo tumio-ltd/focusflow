@@ -1,0 +1,16 @@
+export default {
+  appName: 'FocusFlow Studio',
+  modeOffline: 'Mode A (Offline)',
+  modeCloud: 'Mode B (Cloud SaaS)',
+  saved: 'Saved',
+  dirty: 'Unsaved changes',
+  saveDraft: 'Save Draft',
+  exportHtml: 'Export Standalone HTML',
+  exportVideo: 'Export 4K Video',
+  undo: 'Undo',
+  redo: 'Redo',
+  defaultProjectTitle: 'Untitled Architecture Showcase',
+  editTitleTip: 'Click to edit project title',
+  switchTheme: 'Switch Theme',
+  switchLang: 'Switch Language',
+} as const;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Play, 
   Pause, 
@@ -45,6 +46,8 @@ export function BottomTimeline({
   onNext,
   onPrev,
 }: BottomTimelineProps) {
+  const { t } = useTranslation('timeline');
+
   return (
     <footer
       data-testid="timeline"
@@ -52,7 +55,7 @@ export function BottomTimeline({
     >
       {/* 1. 左侧播放控制组 */}
       <div className="flex items-center gap-1.5 bg-slate-950/70 p-1.5 rounded-xl border border-slate-800 shrink-0">
-        <Tooltip content="上一幕" shortcut="←">
+        <Tooltip content={t('prevScene')} shortcut="←">
           <Button
             size="icon"
             variant="ghost"
@@ -64,7 +67,7 @@ export function BottomTimeline({
           </Button>
         </Tooltip>
 
-        <Tooltip content={isPlaying ? '暂停' : '连续播放'} shortcut="Space">
+        <Tooltip content={isPlaying ? t('pause') : t('play')} shortcut="Space">
           <Button
             size="icon"
             variant="cyan"
@@ -75,7 +78,7 @@ export function BottomTimeline({
           </Button>
         </Tooltip>
 
-        <Tooltip content="下一幕" shortcut="→">
+        <Tooltip content={t('nextScene')} shortcut="→">
           <Button
             size="icon"
             variant="ghost"
@@ -142,7 +145,7 @@ export function BottomTimeline({
                   onDuplicateScene?.(idx);
                 }}
                 className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-cyan-300 transition"
-                title="复制当前场景"
+                title={t('duplicateScene')}
               >
                 <Copy className="w-3 h-3" />
               </button>
@@ -158,14 +161,14 @@ export function BottomTimeline({
           className="border-dashed border-slate-700 hover:border-cyan-500/80 text-slate-400 hover:text-cyan-300 gap-1.5 h-11 px-3.5 rounded-xl shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>添加新场景</span>
+          <span>{t('addScene')}</span>
         </Button>
       </div>
 
       {/* 4. 右侧故事板总时长 */}
       <div className="flex items-center gap-2 text-xs text-slate-400 font-mono shrink-0 pl-2 border-l border-slate-800">
         <Film className="w-3.5 h-3.5 text-cyan-400" />
-        <span>总时长: {scenes.reduce((acc, s) => acc + s.duration, 0).toFixed(1)}s</span>
+        <span>{t('totalDuration')}: {scenes.reduce((acc, s) => acc + s.duration, 0).toFixed(1)}s</span>
       </div>
     </footer>
   );

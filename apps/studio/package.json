@@ -13,10 +13,12 @@
     "@focusflow/dsl": "workspace:*",
     "@focusflow/player": "workspace:*",
     "clsx": "^2.1.1",
+    "i18next": "^23.12.0",
     "lucide-react": "^0.400.0",
     "next-themes": "^0.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-i18next": "^14.1.0",
     "tailwind-merge": "^2.5.0",
     "zustand": "^5.0.0"
   },

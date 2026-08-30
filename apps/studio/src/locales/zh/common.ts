@@ -1,0 +1,16 @@
+export default {
+  appName: 'FocusFlow Studio',
+  modeOffline: '模式 A (离线自治)',
+  modeCloud: '模式 B (云端 SaaS)',
+  saved: '已保存',
+  dirty: '有未保存变更',
+  saveDraft: '保存草稿',
+  exportHtml: '导出独立 HTML',
+  exportVideo: '导出 4K 视频',
+  undo: '撤销',
+  redo: '重做',
+  defaultProjectTitle: '未命名架构演示项目',
+  editTitleTip: '点击修改项目标题',
+  switchTheme: '切换主题',
+  switchLang: '切换语言',
+} as const;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from 'next-themes';
+import { useTranslation } from 'react-i18next';
 import { 
   Sparkles, 
   Undo2, 
@@ -17,8 +18,6 @@ import { Button, Badge, Tooltip } from '@/components/ui';
 export interface TopBarProps {
   title?: string;
   onTitleChange?: (newTitle: string) => void;
-  locale?: 'zh' | 'en';
-  onLocaleChange?: (newLocale: 'zh' | 'en') => void;
   canUndo?: boolean;
   canRedo?: boolean;
   onUndo?: () => void;
@@ -29,10 +28,8 @@ export interface TopBarProps {
 }
 
 export function TopBar({
-  title = '未命名架构演示项目',
+  title,
   onTitleChange,
-  locale = 'zh',
-  onLocaleChange,
   canUndo = false,
   canRedo = false,
   onUndo,
@@ -41,15 +38,27 @@ export function TopBar({
   onExport,
   isSaved = true,
 }: TopBarProps) {
+  const { t, i18n } = useTranslation('common');
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
+  const currentLang = (i18n.language || 'zh').startsWith('zh') ? 'zh' : 'en';
+
+  const defaultTitle = title || t('defaultProjectTitle');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [currentTitle, setCurrentTitle] = useState(title);
+  const [currentTitle, setCurrentTitle] = useState(defaultTitle);
 
   const handleTitleSubmit = () => {
     setIsEditingTitle(false);
     if (currentTitle.trim() && onTitleChange) {
       onTitleChange(currentTitle.trim());
+    }
+  };
+
+  const toggleLanguage = () => {
+    const nextLang = currentLang === 'zh' ? 'en' : 'zh';
+    i18n.changeLanguage(nextLang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('focusflow_locale', nextLang);
     }
   };
 
@@ -62,11 +71,11 @@ export function TopBar({
             <Sparkles className="w-4 h-4" />
           </div>
           <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 to-sky-200 bg-clip-text text-transparent">
-            FocusFlow Studio
+            {t('appName')}
           </span>
         </div>
 
-        <Badge variant="cyan">Mode A (Offline)</Badge>
+        <Badge variant="cyan">{t('modeOffline')}</Badge>
 
         <div className="h-4 w-px bg-slate-800 mx-1" />
 
@@ -90,7 +99,7 @@ export function TopBar({
           <div
             onClick={() => setIsEditingTitle(true)}
             className="group flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800/60 cursor-pointer transition"
-            title="点击修改项目标题"
+            title={t('editTitleTip')}
           >
             <span className="text-xs font-medium text-slate-200">{currentTitle}</span>
             <Edit3 className="w-3 h-3 text-slate-500 group-hover:text-cyan-400 transition" />
@@ -98,13 +107,13 @@ export function TopBar({
         )}
 
         <span className="text-[11px] text-slate-500 font-mono">
-          {isSaved ? '• 已保存' : '• 有未保存变更'}
+          {isSaved ? `• ${t('saved')}` : `• ${t('dirty')}`}
         </span>
       </div>
 
       {/* 2. 中间：撤销 / 重做 */}
       <div className="flex items-center gap-1 bg-slate-950/60 p-1 rounded-lg border border-slate-800/80">
-        <Tooltip content="撤销" shortcut="⌘Z">
+        <Tooltip content={t('undo')} shortcut="⌘Z">
           <Button
             size="icon"
             variant="ghost"
@@ -116,7 +125,7 @@ export function TopBar({
           </Button>
         </Tooltip>
 
-        <Tooltip content="重做" shortcut="⇧⌘Z">
+        <Tooltip content={t('redo')} shortcut="⇧⌘Z">
           <Button
             size="icon"
             variant="ghost"
@@ -132,20 +141,21 @@ export function TopBar({
       {/* 3. 右侧：语言 + 主题 + 保存 + 一键导出 */}
       <div className="flex items-center gap-2">
         {/* 多语言切换 */}
-        <Tooltip content={locale === 'zh' ? '切换为 English' : 'Switch to 中文'}>
+        <Tooltip content={t('switchLang')}>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onLocaleChange?.(locale === 'zh' ? 'en' : 'zh')}
+            data-testid="locale-picker"
+            onClick={toggleLanguage}
             className="h-8 text-xs gap-1.5 font-mono"
           >
             <Languages className="w-3.5 h-3.5 text-slate-400" />
-            <span>{locale.toUpperCase()}</span>
+            <span>{currentLang.toUpperCase()}</span>
           </Button>
         </Tooltip>
 
         {/* 暗黑/明亮主题切换 */}
-        <Tooltip content={isDark ? '切换至明亮主题' : '切换至暗黑主题'}>
+        <Tooltip content={t('switchTheme')}>
           <Button
             size="icon"
             variant="outline"
@@ -162,13 +172,13 @@ export function TopBar({
         {/* 保存草稿 */}
         <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">
           <Save className="w-3.5 h-3.5 text-slate-400" />
-          <span>保存草稿</span>
+          <span>{t('saveDraft')}</span>
         </Button>
 
         {/* 一键导出 HTML */}
         <Button size="sm" variant="cyan" onClick={onExport} className="gap-1.5 h-8">
           <Download className="w-3.5 h-3.5" />
-          <span>导出独立 HTML</span>
+          <span>{t('exportHtml')}</span>
         </Button>
       </div>
     </header>

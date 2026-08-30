@@ -4,6 +4,7 @@
     "jsx": "react-jsx",
     "outDir": "./dist",
     "rootDir": "./src",
+    "resolveJsonModule": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]

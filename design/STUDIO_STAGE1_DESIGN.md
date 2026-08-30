@@ -421,11 +421,11 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
   - [x] 1.3.1 编写 `src/styles/tokens.css`，定义完整的 Dark/Light 语义化 CSS 变量、霓虹辉光 (Neon Glow) 与毛玻璃 (Glassmorphism)
   - [x] 1.3.2 集成 `next-themes` 并在 `TopBar.tsx` 实现 `Light / Dark / System` 三态切换
   - [x] 1.3.3 验证主题切换时各面板与画布背景无白屏闪烁且本地 LocalStorage 状态持久化
-- [ ] **Task 1.4: TypeScript 强类型 i18n 国际化体系落地 (Type-Safe i18next)**
-  - [ ] 1.4.1 创建 `src/locales/zh/` 与 `src/locales/en/` 词条文件（`common.json`, `toolbar.json`, `inspector.json`, `timeline.json`）
-  - [ ] 1.4.2 编写 `src/i18n.ts` 初始化 `i18next` 与 `react-i18next`
-  - [ ] 1.4.3 编写 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型智能联想与类型约束
-  - [ ] 1.4.4 在 `TopBar.tsx` 集成 `zh / en` 一键语言切换开关，全面替换工作台硬编码中英文字符串
+- [x] **Task 1.4: TypeScript 强类型 i18n 国际化体系落地 (Type-Safe i18next)**
+  - [x] 1.4.1 创建 `src/locales/zh/` 与 `src/locales/en/` 词条文件（`common.ts`, `toolbar.ts`, `inspector.ts`, `timeline.ts`）
+  - [x] 1.4.2 编写 `src/i18n.ts` 初始化 `i18next` 与 `react-i18next`
+  - [x] 1.4.3 编写 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型智能联想与类型约束
+  - [x] 1.4.4 在 `TopBar.tsx` 集成 `zh / en` 一键语言切换开关，全面替换工作台硬编码中英文字符串
 - [ ] **Task 1.5: InfiniteCanvas 无限缩放平移视口引擎实现 (Infinite Viewport Engine)**
   - [ ] 1.5.1 编写 `useCanvasGesture.ts` 手势 Hook：实现以光标为中心平滑缩放（Zoom-to-Cursor 数学矩阵算法）
   - [ ] 1.5.2 实现 `Space + Drag` 抓手平移与中键平移手势

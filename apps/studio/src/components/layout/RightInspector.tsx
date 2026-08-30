@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Sliders, 
   Camera, 
@@ -45,6 +46,7 @@ export function RightInspector({
   onToggleElement,
   onDeleteElement,
 }: RightInspectorProps) {
+  const { t } = useTranslation('inspector');
   const [isCameraOpen, setIsCameraOpen] = useState(true);
   const [isLayersOpen, setIsLayersOpen] = useState(true);
 
@@ -57,7 +59,7 @@ export function RightInspector({
       <div className="h-11 px-4 border-b border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-300 uppercase tracking-wider">
         <div className="flex items-center gap-2">
           <Sliders className="w-3.5 h-3.5 text-cyan-400" />
-          <span>属性检查器 (Inspector)</span>
+          <span>{t('inspectorTitle')}</span>
         </div>
       </div>
 
@@ -70,7 +72,7 @@ export function RightInspector({
           >
             <div className="flex items-center gap-2">
               <Camera className="w-3.5 h-3.5 text-cyan-400" />
-              <span>当前场景运镜 (Camera)</span>
+              <span>{t('sceneCamera')}</span>
             </div>
             {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </div>
@@ -78,16 +80,16 @@ export function RightInspector({
           {isCameraOpen && (
             <div className="space-y-3 pl-1 pt-1 animate-in fade-in duration-100">
               <div>
-                <label className="text-slate-400 block mb-1 text-[11px]">场景标题</label>
+                <label className="text-slate-400 block mb-1 text-[11px]">{t('sceneTitle')}</label>
                 <Input
                   value={sceneTitle}
                   onChange={(e) => onSceneTitleChange?.(e.target.value)}
-                  placeholder="请输入场景标题"
+                  placeholder={t('sceneTitlePlaceholder')}
                 />
               </div>
 
               <Slider
-                label="运镜放大倍率 (Zoom)"
+                label={t('cameraZoom')}
                 valueDisplay={`${cameraZoom.toFixed(1)}x`}
                 min="1.0"
                 max="3.0"
@@ -97,7 +99,7 @@ export function RightInspector({
               />
 
               <Slider
-                label="过渡时长 (Duration)"
+                label={t('cameraDuration')}
                 valueDisplay={`${cameraDuration.toFixed(1)}s`}
                 min="0.5"
                 max="4.0"
@@ -109,7 +111,7 @@ export function RightInspector({
               <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3 text-cyan-400" />
-                  <span>运镜缓动曲线</span>
+                  <span>{t('cameraEasing')}</span>
                 </span>
                 <span className="font-mono text-cyan-300 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/50">
                   Cubic-Bezier(0.4, 0, 0.2, 1)
@@ -129,7 +131,7 @@ export function RightInspector({
           >
             <div className="flex items-center gap-2">
               <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span>当前场景图元 ({elements.length})</span>
+              <span>{t('sceneElements')} ({elements.length})</span>
             </div>
             {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </div>
@@ -149,7 +151,7 @@ export function RightInspector({
                     <button
                       onClick={() => onToggleElement?.(el.id)}
                       className="text-slate-400 hover:text-cyan-300 transition"
-                      title={el.active ? '点击在当前场景隐藏' : '点击在当前场景激活'}
+                      title={el.active ? t('hideElementTip') : t('showElementTip')}
                     >
                       {el.active ? <Eye className="w-3.5 h-3.5 text-cyan-400" /> : <EyeOff className="w-3.5 h-3.5" />}
                     </button>
@@ -178,7 +180,7 @@ export function RightInspector({
         <div className="space-y-2">
           <span className="text-[11px] font-semibold text-slate-300 flex items-center gap-1.5">
             <Palette className="w-3.5 h-3.5 text-cyan-400" />
-            <span>图元发光调色板</span>
+            <span>{t('palette')}</span>
           </span>
           <div className="flex items-center gap-2 pt-1">
             {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7'].map((c) => (
