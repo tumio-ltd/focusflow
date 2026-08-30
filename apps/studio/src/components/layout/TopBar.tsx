@@ -12,7 +12,8 @@ import {
   Languages, 
   Check, 
   Edit3,
-  UploadCloud
+  UploadCloud,
+  FolderGit2
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -26,6 +27,7 @@ export interface TopBarProps {
   onSave?: () => void;
   onExport?: () => void;
   onOpenImport?: () => void;
+  onOpenProjects?: () => void;
   isSaved?: boolean;
 }
 
@@ -39,6 +41,7 @@ export function TopBar({
   onSave,
   onExport,
   onOpenImport,
+  onOpenProjects,
   isSaved = true,
 }: TopBarProps) {
   const { t, i18n } = useTranslation('common');
@@ -171,6 +174,18 @@ export function TopBar({
         </Tooltip>
 
         <div className="h-4 w-px bg-slate-800 mx-1" />
+
+        {/* 我的项目 */}
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="open-projects-btn"
+          onClick={onOpenProjects}
+          className="gap-1.5 h-8 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
+        >
+          <FolderGit2 className="w-3.5 h-3.5 text-cyan-400" />
+          <span>工程列表</span>
+        </Button>
 
         {/* 导入底图 */}
         <Button

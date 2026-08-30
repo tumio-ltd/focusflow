@@ -3,6 +3,7 @@ import toolbar from './toolbar';
 import inspector from './inspector';
 import timeline from './timeline';
 import upload from './upload';
+import projects from './projects';
 
 export default {
   common,
@@ -10,4 +11,5 @@ export default {
   inspector,
   timeline,
   upload,
+  projects,
 };

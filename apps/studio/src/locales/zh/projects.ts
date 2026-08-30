@@ -1,0 +1,16 @@
+export default {
+  managerTitle: '本地工程管理器',
+  projectCount: '个本地工程',
+  emptyTip: '暂无本地保存的架构工程',
+  createNew: '新建架构工程',
+  openProject: '打开工程',
+  rename: '重命名',
+  duplicate: '复制副本',
+  exportJson: '导出 DSL JSON',
+  delete: '删除工程',
+  deleteConfirm: '确定要永久物理删除此工程吗？此操作无法撤销。',
+  lastModified: '最后修改于',
+  scenesCount: '幕场景',
+  currentBadge: '当前打开',
+  searchPlaceholder: '搜索本地工程名称...',
+} as const;

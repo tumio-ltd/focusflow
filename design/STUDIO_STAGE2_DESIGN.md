@@ -278,10 +278,10 @@ test.describe('FocusFlow Studio Stage 2 E2E Ingestion & Storage Suite', () => {
   - [x] 2.1.1 编写 `src/utils/imageDecoder.ts`：利用原生 `Image.decode()` 提取真实天然宽高，生成安全 ObjectURL
   - [x] 2.1.2 编写 `src/components/modals/ImageUploadModal.tsx`：实现拖拽上传区、URL 导入与分辨率徽章显示
   - [x] 2.1.3 将底图上传与自动生成 Scene 0 逻辑接入工作台中心空状态与 TopBar
-- [ ] **Task 2.2: 离线 IndexedDB 持久化引擎与项目管理 (IndexedDB & Storage Store)**
-  - [ ] 2.2.1 引入 `idb-keyval` 并编写 `src/services/storage.ts` 数据访问层
-  - [ ] 2.2.2 编写 `src/stores/useStorageStore.ts`：实现 500ms 防抖自动存盘与工程列表 CRUD
-  - [ ] 2.2.3 编写 `src/components/modals/ProjectManagerModal.tsx`：提供工程列表、重命名、复制、导出与物理删除
+- [x] **Task 2.2: 离线 IndexedDB 持久化引擎与项目管理 (IndexedDB & Storage Store)**
+  - [x] 2.2.1 引入 `idb-keyval` 并编写 `src/services/storage.ts` 数据访问层
+  - [x] 2.2.2 编写 `src/stores/useStorageStore.ts`：实现 500ms 防抖自动存盘与工程列表 CRUD
+  - [x] 2.2.3 编写 `src/components/modals/ProjectManagerModal.tsx`：提供工程列表、重命名、复制、导出与物理删除
 - [ ] **Task 2.3: 6 大工业级高精预设架构模板中心 (Templates Library)**
   - [ ] 2.3.1 编写 `src/templates/` 6 套预置架构 DSL（LuxeHMS 酒店 PMS 房态调度经典升级版、微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
   - [ ] 2.3.2 编写 `src/components/modals/TemplatesModal.tsx`：实现分类过滤、动态预览与一键克隆为当前工程

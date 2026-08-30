@@ -8,8 +8,8 @@ import {
   BottomTimeline 
 } from '@/components/layout';
 import { InfiniteCanvas } from '@/components/canvas';
-import { ImageUploadModal } from '@/components/modals';
-import { useEditorStore, useProjectStore } from '@/stores';
+import { ImageUploadModal, ProjectManagerModal } from '@/components/modals';
+import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import type { ImageMeta } from '@/utils/imageDecoder';
 import '@focusflow/player/styles.css';
 
@@ -17,6 +17,8 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Zustand Store Hooks
   const { 
@@ -31,6 +33,7 @@ export default function App() {
   const {
     dsl,
     isDirty,
+    setDSL,
     ingestNewAsset,
     updateMetaTitle,
     updateSceneCamera,
@@ -42,9 +45,56 @@ export default function App() {
     markSaved,
   } = useProjectStore();
 
+  const {
+    currentProjectId,
+    loadProjects,
+    openProject,
+    createProject,
+    saveProject,
+  } = useStorageStore();
+
   const activeScene = dsl.scenes[activeSceneIndex] || dsl.scenes[0];
 
-  // Initialize Player
+  // 1. 初始化时从 IndexedDB 载入最近工程
+  useEffect(() => {
+    loadProjects().then(async () => {
+      const storageState = useStorageStore.getState();
+      if (storageState.currentProjectId) {
+        const record = await openProject(storageState.currentProjectId);
+        if (record?.dsl) {
+          setDSL(record.dsl);
+        }
+      } else if (storageState.projectList.length === 0) {
+        // 创建初始示范工程
+        const currentDSL = useProjectStore.getState().dsl;
+        const initialId = await createProject(currentDSL.meta.title, currentDSL);
+        console.log('Initialized first local project:', initialId);
+      }
+    });
+  }, [loadProjects, openProject, createProject, setDSL]);
+
+  // 2. 500ms 防抖自动存盘至 IndexedDB
+  useEffect(() => {
+    if (!isDirty || !currentProjectId) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(async () => {
+      await saveProject(currentProjectId, dsl);
+      markSaved();
+      console.log('Auto-saved project to IndexedDB at', new Date().toLocaleTimeString());
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [dsl, isDirty, currentProjectId, saveProject, markSaved]);
+
+  // 3. Initialize FocusFlow Player
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -89,18 +139,33 @@ export default function App() {
     }
   };
 
-  const handleSaveDraft = () => {
-    markSaved();
-    alert('🎉 草稿已成功同步并持久化至本地 IndexedDB！');
+  const handleSaveDraft = async () => {
+    if (currentProjectId) {
+      await saveProject(currentProjectId, dsl);
+      markSaved();
+      alert('🎉 工程已实时存入本地 IndexedDB！');
+    }
   };
 
   const handleExportHtml = () => {
     alert('📦 正在打包 FocusFlow 0 依赖单文件离线 HTML...');
   };
 
-  const handleAssetImported = (meta: ImageMeta) => {
+  const handleAssetImported = async (meta: ImageMeta) => {
     ingestNewAsset(meta);
     setActiveSceneIndex(0);
+
+    // 立即新建并保存工程
+    const newProjectId = await createProject(meta.fileName, useProjectStore.getState().dsl, meta.blob);
+    console.log('Created project for imported asset:', newProjectId);
+  };
+
+  const handleOpenProjectById = async (id: string) => {
+    const record = await openProject(id);
+    if (record?.dsl) {
+      setDSL(record.dsl);
+      setActiveSceneIndex(0);
+    }
   };
 
   // 提取当前场景图元信息用于 Inspector 展示
@@ -129,6 +194,7 @@ export default function App() {
             canUndo={true}
             canRedo={false}
             isSaved={!isDirty}
+            onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
             onSave={handleSaveDraft}
             onExport={handleExportHtml}
@@ -192,6 +258,13 @@ export default function App() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onImport={handleAssetImported}
+      />
+
+      <ProjectManagerModal
+        isOpen={isProjectsModalOpen}
+        onClose={() => setIsProjectsModalOpen(false)}
+        onSelectProject={handleOpenProjectById}
+        onNewProject={() => setIsUploadModalOpen(true)}
       />
     </>
   );
