@@ -435,8 +435,8 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
   - [x] 1.6.1 编写 `useEditorStore.ts`：管理视口缩放平移、当前激活工具、选中元素 ID 与播放状态
   - [x] 1.6.2 编写 `useProjectStore.ts`：管理 FocusFlow DSL 数据树、场景切换与元素更新
   - [x] 1.6.3 将五栏组件与 Zustand 状态双向绑定
-- [ ] **Task 1.7: 质量门禁与 Playwright E2E 自动化测试 (Testing & Verification)**
-  - [ ] 1.7.1 运行 `pnpm lint`（Oxlint <30ms 极速质检 0 警告 0 错误）
-  - [ ] 1.7.2 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
-  - [ ] 1.7.3 编写 Playwright E2E 测试套件（逻辑提取为独立 async 函数），覆盖五栏挂载、双主题切换、中英文切换与手势缩放
+- [x] **Task 1.7: 质量门禁与 Playwright E2E 自动化测试 (Testing & Verification)**
+  - [x] 1.7.1 运行 `pnpm lint`（Oxlint 20ms 极速质检 0 警告 0 错误）
+  - [x] 1.7.2 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
+  - [x] 1.7.3 编写 Playwright E2E 测试套件（逻辑提取为独立 async 函数），覆盖五栏挂载、双主题切换、中英文切换与手势缩放
 

@@ -473,19 +473,22 @@ model ProjectVersion {
 ### ⚡ 第一板块：模式 A（纯前端 100% 离线自治工作台研发任务）
 
 #### 🎨 Stage 1: Studio 前端工程基建、双主题与多语言体系 (Foundation, Themes & i18n)
-- [ ] **1.1 项目脚手架与 UI 组件库搭建**
-  - [ ] 1.1.1 初始化 React 19 + TypeScript + Vite 8 工程，集成 Tailwind CSS 与 shadcn/ui 组件库
-  - [ ] 1.1.2 搭建暗黑科技感三栏工作台响应式布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
-  - [ ] 1.1.3 集成 TanStack Router 强类型文件路由体系
-- [ ] **1.2 Dark / Light 科技双主题系统与 Semantic Tokens**
-  - [ ] 1.2.1 配置 CSS 语义化颜色变量表（`tokens.css`）与 `next-themes` 主题切换器
-  - [ ] 1.2.2 顶部栏集成 `☀️ Light / 🌙 Dark / 💻 System` 三态一键切换开关与本地持久化
-- [ ] **1.3 强类型多语言国际化体系 (i18n)**
-  - [ ] 1.3.1 集成 `i18next` + `react-i18next`，按模块拆分中英双语词条（`toolbar.json`, `inspector.json`）
-  - [ ] 1.3.2 配置 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型 Key 智能联想补全
-- [ ] **1.4 可视化无限画布核心容器 (`InfiniteCanvas`)**
-  - [ ] 1.4.1 基于 `@use-gesture/react` 实现鼠标滚轮指针为中心缩放（Zoom-to-Cursor）与抓手平移（Pan/Grab）
-  - [ ] 1.4.2 实现主底图自适应居中与物理像素视口坐标系统映射
+- [x] **1.1 项目脚手架与 UI 组件库搭建**
+  - [x] 1.1.1 初始化 React 19 + TypeScript + Vite 8 工程，集成 Tailwind CSS 与原子 UI 组件库（Button, Input, Slider, Badge, Tooltip）
+  - [x] 1.1.2 搭建暗黑科技感五栏工作台响应式布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
+  - [x] 1.1.3 编写 `WorkbenchLayout.tsx` 沉浸式弹性视口容器
+- [x] **1.2 Dark / Light 科技双主题系统与 Semantic Tokens**
+  - [x] 1.2.1 配置 CSS 语义化颜色变量表（`tokens.css`）与 `next-themes` 主题切换器
+  - [x] 1.2.2 顶部栏集成 `☀️ Light / 🌙 Dark / 💻 System` 三态一键切换开关与本地持久化
+- [x] **1.3 强类型多语言国际化体系 (i18n)**
+  - [x] 1.3.1 集成 `i18next` + `react-i18next`，按模块拆分中英双语词条模块（`common.ts`, `toolbar.ts`, `inspector.ts`, `timeline.ts`）
+  - [x] 1.3.2 配置 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型 Key 智能联想补全
+- [x] **1.4 可视化无限画布核心容器 (`InfiniteCanvas`)**
+  - [x] 1.4.1 实现以光标为中心的平滑几何缩放（Zoom-to-Cursor 数学矩阵算法）与抓手平移（Pan/Grab）
+  - [x] 1.4.2 实现视口自适应居中（Shift+1）与 1:1 物理像素对齐（Shift+0）快捷键
+- [x] **1.5 全局状态与 E2E 自动化测试质量验证**
+  - [x] 1.5.1 Zustand 状态切片架构（`useEditorStore`, `useProjectStore`）双向绑定
+  - [x] 1.5.2 Playwright 端到端全流程测试套件编写（独立异步 helper 函数规范）并 100% 编译通过
 
 ---
 
