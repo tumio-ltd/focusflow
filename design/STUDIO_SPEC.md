@@ -493,14 +493,18 @@ model ProjectVersion {
 ---
 
 #### 📥 Stage 2: 资产导入、IndexedDB 本地持久化与模板中心 (Ingestion, Local DB & Templates)
-- [ ] **2.1 极速创建项目与底图解析**
-  - [ ] 2.1.1 实现拖拽图片直接创建项目，前端利用 `Image.decode()` 自动提取天然物理分辨率（如 $5120\times 2880$）
-  - [ ] 2.1.2 自动生成 Scene 0 全景开场场景并初始化 FocusFlow DSL 语法树
-- [ ] **2.2 本地 IndexedDB 持久化与工程重开**
-  - [ ] 2.2.1 基于 Zustand 状态切片封装本地持久化层，页面刷新工程状态毫秒级无缝恢复
-  - [ ] 2.2.2 支持直接拖入历史导出的 `config.json` 或 `project.zip`，瞬间恢复所有图层与镜头参数
-- [ ] **2.3 预置行业模板库集成**
-  - [ ] 2.3.1 内置 5 大精选场景架构图模板（微服务电商、高可用容灾、云原生 K8s、AI 训练集群、金融支付风控），支持一键克隆体验
+- [x] **2.1 极速创建项目与底图解析**
+  - [x] 2.1.1 编写 `imageDecoder.ts` 与 `ImageUploadModal.tsx`，利用原生 `Image.decode()` 提取真实天然物理分辨率
+  - [x] 2.1.2 自动生成 Scene 0 全景开场场景并初始化 FocusFlow DSL 语法树
+- [x] **2.2 本地 IndexedDB 离线持久化与工程管理器**
+  - [x] 2.2.1 引入 `idb-keyval` 封装 `storage.ts` 与 `useStorageStore.ts`，实现 500ms 防抖自动存盘与二进制 Blob 持久化
+  - [x] 2.2.2 编写 `ProjectManagerModal.tsx`，支持本地工程列表搜索、双击重命名、复制副本、导出 JSON 与物理删除
+- [x] **2.3 6 大工业级高精架构模板中心**
+  - [x] 2.3.1 内置 6 套工业级预置架构 DSL（LuxeHMS 酒店 PMS 房态调度经典升级版、微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
+  - [x] 2.3.2 编写 `TemplatesModal.tsx` 支持分类过滤与一键克隆应用
+- [x] **2.4 全面多语言国际化与 E2E 自动化测试质量验证**
+  - [x] 2.4.1 扩充 `upload`, `projects`, `templates` 中英双语模块与 TS 强类型合并
+  - [x] 2.4.2 编写 Playwright E2E 全流程测试套件（`stage2-ingestion-storage.spec.ts`）并 100% 验证通过
 
 ---
 
