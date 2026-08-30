@@ -14,7 +14,8 @@ import {
   Edit3,
   UploadCloud,
   FolderGit2,
-  LayoutTemplate
+  LayoutTemplate,
+  Play
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -30,6 +31,7 @@ export interface TopBarProps {
   onOpenImport?: () => void;
   onOpenProjects?: () => void;
   onOpenTemplates?: () => void;
+  onOpenAudience?: () => void;
   isSaved?: boolean;
 }
 
@@ -45,6 +47,7 @@ export function TopBar({
   onOpenImport,
   onOpenProjects,
   onOpenTemplates,
+  onOpenAudience,
   isSaved = true,
 }: TopBarProps) {
   const { t, i18n } = useTranslation('common');
@@ -216,14 +219,33 @@ export function TopBar({
           <span>{t('importAsset')}</span>
         </Button>
 
+        {/* 受众全屏演播 */}
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="audience-btn"
+          onClick={onOpenAudience}
+          className="gap-1.5 h-8 border-cyan-500/50 text-cyan-300 hover:bg-cyan-950/40"
+          title="受众全屏演播试播"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>演播</span>
+        </Button>
+
         {/* 保存草稿 */}
         <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">
           <Save className="w-3.5 h-3.5 text-slate-400" />
           <span>{t('saveDraft')}</span>
         </Button>
 
-        {/* 一键导出 HTML */}
-        <Button size="sm" variant="cyan" onClick={onExport} className="gap-1.5 h-8">
+        {/* 导出中心 */}
+        <Button 
+          size="sm" 
+          variant="cyan" 
+          data-testid="export-btn"
+          onClick={onExport} 
+          className="gap-1.5 h-8"
+        >
           <Download className="w-3.5 h-3.5" />
           <span>{t('exportHtml')}</span>
         </Button>

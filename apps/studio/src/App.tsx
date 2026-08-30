@@ -12,7 +12,13 @@ import {
   InfiniteCanvas, 
   CanvasOverlay
 } from '@/components/canvas';
-import { ImageUploadModal, ProjectManagerModal, TemplatesModal } from '@/components/modals';
+import { 
+  ImageUploadModal, 
+  ProjectManagerModal, 
+  TemplatesModal,
+  AudienceModal,
+  ExportModal
+} from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import type { ImageMeta } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
@@ -28,6 +34,8 @@ export default function App() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
+  const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 视口变换与容器尺寸跟踪
@@ -178,10 +186,6 @@ export default function App() {
     }
   };
 
-  const handleExportHtml = () => {
-    alert('📦 正在打包 FocusFlow 0 依赖单文件离线 HTML...');
-  };
-
   const handleAssetImported = async (meta: ImageMeta) => {
     ingestNewAsset(meta);
     setActiveSceneIndex(0);
@@ -287,8 +291,9 @@ export default function App() {
             onOpenTemplates={() => setIsTemplatesModalOpen(true)}
             onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
+            onOpenAudience={() => setIsAudienceModalOpen(true)}
             onSave={handleSaveDraft}
-            onExport={handleExportHtml}
+            onExport={() => setIsExportModalOpen(true)}
           />
         }
         leftToolbox={
@@ -402,6 +407,19 @@ export default function App() {
         isOpen={isTemplatesModalOpen}
         onClose={() => setIsTemplatesModalOpen(false)}
         onApplyTemplate={handleApplyTemplate}
+      />
+
+      <AudienceModal
+        isOpen={isAudienceModalOpen}
+        onClose={() => setIsAudienceModalOpen(false)}
+        dsl={dsl}
+        initialSceneIndex={activeSceneIndex}
+      />
+
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        dsl={dsl}
       />
     </>
   );

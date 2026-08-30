@@ -190,13 +190,13 @@ test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
 - [x] **Task 5.2: 纯前端 ZIP 工程归档导出器 (ZIP Project Exporter)**
   - [x] 5.2.1 引入 `jszip` 并编写 `src/services/zipExporter.ts`
   - [x] 5.2.2 将 DSL、素材与独立 HTML 封装为标准 ZIP 归档包
-- [ ] **Task 5.3: 沉浸式受众全屏演示模式 (Audience Fullscreen Presenter)**
-  - [ ] 5.3.1 编写 `src/components/modals/AudienceModal.tsx`：实现 100vw × 100vh 全屏沉浸式挂载
-  - [ ] 5.3.2 实现键盘 `←` / `→` / `Space` 翻页与顶部精简进度条
-- [ ] **Task 5.4: 多功能导出控制中心与视频录制 (Export Modal & Video Recorder)**
-  - [ ] 5.4.1 编写 `src/components/modals/ExportModal.tsx`：提供 HTML / ZIP / 视频多通道导出
-  - [ ] 5.4.2 编写 `src/services/canvasRecorder.ts`：基于 `MediaRecorder` 实现纯本地 60FPS 录制
-  - [ ] 5.4.3 在 `TopBar.tsx` 绑定“一键导出”与“全屏试播”按键
+- [x] **Task 5.3: 沉浸式受众全屏演示模式 (Audience Fullscreen Presenter)**
+  - [x] 5.3.1 编写 `src/components/modals/AudienceModal.tsx`：实现 100vw × 100vh 全屏沉浸式挂载
+  - [x] 5.3.2 实现键盘 `←` / `→` / `Space` 翻页与顶部精简进度条
+- [x] **Task 5.4: 多功能导出控制中心与视频录制 (Export Modal & Video Recorder)**
+  - [x] 5.4.1 编写 `src/components/modals/ExportModal.tsx`：提供 HTML / ZIP / 视频多通道导出
+  - [x] 5.4.2 编写 `src/services/canvasRecorder.ts`：基于 `MediaRecorder` 实现纯本地 60FPS 录制
+  - [x] 5.4.3 在 `TopBar.tsx` 绑定“一键导出”与“全屏试播”按键
 - [ ] **Task 5.5: 国际化词条扩充与类型声明 (i18n Augmentation)**
   - [ ] 5.5.1 扩充 `src/locales/zh/export.ts` 与 `src/locales/en/export.ts`
 - [ ] **Task 5.6: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
