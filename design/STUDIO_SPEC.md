@@ -464,6 +464,7 @@ model ProjectVersion {
  │  • Stage 8: OpenAPI 文档与 Orval 前端 React Query SDK 自动化代码生成   │
  │  • Stage 9: apps/render-worker 异步计算集群 (BullMQ + Remotion+FFmpeg) │
  │  • Stage 10: 云端只读短链分发与 Notion/飞书 iframe 嵌入体系            │
+ │  • Stage 11: 前后端全链路联调、E2E 集成测试与双模式平滑切换验证        │
  └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -598,6 +599,28 @@ model ProjectVersion {
 - [ ] **10.2 知识库 `<iframe>` 嵌入标签生成**
   - [ ] 10.2.1 提供自适应 HTML `<iframe>` 嵌入代码，支持无缝嵌入 Notion、飞书文档、语雀与 Docusaurus
   - [ ] 10.2.2 配置合规安全响应头（Content-Security-Policy & X-Frame-Options）
+
+---
+
+#### 🔄 Stage 11: 前后端全链路联调、E2E 集成测试与双模式切换验证 (Integration, E2E Testing & Verification)
+- [ ] **11.1 身份认证与 Token 生命周期全链路联调**
+  - [ ] 11.1.1 联调登录、注册、Logout 流程，验证 Access Token (Bearer) 注入与 HttpOnly Cookie 自动携带
+  - [ ] 11.1.2 联调 401 Token 过期拦截器，验证无感静默调用 `/api/auth/refresh` 并在续期成功后无缝重试原请求
+- [ ] **11.2 模式 A ➔ 模式 B 草稿“一键上云”与双向同步联调**
+  - [ ] 11.2.1 联调本地草稿向云端持久化的迁移通道（`LocalStorageAdapter` ➔ `CloudApiAdapter`），一键将本地底图与 DSL 资产转存至 PostgreSQL 18
+  - [ ] 11.2.2 验证云端项目保存、版本快照回滚与并发编辑冲突策略
+- [ ] **11.3 S3/OSS 大文件直传与画布资产加载联调**
+  - [ ] 11.3.1 联调前端直传 4K 底图与覆盖图至 S3/OSS，测试直传进度条与断点续传
+  - [ ] 11.3.2 验证 CDN 加速直链返回后 Studio 画布与 Player 视口的像素级秒开加载
+- [ ] **11.4 4K 视频云端异步渲染全链路闭环联调**
+  - [ ] 11.4.1 联调 Studio 提交转码任务 ➔ API 写入 BullMQ ➔ `apps/render-worker` 消费执行无头 Chromium 逐帧截帧与 FFmpeg 硬件加速合成
+  - [ ] 11.4.2 验证 Redis Pub/Sub 广播转码进度 ➔ WebSocket 直推 Studio 进度条 ➔ 渲染完成自动弹出 CDN 4K MP4 下载
+- [ ] **11.5 CASL 团队协同与权限防越权联调**
+  - [ ] 11.5.1 验证 Owner, Editor, Viewer 三种角色的前端 UI 控制（按钮显隐/禁用）与后端 Guard 拦截的 100% 一致性
+  - [ ] 11.5.2 验证免费用户发起 4K 渲染时前端提示升级与后端 Guard 拦截闭环
+- [ ] **11.6 自动化 E2E 全链路集成测试套件**
+  - [ ] 11.6.1 编写 Playwright E2E 测试脚本（覆盖“从拖图创建 ➔ 选框编辑 ➔ 时间轴排序 ➔ 保存云端 ➔ 导出单文件/视频”全流程）
+  - [ ] 11.6.2 集成至 CI/CD 自动化流水线，作为合并代码的核心质量红线守门员
 
 ---
 
