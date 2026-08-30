@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
+import type { ElementBox } from '@focusflow/dsl';
 import { 
   WorkbenchLayout, 
   TopBar, 
@@ -7,12 +8,13 @@ import {
   RightInspector, 
   BottomTimeline 
 } from '@/components/layout';
-import { InfiniteCanvas, CameraFrustumFrame } from '@/components/canvas';
+import { InfiniteCanvas, CameraFrustumFrame, BoxDrawingOverlay } from '@/components/canvas';
 import { ImageUploadModal, ProjectManagerModal, TemplatesModal } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import type { ImageMeta } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
+import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import '@focusflow/player/styles.css';
 
 export default function App() {
@@ -47,6 +49,7 @@ export default function App() {
     updateSceneTitle,
     addScene,
     duplicateScene,
+    addBox,
     toggleElementInScene,
     deleteElement,
     markSaved,
@@ -116,6 +119,12 @@ export default function App() {
 
     player.init().then(() => {
       playerRef.current = player;
+      // 预先缓存底图像素到 Sobel 空间分析器
+      globalEdgeSnapper.setImageElement(
+        player.imgEl,
+        dsl.meta.viewport.width,
+        dsl.meta.viewport.height
+      );
     });
 
     return () => {
@@ -204,6 +213,10 @@ export default function App() {
     updateSceneCamera(activeSceneIndex, newCamera);
   };
 
+  const handleBoxCreated = (box: ElementBox) => {
+    addBox(box, activeSceneIndex);
+  };
+
   // 提取当前场景图元信息用于 Inspector 展示
   const inspectorElements = [
     ...(dsl.elements.boxes || []).map((b) => ({
@@ -250,6 +263,14 @@ export default function App() {
             onTransformChange={handleCanvasTransformChange}
           >
             <div ref={containerRef} className="w-full h-full relative">
+              {/* 智能选框绘制层 */}
+              <BoxDrawingOverlay
+                contentWidth={dsl.meta.viewport.width}
+                contentHeight={dsl.meta.viewport.height}
+                active={activeTool === 'box'}
+                onBoxCreated={handleBoxCreated}
+              />
+
               {/* 摄像机安全可视取景框 (Frustum) */}
               <CameraFrustumFrame
                 camera={{

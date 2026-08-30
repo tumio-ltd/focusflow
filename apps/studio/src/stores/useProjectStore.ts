@@ -115,6 +115,7 @@ export interface ProjectState {
     elementType: 'boxes' | 'paths' | 'dots' | 'images', 
     elementId: string
   ) => void;
+  addBox: (box: ElementBox, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images', elementId: string) => void;
   markSaved: () => void;
 }
@@ -279,6 +280,38 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
       return {
         dsl: { ...state.dsl, scenes },
+        isDirty: true,
+      };
+    }),
+
+  addBox: (box, activeInSceneIndex = 0) =>
+    set((state) => {
+      const boxes = [...(state.dsl.elements.boxes || []), box];
+      const scenes = [...state.dsl.scenes];
+      const targetScene = scenes[activeInSceneIndex];
+
+      if (targetScene) {
+        const currentBoxes = targetScene.activeElements.boxes || [];
+        if (!currentBoxes.includes(box.id)) {
+          scenes[activeInSceneIndex] = {
+            ...targetScene,
+            activeElements: {
+              ...targetScene.activeElements,
+              boxes: [...currentBoxes, box.id],
+            },
+          };
+        }
+      }
+
+      return {
+        dsl: {
+          ...state.dsl,
+          elements: {
+            ...state.dsl.elements,
+            boxes,
+          },
+          scenes,
+        },
         isDirty: true,
       };
     }),

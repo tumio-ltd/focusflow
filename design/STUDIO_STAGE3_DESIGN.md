@@ -224,10 +224,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   - [x] 3.1.1 编写 `src/utils/cameraMath.ts`：实现摄像机参数与安全取景框物理坐标互转、视口中心反解算法
   - [x] 3.1.2 编写 `src/components/canvas/CameraFrustumFrame.tsx`：在画布上呈现发光安全取景框与调整手柄
   - [x] 3.1.3 在 `RightInspector.tsx` 新增“捕获当前画布视角”快捷操作按键
-- [ ] **Task 3.2: 智能选框工具与 Sobel 边缘自动吸附 (Smart Box Tool & Sobel Snapping Engine)**
-  - [ ] 3.2.1 编写 `src/utils/edgeSnapper.ts`：实现离屏 $3\times 3$ Sobel 梯度卷积与 $\pm 24\text{px}$ 窄带能量极大值投影
-  - [ ] 3.2.2 编写 `src/components/canvas/BoxDrawingOverlay.tsx`：实现鼠标拖拽选框、实时吸附与 `⌥ Option` 手动模式
-  - [ ] 3.2.3 选框生成后自动注入 `useProjectStore` 并关联至当前激活场景
+- [x] **Task 3.2: 智能选框工具与 Sobel 边缘自动吸附 (Smart Box Tool & Sobel Snapping Engine)**
+  - [x] 3.2.1 编写 `src/utils/edgeSnapper.ts`：实现离屏 $3\times 3$ Sobel 梯度卷积与 $\pm 24\text{px}$ 窄带能量极大值投影
+  - [x] 3.2.2 编写 `src/components/canvas/BoxDrawingOverlay.tsx`：实现鼠标拖拽选框、实时吸附与 `⌥ Option` 手动模式
+  - [x] 3.2.3 选框生成后自动注入 `useProjectStore` 并关联至当前激活场景
 - [ ] **Task 3.3: 8 向锚点捕捉与三次贝塞尔流光连线 (Bezier Route Tool & 8-Anchor Snapping)**
   - [ ] 3.3.1 编写 `src/utils/bezierMath.ts`：计算 8 向锚点绝对坐标与平滑三次贝塞尔控制点曲线
   - [ ] 3.3.2 编写 `src/components/canvas/PathDrawingOverlay.tsx`：实现锚点吸附高亮、流光连线拖拽生成与方向向量计算
