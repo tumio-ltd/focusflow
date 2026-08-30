@@ -228,10 +228,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   - [x] 3.2.1 编写 `src/utils/edgeSnapper.ts`：实现离屏 $3\times 3$ Sobel 梯度卷积与 $\pm 24\text{px}$ 窄带能量极大值投影
   - [x] 3.2.2 编写 `src/components/canvas/BoxDrawingOverlay.tsx`：实现鼠标拖拽选框、实时吸附与 `⌥ Option` 手动模式
   - [x] 3.2.3 选框生成后自动注入 `useProjectStore` 并关联至当前激活场景
-- [ ] **Task 3.3: 8 向锚点捕捉与三次贝塞尔流光连线 (Bezier Route Tool & 8-Anchor Snapping)**
-  - [ ] 3.3.1 编写 `src/utils/bezierMath.ts`：计算 8 向锚点绝对坐标与平滑三次贝塞尔控制点曲线
-  - [ ] 3.3.2 编写 `src/components/canvas/PathDrawingOverlay.tsx`：实现锚点吸附高亮、流光连线拖拽生成与方向向量计算
-  - [ ] 3.3.3 支持在 `RightInspector.tsx` 配置连线流速、描边粗细与流光动画
+- [x] **Task 3.3: 8 向锚点捕捉与三次贝塞尔流光连线 (Bezier Route Tool & 8-Anchor Snapping)**
+  - [x] 3.3.1 编写 `src/utils/bezierMath.ts`：计算 8 向锚点绝对坐标与平滑三次贝塞尔控制点曲线
+  - [x] 3.3.2 编写 `src/components/canvas/PathDrawingOverlay.tsx`：实现锚点吸附高亮、流光连线拖拽生成与方向向量计算
+  - [x] 3.3.3 支持在 `RightInspector.tsx` 配置连线流速、描边粗细与流光动画
 - [ ] **Task 3.4: 脉冲定位圆点与解说气泡组件 (Pulse Dot & Callout Badges)**
   - [ ] 3.4.1 编写 `src/components/canvas/DotDrawingOverlay.tsx`：单击放置脉冲圆点与涟漪动效
   - [ ] 3.4.2 编写 `src/components/canvas/CalloutOverlay.tsx`：支持拖拽定位、选框挂载、Markdown 编辑与 5 套科技发光主题色

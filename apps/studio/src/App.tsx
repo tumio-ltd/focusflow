@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
-import type { ElementBox } from '@focusflow/dsl';
+import type { ElementBox, ElementPath } from '@focusflow/dsl';
 import { 
   WorkbenchLayout, 
   TopBar, 
@@ -8,7 +8,12 @@ import {
   RightInspector, 
   BottomTimeline 
 } from '@/components/layout';
-import { InfiniteCanvas, CameraFrustumFrame, BoxDrawingOverlay } from '@/components/canvas';
+import { 
+  InfiniteCanvas, 
+  CameraFrustumFrame, 
+  BoxDrawingOverlay,
+  PathDrawingOverlay
+} from '@/components/canvas';
 import { ImageUploadModal, ProjectManagerModal, TemplatesModal } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import type { ImageMeta } from '@/utils/imageDecoder';
@@ -50,6 +55,7 @@ export default function App() {
     addScene,
     duplicateScene,
     addBox,
+    addPath,
     toggleElementInScene,
     deleteElement,
     markSaved,
@@ -217,6 +223,10 @@ export default function App() {
     addBox(box, activeSceneIndex);
   };
 
+  const handlePathCreated = (path: ElementPath) => {
+    addPath(path, activeSceneIndex);
+  };
+
   // 提取当前场景图元信息用于 Inspector 展示
   const inspectorElements = [
     ...(dsl.elements.boxes || []).map((b) => ({
@@ -269,6 +279,15 @@ export default function App() {
                 contentHeight={dsl.meta.viewport.height}
                 active={activeTool === 'box'}
                 onBoxCreated={handleBoxCreated}
+              />
+
+              {/* 三次贝塞尔 8 向锚点流光连线绘制层 */}
+              <PathDrawingOverlay
+                contentWidth={dsl.meta.viewport.width}
+                contentHeight={dsl.meta.viewport.height}
+                boxes={dsl.elements.boxes || []}
+                active={activeTool === 'path'}
+                onPathCreated={handlePathCreated}
               />
 
               {/* 摄像机安全可视取景框 (Frustum) */}
