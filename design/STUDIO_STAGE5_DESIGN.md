@@ -184,9 +184,9 @@ test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
 
 ## 7. Stage 5 任务分解与执行清单 (WBS Checklist)
 
-- [ ] **Task 5.1: 纯前端单文件独立 HTML 编译器 (Standalone HTML Packager)**
-  - [ ] 5.1.1 编写 `src/services/standalonePackager.ts`：实现 CSS、Player IIFE 运行时与 DSL 的内存拼装
-  - [ ] 5.1.2 实现 `downloadStandaloneHtml(dsl)`：Blob 封装与浏览器 0 延迟一键触发下载
+- [x] **Task 5.1: 纯前端单文件独立 HTML 编译器 (Standalone HTML Packager)**
+  - [x] 5.1.1 编写 `src/services/standalonePackager.ts`：实现 CSS、Player IIFE 运行时与 DSL 的内存拼装
+  - [x] 5.1.2 实现 `downloadStandaloneHtml(dsl)`：Blob 封装与浏览器 0 延迟一键触发下载
 - [ ] **Task 5.2: 纯前端 ZIP 工程归档导出器 (ZIP Project Exporter)**
   - [ ] 5.2.1 引入 `jszip` 并编写 `src/services/zipExporter.ts`
   - [ ] 5.2.2 将 DSL、素材与独立 HTML 封装为标准 ZIP 归档包
