@@ -157,9 +157,9 @@ test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
   - [x] 4.2.1 封装 `useProjectStore` 的 `undo`, `redo`, `past`, `future` 历史快照状态机
   - [x] 4.2.2 编写 `src/hooks/useHistoryKeyboard.ts`：全局监听 `⌘Z` / `⌘⇧Z` / `Ctrl+Z` / `Ctrl+Y` 快捷键
   - [x] 4.2.3 在 `TopBar.tsx` 中双向绑定撤销/重做按键与可用状态
-- [ ] **Task 4.3: 图层可见性矩阵与状态继承 (Layer Visibility Matrix)**
-  - [ ] 4.3.1 在 `RightInspector.tsx` 增强图元列表：支持全量图元显隐勾选、搜索过滤、快速删除
-  - [ ] 4.3.2 增加“从上一幕继承图元”快捷按键，实现跨场景图元状态一键克隆
+- [x] **Task 4.3: 图层可见性矩阵与状态继承 (Layer Visibility Matrix)**
+  - [x] 4.3.1 在 `RightInspector.tsx` 增强图元列表：支持全量图元显隐勾选、搜索过滤、快速删除与类型彩色图标
+  - [x] 4.3.2 增加“从上一幕继承图元”快捷按键，实现跨场景图元状态一键克隆与响应式同步
 - [ ] **Task 4.4: 国际化词条扩充与类型声明 (i18n Augmentation)**
   - [ ] 4.4.1 扩充 `src/locales/zh/` 与 `src/locales/en/`（`timeline.ts`, `inspector.ts`, `common.ts` 增补时序与撤销词条）
 - [ ] **Task 4.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**

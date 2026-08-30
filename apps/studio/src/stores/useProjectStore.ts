@@ -122,6 +122,7 @@ export interface ProjectState {
     elementType: 'boxes' | 'paths' | 'dots' | 'images', 
     elementId: string
   ) => void;
+  inheritPreviousSceneElements: (targetSceneIndex: number) => void;
   addBox: (box: ElementBox, activeInSceneIndex?: number) => void;
   addPath: (path: ElementPath, activeInSceneIndex?: number) => void;
   addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
@@ -319,6 +320,23 @@ export const useProjectStore = create<ProjectState>((set) => ({
           ...scene.activeElements,
           [elementType]: nextActiveList,
         },
+      };
+
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
+    }),
+
+  inheritPreviousSceneElements: (targetSceneIndex) =>
+    set((state) => {
+      if (targetSceneIndex <= 0) return state;
+      const prevScene = state.dsl.scenes[targetSceneIndex - 1];
+      const targetScene = state.dsl.scenes[targetSceneIndex];
+      if (!prevScene || !targetScene) return state;
+
+      const scenes = [...state.dsl.scenes];
+      scenes[targetSceneIndex] = {
+        ...targetScene,
+        activeElements: JSON.parse(JSON.stringify(prevScene.activeElements)),
       };
 
       const nextDSL = { ...state.dsl, scenes };

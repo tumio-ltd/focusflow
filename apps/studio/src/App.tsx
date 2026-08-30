@@ -65,6 +65,7 @@ export default function App() {
     addDot,
     addCallout,
     toggleElementInScene,
+    inheritPreviousSceneElements,
     deleteElement,
     markSaved,
   } = useProjectStore();
@@ -333,6 +334,8 @@ export default function App() {
             cameraDuration={activeScene?.camera.duration || 1.2}
             onCameraDurationChange={(duration) => updateSceneCamera(activeSceneIndex, { duration })}
             onCaptureCurrentCamera={handleCaptureCurrentCamera}
+            canInherit={activeSceneIndex > 0}
+            onInheritPreviousScene={() => inheritPreviousSceneElements(activeSceneIndex)}
             elements={inspectorElements}
             onToggleElement={(id) => {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);

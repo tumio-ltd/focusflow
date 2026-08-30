@@ -11,7 +11,13 @@ import {
   ChevronRight, 
   Palette,
   Clock,
-  Crosshair
+  Crosshair,
+  CopyCheck,
+  Search,
+  Square,
+  GitCommit,
+  CircleDot,
+  MessageSquare
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 
@@ -23,6 +29,8 @@ export interface RightInspectorProps {
   cameraDuration?: number;
   onCameraDurationChange?: (duration: number) => void;
   onCaptureCurrentCamera?: () => void;
+  canInherit?: boolean;
+  onInheritPreviousScene?: () => void;
   elements?: {
     id: string;
     type: 'box' | 'path' | 'dot' | 'callout';
@@ -41,6 +49,8 @@ export function RightInspector({
   cameraDuration = 1.2,
   onCameraDurationChange,
   onCaptureCurrentCamera,
+  canInherit = false,
+  onInheritPreviousScene,
   elements = [
     { id: 'box-1', type: 'box', name: '微服务网关选框', active: true },
     { id: 'callout-1', type: 'callout', name: 'API 网关解说气泡', active: true },
@@ -52,6 +62,25 @@ export function RightInspector({
   const { t } = useTranslation('inspector');
   const [isCameraOpen, setIsCameraOpen] = useState(true);
   const [isLayersOpen, setIsLayersOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredElements = elements.filter((el) =>
+    el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    el.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getElementIcon = (type: 'box' | 'path' | 'dot' | 'callout') => {
+    switch (type) {
+      case 'box':
+        return <Square className="w-3 h-3 text-cyan-400" />;
+      case 'path':
+        return <GitCommit className="w-3 h-3 text-sky-400" />;
+      case 'dot':
+        return <CircleDot className="w-3 h-3 text-purple-400" />;
+      case 'callout':
+        return <MessageSquare className="w-3 h-3 text-amber-400" />;
+    }
+  };
 
   return (
     <aside
@@ -151,39 +180,70 @@ export function RightInspector({
           </div>
 
           {isLayersOpen && (
-            <div className="space-y-1.5 pt-1 animate-in fade-in duration-100">
-              {elements.map((el) => (
-                <div
-                  key={el.id}
-                  className={`flex items-center justify-between px-2.5 py-2 rounded-lg border text-[11px] transition ${
-                    el.active
-                      ? 'bg-slate-800/70 border-slate-700/80 text-slate-200'
-                      : 'bg-slate-900/30 border-slate-800/50 text-slate-500 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <button
-                      onClick={() => onToggleElement?.(el.id)}
-                      className="text-slate-400 hover:text-cyan-300 transition"
-                      title={el.active ? t('hideElementTip') : t('showElementTip')}
-                    >
-                      {el.active ? <Eye className="w-3.5 h-3.5 text-cyan-400" /> : <EyeOff className="w-3.5 h-3.5" />}
-                    </button>
-                    <span className="truncate">{el.name}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => onDeleteElement?.(el.id)}
-                      className="h-6 w-6 text-slate-500 hover:text-rose-400"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
+            <div className="space-y-2 pt-1 animate-in fade-in duration-100">
+              {/* 搜索与一键继承栏 */}
+              <div className="flex items-center gap-1.5">
+                <div className="relative flex-1">
+                  <Search className="w-3 h-3 text-slate-500 absolute left-2 top-2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="过滤图元..."
+                    className="w-full bg-slate-950/60 border border-slate-800 rounded-lg pl-7 pr-2 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                  />
                 </div>
-              ))}
+
+                {canInherit && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    data-testid="inherit-scene-btn"
+                    onClick={onInheritPreviousScene}
+                    className="gap-1 text-[11px] h-7 px-2 border-slate-700 hover:border-cyan-500 text-slate-300 hover:text-cyan-300"
+                    title="从上一幕继承图元激活状态"
+                  >
+                    <CopyCheck className="w-3 h-3" />
+                    <span>继承</span>
+                  </Button>
+                )}
+              </div>
+
+              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5 no-scrollbar">
+                {filteredElements.map((el) => (
+                  <div
+                    key={el.id}
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] transition ${
+                      el.active
+                        ? 'bg-slate-800/70 border-slate-700/80 text-slate-200 shadow-sm'
+                        : 'bg-slate-900/30 border-slate-800/50 text-slate-500 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                      <button
+                        onClick={() => onToggleElement?.(el.id)}
+                        className="text-slate-400 hover:text-cyan-300 transition shrink-0"
+                        title={el.active ? t('hideElementTip') : t('showElementTip')}
+                      >
+                        {el.active ? <Eye className="w-3.5 h-3.5 text-cyan-400" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      </button>
+                      <span className="shrink-0">{getElementIcon(el.type)}</span>
+                      <span className="truncate">{el.name}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0 ml-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => onDeleteElement?.(el.id)}
+                        className="h-5 w-5 text-slate-500 hover:text-rose-400"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
