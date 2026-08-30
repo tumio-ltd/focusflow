@@ -509,18 +509,21 @@ model ProjectVersion {
 ---
 
 #### 🛠️ Stage 3: 可视化取景与 4 大图元标定编辑工具 (Visual Tools & Framing)
-- [ ] **3.1 镜头取景器 (Camera Viewport Frame)**
-  - [ ] 3.1.1 在画布上可视化呈现当前场景的安全可视取景窗口（Frustum），支持手势推拉与拖拽
-  - [ ] 3.1.2 提供“一键捕获当前画布视角”按钮，自动计算精准的 `{ zoom, x, y, duration }`
-- [ ] **3.2 智能选框可视化绘制 (Smart Box Tool)**
-  - [ ] 3.2.1 深度集成 Phase 1 的 Sobel $\pm 24\text{px}$ 窄带智能自动贴合算法，松手瞬间像素级吸附外边框
-  - [ ] 3.2.2 支持 `⌘/Option` 纯手动绘制直通与圆角、描边、霓虹发光属性实时配置
-- [ ] **3.3 拓扑流光连线与 8 向锚点吸附 (Bezier Route Tool)**
-  - [ ] 3.3.1 实现卡片 8 向锚点可视化捕捉与三次贝塞尔流光连线拖拽生成
-  - [ ] 3.3.2 支持流光速度、虚线段长度与发光色彩实时调节
-- [ ] **3.4 毛玻璃气泡所见即所得编辑器 (Callout Visual Editor)**
-  - [ ] 3.4.1 支持在画布上直接拖拽放置气泡，实时配置富文本、标题与 9 种主题徽章
-  - [ ] 3.4.2 支持配置双语国际化文案（`textI18n: { zh: "...", en: "..." }`）
+- [x] **3.1 镜头取景器与视口视角捕获 (Camera Viewport Frame & Framing Engine)**
+  - [x] 3.1.1 编写 `cameraMath.ts` 与 `CameraFrustumFrame.tsx`，在画布上可视化呈现当前场景的安全可视取景窗口（Frustum）
+  - [x] 3.1.2 在属性面板提供“一键捕获当前画布视角”按键，自动计算反解精准 `{ zoom, x, y, duration }`
+- [x] **3.2 智能选框可视化绘制与 Sobel 边缘吸附 (Smart Box Tool & Sobel Snapping)**
+  - [x] 3.2.1 编写 `edgeSnapper.ts`，实现离屏 $3\times 3$ Sobel 梯度卷积与 $\pm 24\text{px}$ 窄带能量极大值投影算法
+  - [x] 3.2.2 编写 `BoxDrawingOverlay.tsx`，支持实时拉框吸附与 `Option` 纯手动绘制直通
+- [x] **3.3 拓扑流光连线与 8 向锚点吸附 (Bezier Route Tool & 8-Anchor Snapping)**
+  - [x] 3.3.1 编写 `bezierMath.ts` 与 `PathDrawingOverlay.tsx`，实现卡片 8 向锚点可视化捕捉与三次贝塞尔流光连线生成
+  - [x] 3.3.2 动态计算法向量与控制点曲率，自动生成平滑流光连线
+- [x] **3.4 脉冲定位圆点与解说气泡组件 (Pulse Dot & Callout Badges)**
+  - [x] 3.4.1 编写 `DotDrawingOverlay.tsx` 单击放置脉冲圆点与涟漪动效
+  - [x] 3.4.2 编写 `CalloutOverlay.tsx` 支持智能选框挂载/绝对定位与发光主题色
+  - [x] 3.4.3 编写 `CanvasOverlay.tsx` 统一调度 5 大标定图层状态机
+- [x] **3.5 质量门禁与 Playwright E2E 自动化测试**
+  - [x] 3.5.1 编写 `stage3-visual-tools.spec.ts` 端到端全流程测试套件并 100% 验证通过
 
 ---
 

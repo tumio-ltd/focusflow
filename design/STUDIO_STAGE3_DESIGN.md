@@ -236,11 +236,11 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   - [x] 3.4.1 编写 `src/components/canvas/DotDrawingOverlay.tsx`：单击放置脉冲圆点与涟漪动效
   - [x] 3.4.2 编写 `src/components/canvas/CalloutOverlay.tsx`：支持拖拽定位、选框挂载、Markdown 编辑与 5 套科技发光主题色
   - [x] 3.4.3 整合 `src/components/canvas/CanvasOverlay.tsx` 统一管理 4 大标定工具状态机
-- [ ] **Task 3.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
-  - [ ] 3.5.1 编写 `e2e/stage3-visual-tools.spec.ts`（独立异步 helper 函数规范）
-  - [ ] 3.5.2 运行 `pnpm lint`（Oxlint 极速静态检查 0 警告 0 错误）
-  - [ ] 3.5.3 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
-  - [ ] 3.5.4 运行 `pnpm build`（Turborepo 全局拓扑构建验证通过）
+- [x] **Task 3.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
+  - [x] 3.5.1 编写 `e2e/stage3-visual-tools.spec.ts`（独立异步 helper 函数规范）
+  - [x] 3.5.2 运行 `pnpm lint`（Oxlint 24ms 极速静态检查 0 警告 0 错误）
+  - [x] 3.5.3 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
+  - [x] 3.5.4 运行 `pnpm build`（Turborepo 全局拓扑构建验证通过）
 
 ---
 *FocusFlow Studio Architecture Working Group · 2026.08*

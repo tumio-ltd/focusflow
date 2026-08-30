@@ -66,6 +66,7 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
         return (
           <Tooltip key={tool.id} content={tool.label} shortcut={tool.shortcut} position="right">
             <button
+              data-testid={`tool-${tool.id}`}
               onClick={() => onToolChange(tool.id)}
               className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ${
                 isActive
