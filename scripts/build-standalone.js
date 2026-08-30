@@ -58,7 +58,7 @@ async function buildStandalone(exampleDirArg = 'examples/overlay-demo', outputFi
   }
 
   // 4. Read CSS
-  const cssPath = path.join(projectRoot, 'src/styles/focusflow.css');
+  const cssPath = path.join(projectRoot, 'packages/player/src/styles/focusflow.css');
   const cssContent = fs.readFileSync(cssPath, 'utf-8');
   console.log(`  ✓ Inlined CSS (${(cssContent.length / 1024).toFixed(1)} KB)`);
 
@@ -69,7 +69,7 @@ async function buildStandalone(exampleDirArg = 'examples/overlay-demo', outputFi
     build: {
       write: false,
       lib: {
-        entry: path.join(projectRoot, 'src/index.js'),
+        entry: path.join(projectRoot, 'packages/player/src/index.js'),
         name: 'FocusFlow',
         formats: ['iife'],
         fileName: () => 'bundle.iife.js'
