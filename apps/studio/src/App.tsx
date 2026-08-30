@@ -9,6 +9,7 @@ import {
   BottomTimeline,
   ToolType 
 } from '@/components/layout';
+import { InfiniteCanvas } from '@/components/canvas';
 import '@focusflow/player/styles.css';
 
 // Initial Mock DSL for Studio Development
@@ -166,7 +167,9 @@ export default function App() {
           />
         }
         centerCanvas={
-          <div ref={containerRef} className="w-full h-full relative" />
+          <InfiniteCanvas contentWidth={1920} contentHeight={1080}>
+            <div ref={containerRef} className="w-full h-full relative" />
+          </InfiniteCanvas>
         }
         rightInspector={
           <RightInspector

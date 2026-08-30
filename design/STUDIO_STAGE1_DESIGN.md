@@ -426,11 +426,11 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
   - [x] 1.4.2 编写 `src/i18n.ts` 初始化 `i18next` 与 `react-i18next`
   - [x] 1.4.3 编写 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型智能联想与类型约束
   - [x] 1.4.4 在 `TopBar.tsx` 集成 `zh / en` 一键语言切换开关，全面替换工作台硬编码中英文字符串
-- [ ] **Task 1.5: InfiniteCanvas 无限缩放平移视口引擎实现 (Infinite Viewport Engine)**
-  - [ ] 1.5.1 编写 `useCanvasGesture.ts` 手势 Hook：实现以光标为中心平滑缩放（Zoom-to-Cursor 数学矩阵算法）
-  - [ ] 1.5.2 实现 `Space + Drag` 抓手平移与中键平移手势
-  - [ ] 1.5.3 实现 `Shift + 1` 视口自适应居中（Fit-to-Screen）与 `Shift + 0` 1:1 像素复原快捷键
-  - [ ] 1.5.4 编写 `InfiniteCanvas.tsx`，将 `@focusflow/player` 内核挂载于视口变换层中
+- [x] **Task 1.5: InfiniteCanvas 无限缩放平移视口引擎实现 (Infinite Viewport Engine)**
+  - [x] 1.5.1 编写 `useCanvasGesture.ts` 手势 Hook：实现以光标为中心平滑缩放（Zoom-to-Cursor 数学矩阵算法）
+  - [x] 1.5.2 实现 `Space + Drag` 抓手平移与中键平移手势
+  - [x] 1.5.3 实现 `Shift + 1` 视口自适应居中（Fit-to-Screen）与 `Shift + 0` 1:1 像素复原快捷键
+  - [x] 1.5.4 编写 `InfiniteCanvas.tsx`，将 `@focusflow/player` 内核挂载于视口变换层中
 - [ ] **Task 1.6: Zustand 状态切片与响应式绑定 (State Architecture)**
   - [ ] 1.6.1 编写 `useEditorStore.ts`：管理视口缩放平移、当前激活工具、选中元素 ID 与播放状态
   - [ ] 1.6.2 编写 `useProjectStore.ts`：管理 FocusFlow DSL 数据树、场景切换与元素更新
