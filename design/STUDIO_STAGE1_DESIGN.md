@@ -24,6 +24,7 @@
 - [6. 模块四：InfiniteCanvas 交互式无限画布视口引擎 (核心算法)](#6-模块四infinitecanvas-交互式无限画布视口引擎-核心算法)
 - [7. 模块五：Zustand 响应式状态切片架构设计](#7-模块五zustand-响应式状态切片架构设计)
 - [8. 验收标准、测试用例与 Playwright E2E 验证规范](#8-验收标准测试用例与-playwright-e2e-验证规范)
+- [9. Stage 1 研发任务分解与执行跟踪清单 (Task Breakdown Checklist / WBS)](#9-stage-1-研发任务分解与执行跟踪清单-task-breakdown-checklist--wbs)
 
 ---
 
@@ -401,3 +402,41 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
   });
 });
 ```
+
+---
+
+## 9. Stage 1 研发任务分解与执行跟踪清单 (Task Breakdown Checklist / WBS)
+
+- [ ] **Task 1.1: 基础设施与原子 UI 组件库搭建 (Scaffolding & UI Primitives)**
+  - [ ] 1.1.1 在 `apps/studio` 封装原子 UI 组件库（`Button.tsx`, `Slider.tsx`, `Input.tsx`, `Dropdown.tsx`, `Tooltip.tsx`）
+  - [ ] 1.1.2 编写 `clsx` + `tailwind-merge` 样式合并工具（`src/utils/cn.ts`）
+  - [ ] 1.1.3 配置 `lucide-react` 常用科技图标映射与统一尺寸/样式封装
+- [ ] **Task 1.2: 五栏响应式工作台布局搭建 (Workbench Layout Skeleton)**
+  - [ ] 1.2.1 编写 `TopBar.tsx`：Logo、项目标题双击内联编辑、撤销/重做快捷按键、保存状态提示
+  - [ ] 1.2.2 编写 `LeftToolbox.tsx`：5 大浮动标定工具按键（Select, Box, Path, Dot, Callout）与激活态/悬停态样式
+  - [ ] 1.2.3 编写 `RightInspector.tsx`：手风琴式场景镜头属性与图层配置折叠面板
+  - [ ] 1.2.4 编写 `BottomTimeline.tsx`：横向场景切片卡片列表、时长指示器、微缩图与播放控制栏
+  - [ ] 1.2.5 编写 `WorkbenchLayout.tsx`：组合五栏栅格，实现 `100vw * 100vh` 沉浸式弹性视口
+- [ ] **Task 1.3: Dark / Light 科技双主题系统与 Token 落地 (Dual Themes & Tokens)**
+  - [ ] 1.3.1 编写 `src/styles/tokens.css`，定义完整的 Dark/Light 语义化 CSS 变量、霓虹辉光 (Neon Glow) 与毛玻璃 (Glassmorphism)
+  - [ ] 1.3.2 集成 `next-themes` 并在 `TopBar.tsx` 实现 `Light / Dark / System` 三态切换
+  - [ ] 1.3.3 验证主题切换时各面板与画布背景无白屏闪烁且本地 LocalStorage 状态持久化
+- [ ] **Task 1.4: TypeScript 强类型 i18n 国际化体系落地 (Type-Safe i18next)**
+  - [ ] 1.4.1 创建 `src/locales/zh/` 与 `src/locales/en/` 词条文件（`common.json`, `toolbar.json`, `inspector.json`, `timeline.json`）
+  - [ ] 1.4.2 编写 `src/i18n.ts` 初始化 `i18next` 与 `react-i18next`
+  - [ ] 1.4.3 编写 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型智能联想与类型约束
+  - [ ] 1.4.4 在 `TopBar.tsx` 集成 `zh / en` 一键语言切换开关，全面替换工作台硬编码中英文字符串
+- [ ] **Task 1.5: InfiniteCanvas 无限缩放平移视口引擎实现 (Infinite Viewport Engine)**
+  - [ ] 1.5.1 编写 `useCanvasGesture.ts` 手势 Hook：实现以光标为中心平滑缩放（Zoom-to-Cursor 数学矩阵算法）
+  - [ ] 1.5.2 实现 `Space + Drag` 抓手平移与中键平移手势
+  - [ ] 1.5.3 实现 `Shift + 1` 视口自适应居中（Fit-to-Screen）与 `Shift + 0` 1:1 像素复原快捷键
+  - [ ] 1.5.4 编写 `InfiniteCanvas.tsx`，将 `@focusflow/player` 内核挂载于视口变换层中
+- [ ] **Task 1.6: Zustand 状态切片与响应式绑定 (State Architecture)**
+  - [ ] 1.6.1 编写 `useEditorStore.ts`：管理视口缩放平移、当前激活工具、选中元素 ID 与播放状态
+  - [ ] 1.6.2 编写 `useProjectStore.ts`：管理 FocusFlow DSL 数据树、场景切换与元素更新
+  - [ ] 1.6.3 将五栏组件与 Zustand 状态双向绑定
+- [ ] **Task 1.7: 质量门禁与 Playwright E2E 自动化测试 (Testing & Verification)**
+  - [ ] 1.7.1 运行 `pnpm lint`（Oxlint <30ms 极速质检 0 警告 0 错误）
+  - [ ] 1.7.2 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
+  - [ ] 1.7.3 编写 Playwright E2E 测试套件（逻辑提取为独立 async 函数），覆盖五栏挂载、双主题切换、中英文切换与手势缩放
+
