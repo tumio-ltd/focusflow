@@ -1508,18 +1508,22 @@ pnpm changeset
 
 ## 7. 平滑无痛迁移实施路线图 (Migration Checklist)
 
-- [ ] **Step 1: 根工作区环境配置 (Root Workspace Setup)**
-  - [ ] 1.1 创建 `pnpm-workspace.yaml`，指定 `packages/*` 与 `apps/*`
-  - [ ] 1.2 创建 `turbo.json`，配置 `build` 拓扑与 `dist/**` 缓存产物
-  - [ ] 1.3 创建 `tsconfig.base.json`，配置 `"composite": true` 复合类型标准
-- [ ] **Step 2: 底层播放器与 DSL 契约提取 (Extract Packages)**
-  - [ ] 2.1 创建 `packages/dsl`，迁移提取 `src/types/dsl.d.ts` 为标准共享包
-  - [ ] 2.2 创建 `packages/player`，将当前 `src/` 迁移至 `packages/player/src/`
-  - [ ] 2.3 配置 `packages/player/package.json` 的 ESM Subpath Exports
-- [ ] **Step 3: Studio 前端工程初始化 (Init Studio App)**
-  - [ ] 3.1 在 `apps/studio` 初始化 React 19 + TypeScript + Vite 8 + Tailwind 工程
-  - [ ] 3.2 引入 `"@focusflow/player": "workspace:*"` 与 `"@focusflow/dsl": "workspace:*"`
-  - [ ] 3.3 验证 Studio 画布成功挂载并实例化 Player 播放器
-- [ ] **Step 4: 脚本与 CI 构建联调 (Scripts & Verification)**
-  - [ ] 4.1 更新 `scripts/build-standalone.js` 适配新目录路径
-  - [ ] 4.2 执行 `pnpm build`，验证 Turborepo 拓扑编译与缓存命中率 100%
+- [x] **Step 1: 根工作区环境配置 (Root Workspace Setup)**
+  - [x] 1.1 创建 `pnpm-workspace.yaml`，指定 `packages/*` 与 `apps/*`
+  - [x] 1.2 创建 `turbo.json`，配置 `build` 拓扑与 `dist/**` 缓存产物
+  - [x] 1.3 创建 `tsconfig.base.json`，配置 `"composite": true` 复合类型标准
+  - [x] 1.4 创建 `.oxlintrc.json` 与 `.prettierrc.json` 极速代码质检与统一排版配置
+  - [x] 1.5 创建 `docker-compose.yml` 本地 PostgreSQL 18 + Redis 7 编排
+- [x] **Step 2: 底层播放器与 DSL 契约提取 (Extract Packages)**
+  - [x] 2.1 物理备份现有资产至 `legacy/phase0-poc/` 与 `legacy/phase1-mvp/`
+  - [x] 2.2 创建 `packages/dsl`，迁移提取领域契约为标准共享包 (`@focusflow/dsl`)
+  - [x] 2.3 创建 `packages/player`，将 `src/` 迁移为独立渲染内核 (`@focusflow/player`)
+  - [x] 2.4 创建共享配置包 `packages/config-typescript`、`packages/config-oxlint`、`packages/config-tailwind`
+  - [x] 2.5 配置 `packages/player/package.json` 的 ESM + IIFE 双产物构建与 Subpath Exports
+- [x] **Step 3: Studio 前端工程初始化 (Init Studio App)**
+  - [x] 3.1 在 `apps/studio` 初始化 React 19 + TypeScript + Vite 8 + Tailwind 工程
+  - [x] 3.2 引入 `"@focusflow/player": "workspace:*"` 与 `"@focusflow/dsl": "workspace:*"`
+  - [x] 3.3 验证 Studio 画布成功挂载并实例化 Player 播放器
+- [x] **Step 4: 脚本与 CI 构建联调 (Scripts & Verification)**
+  - [x] 4.1 更新 `scripts/build-standalone.js` 适配新目录路径并成功生成离线单文件 HTML
+  - [x] 4.2 执行 `pnpm lint`（16ms 极速质检通过）、`pnpm typecheck`（Full Turbo 秒过）与 `pnpm build`（拓扑构建 100% 成功）
