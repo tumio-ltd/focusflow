@@ -187,7 +187,7 @@ export function TopBar({
           className="gap-1.5 h-8 border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-cyan-950/40"
         >
           <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
-          <span>模板中心</span>
+          <span>{t('templatesCenter')}</span>
         </Button>
 
         {/* 我的项目 */}
@@ -199,7 +199,7 @@ export function TopBar({
           className="gap-1.5 h-8 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
         >
           <FolderGit2 className="w-3.5 h-3.5 text-slate-400" />
-          <span>工程列表</span>
+          <span>{t('projectsList')}</span>
         </Button>
 
         {/* 导入底图 */}
@@ -211,7 +211,7 @@ export function TopBar({
           className="gap-1.5 h-8 border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40"
         >
           <UploadCloud className="w-3.5 h-3.5" />
-          <span>导入底图</span>
+          <span>{t('importAsset')}</span>
         </Button>
 
         {/* 保存草稿 */}

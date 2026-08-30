@@ -13,4 +13,7 @@ export default {
   editTitleTip: '点击修改项目标题',
   switchTheme: '切换主题',
   switchLang: '切换语言',
+  templatesCenter: '模板中心',
+  projectsList: '工程列表',
+  importAsset: '导入底图',
 } as const;

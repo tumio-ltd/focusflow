@@ -13,4 +13,7 @@ export default {
   editTitleTip: 'Click to edit project title',
   switchTheme: 'Switch Theme',
   switchLang: 'Switch Language',
+  templatesCenter: 'Templates',
+  projectsList: 'Projects',
+  importAsset: 'Import Asset',
 } as const;

@@ -286,9 +286,9 @@ test.describe('FocusFlow Studio Stage 2 E2E Ingestion & Storage Suite', () => {
   - [x] 2.3.1 编写 `src/templates/` 6 套预置架构 DSL（LuxeHMS 酒店 PMS 房态调度经典升级版、微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
   - [x] 2.3.2 编写 `src/components/modals/TemplatesModal.tsx`：实现分类过滤、动态预览与一键克隆为当前工程
   - [x] 2.3.3 在 `TopBar.tsx` 新增“模板中心”与“我的项目”触发入口
-- [ ] **Task 2.4: 国际化多语言词条扩充与类型更新 (i18n Augmentation)**
-  - [ ] 2.4.1 扩充 `src/locales/zh/` 与 `src/locales/en/`（新增 `upload.ts`, `templates.ts`, `projects.ts`）
-  - [ ] 2.4.2 更新 `src/i18n.d.ts` 强类型声明
+- [x] **Task 2.4: 国际化多语言词条扩充与类型更新 (i18n Augmentation)**
+  - [x] 2.4.1 扩充 `src/locales/zh/` 与 `src/locales/en/`（新增 `upload.ts`, `templates.ts`, `projects.ts`）
+  - [x] 2.4.2 更新 `src/i18n.d.ts` 强类型声明
 - [ ] **Task 2.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
   - [ ] 2.5.1 编写 `e2e/stage2-ingestion-storage.spec.ts`（独立异步 helper 函数规范）
   - [ ] 2.5.2 运行 `pnpm lint`（Oxlint 极速静态检查 0 警告 0 错误）
