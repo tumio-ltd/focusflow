@@ -1,27 +1,31 @@
 {
-  "name": "focusflow",
-  "version": "1.0.0",
-  "description": "Interactive Visual Storytelling & Architecture Evolution Showcase Engine",
+  "name": "focusflow-monorepo",
+  "private": true,
   "type": "module",
-  "main": "src/index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "turbo run dev",
+    "dev:studio": "turbo run dev --filter=@focusflow/studio",
+    "dev:api": "turbo run dev --filter=@focusflow/api",
+    "dev:worker": "turbo run dev --filter=@focusflow/render-worker",
+    "dev:player": "vite",
+    "build": "turbo run build",
+    "build:standalone": "node scripts/build-standalone.js examples/luxehms",
     "create:project": "node scripts/create-project.js",
-    "build:standalone": "node scripts/build-standalone.js",
-    "preview": "vite preview"
+    "db:migrate": "pnpm --filter=@focusflow/database prisma migrate dev",
+    "db:studio": "pnpm --filter=@focusflow/database prisma studio",
+    "lint": "oxlint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "changeset": "changeset"
   },
-  "keywords": [
-    "architecture",
-    "interactive",
-    "svg-animation",
-    "visual-storytelling",
-    "camera-zoom",
-    "flow-diagram"
-  ],
-  "author": "Xiang C.",
-  "license": "MIT",
   "devDependencies": {
-    "vite": "^8.2.2"
-  }
+    "@changesets/cli": "^2.27.0",
+    "oxlint": "^0.15.0",
+    "prettier": "^3.3.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0",
+    "vite": "^8.2.0"
+  },
+  "packageManager": "pnpm@9.0.0"
 }
