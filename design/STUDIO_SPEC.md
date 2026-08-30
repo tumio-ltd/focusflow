@@ -442,66 +442,162 @@ model ProjectVersion {
 
 ## 6. Phase 2 研发任务分解与层级跟踪清单 (Hierarchical Task Checklist / WBS)
 
-### 🎨 Stage 1: Studio 前端工程基建与无限画布容器 (Studio Foundation & Canvas)
+```
+                    【Phase 2 WBS 研发任务层级分解总览】
+
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ ⚡ 第一板块：模式 A（纯前端 100% 离线自治工作台 · 可独立先行发布）     │
+ ├────────────────────────────────────────────────────────────────────────┤
+ │  • Stage 1: Studio 前端工程基建、Dark/Light 双主题与 react-i18next     │
+ │  • Stage 2: 资产导入、IndexedDB 本地持久化与 5 大模板中心              │
+ │  • Stage 3: 可视化取景器与 4 大图元标定编辑工具 (Sobel 自动吸附)       │
+ │  • Stage 4: 场景关键帧时间轴编排、撤销重做栈与图层矩阵                 │
+ │  • Stage 5: 纯前端离线打包 (HTML/ZIP) 与 MediaRecorder 本地视频录制   │
+ └────────────────────────────────────────────────────────────────────────┘
+                                    │ (模式 A 交付后平滑升维)
+                                    ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ ☁️ 第二板块：模式 B（云端全栈 SaaS、团队协同与 4K 视频集群）           │
+ ├────────────────────────────────────────────────────────────────────────┤
+ │  • Stage 6: 数据库层与 Redis 7 基础设施 (PostgreSQL 18 + Prisma)       │
+ │  • Stage 7: 主 API 服务、JWT 双 Token 认证与 CASL 细粒度权限           │
+ │  • Stage 8: OpenAPI 文档与 Orval 前端 React Query SDK 自动化代码生成   │
+ │  • Stage 9: apps/render-worker 异步计算集群 (BullMQ + Remotion+FFmpeg) │
+ │  • Stage 10: 云端只读短链分发与 Notion/飞书 iframe 嵌入体系            │
+ └────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### ⚡ 第一板块：模式 A（纯前端 100% 离线自治工作台研发任务）
+
+#### 🎨 Stage 1: Studio 前端工程基建、双主题与多语言体系 (Foundation, Themes & i18n)
 - [ ] **1.1 项目脚手架与 UI 组件库搭建**
-  - [ ] 1.1.1 初始化 React 19 + TypeScript + Vite 8 工程，集成 Tailwind CSS 与 shadcn/ui
-  - [ ] 1.1.2 搭建暗黑科技感三栏工作台布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
-- [ ] **1.2 可视化无限画布核心 (`InfiniteCanvas`)**
-  - [ ] 1.2.1 实现鼠标滚轮缩放（Zoom-to-Cursor）与平滑平移（Pan/Grab）
-  - [ ] 1.2.2 实现主底图自适应居中与物理像素视口坐标系统映射
+  - [ ] 1.1.1 初始化 React 19 + TypeScript + Vite 8 工程，集成 Tailwind CSS 与 shadcn/ui 组件库
+  - [ ] 1.1.2 搭建暗黑科技感三栏工作台响应式布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
+  - [ ] 1.1.3 集成 TanStack Router 强类型文件路由体系
+- [ ] **1.2 Dark / Light 科技双主题系统与 Semantic Tokens**
+  - [ ] 1.2.1 配置 CSS 语义化颜色变量表（`tokens.css`）与 `next-themes` 主题切换器
+  - [ ] 1.2.2 顶部栏集成 `☀️ Light / 🌙 Dark / 💻 System` 三态一键切换开关与本地持久化
+- [ ] **1.3 强类型多语言国际化体系 (i18n)**
+  - [ ] 1.3.1 集成 `i18next` + `react-i18next`，按模块拆分中英双语词条（`toolbar.json`, `inspector.json`）
+  - [ ] 1.3.2 配置 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型 Key 智能联想补全
+- [ ] **1.4 可视化无限画布核心容器 (`InfiniteCanvas`)**
+  - [ ] 1.4.1 基于 `@use-gesture/react` 实现鼠标滚轮指针为中心缩放（Zoom-to-Cursor）与抓手平移（Pan/Grab）
+  - [ ] 1.4.2 实现主底图自适应居中与物理像素视口坐标系统映射
 
 ---
 
-### 📥 Stage 2: 资产导入、项目创建与模板系统 (Project Ingestion & Templates)
+#### 📥 Stage 2: 资产导入、IndexedDB 本地持久化与模板中心 (Ingestion, Local DB & Templates)
 - [ ] **2.1 极速创建项目与底图解析**
-  - [ ] 2.1.1 实现拖拽图片直接创建项目，前端自动解析分辨率并初始化 DSL
-  - [ ] 2.1.2 实现 `config.json` 与历史工程 ZIP 导入回显
-- [ ] **2.2 预置行业模板库集成**
-  - [ ] 2.2.1 内置 5 大精选场景架构图模板，支持一键克隆体验
+  - [ ] 2.1.1 实现拖拽图片直接创建项目，前端利用 `Image.decode()` 自动提取天然物理分辨率（如 $5120\times 2880$）
+  - [ ] 2.1.2 自动生成 Scene 0 全景开场场景并初始化 FocusFlow DSL 语法树
+- [ ] **2.2 本地 IndexedDB 持久化与工程重开**
+  - [ ] 2.2.1 基于 Zustand 状态切片封装本地持久化层，页面刷新工程状态毫秒级无缝恢复
+  - [ ] 2.2.2 支持直接拖入历史导出的 `config.json` 或 `project.zip`，瞬间恢复所有图层与镜头参数
+- [ ] **2.3 预置行业模板库集成**
+  - [ ] 2.3.1 内置 5 大精选场景架构图模板（微服务电商、高可用容灾、云原生 K8s、AI 训练集群、金融支付风控），支持一键克隆体验
 
 ---
 
-### 🛠️ Stage 3: 可视化取景与图元标定编辑工具 (Visual Tools & Framing)
+#### 🛠️ Stage 3: 可视化取景与 4 大图元标定编辑工具 (Visual Tools & Framing)
 - [ ] **3.1 镜头取景器 (Camera Viewport Frame)**
-  - [ ] 3.1.1 在画布上可视化呈现当前场景的安全可视窗口，支持拖拽推拉
-  - [ ] 3.1.2 一键捕获当前画布视角为场景镜头参数
+  - [ ] 3.1.1 在画布上可视化呈现当前场景的安全可视取景窗口（Frustum），支持手势推拉与拖拽
+  - [ ] 3.1.2 提供“一键捕获当前画布视角”按钮，自动计算精准的 `{ zoom, x, y, duration }`
 - [ ] **3.2 智能选框可视化绘制 (Smart Box Tool)**
-  - [ ] 3.2.1 深度集成 Phase 1 的 Sobel $\pm 24\text{px}$ 窄带智能自动贴合算法
-  - [ ] 3.2.2 支持 `⌘/Option` 纯手动绘制直通与圆角、描边、发光属性实时调整
+  - [ ] 3.2.1 深度集成 Phase 1 的 Sobel $\pm 24\text{px}$ 窄带智能自动贴合算法，松手瞬间像素级吸附外边框
+  - [ ] 3.2.2 支持 `⌘/Option` 纯手动绘制直通与圆角、描边、霓虹发光属性实时配置
 - [ ] **3.3 拓扑流光连线与 8 向锚点吸附 (Bezier Route Tool)**
   - [ ] 3.3.1 实现卡片 8 向锚点可视化捕捉与三次贝塞尔流光连线拖拽生成
+  - [ ] 3.3.2 支持流光速度、虚线段长度与发光色彩实时调节
 - [ ] **3.4 毛玻璃气泡所见即所得编辑器 (Callout Visual Editor)**
-  - [ ] 3.4.1 支持在画布上直接拖拽放置气泡，实时配置富文本与主题徽章
+  - [ ] 3.4.1 支持在画布上直接拖拽放置气泡，实时配置富文本、标题与 9 种主题徽章
+  - [ ] 3.4.2 支持配置双语国际化文案（`textI18n: { zh: "...", en: "..." }`）
 
 ---
 
-### 🎬 Stage 4: 场景时间轴编排与多选图层管理 (Sequence Timeline & Layer Matrix)
+#### 🎬 Stage 4: 场景关键帧时间轴编排与图层矩阵 (Sequence Timeline & Layer Matrix)
 - [ ] **4.1 场景卡片流时间轴 (`TimelineTrack`)**
-  - [ ] 4.1.1 实现场景缩略卡片列表展示、拖拽排序、复制与删除
-  - [ ] 4.1.2 支持单场景持续时间（Duration）与自动轮播时序配置
-- [ ] **4.2 图层可见性矩阵管理**
-  - [ ] 4.2.1 提供当前场景激活图元（Boxes, Paths, Dots, Images）的可视化勾选面板
+  - [ ] 4.1.1 基于 `@dnd-kit/sortable` 实现底部水平时间轴上场景卡片的流畅拖拽排序、复制、删除与重命名
+  - [ ] 4.1.2 支持单场景驻留时间（Duration）与自动轮播时序配置
+- [ ] **4.2 历史时间旅行栈 (Undo / Redo)**
+  - [ ] 4.2.1 基于 `zundo` 实现无限步 `Ctrl/⌘ + Z` 撤销与 `Ctrl/⌘ + Shift + Z` 重做栈
+- [ ] **4.3 图层可见性矩阵管理**
+  - [ ] 4.3.1 提供当前场景激活图元（Boxes, Paths, Dots, Images）的可视化勾选面板与平滑隐藏过渡
 
 ---
 
-### 📦 Stage 5: 纯前端零后端单文件编译与下载引擎 (Browser-side Compiler)
-- [ ] **5.1 浏览器端离线打包器 (`standalonePackager.ts`)**
+#### 📦 Stage 5: 纯前端离线编译、单文件打包与本地视频录制 (Client Compiler, Packager & MediaRecorder)
+- [ ] **5.1 浏览器端单文件打包器 (`standalonePackager.ts`)**
   - [ ] 5.1.1 纯前端将底图与覆盖图转为 Base64 Data URI
-  - [ ] 5.1.2 动态内联 CSS 样式与 IIFE 运行时，使用 `Blob` 实现 0 延迟一键下载 `.html`
-- [ ] **5.2 实时受众全屏预览模式**
-  - [ ] 5.2.1 在工作台内提供一键全屏真实受众视角试播与翻页测试
+  - [ ] 5.1.2 动态内联 CSS 样式与 `@focusflow/player` IIFE 运行时，使用 `Blob` 实现 0 延迟一键下载独立 `.html`
+- [ ] **5.2 纯前端 ZIP 工程压缩导出**
+  - [ ] 5.2.1 集成 `jszip`，在浏览器内存中直接生成包含底图、覆盖图与 `config.json` 的标准压缩包
+- [ ] **5.3 纯前端客户端视频录制 (MediaRecorder)**
+  - [ ] 5.3.1 基于 HTML5 Canvas Capture 与 `MediaRecorder` API 实现纯本地实时截帧录制，导出 WebM/MP4
+- [ ] **5.4 实时受众全屏预览模式**
+  - [ ] 5.4.1 在工作台内提供一键全屏真实受众视角试播与翻页演示测试
 
 ---
 
-### ☁️ Stage 6: 服务端 SaaS 平台、云端短链与视频渲染管线 (Full-Stack Cloud SaaS)
-- [ ] **6.1 服务端 API 与项目云端存储**
-  - [ ] 6.1.1 使用 NestJS + PostgreSQL 18 + Prisma 构建项目管理 RESTful API
-  - [ ] 6.1.2 集成 S3/OSS 对象存储，实现大图直传与 CDN 加速
-- [ ] **6.2 云端免部署只读分享与嵌入**
-  - [ ] 6.2.1 动态生成 `https://focusflow.io/s/:slug` 沉浸式只读演示页
-  - [ ] 6.2.2 提供 Notion/飞书/语雀 `<iframe>` 嵌入标签
-- [ ] **6.3 服务端 Remotion / Puppeteer 4K 视频渲染集群**
-  - [ ] 6.3.1 搭建无头浏览器逐帧截帧与 FFmpeg 合成流水线，支持 4K 60fps MP4 / GIF 导出
+### ☁️ 第二板块：模式 B（云端全栈 SaaS、团队协同与 4K 视频集群研发任务）
+
+#### 🗄️ Stage 6: 数据库层与 Redis 7 基础设施 (PostgreSQL 18 + Prisma + Redis 7)
+- [ ] **6.1 `packages/database` 纯粹数据层构建**
+  - [ ] 6.1.1 编写 `schema.prisma` 模型定义（Project, ProjectVersion, Asset, RenderJob, User），配置 PostgreSQL 18 JSONB 字段
+  - [ ] 6.1.2 执行 Prisma 首次迁移生成客户端代码
+- [ ] **6.2 Prisma 事务、并发锁与自动审计日志**
+  - [ ] 6.2.1 实现 Prisma Client 自动写入审计日志扩展（`audit.extension.ts`），记录每次 DSL 变更 Diff
+- [ ] **6.3 Docker Compose 本地基础设施编排**
+  - [ ] 6.3.1 编写根目录 `docker-compose.yml`，一键拉起 PostgreSQL 18 与 Redis 7 容器服务
+
+---
+
+#### ⚡ Stage 7: 主 API 服务、JWT 认证与 CASL 细粒度权限 (NestJS API, Auth & CASL)
+- [ ] **7.1 NestJS RESTful API 基础架构**
+  - [ ] 7.1.1 搭建 `apps/api` 工程，配置全局 `ValidationPipe`、Swagger OpenAPI 交互式文档与全局异常过滤器
+  - [ ] 7.1.2 实现 `ProjectsService` 与项目 CRUD、版本快照保存逻辑
+- [ ] **7.2 JWT 双 Token 身份认证体系 (AuthN)**
+  - [ ] 7.2.1 实现登录注册、短效 Access Token (15min) 与 HttpOnly Cookie Refresh Token (7天) 静默刷新
+  - [ ] 7.2.2 配置全局 `JwtAuthGuard` 守卫与 `@Public()` 装饰器白名单机制
+- [ ] **7.3 CASL 前后端同构细粒度授权 (AuthZ / ABAC)**
+  - [ ] 7.3.1 编写 `CaslAbilityFactory`，定义 Owner, Editor, Viewer 与免费用户 4K 渲染限制规则
+  - [ ] 7.3.2 深度集成 `@casl/prisma`，实现项目列表安全查询（`accessibleBy` 自动注入 SQL WHERE）
+  - [ ] 7.3.3 前端 Studio 引入 `@casl/react`，使用 `<Can>` 声明式控制按钮显隐与禁用态
+- [ ] **7.4 静态资产直传与 CDN 托管**
+  - [ ] 7.4.1 集成 S3 / 阿里云 OSS / 腾讯云 COS 对象存储直传凭证签发与元数据探测
+
+---
+
+#### 🌐 Stage 8: OpenAPI 规范与 Orval 强类型前端 SDK 自动生成 (Orval + React Query Integration)
+- [ ] **8.1 OpenAPI 3.0 规范导出与 Orval 编译器配置**
+  - [ ] 8.1.1 配置 NestJS 自动化导出 `apps/api/openapi.json` 规范文件
+  - [ ] 8.1.2 配置 `apps/studio/orval.config.ts`，指定 `tags-split` 与原生 `fetch` 客户端
+- [ ] **8.2 强类型 SDK 生成与 React Query 接入**
+  - [ ] 8.2.1 配置 `pnpm generate:api` 命令，一键生成 React Query v5 Hooks 与 DTO Interface
+  - [ ] 8.2.2 在 Studio 前端属性面板全面替换为自动生成的 `useUpdateProject` 等 Hooks，实现属性修改的乐观更新
+
+---
+
+#### 🎥 Stage 9: 4K 60fps 视频异步渲染计算集群 (Render-Worker + BullMQ + Remotion + FFmpeg)
+- [ ] **9.1 消息队列强类型契约与分发 (`packages/dsl/jobs.ts`)**
+  - [ ] 9.1.1 完善 `RenderVideoJobPayload` 契约，在 `apps/api` 中实现任务入队投递接口
+- [ ] **9.2 渲染工作节点工程构建 (`apps/render-worker`)**
+  - [ ] 9.2.1 搭建 NestJS Worker 守护进程，配置 `@nestjs/bullmq` 消费者与单节点并发限流（Concurrency = 2）
+- [ ] **9.3 无头 Chromium 逐帧步进截帧与 FFmpeg 硬件加速合成**
+  - [ ] 9.3.1 深度复用 `@focusflow/player` 内核，驱动无头浏览器执行精确时间步进（Deterministic Stepping）
+  - [ ] 9.3.2 搭建 FFmpeg 硬件加速流水线（NVENC / VideoToolbox），支持 4K 60fps ProRes / H.265 / 高清 GIF 导出
+- [ ] **9.4 实时进度广播与 WebSocket 推送**
+  - [ ] 9.4.1 Worker 逐帧截帧时通过 Redis Pub/Sub 发布进度，主 API 订阅并通过 WebSocket 实时推送给 Studio 进度条
+
+---
+
+#### 🔗 Stage 10: 云端只读短链分发与知识库嵌入系统 (Share & Embed)
+- [ ] **10.1 沉浸式只读短链路由 (`/s/:slug`)**
+  - [ ] 10.1.1 实现极速只读演示页面，根据短链 Slug 秒级拉取 DSL 并挂载 Player 播放器
+- [ ] **10.2 知识库 `<iframe>` 嵌入标签生成**
+  - [ ] 10.2.1 提供自适应 HTML `<iframe>` 嵌入代码，支持无缝嵌入 Notion、飞书文档、语雀与 Docusaurus
+  - [ ] 10.2.2 配置合规安全响应头（Content-Security-Policy & X-Frame-Options）
 
 ---
 
