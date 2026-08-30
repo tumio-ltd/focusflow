@@ -117,6 +117,13 @@ flowchart TB
    * **零门槛体验**：用户无需注册、无需登录、零等待，打开网页即可直接拖图制作；
    * **极低分发成本**：纯静态产物可直接托管于 GitHub Pages、Vercel Edge 或 Cloudflare CDN，全球分发成本几乎为 $0。
 
+#### 模式 A 的两种纯本地/单机视频导出方案 (零后端服务依赖)：
+若处于离线/单机模式 A 的创作者需要导出视频，无需连接任何后端服务，可通过以下两种纯本地方案完成：
+1. **方案 1：纯浏览器客户端录制 (Client-side `MediaRecorder`)**：
+   * 浏览器利用原生 HTML5 Canvas Capture 与 `MediaRecorder` API，直接在用户电脑内存与显卡中实时录制动效，导出 `.webm` 或轻量 `.mp4` 文件直接下载；
+2. **方案 2：开发者本地 CLI 脚本工具 (Local Node.js + FFmpeg CLI)**：
+   * 开发者在本地终端运行 `node scripts/build-standalone.js`，直接调用本机已安装的 FFmpeg 执行离线批量渲染合成。
+
 ---
 
 ### 2.2 模式 A 与 模式 B (云端全栈 SaaS) 清晰边界与全方位对比矩阵
@@ -126,15 +133,20 @@ flowchart TB
 | 评估维度                | ⚡ 模式 A: 纯前端零后端 (Client-Only)| ☁️ 模式 B: 云端全栈 SaaS (Cloud)    |
 +------------------------+------------------------------------+------------------------------------+
 | 1. 后端与数据库依赖    | 🏆 0 依赖 (无需 API / DB / Redis)  | 依赖 NestJS + PostgreSQL 18 + Redis|
-| 2. 数据保密性与离线    | 🏆 100% 离线自治 (数据绝不上云)    | 数据加密持久化于云端数据库         |
-| 3. 工程持久化与管理    | 浏览器 IndexedDB / 本地文件导入导出| 云端多设备自动同步与完整版本快照   |
-| 4. 独立 HTML 导出      | 🏆 纯前端 Base64 内联瞬间下载      | 云端流式导出与 CDN 加速分发        |
-| 5. 4K 60fps 视频渲染   | 本地 WebM 录制 (受限于用户本机性能)| 🏆 专用 render-worker + FFmpeg 转码|
-| 6. 团队协同与权限控制  | 不支持 (单机独立创作)              | 🏆 CASL (Owner/Editor/Viewer 协同) |
-| 7. 在线分享与嵌入      | 手动发送导出的 standalone.html     | 🏆 一键生成短链与 <iframe> 知识库嵌入|
-| 8. 适用目标群体        | 极客开发者、内网保密项目、单机快速演练| 企业研发团队、跨国架构评审、SaaS 会员|
+| 2. render-worker 依赖  | 🏆 0 依赖 (完全不使用 render-worker)| 🏆 专属依赖 (BullMQ 异步队列驱动)  |
+| 3. 数据保密性与离线    | 🏆 100% 离线自治 (数据绝不上云)    | 数据加密持久化于云端数据库         |
+| 4. 工程持久化与管理    | 浏览器 IndexedDB / 本地文件导入导出| 云端多设备自动同步与完整版本快照   |
+| 5. 独立 HTML 导出      | 🏆 纯前端 Base64 内联瞬间下载      | 云端流式导出与 CDN 加速分发        |
+| 6. 4K 60fps 视频渲染   | 纯本地方案: MediaRecorder / 本地CLI| 🏆 专属服务: render-worker 云端集群|
+| 7. 团队协同与权限控制  | 不支持 (单机独立创作)              | 🏆 CASL (Owner/Editor/Viewer 协同) |
+| 8. 在线分享与嵌入      | 手动发送导出的 standalone.html     | 🏆 一键生成短链与 <iframe> 知识库嵌入|
+| 9. 适用目标群体        | 极客开发者、内网保密项目、单机快速演练| 企业研发团队、跨国架构评审、SaaS 会员|
 +------------------------+------------------------------------+------------------------------------+
 ```
+
+#### 💡 `render-worker` 的核心定位：【模式 B 云端 SaaS 专属服务】
+* **重度算力卸载**：4K 60fps 逐帧截帧与 H.265/ProRes 硬件转码属于极重 CPU/GPU 负载。若在用户端浏览器强行执行会导致低配设备发热卡死；
+* **异步解耦体验**：在模式 B 中，云端 `render-worker` 独立部署于高性能 GPU 计算集群，用户提交渲染任务后即可关闭网页，转码完成后自动发送通知或生成 CDN 直链。模式 A 完全不与该服务发生任何交互。
 
 ---
 
@@ -244,9 +256,13 @@ FocusFlow Studio 前端采用**适配器架构（Storage & Export Adapter Patter
 #### 导出 2：标准 DSL 源码与工程包 (`config.json` / `project.zip`)
 * 导出标准 FocusFlow DSL JSON 结构与图片素材压缩包，方便工程化版本控制。
 
-#### 导出 3：服务端 4K 60fps MP4 / 高清 GIF 视频渲染导出
-* **渲染管线**：服务端无头浏览器步进截帧 + FFmpeg 硬件加速转码；
-* **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频文件下载，可直接插入 Keynote、PPT 或发布到 B站/YouTube。
+#### 导出 3：视频渲染导出 (MP4 / GIF)
+* **模式 A 本地单机导出**：
+  * 浏览器端利用 HTML5 `MediaRecorder` API 捕获 Canvas 实时帧流，直接生成 WebM/MP4 供本地即刻下载；
+  * 开发者亦可在本地运行 `scripts/build-standalone.js` 调用本机 FFmpeg 进行离线批量合成。
+* **模式 B 云端 `render-worker` 导出 (4K 60fps 影院级)**：
+  * **异步渲染管线**：Studio 提交任务 ➔ BullMQ 队列 ➔ 云端 `render-worker` 无头浏览器逐帧步进截帧 ➔ FFmpeg 硬件加速高码率转码；
+  * **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频文件下载，可直接插入 Keynote、PPT 或发布到视频平台，完全不占用用户本机 CPU/GPU。
 
 #### 导出 4：云端只读演示短链与知识库 `<iframe>` 嵌入
 * 一键生成 `https://focusflow.io/s/[slug]` 短链；
