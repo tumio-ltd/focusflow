@@ -407,10 +407,10 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
 
 ## 9. Stage 1 研发任务分解与执行跟踪清单 (Task Breakdown Checklist / WBS)
 
-- [ ] **Task 1.1: 基础设施与原子 UI 组件库搭建 (Scaffolding & UI Primitives)**
-  - [ ] 1.1.1 在 `apps/studio` 封装原子 UI 组件库（`Button.tsx`, `Slider.tsx`, `Input.tsx`, `Dropdown.tsx`, `Tooltip.tsx`）
-  - [ ] 1.1.2 编写 `clsx` + `tailwind-merge` 样式合并工具（`src/utils/cn.ts`）
-  - [ ] 1.1.3 配置 `lucide-react` 常用科技图标映射与统一尺寸/样式封装
+- [x] **Task 1.1: 基础设施与原子 UI 组件库搭建 (Scaffolding & UI Primitives)**
+  - [x] 1.1.1 在 `apps/studio` 封装原子 UI 组件库（`Button.tsx`, `Slider.tsx`, `Input.tsx`, `Badge.tsx`, `Tooltip.tsx`）
+  - [x] 1.1.2 编写 `clsx` + `tailwind-merge` 样式合并工具（`src/utils/cn.ts`）
+  - [x] 1.1.3 配置 `lucide-react` 常用科技图标映射与统一尺寸/样式封装
 - [ ] **Task 1.2: 五栏响应式工作台布局搭建 (Workbench Layout Skeleton)**
   - [ ] 1.2.1 编写 `TopBar.tsx`：Logo、项目标题双击内联编辑、撤销/重做快捷按键、保存状态提示
   - [ ] 1.2.2 编写 `LeftToolbox.tsx`：5 大浮动标定工具按键（Select, Box, Path, Dot, Callout）与激活态/悬停态样式
