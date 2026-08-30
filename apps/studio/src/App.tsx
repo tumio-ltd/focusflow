@@ -8,9 +8,10 @@ import {
   BottomTimeline 
 } from '@/components/layout';
 import { InfiniteCanvas } from '@/components/canvas';
-import { ImageUploadModal, ProjectManagerModal } from '@/components/modals';
+import { ImageUploadModal, ProjectManagerModal, TemplatesModal } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import type { ImageMeta } from '@/utils/imageDecoder';
+import type { ArchitectureTemplate } from '@/templates';
 import '@focusflow/player/styles.css';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Zustand Store Hooks
@@ -168,6 +170,15 @@ export default function App() {
     }
   };
 
+  const handleApplyTemplate = async (tpl: ArchitectureTemplate) => {
+    setDSL(tpl.dsl);
+    setActiveSceneIndex(0);
+
+    // 创建对应的新工程
+    const newProjectId = await createProject(tpl.title, tpl.dsl);
+    console.log('Created project from template:', newProjectId);
+  };
+
   // 提取当前场景图元信息用于 Inspector 展示
   const inspectorElements = [
     ...(dsl.elements.boxes || []).map((b) => ({
@@ -194,6 +205,7 @@ export default function App() {
             canUndo={true}
             canRedo={false}
             isSaved={!isDirty}
+            onOpenTemplates={() => setIsTemplatesModalOpen(true)}
             onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
             onSave={handleSaveDraft}
@@ -265,6 +277,12 @@ export default function App() {
         onClose={() => setIsProjectsModalOpen(false)}
         onSelectProject={handleOpenProjectById}
         onNewProject={() => setIsUploadModalOpen(true)}
+      />
+
+      <TemplatesModal
+        isOpen={isTemplatesModalOpen}
+        onClose={() => setIsTemplatesModalOpen(false)}
+        onApplyTemplate={handleApplyTemplate}
       />
     </>
   );

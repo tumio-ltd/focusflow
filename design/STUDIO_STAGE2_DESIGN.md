@@ -282,10 +282,10 @@ test.describe('FocusFlow Studio Stage 2 E2E Ingestion & Storage Suite', () => {
   - [x] 2.2.1 引入 `idb-keyval` 并编写 `src/services/storage.ts` 数据访问层
   - [x] 2.2.2 编写 `src/stores/useStorageStore.ts`：实现 500ms 防抖自动存盘与工程列表 CRUD
   - [x] 2.2.3 编写 `src/components/modals/ProjectManagerModal.tsx`：提供工程列表、重命名、复制、导出与物理删除
-- [ ] **Task 2.3: 6 大工业级高精预设架构模板中心 (Templates Library)**
-  - [ ] 2.3.1 编写 `src/templates/` 6 套预置架构 DSL（LuxeHMS 酒店 PMS 房态调度经典升级版、微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
-  - [ ] 2.3.2 编写 `src/components/modals/TemplatesModal.tsx`：实现分类过滤、动态预览与一键克隆为当前工程
-  - [ ] 2.3.3 在 `TopBar.tsx` 新增“模板中心”与“我的项目”触发入口
+- [x] **Task 2.3: 6 大工业级高精预设架构模板中心 (Templates Library)**
+  - [x] 2.3.1 编写 `src/templates/` 6 套预置架构 DSL（LuxeHMS 酒店 PMS 房态调度经典升级版、微服务集群、DDD 模型、K8s 云原生、分布式事务、AI RAG 链路）
+  - [x] 2.3.2 编写 `src/components/modals/TemplatesModal.tsx`：实现分类过滤、动态预览与一键克隆为当前工程
+  - [x] 2.3.3 在 `TopBar.tsx` 新增“模板中心”与“我的项目”触发入口
 - [ ] **Task 2.4: 国际化多语言词条扩充与类型更新 (i18n Augmentation)**
   - [ ] 2.4.1 扩充 `src/locales/zh/` 与 `src/locales/en/`（新增 `upload.ts`, `templates.ts`, `projects.ts`）
   - [ ] 2.4.2 更新 `src/i18n.d.ts` 强类型声明

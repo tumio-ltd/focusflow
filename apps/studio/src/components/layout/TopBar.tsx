@@ -13,7 +13,8 @@ import {
   Check, 
   Edit3,
   UploadCloud,
-  FolderGit2
+  FolderGit2,
+  LayoutTemplate
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -28,6 +29,7 @@ export interface TopBarProps {
   onExport?: () => void;
   onOpenImport?: () => void;
   onOpenProjects?: () => void;
+  onOpenTemplates?: () => void;
   isSaved?: boolean;
 }
 
@@ -42,6 +44,7 @@ export function TopBar({
   onExport,
   onOpenImport,
   onOpenProjects,
+  onOpenTemplates,
   isSaved = true,
 }: TopBarProps) {
   const { t, i18n } = useTranslation('common');
@@ -175,6 +178,18 @@ export function TopBar({
 
         <div className="h-4 w-px bg-slate-800 mx-1" />
 
+        {/* 模板中心 */}
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="open-templates-btn"
+          onClick={onOpenTemplates}
+          className="gap-1.5 h-8 border-cyan-500/30 text-cyan-300 hover:text-white hover:bg-cyan-950/40"
+        >
+          <LayoutTemplate className="w-3.5 h-3.5 text-cyan-400" />
+          <span>模板中心</span>
+        </Button>
+
         {/* 我的项目 */}
         <Button
           size="sm"
@@ -183,7 +198,7 @@ export function TopBar({
           onClick={onOpenProjects}
           className="gap-1.5 h-8 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800"
         >
-          <FolderGit2 className="w-3.5 h-3.5 text-cyan-400" />
+          <FolderGit2 className="w-3.5 h-3.5 text-slate-400" />
           <span>工程列表</span>
         </Button>
 
