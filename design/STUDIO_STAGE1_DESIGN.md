@@ -411,12 +411,12 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
   - [x] 1.1.1 在 `apps/studio` 封装原子 UI 组件库（`Button.tsx`, `Slider.tsx`, `Input.tsx`, `Badge.tsx`, `Tooltip.tsx`）
   - [x] 1.1.2 编写 `clsx` + `tailwind-merge` 样式合并工具（`src/utils/cn.ts`）
   - [x] 1.1.3 配置 `lucide-react` 常用科技图标映射与统一尺寸/样式封装
-- [ ] **Task 1.2: 五栏响应式工作台布局搭建 (Workbench Layout Skeleton)**
-  - [ ] 1.2.1 编写 `TopBar.tsx`：Logo、项目标题双击内联编辑、撤销/重做快捷按键、保存状态提示
-  - [ ] 1.2.2 编写 `LeftToolbox.tsx`：5 大浮动标定工具按键（Select, Box, Path, Dot, Callout）与激活态/悬停态样式
-  - [ ] 1.2.3 编写 `RightInspector.tsx`：手风琴式场景镜头属性与图层配置折叠面板
-  - [ ] 1.2.4 编写 `BottomTimeline.tsx`：横向场景切片卡片列表、时长指示器、微缩图与播放控制栏
-  - [ ] 1.2.5 编写 `WorkbenchLayout.tsx`：组合五栏栅格，实现 `100vw * 100vh` 沉浸式弹性视口
+- [x] **Task 1.2: 五栏响应式工作台布局搭建 (Workbench Layout Skeleton)**
+  - [x] 1.2.1 编写 `TopBar.tsx`：Logo、项目标题双击内联编辑、撤销/重做快捷按键、保存状态提示
+  - [x] 1.2.2 编写 `LeftToolbox.tsx`：5 大浮动标定工具按键（Select, Box, Path, Dot, Callout）与激活态/悬停态样式
+  - [x] 1.2.3 编写 `RightInspector.tsx`：手风琴式场景镜头属性与图层配置折叠面板
+  - [x] 1.2.4 编写 `BottomTimeline.tsx`：横向场景切片卡片列表、时长指示器、微缩图与播放控制栏
+  - [x] 1.2.5 编写 `WorkbenchLayout.tsx`：组合五栏栅格，实现 `100vw * 100vh` 沉浸式弹性视口
 - [ ] **Task 1.3: Dark / Light 科技双主题系统与 Token 落地 (Dual Themes & Tokens)**
   - [ ] 1.3.1 编写 `src/styles/tokens.css`，定义完整的 Dark/Light 语义化 CSS 变量、霓虹辉光 (Neon Glow) 与毛玻璃 (Glassmorphism)
   - [ ] 1.3.2 集成 `next-themes` 并在 `TopBar.tsx` 实现 `Light / Dark / System` 三态切换
