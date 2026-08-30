@@ -197,13 +197,13 @@ test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
   - [x] 5.4.1 编写 `src/components/modals/ExportModal.tsx`：提供 HTML / ZIP / 视频多通道导出
   - [x] 5.4.2 编写 `src/services/canvasRecorder.ts`：基于 `MediaRecorder` 实现纯本地 60FPS 录制
   - [x] 5.4.3 在 `TopBar.tsx` 绑定“一键导出”与“全屏试播”按键
-- [ ] **Task 5.5: 国际化词条扩充与类型声明 (i18n Augmentation)**
-  - [ ] 5.5.1 扩充 `src/locales/zh/export.ts` 与 `src/locales/en/export.ts`
-- [ ] **Task 5.6: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
-  - [ ] 5.6.1 编写 `e2e/stage5-export-compiler.spec.ts`（独立异步 helper 函数规范）
-  - [ ] 5.6.2 运行 `pnpm lint`（Oxlint 极速静态检查 0 警告 0 错误）
-  - [ ] 5.6.3 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
-  - [ ] 5.6.4 运行 `pnpm build`（Turborepo 全局拓扑构建验证通过）
+- [x] **Task 5.5: 国际化词条扩充与类型声明 (i18n Augmentation)**
+  - [x] 5.5.1 扩充 `src/locales/zh/export.ts` 与 `src/locales/en/export.ts`
+- [x] **Task 5.6: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
+  - [x] 5.6.1 编写 `e2e/stage5-export-compiler.spec.ts`（独立异步 helper 函数规范）
+  - [x] 5.6.2 运行 `pnpm lint`（Oxlint 30ms 极速静态检查 0 警告 0 错误）
+  - [x] 5.6.3 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
+  - [x] 5.6.4 运行 `pnpm build`（Turborepo 全局拓扑构建验证通过）
 
 ---
 *FocusFlow Studio Architecture Working Group · 2026.08*

@@ -544,15 +544,17 @@ model ProjectVersion {
 ---
 
 #### 📦 Stage 5: 纯前端离线编译、单文件打包与本地视频录制 (Client Compiler, Packager & MediaRecorder)
-- [ ] **5.1 浏览器端单文件打包器 (`standalonePackager.ts`)**
-  - [ ] 5.1.1 纯前端将底图与覆盖图转为 Base64 Data URI
-  - [ ] 5.1.2 动态内联 CSS 样式与 `@focusflow/player` IIFE 运行时，使用 `Blob` 实现 0 延迟一键下载独立 `.html`
-- [ ] **5.2 纯前端 ZIP 工程压缩导出**
-  - [ ] 5.2.1 集成 `jszip`，在浏览器内存中直接生成包含底图、覆盖图与 `config.json` 的标准压缩包
-- [ ] **5.3 纯前端客户端视频录制 (MediaRecorder)**
-  - [ ] 5.3.1 基于 HTML5 Canvas Capture 与 `MediaRecorder` API 实现纯本地实时截帧录制，导出 WebM/MP4
-- [ ] **5.4 实时受众全屏预览模式**
-  - [ ] 5.4.1 在工作台内提供一键全屏真实受众视角试播与翻页演示测试
+- [x] **5.1 浏览器端单文件打包器 (`standalonePackager.ts`)**
+  - [x] 5.1.1 纯前端将底图与覆盖图转为 Base64 Data URI
+  - [x] 5.1.2 动态内联 CSS 样式与 `@focusflow/player` IIFE 运行时，使用 `Blob` 实现 0 延迟一键下载独立 `.html`
+- [x] **5.2 纯前端 ZIP 工程压缩导出 (`zipExporter.ts`)**
+  - [x] 5.2.1 集成 `jszip`，在浏览器内存中直接生成包含底图、覆盖图与 `config.json` 的标准压缩包
+- [x] **5.3 纯前端客户端视频录制 (`canvasRecorder.ts`)**
+  - [x] 5.3.1 基于 HTML5 `MediaRecorder` API 实现纯本地 60FPS 实时截帧录制，导出 WebM
+- [x] **5.4 实时受众全屏预览模式 (`AudienceModal.tsx`)**
+  - [x] 5.4.1 在工作台内提供一键全屏真实受众视角试播与翻页演示测试，支持键盘快捷键
+- [x] **5.5 质量门禁与 Playwright E2E 自动化测试**
+  - [x] 5.5.1 编写 `stage5-export-compiler.spec.ts` 端到端全流程测试套件并 100% 验证通过
 
 ---
 
