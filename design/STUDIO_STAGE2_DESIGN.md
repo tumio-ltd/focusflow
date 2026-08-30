@@ -274,10 +274,10 @@ test.describe('FocusFlow Studio Stage 2 E2E Ingestion & Storage Suite', () => {
 
 ## 8. Stage 2 任务分解与执行清单 (WBS Checklist)
 
-- [ ] **Task 2.1: 资产解析与图像解码引擎 (Image Ingestion & Decoding)**
-  - [ ] 2.1.1 编写 `src/utils/imageDecoder.ts`：利用原生 `Image.decode()` 提取真实天然宽高，生成安全 ObjectURL
-  - [ ] 2.1.2 编写 `src/components/modals/ImageUploadModal.tsx`：实现拖拽上传区、URL 导入与分辨率徽章显示
-  - [ ] 2.1.3 将底图上传与自动生成 Scene 0 逻辑接入工作台中心空状态与 TopBar
+- [x] **Task 2.1: 资产解析与图像解码引擎 (Image Ingestion & Decoding)**
+  - [x] 2.1.1 编写 `src/utils/imageDecoder.ts`：利用原生 `Image.decode()` 提取真实天然宽高，生成安全 ObjectURL
+  - [x] 2.1.2 编写 `src/components/modals/ImageUploadModal.tsx`：实现拖拽上传区、URL 导入与分辨率徽章显示
+  - [x] 2.1.3 将底图上传与自动生成 Scene 0 逻辑接入工作台中心空状态与 TopBar
 - [ ] **Task 2.2: 离线 IndexedDB 持久化引擎与项目管理 (IndexedDB & Storage Store)**
   - [ ] 2.2.1 引入 `idb-keyval` 并编写 `src/services/storage.ts` 数据访问层
   - [ ] 2.2.2 编写 `src/stores/useStorageStore.ts`：实现 500ms 防抖自动存盘与工程列表 CRUD

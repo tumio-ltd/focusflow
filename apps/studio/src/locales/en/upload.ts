@@ -1,0 +1,16 @@
+export default {
+  modalTitle: 'Import Diagram Asset',
+  dragDropTitle: 'Click or drag image to this zone',
+  dragDropSubtitle: 'Supports 4K/8K Ultra-HD PNG, JPG, WEBP, SVG (Max 30MB)',
+  urlTabTitle: 'Remote URL Import',
+  fileTabTitle: 'Local File Upload',
+  urlPlaceholder: 'https://example.com/architecture-diagram.png',
+  parsing: 'Decoding physical image resolution...',
+  importSuccess: 'Successfully parsed diagram',
+  confirmImport: 'Create & Ingest Project',
+  cancel: 'Cancel',
+  invalidImage: 'Please select a valid image format (PNG/JPG/WEBP/SVG)',
+  emptyCanvasTip: 'No architecture diagram loaded yet',
+  importAction: 'Import Diagram to Start',
+  selectTemplateAction: 'Explore Preset Templates',
+} as const;

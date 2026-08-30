@@ -1,0 +1,16 @@
+export default {
+  modalTitle: '导入架构图资产',
+  dragDropTitle: '点击或拖拽图片到此区域',
+  dragDropSubtitle: '支持 4K/8K 超清 PNG, JPG, WEBP, SVG（最大 30MB）',
+  urlTabTitle: '远程 URL 导入',
+  fileTabTitle: '本地文件上传',
+  urlPlaceholder: 'https://example.com/architecture-diagram.png',
+  parsing: '正在极速解码图片物理分辨率...',
+  importSuccess: '成功解析底图',
+  confirmImport: '创建并导入新工程',
+  cancel: '取消',
+  invalidImage: '请选择合法的图片文件格式 (PNG/JPG/WEBP/SVG)',
+  emptyCanvasTip: '当前工作区暂未导入架构底图',
+  importAction: '导入底图开始创作',
+  selectTemplateAction: '浏览精选预设模板',
+} as const;

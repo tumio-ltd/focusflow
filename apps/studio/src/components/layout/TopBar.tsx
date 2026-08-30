@@ -11,7 +11,8 @@ import {
   Moon, 
   Languages, 
   Check, 
-  Edit3
+  Edit3,
+  UploadCloud
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -24,6 +25,7 @@ export interface TopBarProps {
   onRedo?: () => void;
   onSave?: () => void;
   onExport?: () => void;
+  onOpenImport?: () => void;
   isSaved?: boolean;
 }
 
@@ -36,6 +38,7 @@ export function TopBar({
   onRedo,
   onSave,
   onExport,
+  onOpenImport,
   isSaved = true,
 }: TopBarProps) {
   const { t, i18n } = useTranslation('common');
@@ -168,6 +171,18 @@ export function TopBar({
         </Tooltip>
 
         <div className="h-4 w-px bg-slate-800 mx-1" />
+
+        {/* 导入底图 */}
+        <Button
+          size="sm"
+          variant="outline"
+          data-testid="open-import-btn"
+          onClick={onOpenImport}
+          className="gap-1.5 h-8 border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40"
+        >
+          <UploadCloud className="w-3.5 h-3.5" />
+          <span>导入底图</span>
+        </Button>
 
         {/* 保存草稿 */}
         <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">

@@ -7,6 +7,7 @@ import type {
   ElementDot, 
   ElementImage 
 } from '@focusflow/dsl';
+import type { ImageMeta } from '@/utils/imageDecoder';
 
 const defaultInitialDSL: FocusFlowDSL = {
   meta: {
@@ -102,6 +103,7 @@ export interface ProjectState {
 
   // Actions
   setDSL: (dsl: FocusFlowDSL) => void;
+  ingestNewAsset: (meta: ImageMeta) => void;
   updateMetaTitle: (title: string) => void;
   updateSceneCamera: (sceneIndex: number, camera: Partial<SceneStep['camera']>) => void;
   updateSceneTitle: (sceneIndex: number, title: string) => void;
@@ -122,6 +124,40 @@ export const useProjectStore = create<ProjectState>((set) => ({
   isDirty: false,
 
   setDSL: (dsl) => set({ dsl, isDirty: true }),
+
+  ingestNewAsset: (meta) =>
+    set({
+      dsl: {
+        meta: {
+          title: meta.fileName || '全新架构演示项目',
+          viewport: { width: meta.width, height: meta.height },
+          theme: { mode: 'dark' },
+          controls: { showHUDButton: true, autoplay: false, interval: 4000 },
+        },
+        asset: {
+          url: meta.url,
+        },
+        elements: {
+          boxes: [],
+          paths: [],
+          dots: [],
+          images: [],
+        },
+        scenes: [
+          {
+            id: `scene-${Date.now()}`,
+            title: '01 全局总览架构',
+            camera: { zoom: 1.0, x: 0, y: 0, duration: 1.2 },
+            activeElements: {
+              boxes: [],
+              paths: [],
+              callouts: [],
+            },
+          },
+        ],
+      },
+      isDirty: true,
+    }),
 
   updateMetaTitle: (title) =>
     set((state) => ({
