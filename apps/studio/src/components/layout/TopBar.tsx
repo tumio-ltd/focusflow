@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from 'next-themes';
 import { 
   Sparkles, 
   Undo2, 
@@ -16,8 +17,6 @@ import { Button, Badge, Tooltip } from '@/components/ui';
 export interface TopBarProps {
   title?: string;
   onTitleChange?: (newTitle: string) => void;
-  isDark?: boolean;
-  onThemeToggle?: () => void;
   locale?: 'zh' | 'en';
   onLocaleChange?: (newLocale: 'zh' | 'en') => void;
   canUndo?: boolean;
@@ -32,8 +31,6 @@ export interface TopBarProps {
 export function TopBar({
   title = '未命名架构演示项目',
   onTitleChange,
-  isDark = true,
-  onThemeToggle,
   locale = 'zh',
   onLocaleChange,
   canUndo = false,
@@ -44,6 +41,8 @@ export function TopBar({
   onExport,
   isSaved = true,
 }: TopBarProps) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
 
@@ -150,7 +149,8 @@ export function TopBar({
           <Button
             size="icon"
             variant="outline"
-            onClick={onThemeToggle}
+            data-testid="theme-toggle"
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
             className="h-8 w-8 text-slate-300 hover:text-white"
           >
             {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}

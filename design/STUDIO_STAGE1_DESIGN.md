@@ -417,10 +417,10 @@ test.describe('FocusFlow Studio Stage 1 E2E Suite', () => {
   - [x] 1.2.3 编写 `RightInspector.tsx`：手风琴式场景镜头属性与图层配置折叠面板
   - [x] 1.2.4 编写 `BottomTimeline.tsx`：横向场景切片卡片列表、时长指示器、微缩图与播放控制栏
   - [x] 1.2.5 编写 `WorkbenchLayout.tsx`：组合五栏栅格，实现 `100vw * 100vh` 沉浸式弹性视口
-- [ ] **Task 1.3: Dark / Light 科技双主题系统与 Token 落地 (Dual Themes & Tokens)**
-  - [ ] 1.3.1 编写 `src/styles/tokens.css`，定义完整的 Dark/Light 语义化 CSS 变量、霓虹辉光 (Neon Glow) 与毛玻璃 (Glassmorphism)
-  - [ ] 1.3.2 集成 `next-themes` 并在 `TopBar.tsx` 实现 `Light / Dark / System` 三态切换
-  - [ ] 1.3.3 验证主题切换时各面板与画布背景无白屏闪烁且本地 LocalStorage 状态持久化
+- [x] **Task 1.3: Dark / Light 科技双主题系统与 Token 落地 (Dual Themes & Tokens)**
+  - [x] 1.3.1 编写 `src/styles/tokens.css`，定义完整的 Dark/Light 语义化 CSS 变量、霓虹辉光 (Neon Glow) 与毛玻璃 (Glassmorphism)
+  - [x] 1.3.2 集成 `next-themes` 并在 `TopBar.tsx` 实现 `Light / Dark / System` 三态切换
+  - [x] 1.3.3 验证主题切换时各面板与画布背景无白屏闪烁且本地 LocalStorage 状态持久化
 - [ ] **Task 1.4: TypeScript 强类型 i18n 国际化体系落地 (Type-Safe i18next)**
   - [ ] 1.4.1 创建 `src/locales/zh/` 与 `src/locales/en/` 词条文件（`common.json`, `toolbar.json`, `inspector.json`, `timeline.json`）
   - [ ] 1.4.2 编写 `src/i18n.ts` 初始化 `i18next` 与 `react-i18next`

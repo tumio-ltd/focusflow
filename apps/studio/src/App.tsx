@@ -95,7 +95,6 @@ export default function App() {
 
   // States
   const [projectTitle, setProjectTitle] = useState(initialDSL.meta.title);
-  const [isDark, setIsDark] = useState(true);
   const [locale, setLocale] = useState<'zh' | 'en'>('zh');
   const [activeTool, setActiveTool] = useState<ToolType>('select');
   const [activeSceneIndex, setActiveSceneIndex] = useState(0);
@@ -150,22 +149,19 @@ export default function App() {
   };
 
   return (
-    <div className={isDark ? 'dark' : ''}>
-      <WorkbenchLayout
-        topBar={
-          <TopBar
-            title={projectTitle}
-            onTitleChange={setProjectTitle}
-            isDark={isDark}
-            onThemeToggle={() => setIsDark(!isDark)}
-            locale={locale}
-            onLocaleChange={setLocale}
-            canUndo={true}
-            canRedo={false}
-            onSave={() => alert('草稿已成功保存至本地 IndexedDB！')}
-            onExport={() => alert('正在打包生成独立离线 HTML...')}
-          />
-        }
+    <WorkbenchLayout
+      topBar={
+        <TopBar
+          title={projectTitle}
+          onTitleChange={setProjectTitle}
+          locale={locale}
+          onLocaleChange={setLocale}
+          canUndo={true}
+          canRedo={false}
+          onSave={() => alert('草稿已成功保存至本地 IndexedDB！')}
+          onExport={() => alert('正在打包生成独立离线 HTML...')}
+        />
+      }
         leftToolbox={
           <LeftToolbox
             activeTool={activeTool}
@@ -202,6 +198,5 @@ export default function App() {
           />
         }
       />
-    </div>
   );
 }

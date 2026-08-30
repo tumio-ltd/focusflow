@@ -1,51 +1,53 @@
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: #ffffff;
-    --foreground: #090d16;
-    --card: #f8fafc;
-    --card-foreground: #090d16;
-    --popover: #ffffff;
-    --popover-foreground: #090d16;
-    --primary: #0284c7;
+    --background: var(--ff-bg-app);
+    --foreground: var(--ff-text-primary);
+    --card: var(--ff-bg-card);
+    --card-foreground: var(--ff-text-primary);
+    --popover: var(--ff-bg-panel);
+    --popover-foreground: var(--ff-text-primary);
+    --primary: var(--ff-accent);
     --primary-foreground: #ffffff;
-    --secondary: #f1f5f9;
-    --secondary-foreground: #0f172a;
-    --muted: #f1f5f9;
-    --muted-foreground: #64748b;
-    --accent: #f1f5f9;
-    --accent-foreground: #0f172a;
+    --secondary: var(--ff-bg-hover);
+    --secondary-foreground: var(--ff-text-primary);
+    --muted: var(--ff-bg-hover);
+    --muted-foreground: var(--ff-text-secondary);
+    --accent: var(--ff-bg-hover);
+    --accent-foreground: var(--ff-text-primary);
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #0284c7;
+    --border: var(--ff-border);
+    --input: var(--ff-border);
+    --ring: var(--ff-accent);
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: #06090e;
-    --foreground: #f8fafc;
-    --card: #0b0f19;
-    --card-foreground: #f8fafc;
-    --popover: #0b0f19;
-    --popover-foreground: #f8fafc;
-    --primary: #38bdf8;
+    --background: var(--ff-bg-app);
+    --foreground: var(--ff-text-primary);
+    --card: var(--ff-bg-card);
+    --card-foreground: var(--ff-text-primary);
+    --popover: var(--ff-bg-panel);
+    --popover-foreground: var(--ff-text-primary);
+    --primary: var(--ff-accent);
     --primary-foreground: #06090e;
-    --secondary: #131b2e;
-    --secondary-foreground: #f8fafc;
-    --muted: #131b2e;
-    --muted-foreground: #94a3b8;
-    --accent: #131b2e;
-    --accent-foreground: #f8fafc;
+    --secondary: var(--ff-bg-hover);
+    --secondary-foreground: var(--ff-text-primary);
+    --muted: var(--ff-bg-hover);
+    --muted-foreground: var(--ff-text-secondary);
+    --accent: var(--ff-bg-hover);
+    --accent-foreground: var(--ff-text-primary);
     --destructive: #7f1d1d;
     --destructive-foreground: #f8fafc;
-    --border: #1e293b;
-    --input: #1e293b;
-    --ring: #38bdf8;
+    --border: var(--ff-border);
+    --input: var(--ff-border);
+    --ring: var(--ff-accent);
   }
 }
 
@@ -53,4 +55,16 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--ff-bg-app);
+  color: var(--ff-text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* 隐藏默认滚动条 */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
