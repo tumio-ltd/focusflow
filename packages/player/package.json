@@ -2,13 +2,13 @@
   "name": "@focusflow/player",
   "version": "1.0.0",
   "type": "module",
-  "main": "./dist/focusflow.esm.js",
-  "module": "./dist/focusflow.esm.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/focusflow.es.js",
+  "module": "./dist/focusflow.es.js",
+  "types": "./src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/focusflow.esm.js"
+      "types": "./src/index.d.ts",
+      "import": "./dist/focusflow.es.js"
     },
     "./styles.css": "./src/styles/focusflow.css",
     "./package.json": "./package.json"
