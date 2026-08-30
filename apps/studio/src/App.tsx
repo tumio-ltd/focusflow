@@ -52,6 +52,8 @@ export default function App() {
     updateSceneTitle,
     addScene,
     duplicateScene,
+    deleteScene,
+    reorderScenes,
     addBox,
     addPath,
     addDot,
@@ -353,6 +355,17 @@ export default function App() {
             onSelectScene={handleSelectScene}
             onAddScene={addScene}
             onDuplicateScene={duplicateScene}
+            onDeleteScene={(idx) => {
+              deleteScene(idx);
+              if (activeSceneIndex >= dsl.scenes.length - 1) {
+                setActiveSceneIndex(Math.max(0, dsl.scenes.length - 2));
+              }
+            }}
+            onReorderScenes={(source, target) => {
+              reorderScenes(source, target);
+              setActiveSceneIndex(target);
+            }}
+            onUpdateSceneTitle={(idx, title) => updateSceneTitle(idx, title)}
             isPlaying={isPlaying}
             onTogglePlay={handleTogglePlay}
             onNext={handleNext}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Play, 
@@ -7,8 +7,11 @@ import {
   ChevronRight, 
   Plus, 
   Copy, 
+  Trash2, 
   Film,
-  Layers
+  Layers,
+  Edit3,
+  Check
 } from 'lucide-react';
 import { Button, Tooltip } from '@/components/ui';
 
@@ -26,6 +29,9 @@ export interface BottomTimelineProps {
   onSelectScene: (index: number) => void;
   onAddScene?: () => void;
   onDuplicateScene?: (index: number) => void;
+  onDeleteScene?: (index: number) => void;
+  onReorderScenes?: (sourceIndex: number, targetIndex: number) => void;
+  onUpdateSceneTitle?: (index: number, title: string) => void;
   isPlaying?: boolean;
   onTogglePlay?: () => void;
   onNext?: () => void;
@@ -41,12 +47,60 @@ export function BottomTimeline({
   onSelectScene,
   onAddScene,
   onDuplicateScene,
+  onDeleteScene,
+  onReorderScenes,
+  onUpdateSceneTitle,
   isPlaying = false,
   onTogglePlay,
   onNext,
   onPrev,
 }: BottomTimelineProps) {
   const { t } = useTranslation('timeline');
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+
+  const handleStartEditing = (idx: number, currentTitle: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingIndex(idx);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleSaveTitle = (idx: number) => {
+    if (editingTitle.trim() && onUpdateSceneTitle) {
+      onUpdateSceneTitle(idx, editingTitle.trim());
+    }
+    setEditingIndex(null);
+  };
+
+  const handleDragStart = (idx: number, e: React.DragEvent) => {
+    setDraggedIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(idx));
+  };
+
+  const handleDragOver = (idx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== idx) {
+      setDragOverIdx(idx);
+    }
+  };
+
+  const handleDrop = (targetIdx: number, e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggedIdx !== null && draggedIdx !== targetIdx && onReorderScenes) {
+      onReorderScenes(draggedIdx, targetIdx);
+    }
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
 
   return (
     <footer
@@ -71,6 +125,7 @@ export function BottomTimeline({
           <Button
             size="icon"
             variant="cyan"
+            data-testid="timeline-play-btn"
             onClick={onTogglePlay}
             className="h-8 w-8 rounded-lg"
           >
@@ -101,12 +156,25 @@ export function BottomTimeline({
       <div className="flex items-center gap-2.5 overflow-x-auto flex-1 py-1 no-scrollbar">
         {scenes.map((scene, idx) => {
           const isActive = activeSceneIndex === idx;
+          const isDragging = draggedIdx === idx;
+          const isOver = dragOverIdx === idx;
+          const isEditing = editingIndex === idx;
 
           return (
             <div
               key={scene.id}
+              data-testid={`scene-card-${idx}`}
+              draggable={!isEditing}
+              onDragStart={(e) => handleDragStart(idx, e)}
+              onDragOver={(e) => handleDragOver(idx, e)}
+              onDrop={(e) => handleDrop(idx, e)}
+              onDragEnd={handleDragEnd}
               onClick={() => onSelectScene(idx)}
-              className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[170px] ${
+              className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[180px] ${
+                isDragging ? 'opacity-40 scale-95 border-dashed border-cyan-400' : ''
+              } ${
+                isOver ? 'ring-2 ring-cyan-400 scale-105' : ''
+              } ${
                 isActive
                   ? 'border-cyan-500/80 bg-cyan-950/30 text-cyan-200 shadow-md shadow-cyan-950/50 ring-1 ring-cyan-400/30 font-medium'
                   : 'border-slate-800/80 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:bg-slate-800/40 hover:text-slate-200'
@@ -124,8 +192,39 @@ export function BottomTimeline({
               </div>
 
               {/* 标题与时长 */}
-              <div className="flex flex-col gap-0.5 truncate flex-1">
-                <span className="truncate text-xs font-medium">{scene.title}</span>
+              <div className="flex flex-col gap-0.5 truncate flex-1 min-w-0">
+                {isEditing ? (
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => handleSaveTitle(idx)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle(idx)}
+                      autoFocus
+                      onClick={(e) => e.stopPropagation()}
+                      className="bg-slate-900 border border-cyan-500 rounded px-1.5 py-0.5 text-xs text-white focus:outline-none w-full"
+                    />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSaveTitle(idx);
+                      }}
+                      className="p-0.5 text-cyan-400 hover:text-cyan-300"
+                    >
+                      <Check className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <span
+                    onDoubleClick={(e) => handleStartEditing(idx, scene.title, e)}
+                    className="truncate text-xs font-medium hover:text-cyan-300"
+                    title="双击就地修改标题"
+                  >
+                    {scene.title}
+                  </span>
+                )}
+
                 <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
                   <span>{scene.duration.toFixed(1)}s</span>
                   {scene.boxCount !== undefined && (
@@ -138,17 +237,40 @@ export function BottomTimeline({
                 </div>
               </div>
 
-              {/* 悬停复制操作 */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDuplicateScene?.(idx);
-                }}
-                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-cyan-300 transition"
-                title={t('duplicateScene')}
-              >
-                <Copy className="w-3 h-3" />
-              </button>
+              {/* 悬停快捷操作组 (改名 / 复制 / 删除) */}
+              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition">
+                <button
+                  onClick={(e) => handleStartEditing(idx, scene.title, e)}
+                  className="p-1 text-slate-400 hover:text-cyan-300 transition"
+                  title="重命名场景"
+                >
+                  <Edit3 className="w-3 h-3" />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDuplicateScene?.(idx);
+                  }}
+                  className="p-1 text-slate-400 hover:text-cyan-300 transition"
+                  title={t('duplicateScene')}
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+
+                {scenes.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteScene?.(idx);
+                    }}
+                    className="p-1 text-slate-400 hover:text-rose-400 transition"
+                    title="删除场景"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
@@ -157,6 +279,7 @@ export function BottomTimeline({
         <Button
           variant="outline"
           size="sm"
+          data-testid="add-scene-btn"
           onClick={onAddScene}
           className="border-dashed border-slate-700 hover:border-cyan-500/80 text-slate-400 hover:text-cyan-300 gap-1.5 h-11 px-3.5 rounded-xl shrink-0"
         >

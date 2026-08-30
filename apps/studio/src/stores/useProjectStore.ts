@@ -109,6 +109,8 @@ export interface ProjectState {
   updateSceneCamera: (sceneIndex: number, camera: Partial<SceneStep['camera']>) => void;
   updateSceneTitle: (sceneIndex: number, title: string) => void;
   addScene: () => void;
+  insertScene: (index: number) => void;
+  reorderScenes: (sourceIndex: number, targetIndex: number) => void;
   duplicateScene: (index: number) => void;
   deleteScene: (index: number) => void;
   toggleElementInScene: (
@@ -227,6 +229,39 @@ export const useProjectStore = create<ProjectState>((set) => ({
           ...state.dsl,
           scenes: [...state.dsl.scenes, newScene],
         },
+        isDirty: true,
+      };
+    }),
+
+  insertScene: (index) =>
+    set((state) => {
+      const newScene: SceneStep = {
+        id: `scene-${Date.now()}`,
+        title: `${String(index + 1).padStart(2, '0')} 插入场景`,
+        camera: { zoom: 1.2, x: 0, y: 0, duration: 1.2 },
+        activeElements: {
+          boxes: [],
+          paths: [],
+          callouts: [],
+        },
+      };
+      const scenes = [...state.dsl.scenes];
+      scenes.splice(index, 0, newScene);
+      return {
+        dsl: { ...state.dsl, scenes },
+        isDirty: true,
+      };
+    }),
+
+  reorderScenes: (sourceIndex, targetIndex) =>
+    set((state) => {
+      if (sourceIndex === targetIndex) return state;
+      const scenes = [...state.dsl.scenes];
+      const [moved] = scenes.splice(sourceIndex, 1);
+      if (!moved) return state;
+      scenes.splice(targetIndex, 0, moved);
+      return {
+        dsl: { ...state.dsl, scenes },
         isDirty: true,
       };
     }),
