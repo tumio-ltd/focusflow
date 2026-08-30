@@ -11,4 +11,6 @@ export default {
   hideElementTip: '点击在当前场景隐藏',
   showElementTip: '点击在当前场景激活',
   captureCurrentView: '捕获当前画布视角',
+  inheritElements: '从上一幕继承图元',
+  filterElementsPlaceholder: '过滤图元...',
 } as const;

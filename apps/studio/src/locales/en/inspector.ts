@@ -11,4 +11,6 @@ export default {
   hideElementTip: 'Click to hide in current scene',
   showElementTip: 'Click to activate in current scene',
   captureCurrentView: 'Capture Current Viewport',
+  inheritElements: 'Inherit from Previous Scene',
+  filterElementsPlaceholder: 'Filter elements...',
 } as const;

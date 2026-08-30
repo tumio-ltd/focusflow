@@ -5,5 +5,7 @@ export default {
   pause: '暂停',
   addScene: '添加新场景',
   duplicateScene: '复制当前场景',
+  deleteScene: '删除场景',
+  renameScene: '重命名场景',
   totalDuration: '总时长',
 } as const;

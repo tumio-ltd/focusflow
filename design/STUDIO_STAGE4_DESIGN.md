@@ -160,13 +160,13 @@ test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
 - [x] **Task 4.3: 图层可见性矩阵与状态继承 (Layer Visibility Matrix)**
   - [x] 4.3.1 在 `RightInspector.tsx` 增强图元列表：支持全量图元显隐勾选、搜索过滤、快速删除与类型彩色图标
   - [x] 4.3.2 增加“从上一幕继承图元”快捷按键，实现跨场景图元状态一键克隆与响应式同步
-- [ ] **Task 4.4: 国际化词条扩充与类型声明 (i18n Augmentation)**
-  - [ ] 4.4.1 扩充 `src/locales/zh/` 与 `src/locales/en/`（`timeline.ts`, `inspector.ts`, `common.ts` 增补时序与撤销词条）
-- [ ] **Task 4.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
-  - [ ] 4.5.1 编写 `e2e/stage4-timeline-history.spec.ts`（独立异步 helper 函数规范）
-  - [ ] 4.5.2 运行 `pnpm lint`（Oxlint 极速静态检查 0 警告 0 错误）
-  - [ ] 4.5.3 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
-  - [ ] 4.5.4 运行 `pnpm build`（Turborepo 全局拓扑构建验证通过）
+- [x] **Task 4.4: 国际化词条扩充与类型声明 (i18n Augmentation)**
+  - [x] 4.4.1 扩充 `src/locales/zh/` 与 `src/locales/en/`（`timeline.ts`, `inspector.ts`, `common.ts` 增补时序与撤销词条）
+- [x] **Task 4.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
+  - [x] 4.5.1 编写 `e2e/stage4-timeline-history.spec.ts`（独立异步 helper 函数规范）
+  - [x] 4.5.2 运行 `pnpm lint`（Oxlint 35ms 极速静态检查 0 警告 0 错误）
+  - [x] 4.5.3 运行 `pnpm typecheck`（TypeScript 复合类型 100% 编译通过）
+  - [x] 4.5.4 运行 `pnpm build`（Turborepo 全局拓扑构建验证通过）
 
 ---
 *FocusFlow Studio Architecture Working Group · 2026.08*

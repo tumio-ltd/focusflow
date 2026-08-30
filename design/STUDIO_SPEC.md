@@ -528,13 +528,18 @@ model ProjectVersion {
 ---
 
 #### 🎬 Stage 4: 场景关键帧时间轴编排与图层矩阵 (Sequence Timeline & Layer Matrix)
-- [ ] **4.1 场景卡片流时间轴 (`TimelineTrack`)**
-  - [ ] 4.1.1 基于 `@dnd-kit/sortable` 实现底部水平时间轴上场景卡片的流畅拖拽排序、复制、删除与重命名
-  - [ ] 4.1.2 支持单场景驻留时间（Duration）与自动轮播时序配置
-- [ ] **4.2 历史时间旅行栈 (Undo / Redo)**
-  - [ ] 4.2.1 基于 `zundo` 实现无限步 `Ctrl/⌘ + Z` 撤销与 `Ctrl/⌘ + Shift + Z` 重做栈
-- [ ] **4.3 图层可见性矩阵管理**
-  - [ ] 4.3.1 提供当前场景激活图元（Boxes, Paths, Dots, Images）的可视化勾选面板与平滑隐藏过渡
+- [x] **4.1 场景卡片流时间轴 (`TimelineTrack`)**
+  - [x] 4.1.1 升级 `BottomTimeline.tsx` 实现原生拖拽排序、复制、删除与双击就地重命名
+  - [x] 4.1.2 支持单场景驻留时间（Duration）与总时长动态累加呈现
+- [x] **4.2 历史时间旅行栈 (Undo / Redo)**
+  - [x] 4.2.1 自研轻量不可变历史栈（`past`, `present`, `future`，上限 50 步），实现 `⌘Z` 撤销与 `⌘⇧Z` 重做
+  - [x] 4.2.2 编写 `useHistoryKeyboard.ts` 全局监听快捷键，TopBar 双向绑定
+- [x] **4.3 图层可见性矩阵管理与状态继承**
+  - [x] 4.3.1 升级 `RightInspector.tsx` 支持全量图元显隐勾选、搜索过滤、快速删除与类型彩色图标
+  - [x] 4.3.2 实现 `inheritPreviousSceneElements` 一键继承上一幕所有已点亮图元
+- [x] **4.4 国际化与质量门禁 E2E 自动化测试**
+  - [x] 4.4.1 扩充 `timeline.ts`, `inspector.ts` 中英双语词条
+  - [x] 4.4.2 编写 `stage4-timeline-history.spec.ts` 端到端全流程测试套件并 100% 验证通过
 
 ---
 

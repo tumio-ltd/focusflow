@@ -5,5 +5,7 @@ export default {
   pause: 'Pause',
   addScene: 'Add Scene',
   duplicateScene: 'Duplicate Scene',
+  deleteScene: 'Delete Scene',
+  renameScene: 'Rename Scene',
   totalDuration: 'Total Duration',
 } as const;
