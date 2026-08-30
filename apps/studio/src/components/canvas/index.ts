@@ -2,3 +2,6 @@ export * from './InfiniteCanvas';
 export * from './CameraFrustumFrame';
 export * from './BoxDrawingOverlay';
 export * from './PathDrawingOverlay';
+export * from './DotDrawingOverlay';
+export * from './CalloutOverlay';
+export * from './CanvasOverlay';

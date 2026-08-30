@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
-import type { ElementBox, ElementPath } from '@focusflow/dsl';
+import type { ElementBox, ElementPath, ElementDot, CalloutItem } from '@focusflow/dsl';
 import { 
   WorkbenchLayout, 
   TopBar, 
@@ -10,9 +10,7 @@ import {
 } from '@/components/layout';
 import { 
   InfiniteCanvas, 
-  CameraFrustumFrame, 
-  BoxDrawingOverlay,
-  PathDrawingOverlay
+  CanvasOverlay
 } from '@/components/canvas';
 import { ImageUploadModal, ProjectManagerModal, TemplatesModal } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
@@ -56,6 +54,8 @@ export default function App() {
     duplicateScene,
     addBox,
     addPath,
+    addDot,
+    addCallout,
     toggleElementInScene,
     deleteElement,
     markSaved,
@@ -227,6 +227,14 @@ export default function App() {
     addPath(path, activeSceneIndex);
   };
 
+  const handleDotCreated = (dot: ElementDot) => {
+    addDot(dot, activeSceneIndex);
+  };
+
+  const handleCalloutCreated = (callout: CalloutItem) => {
+    addCallout(callout, activeSceneIndex);
+  };
+
   // 提取当前场景图元信息用于 Inspector 展示
   const inspectorElements = [
     ...(dsl.elements.boxes || []).map((b) => ({
@@ -240,6 +248,18 @@ export default function App() {
       type: 'path' as const,
       name: p.id,
       active: activeScene?.activeElements.paths?.includes(p.id) || false,
+    })),
+    ...(dsl.elements.dots || []).map((d) => ({
+      id: d.id,
+      type: 'dot' as const,
+      name: d.id,
+      active: activeScene?.activeElements.dots?.includes(d.id) || false,
+    })),
+    ...(activeScene?.activeElements.callouts || []).map((c) => ({
+      id: c.id,
+      type: 'callout' as const,
+      name: c.title || c.id,
+      active: true,
     })),
   ];
 
@@ -273,34 +293,23 @@ export default function App() {
             onTransformChange={handleCanvasTransformChange}
           >
             <div ref={containerRef} className="w-full h-full relative">
-              {/* 智能选框绘制层 */}
-              <BoxDrawingOverlay
+              {/* 统一交互标定绘制层 (选框 / 连线 / 脉冲圆点 / 解说气泡 / 取景框) */}
+              <CanvasOverlay
                 contentWidth={dsl.meta.viewport.width}
                 contentHeight={dsl.meta.viewport.height}
-                active={activeTool === 'box'}
-                onBoxCreated={handleBoxCreated}
-              />
-
-              {/* 三次贝塞尔 8 向锚点流光连线绘制层 */}
-              <PathDrawingOverlay
-                contentWidth={dsl.meta.viewport.width}
-                contentHeight={dsl.meta.viewport.height}
-                boxes={dsl.elements.boxes || []}
-                active={activeTool === 'path'}
-                onPathCreated={handlePathCreated}
-              />
-
-              {/* 摄像机安全可视取景框 (Frustum) */}
-              <CameraFrustumFrame
+                activeTool={activeTool}
                 camera={{
                   zoom: activeScene?.camera.zoom || 1.0,
                   x: activeScene?.camera.x || 0,
                   y: activeScene?.camera.y || 0,
                   duration: activeScene?.camera.duration,
                 }}
-                naturalWidth={dsl.meta.viewport.width}
-                naturalHeight={dsl.meta.viewport.height}
-                visible={!isPlaying}
+                boxes={dsl.elements.boxes || []}
+                isPlaying={isPlaying}
+                onBoxCreated={handleBoxCreated}
+                onPathCreated={handlePathCreated}
+                onDotCreated={handleDotCreated}
+                onCalloutCreated={handleCalloutCreated}
               />
             </div>
           </InfiniteCanvas>
@@ -317,11 +326,17 @@ export default function App() {
             elements={inspectorElements}
             onToggleElement={(id) => {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);
-              toggleElementInScene(activeSceneIndex, isBox ? 'boxes' : 'paths', id);
+              const isPath = dsl.elements.paths?.some((p) => p.id === id);
+              const isDot = dsl.elements.dots?.some((d) => d.id === id);
+              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : 'images';
+              toggleElementInScene(activeSceneIndex, type, id);
             }}
             onDeleteElement={(id) => {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);
-              deleteElement(isBox ? 'boxes' : 'paths', id);
+              const isPath = dsl.elements.paths?.some((p) => p.id === id);
+              const isDot = dsl.elements.dots?.some((d) => d.id === id);
+              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : 'images';
+              deleteElement(type, id);
             }}
           />
         }

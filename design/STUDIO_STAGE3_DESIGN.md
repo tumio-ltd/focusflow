@@ -232,10 +232,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   - [x] 3.3.1 编写 `src/utils/bezierMath.ts`：计算 8 向锚点绝对坐标与平滑三次贝塞尔控制点曲线
   - [x] 3.3.2 编写 `src/components/canvas/PathDrawingOverlay.tsx`：实现锚点吸附高亮、流光连线拖拽生成与方向向量计算
   - [x] 3.3.3 支持在 `RightInspector.tsx` 配置连线流速、描边粗细与流光动画
-- [ ] **Task 3.4: 脉冲定位圆点与解说气泡组件 (Pulse Dot & Callout Badges)**
-  - [ ] 3.4.1 编写 `src/components/canvas/DotDrawingOverlay.tsx`：单击放置脉冲圆点与涟漪动效
-  - [ ] 3.4.2 编写 `src/components/canvas/CalloutOverlay.tsx`：支持拖拽定位、选框挂载、Markdown 编辑与 5 套科技发光主题色
-  - [ ] 3.4.3 整合 `src/components/canvas/CanvasOverlay.tsx` 统一管理 4 大标定工具状态机
+- [x] **Task 3.4: 脉冲定位圆点与解说气泡组件 (Pulse Dot & Callout Badges)**
+  - [x] 3.4.1 编写 `src/components/canvas/DotDrawingOverlay.tsx`：单击放置脉冲圆点与涟漪动效
+  - [x] 3.4.2 编写 `src/components/canvas/CalloutOverlay.tsx`：支持拖拽定位、选框挂载、Markdown 编辑与 5 套科技发光主题色
+  - [x] 3.4.3 整合 `src/components/canvas/CanvasOverlay.tsx` 统一管理 4 大标定工具状态机
 - [ ] **Task 3.5: 质量门禁与 Playwright E2E 自动化测试 (Quality Gates & Verification)**
   - [ ] 3.5.1 编写 `e2e/stage3-visual-tools.spec.ts`（独立异步 helper 函数规范）
   - [ ] 3.5.2 运行 `pnpm lint`（Oxlint 极速静态检查 0 警告 0 错误）

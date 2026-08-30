@@ -5,7 +5,8 @@ import type {
   ElementBox, 
   ElementPath, 
   ElementDot, 
-  ElementImage 
+  ElementImage,
+  CalloutItem
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
 
@@ -117,6 +118,8 @@ export interface ProjectState {
   ) => void;
   addBox: (box: ElementBox, activeInSceneIndex?: number) => void;
   addPath: (path: ElementPath, activeInSceneIndex?: number) => void;
+  addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
+  addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images', elementId: string) => void;
   markSaved: () => void;
 }
@@ -343,6 +346,63 @@ export const useProjectStore = create<ProjectState>((set) => ({
             ...state.dsl.elements,
             paths,
           },
+          scenes,
+        },
+        isDirty: true,
+      };
+    }),
+
+  addDot: (dot, activeInSceneIndex = 0) =>
+    set((state) => {
+      const dots = [...(state.dsl.elements.dots || []), dot];
+      const scenes = [...state.dsl.scenes];
+      const targetScene = scenes[activeInSceneIndex];
+
+      if (targetScene) {
+        const currentDots = targetScene.activeElements.dots || [];
+        if (!currentDots.includes(dot.id)) {
+          scenes[activeInSceneIndex] = {
+            ...targetScene,
+            activeElements: {
+              ...targetScene.activeElements,
+              dots: [...currentDots, dot.id],
+            },
+          };
+        }
+      }
+
+      return {
+        dsl: {
+          ...state.dsl,
+          elements: {
+            ...state.dsl.elements,
+            dots,
+          },
+          scenes,
+        },
+        isDirty: true,
+      };
+    }),
+
+  addCallout: (callout, activeInSceneIndex = 0) =>
+    set((state) => {
+      const scenes = [...state.dsl.scenes];
+      const targetScene = scenes[activeInSceneIndex];
+
+      if (targetScene) {
+        const currentCallouts = targetScene.activeElements.callouts || [];
+        scenes[activeInSceneIndex] = {
+          ...targetScene,
+          activeElements: {
+            ...targetScene.activeElements,
+            callouts: [...currentCallouts, callout],
+          },
+        };
+      }
+
+      return {
+        dsl: {
+          ...state.dsl,
           scenes,
         },
         isDirty: true,
