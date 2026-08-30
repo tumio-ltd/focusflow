@@ -18,9 +18,11 @@ import type { ImageMeta } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
+import { useHistoryKeyboard } from '@/hooks/useHistoryKeyboard';
 import '@focusflow/player/styles.css';
 
 export default function App() {
+  useHistoryKeyboard();
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -45,6 +47,10 @@ export default function App() {
   const {
     dsl,
     isDirty,
+    past,
+    future,
+    undo,
+    redo,
     setDSL,
     ingestNewAsset,
     updateMetaTitle,
@@ -272,8 +278,10 @@ export default function App() {
           <TopBar
             title={dsl.meta.title}
             onTitleChange={updateMetaTitle}
-            canUndo={true}
-            canRedo={false}
+            canUndo={past.length > 0}
+            canRedo={future.length > 0}
+            onUndo={undo}
+            onRedo={redo}
             isSaved={!isDirty}
             onOpenTemplates={() => setIsTemplatesModalOpen(true)}
             onOpenProjects={() => setIsProjectsModalOpen(true)}

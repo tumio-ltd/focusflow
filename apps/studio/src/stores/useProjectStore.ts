@@ -10,6 +10,8 @@ import type {
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
 
+const MAX_HISTORY = 50;
+
 const defaultInitialDSL: FocusFlowDSL = {
   meta: {
     title: '微服务电商架构演进演示',
@@ -101,6 +103,8 @@ const defaultInitialDSL: FocusFlowDSL = {
 export interface ProjectState {
   dsl: FocusFlowDSL;
   isDirty: boolean;
+  past: FocusFlowDSL[];
+  future: FocusFlowDSL[];
 
   // Actions
   setDSL: (dsl: FocusFlowDSL) => void;
@@ -123,18 +127,34 @@ export interface ProjectState {
   addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
   addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images', elementId: string) => void;
+  undo: () => void;
+  redo: () => void;
   markSaved: () => void;
+}
+
+function pushHistory(state: ProjectState, nextDSL: FocusFlowDSL): Partial<ProjectState> {
+  const currentSnapshot = JSON.parse(JSON.stringify(state.dsl));
+  const past = [...state.past, currentSnapshot].slice(-MAX_HISTORY);
+  return {
+    past,
+    future: [],
+    dsl: nextDSL,
+    isDirty: true,
+  };
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
   dsl: defaultInitialDSL,
   isDirty: false,
+  past: [],
+  future: [],
 
-  setDSL: (dsl) => set({ dsl, isDirty: true }),
+  setDSL: (dsl) =>
+    set((state) => pushHistory(state, dsl)),
 
   ingestNewAsset: (meta) =>
-    set({
-      dsl: {
+    set((state) => {
+      const nextDSL: FocusFlowDSL = {
         meta: {
           title: meta.fileName || '全新架构演示项目',
           viewport: { width: meta.width, height: meta.height },
@@ -162,21 +182,21 @@ export const useProjectStore = create<ProjectState>((set) => ({
             },
           },
         ],
-      },
-      isDirty: true,
+      };
+      return pushHistory(state, nextDSL);
     }),
 
   updateMetaTitle: (title) =>
-    set((state) => ({
-      dsl: {
+    set((state) => {
+      const nextDSL = {
         ...state.dsl,
         meta: {
           ...state.dsl.meta,
           title,
         },
-      },
-      isDirty: true,
-    })),
+      };
+      return pushHistory(state, nextDSL);
+    }),
 
   updateSceneCamera: (sceneIndex, camera) =>
     set((state) => {
@@ -192,10 +212,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
         },
       };
 
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   updateSceneTitle: (sceneIndex, title) =>
@@ -205,10 +223,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
       if (!target) return state;
 
       scenes[sceneIndex] = { ...target, title };
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   addScene: () =>
@@ -224,13 +240,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
           callouts: [],
         },
       };
-      return {
-        dsl: {
-          ...state.dsl,
-          scenes: [...state.dsl.scenes, newScene],
-        },
-        isDirty: true,
+      const nextDSL = {
+        ...state.dsl,
+        scenes: [...state.dsl.scenes, newScene],
       };
+      return pushHistory(state, nextDSL);
     }),
 
   insertScene: (index) =>
@@ -247,10 +261,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
       };
       const scenes = [...state.dsl.scenes];
       scenes.splice(index, 0, newScene);
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   reorderScenes: (sourceIndex, targetIndex) =>
@@ -260,10 +272,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const [moved] = scenes.splice(sourceIndex, 1);
       if (!moved) return state;
       scenes.splice(targetIndex, 0, moved);
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   duplicateScene: (index) =>
@@ -280,20 +290,16 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const scenes = [...state.dsl.scenes];
       scenes.splice(index + 1, 0, clonedScene);
 
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   deleteScene: (index) =>
     set((state) => {
       if (state.dsl.scenes.length <= 1) return state; // 至少保留 1 个场景
       const scenes = state.dsl.scenes.filter((_, idx) => idx !== index);
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   toggleElementInScene: (sceneIndex, elementType, elementId) =>
@@ -303,9 +309,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
       if (!scene) return state;
 
       const activeList = scene.activeElements[elementType] || [];
-      const isAlreadyActive = activeList.includes(elementId);
-
-      const nextActiveList = isAlreadyActive
+      const nextActiveList = activeList.includes(elementId)
         ? activeList.filter((id) => id !== elementId)
         : [...activeList, elementId];
 
@@ -317,10 +321,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
         },
       };
 
-      return {
-        dsl: { ...state.dsl, scenes },
-        isDirty: true,
-      };
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
     }),
 
   addBox: (box, activeInSceneIndex = 0) =>
@@ -342,17 +344,15 @@ export const useProjectStore = create<ProjectState>((set) => ({
         }
       }
 
-      return {
-        dsl: {
-          ...state.dsl,
-          elements: {
-            ...state.dsl.elements,
-            boxes,
-          },
-          scenes,
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          boxes,
         },
-        isDirty: true,
+        scenes,
       };
+      return pushHistory(state, nextDSL);
     }),
 
   addPath: (path, activeInSceneIndex = 0) =>
@@ -374,17 +374,15 @@ export const useProjectStore = create<ProjectState>((set) => ({
         }
       }
 
-      return {
-        dsl: {
-          ...state.dsl,
-          elements: {
-            ...state.dsl.elements,
-            paths,
-          },
-          scenes,
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          paths,
         },
-        isDirty: true,
+        scenes,
       };
+      return pushHistory(state, nextDSL);
     }),
 
   addDot: (dot, activeInSceneIndex = 0) =>
@@ -406,17 +404,15 @@ export const useProjectStore = create<ProjectState>((set) => ({
         }
       }
 
-      return {
-        dsl: {
-          ...state.dsl,
-          elements: {
-            ...state.dsl.elements,
-            dots,
-          },
-          scenes,
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          dots,
         },
-        isDirty: true,
+        scenes,
       };
+      return pushHistory(state, nextDSL);
     }),
 
   addCallout: (callout, activeInSceneIndex = 0) =>
@@ -435,13 +431,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
         };
       }
 
-      return {
-        dsl: {
-          ...state.dsl,
-          scenes,
-        },
-        isDirty: true,
+      const nextDSL = {
+        ...state.dsl,
+        scenes,
       };
+      return pushHistory(state, nextDSL);
     }),
 
   deleteElement: (elementType, elementId) =>
@@ -457,7 +451,6 @@ export const useProjectStore = create<ProjectState>((set) => ({
         elements.images = elements.images?.filter((i: ElementImage) => i.id !== elementId) || [];
       }
 
-      // 同时从所有场景中移除该图元引用
       const scenes = state.dsl.scenes.map((s) => ({
         ...s,
         activeElements: {
@@ -466,8 +459,34 @@ export const useProjectStore = create<ProjectState>((set) => ({
         },
       }));
 
+      const nextDSL = { ...state.dsl, elements, scenes };
+      return pushHistory(state, nextDSL);
+    }),
+
+  undo: () =>
+    set((state) => {
+      if (state.past.length === 0) return state;
+      const past = [...state.past];
+      const previous = past.pop()!;
+      const future = [JSON.parse(JSON.stringify(state.dsl)), ...state.future];
       return {
-        dsl: { ...state.dsl, elements, scenes },
+        past,
+        future,
+        dsl: previous,
+        isDirty: true,
+      };
+    }),
+
+  redo: () =>
+    set((state) => {
+      if (state.future.length === 0) return state;
+      const future = [...state.future];
+      const next = future.shift()!;
+      const past = [...state.past, JSON.parse(JSON.stringify(state.dsl))].slice(-MAX_HISTORY);
+      return {
+        past,
+        future,
+        dsl: next,
         isDirty: true,
       };
     }),

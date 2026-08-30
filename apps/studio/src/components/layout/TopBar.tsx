@@ -126,6 +126,7 @@ export function TopBar({
           <Button
             size="icon"
             variant="ghost"
+            data-testid="undo-btn"
             disabled={!canUndo}
             onClick={onUndo}
             className="h-7 w-7 text-slate-400 hover:text-slate-100"
@@ -138,6 +139,7 @@ export function TopBar({
           <Button
             size="icon"
             variant="ghost"
+            data-testid="redo-btn"
             disabled={!canRedo}
             onClick={onRedo}
             className="h-7 w-7 text-slate-400 hover:text-slate-100"

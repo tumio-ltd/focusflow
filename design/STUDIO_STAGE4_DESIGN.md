@@ -153,10 +153,10 @@ test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
   - [x] 4.1.1 在 `useProjectStore.ts` 中实现 `reorderScenes`, `insertScene`, `duplicateScene`, `deleteScene` 完整时序 Action
   - [x] 4.1.2 升级 `src/components/layout/BottomTimeline.tsx`：实现卡片序号、运镜徽章、双击改名、复制/删除浮动按键与拖拽排序
   - [x] 4.1.3 支持总时长与单场景运镜时长动态计算呈现
-- [ ] **Task 4.2: 历史时间旅行撤销/重做引擎 (Undo / Redo History Stack)**
-  - [ ] 4.2.1 编写 `src/stores/historySlice.ts` / 封装 `useProjectStore` 的 `undo`, `redo`, `canUndo`, `canRedo` 状态机
-  - [ ] 4.2.2 编写 `src/hooks/useHistoryKeyboard.ts`：全局监听 `⌘Z` / `⌘⇧Z` / `Ctrl+Z` / `Ctrl+Y` 快捷键
-  - [ ] 4.2.3 在 `TopBar.tsx` 中双向绑定撤销/重做按键与可用状态
+- [x] **Task 4.2: 历史时间旅行撤销/重做引擎 (Undo / Redo History Stack)**
+  - [x] 4.2.1 封装 `useProjectStore` 的 `undo`, `redo`, `past`, `future` 历史快照状态机
+  - [x] 4.2.2 编写 `src/hooks/useHistoryKeyboard.ts`：全局监听 `⌘Z` / `⌘⇧Z` / `Ctrl+Z` / `Ctrl+Y` 快捷键
+  - [x] 4.2.3 在 `TopBar.tsx` 中双向绑定撤销/重做按键与可用状态
 - [ ] **Task 4.3: 图层可见性矩阵与状态继承 (Layer Visibility Matrix)**
   - [ ] 4.3.1 在 `RightInspector.tsx` 增强图元列表：支持全量图元显隐勾选、搜索过滤、快速删除
   - [ ] 4.3.2 增加“从上一幕继承图元”快捷按键，实现跨场景图元状态一键克隆
