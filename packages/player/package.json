@@ -1,0 +1,30 @@
+{
+  "name": "@focusflow/player",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/focusflow.esm.js",
+  "module": "./dist/focusflow.esm.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/focusflow.esm.js"
+    },
+    "./styles.css": "./src/styles/focusflow.css",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@focusflow/dsl": "workspace:*"
+  },
+  "devDependencies": {
+    "@focusflow/config-typescript": "workspace:*",
+    "typescript": "^5.5.0",
+    "vite": "^8.2.0"
+  }
+}

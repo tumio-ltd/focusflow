@@ -1,0 +1,7 @@
+{
+  "name": "@focusflow/config-tailwind",
+  "version": "1.0.0",
+  "private": true,
+  "main": "tailwind.config.js",
+  "files": ["tailwind.config.js"]
+}

@@ -1,0 +1,10 @@
+{
+  "extends": "@focusflow/config-typescript/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "allowJs": true,
+    "checkJs": false
+  },
+  "include": ["src/**/*"]
+}
