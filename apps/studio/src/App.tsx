@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
 import { 
   WorkbenchLayout, 
@@ -7,11 +7,12 @@ import {
   RightInspector, 
   BottomTimeline 
 } from '@/components/layout';
-import { InfiniteCanvas } from '@/components/canvas';
+import { InfiniteCanvas, CameraFrustumFrame } from '@/components/canvas';
 import { ImageUploadModal, ProjectManagerModal, TemplatesModal } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import type { ImageMeta } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
+import { captureCanvasToCamera } from '@/utils/cameraMath';
 import '@focusflow/player/styles.css';
 
 export default function App() {
@@ -21,6 +22,10 @@ export default function App() {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 视口变换与容器尺寸跟踪
+  const [canvasTransform, setCanvasTransform] = useState({ scale: 1, x: 0, y: 0 });
+  const [containerRect, setContainerRect] = useState({ width: 1920, height: 1080 });
 
   // Zustand Store Hooks
   const { 
@@ -179,6 +184,26 @@ export default function App() {
     console.log('Created project from template:', newProjectId);
   };
 
+  const handleCanvasTransformChange = useCallback(
+    (transform: { scale: number; x: number; y: number }, rect: { width: number; height: number }) => {
+      setCanvasTransform(transform);
+      setContainerRect(rect);
+    },
+    []
+  );
+
+  // 一键捕获当前视口为当前场景摄像机参数
+  const handleCaptureCurrentCamera = () => {
+    const newCamera = captureCanvasToCamera(
+      canvasTransform,
+      containerRect,
+      dsl.meta.viewport.width,
+      dsl.meta.viewport.height,
+      activeScene?.camera.duration || 1.2
+    );
+    updateSceneCamera(activeSceneIndex, newCamera);
+  };
+
   // 提取当前场景图元信息用于 Inspector 展示
   const inspectorElements = [
     ...(dsl.elements.boxes || []).map((b) => ({
@@ -222,8 +247,22 @@ export default function App() {
           <InfiniteCanvas
             contentWidth={dsl.meta.viewport.width}
             contentHeight={dsl.meta.viewport.height}
+            onTransformChange={handleCanvasTransformChange}
           >
-            <div ref={containerRef} className="w-full h-full relative" />
+            <div ref={containerRef} className="w-full h-full relative">
+              {/* 摄像机安全可视取景框 (Frustum) */}
+              <CameraFrustumFrame
+                camera={{
+                  zoom: activeScene?.camera.zoom || 1.0,
+                  x: activeScene?.camera.x || 0,
+                  y: activeScene?.camera.y || 0,
+                  duration: activeScene?.camera.duration,
+                }}
+                naturalWidth={dsl.meta.viewport.width}
+                naturalHeight={dsl.meta.viewport.height}
+                visible={!isPlaying}
+              />
+            </div>
           </InfiniteCanvas>
         }
         rightInspector={
@@ -234,6 +273,7 @@ export default function App() {
             onCameraZoomChange={(zoom) => updateSceneCamera(activeSceneIndex, { zoom })}
             cameraDuration={activeScene?.camera.duration || 1.2}
             onCameraDurationChange={(duration) => updateSceneCamera(activeSceneIndex, { duration })}
+            onCaptureCurrentCamera={handleCaptureCurrentCamera}
             elements={inspectorElements}
             onToggleElement={(id) => {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);

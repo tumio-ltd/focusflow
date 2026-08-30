@@ -10,7 +10,8 @@ import {
   ChevronDown, 
   ChevronRight, 
   Palette,
-  Clock
+  Clock,
+  Crosshair
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 
@@ -21,6 +22,7 @@ export interface RightInspectorProps {
   onCameraZoomChange?: (zoom: number) => void;
   cameraDuration?: number;
   onCameraDurationChange?: (duration: number) => void;
+  onCaptureCurrentCamera?: () => void;
   elements?: {
     id: string;
     type: 'box' | 'path' | 'dot' | 'callout';
@@ -38,6 +40,7 @@ export function RightInspector({
   onCameraZoomChange,
   cameraDuration = 1.2,
   onCameraDurationChange,
+  onCaptureCurrentCamera,
   elements = [
     { id: 'box-1', type: 'box', name: '微服务网关选框', active: true },
     { id: 'callout-1', type: 'callout', name: 'API 网关解说气泡', active: true },
@@ -87,6 +90,17 @@ export function RightInspector({
                   placeholder={t('sceneTitlePlaceholder')}
                 />
               </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="capture-camera-btn"
+                onClick={onCaptureCurrentCamera}
+                className="w-full gap-2 text-xs border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 font-medium py-1.5 h-auto"
+              >
+                <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+                <span>{t('captureCurrentView')}</span>
+              </Button>
 
               <Slider
                 label={t('cameraZoom')}

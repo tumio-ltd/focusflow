@@ -14,6 +14,7 @@ export interface InfiniteCanvasProps {
   contentWidth?: number;
   contentHeight?: number;
   className?: string;
+  onTransformChange?: (transform: { scale: number; x: number; y: number }, containerRect: { width: number; height: number }) => void;
 }
 
 export function InfiniteCanvas({
@@ -21,6 +22,7 @@ export function InfiniteCanvas({
   contentWidth = 1920,
   contentHeight = 1080,
   className = '',
+  onTransformChange,
 }: InfiniteCanvasProps) {
   const {
     containerRef,
@@ -34,6 +36,7 @@ export function InfiniteCanvas({
   } = useCanvasGesture({
     contentWidth,
     contentHeight,
+    onTransformChange,
   });
 
   const zoomPercent = Math.round(transform.scale * 100);

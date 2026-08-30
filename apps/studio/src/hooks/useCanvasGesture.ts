@@ -12,6 +12,7 @@ export interface UseCanvasGestureOptions {
   initialScale?: number;
   contentWidth?: number;
   contentHeight?: number;
+  onTransformChange?: (transform: CanvasTransform, containerRect: { width: number; height: number }) => void;
 }
 
 export function useCanvasGesture({
@@ -20,12 +21,20 @@ export function useCanvasGesture({
   initialScale = 1.0,
   contentWidth = 1920,
   contentHeight = 1080,
+  onTransformChange,
 }: UseCanvasGestureOptions = {}) {
   const [transform, setTransform] = useState<CanvasTransform>({
     x: 0,
     y: 0,
     scale: initialScale,
   });
+
+  useEffect(() => {
+    if (onTransformChange && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      onTransformChange(transform, { width: rect.width, height: rect.height });
+    }
+  }, [transform, onTransformChange]);
 
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);

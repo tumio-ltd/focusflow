@@ -10,4 +10,5 @@ export default {
   palette: '图元发光调色板',
   hideElementTip: '点击在当前场景隐藏',
   showElementTip: '点击在当前场景激活',
+  captureCurrentView: '捕获当前画布视角',
 } as const;

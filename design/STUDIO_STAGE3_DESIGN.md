@@ -220,10 +220,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
 
 ## 8. Stage 3 任务分解与执行清单 (WBS Checklist)
 
-- [ ] **Task 3.1: 镜头取景器与视口视角捕获 (Camera Viewport Frame & Framing Engine)**
-  - [ ] 3.1.1 编写 `src/utils/cameraMath.ts`：实现摄像机参数与安全取景框物理坐标互转、视口中心反解算法
-  - [ ] 3.1.2 编写 `src/components/canvas/CameraFrustumFrame.tsx`：在画布上呈现发光安全取景框与调整手柄
-  - [ ] 3.1.3 在 `RightInspector.tsx` 新增“捕获当前画布视角”快捷操作按键
+- [x] **Task 3.1: 镜头取景器与视口视角捕获 (Camera Viewport Frame & Framing Engine)**
+  - [x] 3.1.1 编写 `src/utils/cameraMath.ts`：实现摄像机参数与安全取景框物理坐标互转、视口中心反解算法
+  - [x] 3.1.2 编写 `src/components/canvas/CameraFrustumFrame.tsx`：在画布上呈现发光安全取景框与调整手柄
+  - [x] 3.1.3 在 `RightInspector.tsx` 新增“捕获当前画布视角”快捷操作按键
 - [ ] **Task 3.2: 智能选框工具与 Sobel 边缘自动吸附 (Smart Box Tool & Sobel Snapping Engine)**
   - [ ] 3.2.1 编写 `src/utils/edgeSnapper.ts`：实现离屏 $3\times 3$ Sobel 梯度卷积与 $\pm 24\text{px}$ 窄带能量极大值投影
   - [ ] 3.2.2 编写 `src/components/canvas/BoxDrawingOverlay.tsx`：实现鼠标拖拽选框、实时吸附与 `⌥ Option` 手动模式
