@@ -378,23 +378,26 @@ FocusFlow Studio 采用工业级 **CSS 变量分层映射 + Tailwind 纯 Token �
                     │       --canvas:     var(--ff-bg-canvas);               │
                     │       --card:       var(--ff-bg-card);                 │
                     │       --primary:    var(--ff-accent);                  │
-                    │       --border:     var(--ff-border);                  │
-                    └──────────────────────────┬─────────────────────────────┘
-                                               │
-                                               ▼
-                    ┌────────────────────────────────────────────────────────┐
-                    │  3. Tailwind 语义化 Token (packages/config-tailwind)   │
-                    │     bg-background, bg-panel, bg-canvas, bg-card,       │
-                    │     text-foreground, border-border, bg-primary, ...    │
-                    └──────────────────────────┬─────────────────────────────┘
-                                               │
-                                               ▼
-                    ┌────────────────────────────────────────────────────────┐
-                    │  4. UI 组件纯语义消费 (Components / Layouts / Modals)   │
-                    │     <header className="bg-panel/90 border-border" />   │
-                    │     <main className="bg-canvas" />                     │
-                    │     <Button className="bg-primary text-primary-fg" />  │
-                    └────────────────────────────────────────────────────────┘
+                     │  2. 抽象语义桥接层 (apps/studio/src/index.css)          │
+                     │     :root / .dark CSS 变量映射 (以 RGB 通道定义支持 /40) │
+                     │       --primary:    var(--ff-accent);                  │
+                     │       --border:     var(--ff-border);                  │
+                     └──────────────────────────┬─────────────────────────────┘
+                                                │
+                                                ▼
+                     ┌────────────────────────────────────────────────────────┐
+                     │  3. Tailwind 语义化 Token (packages/config-tailwind)   │
+                     │     rgb(var(--background) / <alpha-value>),            │
+                     │     rgb(var(--border) / <alpha-value>), ...            │
+                     └──────────────────────────┬─────────────────────────────┘
+                                                │
+                                                ▼
+                     ┌────────────────────────────────────────────────────────┐
+                     │  4. UI 组件纯语义消费 (Components / Layouts / Modals)   │
+                     │     <header className="bg-panel/90 border-border/40" />│
+                     │     <main className="bg-canvas" />                     │
+                     │     <Button className="bg-muted/40 border-border/40" />│
+                     └────────────────────────────────────────────────────────┘
 ```
 
 #### 2. 核心语义 Token 定义与消费规范表
