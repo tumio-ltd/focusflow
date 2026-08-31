@@ -24,7 +24,7 @@ export function CameraFrustumFrame({
       {/* 1. 安全取景框主体 (发光边框 + 准星) */}
       <div
         data-testid="camera-frustum-frame"
-        className="absolute border-2 border-cyan-400/80 rounded-xl transition-all duration-150 ease-out shadow-2xl"
+        className="absolute border-2 border-primary/80 rounded-xl transition-all duration-150 ease-out shadow-2xl"
         style={{
           left: `${rect.x}px`,
           top: `${rect.y}px`,
@@ -34,23 +34,23 @@ export function CameraFrustumFrame({
         }}
       >
         {/* 左上角摄像机镜头标签 */}
-        <div className="absolute -top-7 left-0 flex items-center gap-1.5 bg-cyan-950/90 border border-cyan-500/60 backdrop-blur-md px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg">
-          <Camera className="w-3 h-3 text-cyan-400" />
+        <div className="absolute -top-8 left-0 flex items-center gap-1.5 bg-panel/90 border border-primary/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-mono text-primary shadow-lg font-semibold">
+          <Camera className="w-3.5 h-3.5 text-primary" />
           <span>
             {camera.zoom.toFixed(1)}x · ({camera.x || 0}%, {camera.y || 0}%)
           </span>
         </div>
 
         {/* 视口中心准星 */}
-        <div className="absolute inset-0 flex items-center justify-center text-cyan-400/40">
+        <div className="absolute inset-0 flex items-center justify-center text-primary/40">
           <Crosshair className="w-6 h-6 animate-pulse" />
         </div>
 
         {/* 四角标记手柄 */}
-        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-cyan-300" />
-        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-cyan-300" />
-        <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-cyan-300" />
-        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-cyan-300" />
+        <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-primary" />
+        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-primary" />
+        <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-primary" />
+        <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-primary" />
       </div>
     </div>
   );

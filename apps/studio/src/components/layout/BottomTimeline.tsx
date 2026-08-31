@@ -105,7 +105,7 @@ export function BottomTimeline({
   return (
     <footer
       data-testid="timeline"
-      className="h-20 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
+      className="h-22 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
     >
       {/* 1. 左侧播放控制组 */}
       <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border shrink-0">
@@ -115,7 +115,7 @@ export function BottomTimeline({
             variant="ghost"
             onClick={onPrev}
             disabled={activeSceneIndex === 0}
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
@@ -127,7 +127,7 @@ export function BottomTimeline({
             variant="cyan"
             data-testid="timeline-play-btn"
             onClick={onTogglePlay}
-            className="h-8 w-8 rounded-lg"
+            className="h-8.5 w-8.5 rounded-lg"
           >
             {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
           </Button>
@@ -139,7 +139,7 @@ export function BottomTimeline({
             variant="ghost"
             onClick={onNext}
             disabled={activeSceneIndex === scenes.length - 1}
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -147,13 +147,13 @@ export function BottomTimeline({
 
         <div className="h-4 w-px bg-border mx-1" />
 
-        <span className="text-xs font-mono text-muted-foreground px-1">
+        <span className="text-xs font-mono text-muted-foreground px-1.5 font-semibold">
           {String(activeSceneIndex + 1).padStart(2, '0')} / {String(scenes.length).padStart(2, '0')}
         </span>
       </div>
 
       {/* 2. 中间场景切片横向滚动卡片列表 */}
-      <div className="flex items-center gap-2.5 overflow-x-auto flex-1 py-1 no-scrollbar">
+      <div className="flex items-center gap-3 overflow-x-auto flex-1 py-1 no-scrollbar">
         {scenes.map((scene, idx) => {
           const isActive = activeSceneIndex === idx;
           const isDragging = draggedIdx === idx;
@@ -170,7 +170,7 @@ export function BottomTimeline({
               onDrop={(e) => handleDrop(idx, e)}
               onDragEnd={handleDragEnd}
               onClick={() => onSelectScene(idx)}
-              className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[180px] ${
+              className={`group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl border cursor-pointer transition-all shrink-0 min-w-[200px] ${
                 isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
               } ${
                 isOver ? 'ring-2 ring-primary scale-105' : ''
@@ -182,7 +182,7 @@ export function BottomTimeline({
             >
               {/* 场景微缩标志指示 */}
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center border text-[11px] font-mono shrink-0 transition ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center border text-xs font-mono shrink-0 transition ${
                   isActive
                     ? 'bg-primary text-primary-foreground border-primary font-bold shadow-sm'
                     : 'bg-muted text-muted-foreground border-border'
@@ -203,7 +203,7 @@ export function BottomTimeline({
                       onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle(idx)}
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-background border border-primary rounded px-1.5 py-0.5 text-xs text-foreground focus:outline-none w-full"
+                      className="bg-background border border-primary rounded px-2 py-0.5 text-xs text-foreground focus:outline-none w-full font-medium"
                     />
                     <button
                       onClick={(e) => {
@@ -212,24 +212,24 @@ export function BottomTimeline({
                       }}
                       className="p-0.5 text-primary hover:opacity-80"
                     >
-                      <Check className="w-3 h-3" />
+                      <Check className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ) : (
                   <span
                     onDoubleClick={(e) => handleStartEditing(idx, scene.title, e)}
-                    className="truncate text-xs font-medium hover:text-primary"
+                    className="truncate text-xs font-medium text-foreground hover:text-primary"
                     title="双击就地修改标题"
                   >
                     {scene.title}
                   </span>
                 )}
 
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-mono">
+                <div className="flex items-center gap-2.5 text-xs text-muted-foreground font-mono">
                   <span>{scene.duration.toFixed(1)}s</span>
                   {scene.boxCount !== undefined && (
                     <span className="flex items-center gap-0.5">
-                      <Layers className="w-2.5 h-2.5" />
+                      <Layers className="w-3 h-3" />
                       {scene.boxCount}
                     </span>
                   )}
@@ -244,7 +244,7 @@ export function BottomTimeline({
                   className="p-1 text-muted-foreground hover:text-primary transition"
                   title="重命名场景"
                 >
-                  <Edit3 className="w-3 h-3" />
+                  <Edit3 className="w-3.5 h-3.5" />
                 </button>
 
                 <button
@@ -255,7 +255,7 @@ export function BottomTimeline({
                   className="p-1 text-muted-foreground hover:text-primary transition"
                   title={t('duplicateScene')}
                 >
-                  <Copy className="w-3 h-3" />
+                  <Copy className="w-3.5 h-3.5" />
                 </button>
 
                 {scenes.length > 1 && (
@@ -267,7 +267,7 @@ export function BottomTimeline({
                     className="p-1 text-muted-foreground hover:text-destructive transition"
                     title="删除场景"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -281,16 +281,16 @@ export function BottomTimeline({
           size="sm"
           data-testid="add-scene-btn"
           onClick={onAddScene}
-          className="border-dashed border-border hover:border-primary text-muted-foreground hover:text-primary gap-1.5 h-11 px-3.5 rounded-xl shrink-0"
+          className="border-dashed border-border hover:border-primary text-muted-foreground hover:text-primary gap-1.5 h-12 px-4 rounded-xl shrink-0 text-xs font-medium"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-4 h-4" />
           <span>{t('addScene')}</span>
         </Button>
       </div>
 
       {/* 4. 右侧故事板总时长 */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono shrink-0 pl-2 border-l border-border">
-        <Film className="w-3.5 h-3.5 text-primary" />
+      <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono shrink-0 pl-3 border-l border-border font-medium">
+        <Film className="w-4 h-4 text-primary" />
         <span>{t('totalDuration')}: {scenes.reduce((acc, s) => acc + s.duration, 0).toFixed(1)}s</span>
       </div>
     </footer>

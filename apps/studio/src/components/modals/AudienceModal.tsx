@@ -182,8 +182,8 @@ export function AudienceModal({
 
         <div className="h-4 w-px bg-slate-800 mx-1" />
 
-        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
-          <Layers className="w-3 h-3 text-cyan-400" />
+        <div className="flex items-center gap-1.5 text-xs text-slate-300 font-mono">
+          <Layers className="w-3.5 h-3.5 text-cyan-400" />
           <span>{(currentScene?.activeElements.boxes || []).length} 图元</span>
         </div>
       </div>

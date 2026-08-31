@@ -35,13 +35,13 @@ export function Tooltip({
       {isVisible && (
         <div
           className={cn(
-            'absolute z-50 px-2 py-1 text-[11px] font-medium text-popover-foreground bg-popover border border-border rounded-md shadow-xl whitespace-nowrap pointer-events-none flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-100',
+            'absolute z-50 px-2.5 py-1 text-xs font-medium text-popover-foreground bg-popover border border-border rounded-md shadow-xl whitespace-nowrap pointer-events-none flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-100',
             positionStyles[position]
           )}
         >
           <span>{content}</span>
           {shortcut && (
-            <kbd className="px-1.5 py-0.2 bg-muted border border-border rounded text-[10px] font-mono text-primary">
+            <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs font-mono text-primary font-semibold">
               {shortcut}
             </kbd>
           )}

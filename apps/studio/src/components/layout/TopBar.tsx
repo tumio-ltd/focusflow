@@ -91,11 +91,11 @@ export function TopBar({
   };
 
   return (
-    <header className="h-13 border-b border-border bg-panel/90 backdrop-blur-md px-4 flex items-center justify-between select-none z-30 shrink-0 transition-colors duration-200">
+    <header className="h-14 border-b border-border bg-panel/90 backdrop-blur-md px-4 flex items-center justify-between select-none z-30 shrink-0 transition-colors duration-200">
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3.5">
         <div className="flex items-center gap-2 font-bold tracking-wide text-primary">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
+          <div className="w-7.5 h-7.5 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
             <Sparkles className="w-4 h-4" />
           </div>
           <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-primary to-accent-hover bg-clip-text text-transparent">
@@ -117,24 +117,24 @@ export function TopBar({
               onBlur={handleTitleSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
               autoFocus
-              className="bg-background border border-primary rounded px-2 py-0.5 text-xs text-foreground focus:outline-none"
+              className="bg-background border border-primary rounded px-2.5 py-1 text-sm font-medium text-foreground focus:outline-none"
             />
-            <Button size="sm" variant="ghost" onClick={handleTitleSubmit} className="h-6 w-6 p-0">
-              <Check className="w-3.5 h-3.5 text-primary" />
+            <Button size="sm" variant="ghost" onClick={handleTitleSubmit} className="h-7 w-7 p-0">
+              <Check className="w-4 h-4 text-primary" />
             </Button>
           </div>
         ) : (
           <div
             onClick={() => setIsEditingTitle(true)}
-            className="group flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer transition"
+            className="group flex items-center gap-2 px-2.5 py-1 rounded hover:bg-muted cursor-pointer transition"
             title={t('editTitleTip')}
           >
-            <span className="text-xs font-medium text-foreground">{currentTitle}</span>
-            <Edit3 className="w-3 h-3 text-muted-foreground group-hover:text-primary transition" />
+            <span className="text-sm font-semibold text-foreground">{currentTitle}</span>
+            <Edit3 className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition" />
           </div>
         )}
 
-        <span className="text-[11px] text-muted-foreground font-mono">
+        <span className="text-xs text-muted-foreground font-mono">
           {isSaved ? `• ${t('saved')}` : `• ${t('dirty')}`}
         </span>
       </div>
@@ -148,9 +148,9 @@ export function TopBar({
             data-testid="undo-btn"
             disabled={!canUndo}
             onClick={onUndo}
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-7.5 w-7.5 text-muted-foreground hover:text-foreground"
           >
-            <Undo2 className="w-3.5 h-3.5" />
+            <Undo2 className="w-4 h-4" />
           </Button>
         </Tooltip>
 
@@ -161,9 +161,9 @@ export function TopBar({
             data-testid="redo-btn"
             disabled={!canRedo}
             onClick={onRedo}
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-7.5 w-7.5 text-muted-foreground hover:text-foreground"
           >
-            <Redo2 className="w-3.5 h-3.5" />
+            <Redo2 className="w-4 h-4" />
           </Button>
         </Tooltip>
       </div>
@@ -177,7 +177,7 @@ export function TopBar({
             variant="outline"
             data-testid="locale-picker"
             onClick={toggleLanguage}
-            className="h-8 text-xs gap-1.5 font-mono text-foreground"
+            className="h-8.5 text-xs gap-1.5 font-mono text-foreground"
           >
             <Languages className="w-3.5 h-3.5 text-muted-foreground" />
             <span>{currentLang.toUpperCase()}</span>
@@ -191,14 +191,14 @@ export function TopBar({
             variant="outline"
             data-testid="theme-toggle"
             onClick={cycleTheme}
-            className="h-8 w-8 text-foreground hover:text-primary"
+            className="h-8.5 w-8.5 text-foreground hover:text-primary"
           >
             {theme === 'light' ? (
-              <Sun className="w-3.5 h-3.5 text-amber-500" />
+              <Sun className="w-4 h-4 text-amber-500" />
             ) : theme === 'system' ? (
-              <Laptop className="w-3.5 h-3.5 text-sky-500" />
+              <Laptop className="w-4 h-4 text-sky-500" />
             ) : (
-              <Moon className="w-3.5 h-3.5 text-primary" />
+              <Moon className="w-4 h-4 text-primary" />
             )}
           </Button>
         </Tooltip>
@@ -211,7 +211,7 @@ export function TopBar({
           variant="outline"
           data-testid="open-templates-btn"
           onClick={onOpenTemplates}
-          className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
+          className="gap-1.5 h-8.5 text-xs border-primary/30 text-primary hover:bg-primary/10"
         >
           <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
           <span>{t('templatesCenter')}</span>
@@ -223,7 +223,7 @@ export function TopBar({
           variant="outline"
           data-testid="open-projects-btn"
           onClick={onOpenProjects}
-          className="gap-1.5 h-8 border-border text-foreground hover:bg-muted"
+          className="gap-1.5 h-8.5 text-xs border-border text-foreground hover:bg-muted"
         >
           <FolderGit2 className="w-3.5 h-3.5 text-muted-foreground" />
           <span>{t('projectsList')}</span>
@@ -235,7 +235,7 @@ export function TopBar({
           variant="outline"
           data-testid="open-import-btn"
           onClick={onOpenImport}
-          className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
+          className="gap-1.5 h-8.5 text-xs border-primary/30 text-primary hover:bg-primary/10"
         >
           <UploadCloud className="w-3.5 h-3.5" />
           <span>{t('importAsset')}</span>
@@ -247,7 +247,7 @@ export function TopBar({
           variant="outline"
           data-testid="audience-btn"
           onClick={onOpenAudience}
-          className="gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10"
+          className="gap-1.5 h-8.5 text-xs border-primary/40 text-primary hover:bg-primary/10"
           title="受众全屏演播试播"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
@@ -255,7 +255,7 @@ export function TopBar({
         </Button>
 
         {/* 保存草稿 */}
-        <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">
+        <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8.5 text-xs">
           <Save className="w-3.5 h-3.5 text-muted-foreground" />
           <span>{t('saveDraft')}</span>
         </Button>
@@ -266,7 +266,7 @@ export function TopBar({
           variant="cyan" 
           data-testid="export-btn"
           onClick={onExport} 
-          className="gap-1.5 h-8"
+          className="gap-1.5 h-8.5 text-xs font-semibold"
         >
           <Download className="w-3.5 h-3.5" />
           <span>{t('exportHtml')}</span>

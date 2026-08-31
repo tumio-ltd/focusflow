@@ -68,30 +68,30 @@ export function RightInspector({
   const getElementIcon = (type: 'box' | 'path' | 'dot' | 'callout') => {
     switch (type) {
       case 'box':
-        return <Square className="w-3 h-3 text-primary" />;
+        return <Square className="w-3.5 h-3.5 text-primary" />;
       case 'path':
-        return <GitCommit className="w-3 h-3 text-accent" />;
+        return <GitCommit className="w-3.5 h-3.5 text-accent" />;
       case 'dot':
-        return <CircleDot className="w-3 h-3 text-purple-500" />;
+        return <CircleDot className="w-3.5 h-3.5 text-purple-500" />;
       case 'callout':
-        return <MessageSquare className="w-3 h-3 text-amber-500" />;
+        return <MessageSquare className="w-3.5 h-3.5 text-amber-500" />;
     }
   };
 
   return (
     <aside
       data-testid="inspector"
-      className="w-72 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto transition-colors duration-200"
+      className="w-80 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto transition-colors duration-200"
     >
       {/* 顶部标题 */}
-      <div className="h-11 px-4 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground uppercase tracking-wider">
+      <div className="h-12 px-4 border-b border-border flex items-center justify-between text-sm font-semibold text-foreground tracking-wide">
         <div className="flex items-center gap-2">
-          <Sliders className="w-3.5 h-3.5 text-primary" />
+          <Sliders className="w-4 h-4 text-primary" />
           <span>{t('inspectorTitle')}</span>
         </div>
       </div>
 
-      <div className="p-4 space-y-5 text-xs">
+      <div className="p-4 space-y-5 text-sm">
         {/* 1. 场景镜头配置折叠面板 */}
         <div className="space-y-3">
           <div
@@ -99,16 +99,16 @@ export function RightInspector({
             className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
           >
             <div className="flex items-center gap-2">
-              <Camera className="w-3.5 h-3.5 text-primary" />
+              <Camera className="w-4 h-4 text-primary" />
               <span>{t('sceneCamera')}</span>
             </div>
-            {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+            {isCameraOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </div>
 
           {isCameraOpen && (
-            <div className="space-y-3 pl-1 pt-1 animate-in fade-in duration-100">
+            <div className="space-y-3.5 pl-1 pt-1 animate-in fade-in duration-100">
               <div>
-                <label className="text-muted-foreground block mb-1 text-[11px] font-medium">{t('sceneTitle')}</label>
+                <label className="text-muted-foreground block mb-1 text-xs font-medium">{t('sceneTitle')}</label>
                 <Input
                   value={sceneTitle}
                   onChange={(e) => onSceneTitleChange?.(e.target.value)}
@@ -121,9 +121,9 @@ export function RightInspector({
                 variant="outline"
                 data-testid="capture-camera-btn"
                 onClick={onCaptureCurrentCamera}
-                className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-1.5 h-auto"
+                className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-2 h-auto"
               >
-                <Crosshair className="w-3.5 h-3.5 text-primary" />
+                <Crosshair className="w-4 h-4 text-primary" />
                 <span>{t('captureCurrentView')}</span>
               </Button>
 
@@ -147,12 +147,12 @@ export function RightInspector({
                 onChange={(e) => onCameraDurationChange?.(parseFloat(e.target.value))}
               />
 
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-primary" />
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-primary" />
                   <span>{t('cameraEasing')}</span>
                 </span>
-                <span className="font-mono text-primary bg-muted px-1.5 py-0.5 rounded border border-border">
+                <span className="font-mono text-primary bg-muted px-2 py-0.5 rounded border border-border font-semibold text-xs">
                   Cubic-Bezier(0.4, 0, 0.2, 1)
                 </span>
               </div>
@@ -169,24 +169,24 @@ export function RightInspector({
             className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
           >
             <div className="flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5 text-primary" />
+              <Layers className="w-4 h-4 text-primary" />
               <span>{t('sceneElements')} ({elements.length})</span>
             </div>
-            {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+            {isLayersOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </div>
 
           {isLayersOpen && (
-            <div className="space-y-2 pt-1 animate-in fade-in duration-100">
+            <div className="space-y-2.5 pt-1 animate-in fade-in duration-100">
               {/* 搜索与一键继承栏 */}
               <div className="flex items-center gap-1.5">
                 <div className="relative flex-1">
-                  <Search className="w-3 h-3 text-muted-foreground absolute left-2 top-2" />
+                  <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-2.5 top-2.5" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="过滤图元..."
-                    className="w-full bg-background border border-border rounded-lg pl-7 pr-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary"
+                    className="w-full bg-background border border-border rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
                   />
                 </div>
 
@@ -196,22 +196,22 @@ export function RightInspector({
                     variant="outline"
                     data-testid="inherit-scene-btn"
                     onClick={onInheritPreviousScene}
-                    className="gap-1 text-[11px] h-7 px-2 border-border hover:border-primary text-foreground hover:text-primary"
+                    className="gap-1 text-xs h-8 px-2.5 border-border hover:border-primary text-foreground hover:text-primary"
                     title="从上一幕继承图元激活状态"
                   >
-                    <CopyCheck className="w-3 h-3" />
+                    <CopyCheck className="w-3.5 h-3.5" />
                     <span>继承</span>
                   </Button>
                 )}
               </div>
 
-              <div className="space-y-1.5 max-h-56 overflow-y-auto pr-0.5 no-scrollbar">
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-0.5 no-scrollbar">
                 {filteredElements.map((el) => (
                   <div
                     key={el.id}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] transition ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs transition ${
                       el.active
-                        ? 'bg-muted/80 border-border text-foreground shadow-sm'
+                        ? 'bg-muted/80 border-border text-foreground shadow-sm font-medium'
                         : 'bg-background/40 border-border/50 text-muted-foreground opacity-60'
                     }`}
                   >
@@ -232,9 +232,9 @@ export function RightInspector({
                         size="icon"
                         variant="ghost"
                         onClick={() => onDeleteElement?.(el.id)}
-                        className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -247,17 +247,17 @@ export function RightInspector({
         <div className="h-px bg-border" />
 
         {/* 3. 视觉主题色调预设 */}
-        <div className="space-y-2">
-          <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+        <div className="space-y-2.5">
+          <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
             <Palette className="w-3.5 h-3.5 text-primary" />
             <span>{t('palette')}</span>
           </span>
-          <div className="flex items-center gap-2 pt-1">
+          <div className="flex items-center gap-2.5 pt-1">
             {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7'].map((c) => (
               <div
                 key={c}
                 style={{ backgroundColor: c }}
-                className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20"
+                className="w-6 h-6 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20"
               />
             ))}
           </div>
