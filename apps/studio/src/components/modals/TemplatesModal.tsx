@@ -48,15 +48,15 @@ export function TemplatesModal({
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-md animate-in fade-in duration-150 ease-spring">
       <div 
         data-testid="templates-modal"
-        className="relative w-full max-w-4xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-card-foreground transition-colors duration-200"
+        className="relative w-full max-w-4xl bg-card border border-white/[0.08] rounded-2xl shadow-elevation-modal overflow-hidden flex flex-col max-h-[85vh] text-card-foreground transition-all duration-200 animate-in fade-in zoom-in-95 ease-spring"
       >
         {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-border">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-border/40">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-keycap">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>

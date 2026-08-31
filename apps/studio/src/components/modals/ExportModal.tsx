@@ -69,13 +69,13 @@ export function ExportModal({
   return (
     <div
       data-testid="export-modal"
-      className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
+      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 ease-spring select-none"
     >
-      <div className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col text-card-foreground transition-colors duration-200">
+      <div className="bg-card border border-white/[0.08] rounded-2xl w-full max-w-xl shadow-elevation-modal overflow-hidden flex flex-col text-card-foreground transition-all duration-200 animate-in fade-in zoom-in-95 ease-spring">
         {/* 顶部标题栏 */}
-        <div className="px-6 py-4.5 border-b border-border flex items-center justify-between">
+        <div className="px-6 py-4.5 border-b border-border/40 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-keycap">
               <Download className="w-5 h-5" />
             </div>
             <div>

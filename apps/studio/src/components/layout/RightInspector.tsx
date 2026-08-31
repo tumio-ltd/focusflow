@@ -121,7 +121,7 @@ export function RightInspector({
                 variant="outline"
                 data-testid="capture-camera-btn"
                 onClick={onCaptureCurrentCamera}
-                className="w-full gap-2 text-xs bg-primary/15 text-primary hover:bg-primary/25 font-medium py-2 h-auto rounded-lg border border-transparent"
+                className="w-full gap-2 text-xs bg-primary/15 text-primary hover:bg-primary/25 font-medium py-2 h-auto rounded-lg border border-transparent shadow-keycap-cyan hover:shadow-keycap-cyan-hover hover:-translate-y-[0.5px] active:translate-y-[0.5px] transition-all duration-150 ease-spring"
               >
                 <Crosshair className="w-4 h-4 text-primary" />
                 <span>{t('captureCurrentView')}</span>
@@ -152,7 +152,7 @@ export function RightInspector({
                   <Clock className="w-3.5 h-3.5 text-primary" />
                   <span>{t('cameraEasing')}</span>
                 </span>
-                <span className="font-mono text-primary bg-muted/60 px-2 py-0.5 rounded-md font-semibold text-xs border border-transparent">
+                <span className="font-mono text-primary bg-muted/60 px-2 py-0.5 rounded-md font-semibold text-xs border border-transparent shadow-keycap">
                   Cubic-Bezier(0.4, 0, 0.2, 1)
                 </span>
               </div>

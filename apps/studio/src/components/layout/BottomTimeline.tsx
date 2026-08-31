@@ -170,22 +170,22 @@ export function BottomTimeline({
               onDrop={(e) => handleDrop(idx, e)}
               onDragEnd={handleDragEnd}
               onClick={() => onSelectScene(idx)}
-              className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-xl cursor-pointer transition-all shrink-0 min-w-[200px] border border-transparent ${
+              className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-xl cursor-pointer transition-all duration-150 ease-spring shrink-0 min-w-[200px] border border-transparent ${
                 isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
               } ${
                 isOver ? 'ring-2 ring-primary scale-105' : ''
               } ${
                 isActive
-                  ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 font-medium shadow-md'
-                  : 'bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                  ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 font-medium shadow-keycap-hover hover:-translate-y-[0.5px]'
+                  : 'bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground shadow-keycap hover:shadow-keycap-hover hover:-translate-y-[0.5px]'
               }`}
             >
               {/* 场景微缩标志指示 */}
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono shrink-0 transition border border-transparent ${
                   isActive
-                    ? 'bg-primary text-primary-foreground font-bold shadow-sm'
-                    : 'bg-muted/60 text-muted-foreground'
+                    ? 'bg-primary text-primary-foreground font-bold shadow-keycap-cyan'
+                    : 'bg-muted/60 text-muted-foreground shadow-keycap'
                 }`}
               >
                 {String(idx + 1).padStart(2, '0')}
@@ -281,7 +281,7 @@ export function BottomTimeline({
           size="sm"
           data-testid="add-scene-btn"
           onClick={onAddScene}
-          className="border-dashed border-border/60 hover:border-primary/60 bg-muted/20 hover:bg-primary/5 text-muted-foreground hover:text-primary gap-1.5 h-12 px-3.5 rounded-xl shrink-0 text-xs font-medium"
+          className="border-dashed border-border/50 hover:border-primary/60 bg-muted/20 hover:bg-primary/5 text-muted-foreground hover:text-primary gap-1.5 h-12 px-3.5 rounded-xl shrink-0 text-xs font-medium shadow-none hover:shadow-keycap transition-all duration-150 ease-spring active:scale-95"
         >
           <Plus className="w-4 h-4" />
           <span>{t('addScene')}</span>

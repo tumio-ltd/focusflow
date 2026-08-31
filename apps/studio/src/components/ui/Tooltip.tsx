@@ -1,5 +1,6 @@
 import React, { useState, ReactNode } from 'react';
 import { cn } from '@/utils/cn';
+import { Kbd } from './Kbd';
 
 export interface TooltipProps {
   content: ReactNode;
@@ -35,15 +36,17 @@ export function Tooltip({
       {isVisible && (
         <div
           className={cn(
-            'absolute z-50 px-2.5 py-1 text-xs font-medium text-popover-foreground bg-popover border border-border rounded-md shadow-xl whitespace-nowrap pointer-events-none flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-100',
+            'absolute z-50 px-2.5 py-1.5 text-xs font-medium text-popover-foreground bg-popover/95 border border-border/40 backdrop-blur-md rounded-lg shadow-elevation-dropdown whitespace-nowrap pointer-events-none flex items-center gap-2 animate-in fade-in zoom-in-95 duration-100 ease-spring',
             positionStyles[position]
           )}
         >
           <span>{content}</span>
           {shortcut && (
-            <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs font-mono text-primary font-semibold">
-              {shortcut}
-            </kbd>
+            <div className="flex items-center gap-1">
+              {shortcut.split(' ').map((keyPart, i) => (
+                <Kbd key={i}>{keyPart}</Kbd>
+              ))}
+            </div>
           )}
         </div>
       )}
