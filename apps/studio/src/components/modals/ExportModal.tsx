@@ -88,7 +88,7 @@ export function ExportModal({
             size="icon"
             variant="ghost"
             onClick={onClose}
-            className="w-8.5 h-8.5 rounded-lg text-muted-foreground hover:text-foreground"
+            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
           >
             <X className="w-4.5 h-4.5" />
           </Button>

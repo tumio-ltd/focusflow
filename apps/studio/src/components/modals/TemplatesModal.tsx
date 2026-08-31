@@ -117,7 +117,7 @@ export function TemplatesModal({
             >
               <div>
                 {/* 封面与 Badge */}
-                <div className="relative h-34 rounded-lg overflow-hidden border border-border mb-3.5 bg-muted">
+                <div className="relative h-36 rounded-lg overflow-hidden border border-border mb-3.5 bg-muted">
                   <img
                     src={tpl.coverImage}
                     alt={tpl.title}

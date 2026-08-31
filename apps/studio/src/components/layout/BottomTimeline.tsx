@@ -8,10 +8,10 @@ import {
   Plus, 
   Copy, 
   Trash2, 
-  Film,
-  Layers,
-  Edit3,
-  Check
+  Film, 
+  Layers, 
+  Edit3, 
+  Check 
 } from 'lucide-react';
 import { Button, Tooltip } from '@/components/ui';
 
@@ -105,10 +105,10 @@ export function BottomTimeline({
   return (
     <footer
       data-testid="timeline"
-      className="h-22 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
+      className="h-20 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
     >
       {/* 1. 左侧播放控制组 */}
-      <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border shrink-0">
+      <div className="flex items-center gap-1 bg-background p-1 rounded-xl border border-border shrink-0">
         <Tooltip content={t('prevScene')} shortcut="←">
           <Button
             size="icon"
@@ -127,7 +127,7 @@ export function BottomTimeline({
             variant="cyan"
             data-testid="timeline-play-btn"
             onClick={onTogglePlay}
-            className="h-8.5 w-8.5 rounded-lg"
+            className="h-8 w-8 rounded-lg"
           >
             {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
           </Button>
@@ -153,7 +153,7 @@ export function BottomTimeline({
       </div>
 
       {/* 2. 中间场景切片横向滚动卡片列表 */}
-      <div className="flex items-center gap-3 overflow-x-auto flex-1 py-1 no-scrollbar">
+      <div className="flex items-center gap-2.5 overflow-x-auto flex-1 py-1 no-scrollbar">
         {scenes.map((scene, idx) => {
           const isActive = activeSceneIndex === idx;
           const isDragging = draggedIdx === idx;
@@ -170,7 +170,7 @@ export function BottomTimeline({
               onDrop={(e) => handleDrop(idx, e)}
               onDragEnd={handleDragEnd}
               onClick={() => onSelectScene(idx)}
-              className={`group relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl border cursor-pointer transition-all shrink-0 min-w-[200px] ${
+              className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-xl border cursor-pointer transition-all shrink-0 min-w-[200px] ${
                 isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
               } ${
                 isOver ? 'ring-2 ring-primary scale-105' : ''
@@ -225,7 +225,7 @@ export function BottomTimeline({
                   </span>
                 )}
 
-                <div className="flex items-center gap-2.5 text-xs text-muted-foreground font-mono">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
                   <span>{scene.duration.toFixed(1)}s</span>
                   {scene.boxCount !== undefined && (
                     <span className="flex items-center gap-0.5">
@@ -281,7 +281,7 @@ export function BottomTimeline({
           size="sm"
           data-testid="add-scene-btn"
           onClick={onAddScene}
-          className="border-dashed border-border hover:border-primary text-muted-foreground hover:text-primary gap-1.5 h-12 px-4 rounded-xl shrink-0 text-xs font-medium"
+          className="border-dashed border-border hover:border-primary text-muted-foreground hover:text-primary gap-1.5 h-12 px-3.5 rounded-xl shrink-0 text-xs font-medium"
         >
           <Plus className="w-4 h-4" />
           <span>{t('addScene')}</span>

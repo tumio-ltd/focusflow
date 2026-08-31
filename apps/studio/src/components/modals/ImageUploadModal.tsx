@@ -165,7 +165,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
                 onChange={handleFileInputChange}
                 className="hidden"
               />
-              <div className="w-13 h-13 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3">
                 <UploadCloud className="w-6 h-6 animate-pulse" />
               </div>
               <p className="text-sm font-semibold text-foreground">{t('dragDropTitle')}</p>
@@ -181,7 +181,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
                   className="flex-1"
                 />
                 <Button size="sm" variant="cyan" onClick={handleUrlProcess} disabled={!urlInput.trim() || loading}>
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : '解析'}
+                  {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '解析'}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -209,7 +209,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
           {/* 解析成功预览卡片 */}
           {parsedMeta && (
             <div className="p-4 rounded-xl bg-card border border-primary/40 flex items-center gap-4 animate-in fade-in duration-200 shadow-sm">
-              <div className="w-18 h-13 rounded-lg bg-muted border border-border overflow-hidden flex items-center justify-center shrink-0">
+              <div className="w-16 h-12 rounded-lg bg-muted border border-border overflow-hidden flex items-center justify-center shrink-0">
                 <img src={parsedMeta.url} alt="preview" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
