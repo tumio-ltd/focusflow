@@ -50,7 +50,7 @@ async function verifySceneTitleInlineEditing(page: Page): Promise<void> {
   // 验证卡片与右侧属性面板同步更新
   await expect(firstCard).toContainText('01 核心网关拓扑');
   const inspector = page.locator('[data-testid="inspector"]');
-  await expect(inspector).toContainText('01 核心网关拓扑');
+  await expect(inspector.locator('input').first()).toHaveValue('01 核心网关拓扑');
 }
 
 /**

@@ -59,6 +59,12 @@ export function TopBar({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(defaultTitle);
 
+  React.useEffect(() => {
+    if (title) {
+      setCurrentTitle(title);
+    }
+  }, [title]);
+
   const handleTitleSubmit = () => {
     setIsEditingTitle(false);
     if (currentTitle.trim() && onTitleChange) {

@@ -131,33 +131,38 @@ export default function App() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const player = new FocusFlowPlayer({
-      container: containerRef.current,
-      dsl,
-      debug: false,
-      onSceneChange: (index: number) => {
-        setActiveSceneIndex(index);
-      },
-    });
+    try {
+      const player = new FocusFlowPlayer({
+        container: containerRef.current,
+        dsl,
+        debug: false,
+        onSceneChange: (index: number) => {
+          setActiveSceneIndex(index);
+        },
+      });
 
-    player.init().then(() => {
       playerRef.current = player;
       // 预先缓存底图像素到 Sobel 空间分析器
-      globalEdgeSnapper.setImageElement(
-        player.imgEl,
-        dsl.meta.viewport.width,
-        dsl.meta.viewport.height
-      );
-    });
+      if (player.imgEl) {
+        globalEdgeSnapper.setImageElement(
+          player.imgEl,
+          dsl.meta.viewport.width,
+          dsl.meta.viewport.height
+        );
+      }
 
-    return () => {
-      player.destroy();
-    };
+      return () => {
+        player.destroy();
+        playerRef.current = null;
+      };
+    } catch (err) {
+      console.warn('Player init warning:', err);
+    }
   }, [dsl, setActiveSceneIndex]);
 
   const handleSelectScene = (index: number) => {
     setActiveSceneIndex(index);
-    playerRef.current?.goToScene(index);
+    playerRef.current?.goToStep(index);
   };
 
   const handleTogglePlay = () => {
@@ -308,7 +313,10 @@ export default function App() {
             contentHeight={dsl.meta.viewport.height}
             onTransformChange={handleCanvasTransformChange}
           >
-            <div ref={containerRef} className="w-full h-full relative">
+            <div className="w-full h-full relative">
+              {/* 底层 FocusFlow 播放器挂载容器 */}
+              <div ref={containerRef} className="w-full h-full absolute inset-0 pointer-events-none" />
+
               {/* 统一交互标定绘制层 (选框 / 连线 / 脉冲圆点 / 解说气泡 / 取景框) */}
               <CanvasOverlay
                 contentWidth={dsl.meta.viewport.width}

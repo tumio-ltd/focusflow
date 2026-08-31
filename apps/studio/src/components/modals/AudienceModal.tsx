@@ -38,21 +38,23 @@ export function AudienceModal({
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
 
-    const player = new FocusFlowPlayer({
-      container: containerRef.current,
-      dsl,
-      debug: false,
-      onSceneChange: (index: number) => {
-        setCurrentSceneIdx(index);
-      },
-    });
+    try {
+      const player = new FocusFlowPlayer({
+        container: containerRef.current,
+        dsl,
+        debug: false,
+        onSceneChange: (index: number) => {
+          setCurrentSceneIdx(index);
+        },
+      });
 
-    player.init().then(() => {
       playerRef.current = player;
       if (initialSceneIndex > 0) {
-        player.goToScene(initialSceneIndex);
+        player.goToStep(initialSceneIndex);
       }
-    });
+    } catch (err) {
+      console.warn('Audience player init error:', err);
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -73,7 +75,7 @@ export function AudienceModal({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      player.destroy();
+      playerRef.current?.destroy();
       playerRef.current = null;
     };
   }, [isOpen, dsl, initialSceneIndex, onClose]);
