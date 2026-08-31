@@ -57,7 +57,7 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
   return (
     <aside 
       data-testid="toolbox" 
-      className="w-14 border-r border-slate-800 bg-slate-900/60 backdrop-blur-md flex flex-col items-center py-4 gap-3 select-none z-20 shrink-0"
+      className="w-14 border-r border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md flex flex-col items-center py-4 gap-3 select-none z-20 shrink-0 transition-colors duration-200"
     >
       {tools.map((tool) => {
         const Icon = tool.icon;
@@ -70,8 +70,8 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
               onClick={() => onToolChange(tool.id)}
               className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ${
                 isActive
-                  ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-400/40 font-semibold'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 active:bg-slate-800'
+                  ? 'bg-cyan-500 text-white dark:text-slate-950 shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-400/40 font-semibold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/80 active:bg-slate-200 dark:active:bg-slate-800'
               }`}
             >
               <Icon className="w-4.5 h-4.5" />
@@ -90,7 +90,7 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
 
       {/* 底部 AI 辅助标定图标 */}
       <Tooltip content={t('aiExtraction')} position="right">
-        <div className="w-9 h-9 rounded-lg border border-dashed border-slate-800 flex items-center justify-center text-slate-600 hover:text-cyan-400 hover:border-cyan-800/60 transition cursor-help">
+        <div className="w-9 h-9 rounded-lg border border-dashed border-slate-300 dark:border-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-600 hover:text-cyan-500 dark:hover:text-cyan-400 hover:border-cyan-500/60 dark:hover:border-cyan-800/60 transition cursor-help">
           <Sparkles className="w-4 h-4" />
         </div>
       </Tooltip>

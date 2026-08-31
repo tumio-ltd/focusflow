@@ -96,42 +96,42 @@ export function ProjectManagerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150">
       <div 
         data-testid="project-manager-modal"
-        className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-slate-900 dark:text-slate-100 transition-colors duration-200"
       >
         {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
               <FolderGit2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-slate-100">{t('managerTitle')}</h3>
-              <span className="text-[11px] text-slate-400">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('managerTitle')}</h3>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
                 {projectList.length} {t('projectCount')}
               </span>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition p-1 rounded-lg hover:bg-slate-800"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* 搜索与新建控制栏 */}
-        <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-800 bg-slate-950/40">
+        <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/60"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:border-cyan-500/60"
             />
           </div>
           <Button size="sm" variant="cyan" onClick={() => { onNewProject(); onClose(); }} className="gap-1.5">
@@ -143,12 +143,12 @@ export function ProjectManagerModal({
         {/* 工程卡片列表 */}
         <div className="p-6 overflow-y-auto space-y-2.5 flex-1 min-h-[250px]">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-2 text-xs text-slate-400">
-              <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
+            <div className="flex flex-col items-center justify-center h-48 gap-2 text-xs text-slate-500">
+              <Loader2 className="w-5 h-5 animate-spin text-cyan-600 dark:text-cyan-400" />
               <span>正在读取本地 IndexedDB...</span>
             </div>
           ) : filteredProjects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 gap-3 text-slate-500">
+            <div className="flex flex-col items-center justify-center h-48 gap-3 text-slate-400 dark:text-slate-500">
               <FolderGit2 className="w-8 h-8 opacity-40" />
               <p className="text-xs">{t('emptyTip')}</p>
             </div>
@@ -162,13 +162,13 @@ export function ProjectManagerModal({
                   key={p.id}
                   className={`group relative flex items-center justify-between p-3.5 rounded-xl border transition-all ${
                     isCurrent
-                      ? 'border-cyan-500/70 bg-cyan-950/20 text-slate-100 shadow-md ring-1 ring-cyan-500/30'
-                      : 'border-slate-800 bg-slate-950/50 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
+                      ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/20 text-slate-900 dark:text-slate-100 shadow-md ring-1 ring-cyan-500/30'
+                      : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800/40'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    <div className="w-9 h-9 rounded-lg bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-400 shrink-0 font-mono text-xs">
-                      {isCurrent ? <span className="text-cyan-400 font-bold">●</span> : <Layers className="w-4 h-4" />}
+                    <div className="w-9 h-9 rounded-lg bg-slate-200 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700/80 flex items-center justify-center text-slate-500 dark:text-slate-400 shrink-0 font-mono text-xs">
+                      {isCurrent ? <span className="text-cyan-600 dark:text-cyan-400 font-bold">●</span> : <Layers className="w-4 h-4" />}
                     </div>
 
                     <div className="flex flex-col min-w-0 flex-1 pr-2">
@@ -181,10 +181,10 @@ export function ProjectManagerModal({
                             onBlur={() => handleSaveRename(p.id)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSaveRename(p.id)}
                             autoFocus
-                            className="bg-slate-900 border border-cyan-500 rounded px-2 py-0.5 text-xs text-white focus:outline-none"
+                            className="bg-white dark:bg-slate-900 border border-cyan-500 rounded px-2 py-0.5 text-xs text-slate-900 dark:text-white focus:outline-none"
                           />
                           <Button size="sm" variant="ghost" onClick={() => handleSaveRename(p.id)} className="h-6 w-6 p-0">
-                            <Check className="w-3.5 h-3.5 text-cyan-400" />
+                            <Check className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                           </Button>
                         </div>
                       ) : (
@@ -196,14 +196,14 @@ export function ProjectManagerModal({
                                 onClose();
                               }
                             }}
-                            className="text-xs font-semibold truncate hover:text-cyan-300 cursor-pointer transition"
+                            className="text-xs font-semibold truncate hover:text-cyan-600 dark:hover:text-cyan-300 cursor-pointer transition"
                           >
                             {p.title}
                           </span>
                           {isCurrent && <Badge variant="cyan">{t('currentBadge')}</Badge>}
                           <button
                             onClick={() => handleStartRename(p.id, p.title)}
-                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-cyan-400 transition"
+                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-400 transition"
                             title={t('rename')}
                           >
                             <Edit3 className="w-3 h-3" />
@@ -213,7 +213,7 @@ export function ProjectManagerModal({
 
                       <div className="flex items-center gap-3 text-[11px] text-slate-500 font-mono mt-1">
                         <span className="flex items-center gap-1">
-                          <Layers className="w-3 h-3 text-cyan-500/70" />
+                          <Layers className="w-3 h-3 text-cyan-600 dark:text-cyan-500/70" />
                           <span>{p.sceneCount} {t('scenesCount')}</span>
                         </span>
                         <span className="flex items-center gap-1">
@@ -245,7 +245,7 @@ export function ProjectManagerModal({
                       size="icon"
                       variant="ghost"
                       onClick={() => duplicateProject(p.id)}
-                      className="h-7 w-7 text-slate-400 hover:text-cyan-300"
+                      className="h-7 w-7 text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
                       title={t('duplicate')}
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -255,7 +255,7 @@ export function ProjectManagerModal({
                       size="icon"
                       variant="ghost"
                       onClick={() => handleExportJson(p.id, p.title)}
-                      className="h-7 w-7 text-slate-400 hover:text-cyan-300"
+                      className="h-7 w-7 text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
                       title={t('exportJson')}
                     >
                       <Download className="w-3.5 h-3.5" />
@@ -269,7 +269,7 @@ export function ProjectManagerModal({
                           deleteProject(p.id);
                         }
                       }}
-                      className="h-7 w-7 text-slate-500 hover:text-rose-400"
+                      className="h-7 w-7 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400"
                       title={t('delete')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
