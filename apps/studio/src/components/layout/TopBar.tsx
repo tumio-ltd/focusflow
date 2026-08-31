@@ -15,7 +15,8 @@ import {
   UploadCloud,
   FolderGit2,
   LayoutTemplate,
-  Play
+  Play,
+  Laptop
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -51,9 +52,18 @@ export function TopBar({
   isSaved = true,
 }: TopBarProps) {
   const { t, i18n } = useTranslation('common');
-  const { resolvedTheme, setTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const { theme, setTheme } = useTheme();
   const currentLang = (i18n.language || 'zh').startsWith('zh') ? 'zh' : 'en';
+
+  const cycleTheme = () => {
+    if (theme === 'dark') {
+      setTheme('light');
+    } else if (theme === 'light') {
+      setTheme('system');
+    } else {
+      setTheme('dark');
+    }
+  };
 
   const defaultTitle = title || t('defaultProjectTitle');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -174,16 +184,22 @@ export function TopBar({
           </Button>
         </Tooltip>
 
-        {/* 暗黑/明亮主题切换 */}
-        <Tooltip content={t('switchTheme')}>
+        {/* 科技暗黑 / 极简明亮 / 跟随系统 三态循环切换 */}
+        <Tooltip content={theme === 'light' ? t('themeLight') : theme === 'system' ? t('themeSystem') : t('themeDark')}>
           <Button
             size="icon"
             variant="outline"
             data-testid="theme-toggle"
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            onClick={cycleTheme}
             className="h-8 w-8 text-slate-300 hover:text-white"
           >
-            {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            {theme === 'light' ? (
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+            ) : theme === 'system' ? (
+              <Laptop className="w-3.5 h-3.5 text-sky-400" />
+            ) : (
+              <Moon className="w-3.5 h-3.5 text-cyan-400" />
+            )}
           </Button>
         </Tooltip>
 

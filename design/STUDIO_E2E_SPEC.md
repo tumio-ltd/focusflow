@@ -51,7 +51,7 @@
 | 用例 ID | 测试名称 | 对应独立异步函数 | 核心测试步骤与断言逻辑 | 状态 |
 | :--- | :--- | :--- | :--- | :---: |
 | **TC01** | 验证五栏响应式工作台核心容器全部正常挂载 | `verifyWorkbenchLayoutMounted` | 1. 验证 `header` 全局控制台挂载<br/>2. 验证 `[data-testid="toolbox"]` 左侧工具栏可见<br/>3. 验证 `[data-testid="canvas-viewport"]` 视口可见<br/>4. 验证 `[data-testid="inspector"]` 属性面板可见<br/>5. 验证 `[data-testid="timeline"]` 场景时间轴可见 | ✅ Passed |
-| **TC02** | 验证 Dark / Light 双科技主题切换与 Semantic Tokens 变量深度求值 | `verifyThemeToggleBehavior` | 1. 验证默认 `html.dark`，求值 `--ff-bg-app` 为 `#06090e`、`--ff-text-primary` 为 `#f8fafc`<br/>2. 切换为 Light，断言移除 `.dark`，求值 `--ff-bg-app` 为 `#f8fafc`、`--ff-text-primary` 为 `#0f172a`，断言 `localStorage.getItem('theme') === 'light'`<br/>3. 再次切回 Dark，断言完全复原并持久化 | ✅ Passed |
+| **TC02** | 验证 Dark / Light / System 三态科技主题循环切换与 Semantic Tokens 深度求值 | `verifyThemeToggleBehavior` | 1. 验证默认 `html.dark`，求值 `--ff-bg-app` 为 `#06090e`、`--ff-text-primary` 为 `#f8fafc`<br/>2. 切换为 Light，断言移除 `.dark`，求值 `--ff-bg-app` 为 `#f8fafc`、`--ff-text-primary` 为 `#0f172a`，断言 `localStorage.getItem('theme') === 'light'`<br/>3. 切换为 System，断言 `localStorage.getItem('theme') === 'system'`<br/>4. 循环切回 Dark，断言完全复原并持久化 | ✅ Passed |
 | **TC03** | 验证中英双语动态切换无闪烁 | `verifyLanguageSwitchingBehavior` | 1. 初始为中文（断言出现“导出独立 HTML”、“添加新场景”）<br/>2. 点击语言切换按钮，断言无缝变为英文（“Export Standalone HTML”、“Add Scene”）<br/>3. 再次点击切回中文 | ✅ Passed |
 | **TC04** | 验证左侧 5 大标定工具激活切换 | `verifyToolSelectionBehavior` | 1. 依次切换选择抓手、矩形选框、贝塞尔连线工具<br/>2. 断言被激活按钮带有高亮背景类 `bg-cyan-500`，未激活按钮样式正常清除 | ✅ Passed |
 | **TC05** | 验证底部时间轴场景选择与新增场景 | `verifySceneTimelineNavigation` | 1. 断言初始包含 2 个场景卡片<br/>2. 点击第 2 个场景，断言卡片带有 `border-cyan-500` 选中态<br/>3. 点击“添加新场景”，断言卡片总数递增为 3 | ✅ Passed |

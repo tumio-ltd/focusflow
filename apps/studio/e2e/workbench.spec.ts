@@ -26,7 +26,7 @@ async function verifyWorkbenchLayoutMounted(page: Page): Promise<void> {
 }
 
 /**
- * 2. 验证 Dark / Light 双科技主题切换、Semantic Tokens 变量求值与 LocalStorage 深度持久化
+ * 2. 验证 Dark / Light / System 三态科技主题循环切换、Semantic Tokens 变量求值与 LocalStorage 深度持久化
  */
 async function verifyThemeToggleBehavior(page: Page): Promise<void> {
   const themeBtn = page.locator('[data-testid="theme-toggle"]');
@@ -71,7 +71,12 @@ async function verifyThemeToggleBehavior(page: Page): Promise<void> {
   expect(lightTokens.accent).toBe('#0284c7');
   expect(lightTokens.storageTheme).toBe('light');
 
-  // 3. 再次切换回科技暗黑模式 (Dark)
+  // 3. 切换为跟随系统模式 (System)
+  await themeBtn.click();
+  const systemStorage = await page.evaluate(() => window.localStorage.getItem('theme'));
+  expect(systemStorage).toBe('system');
+
+  // 4. 再次点击，循环回到科技暗黑模式 (Dark)
   await themeBtn.click();
   await expect(page.locator('html')).toHaveClass(/dark/);
 
