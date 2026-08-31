@@ -26,22 +26,66 @@ async function verifyWorkbenchLayoutMounted(page: Page): Promise<void> {
 }
 
 /**
- * 2. 验证 Dark / Light 双主题响应式切换与 LocalStorage 持久化
+ * 2. 验证 Dark / Light 双科技主题切换、Semantic Tokens 变量求值与 LocalStorage 深度持久化
  */
 async function verifyThemeToggleBehavior(page: Page): Promise<void> {
   const themeBtn = page.locator('[data-testid="theme-toggle"]');
   await expect(themeBtn).toBeVisible();
 
-  // 默认应为 dark 类
+  // 1. 验证默认科技暗黑模式 (Dark)
   await expect(page.locator('html')).toHaveClass(/dark/);
+  
+  // 求值暗黑模式下的核心 Semantic Tokens 变量
+  const darkTokens = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    return {
+      bgApp: rootStyle.getPropertyValue('--ff-bg-app').trim(),
+      textPrimary: rootStyle.getPropertyValue('--ff-text-primary').trim(),
+      border: rootStyle.getPropertyValue('--ff-border').trim(),
+      accent: rootStyle.getPropertyValue('--ff-accent').trim(),
+    };
+  });
+  expect(darkTokens.bgApp).toBe('#06090e');
+  expect(darkTokens.textPrimary).toBe('#f8fafc');
+  expect(darkTokens.border).toBe('#1e293b');
+  expect(darkTokens.accent).toBe('#38bdf8');
 
-  // 切换为 light
+  // 2. 切换为极简明亮模式 (Light)
   await themeBtn.click();
   await expect(page.locator('html')).not.toHaveClass(/dark/);
 
-  // 再次切换回 dark
+  // 求值明亮模式下的核心 Semantic Tokens 变量与 LocalStorage 存储
+  const lightTokens = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    return {
+      bgApp: rootStyle.getPropertyValue('--ff-bg-app').trim(),
+      textPrimary: rootStyle.getPropertyValue('--ff-text-primary').trim(),
+      border: rootStyle.getPropertyValue('--ff-border').trim(),
+      accent: rootStyle.getPropertyValue('--ff-accent').trim(),
+      storageTheme: window.localStorage.getItem('theme'),
+    };
+  });
+  expect(lightTokens.bgApp).toBe('#f8fafc');
+  expect(lightTokens.textPrimary).toBe('#0f172a');
+  expect(lightTokens.border).toBe('#e2e8f0');
+  expect(lightTokens.accent).toBe('#0284c7');
+  expect(lightTokens.storageTheme).toBe('light');
+
+  // 3. 再次切换回科技暗黑模式 (Dark)
   await themeBtn.click();
   await expect(page.locator('html')).toHaveClass(/dark/);
+
+  const restoredDarkTokens = await page.evaluate(() => {
+    const rootStyle = getComputedStyle(document.documentElement);
+    return {
+      bgApp: rootStyle.getPropertyValue('--ff-bg-app').trim(),
+      textPrimary: rootStyle.getPropertyValue('--ff-text-primary').trim(),
+      storageTheme: window.localStorage.getItem('theme'),
+    };
+  });
+  expect(restoredDarkTokens.bgApp).toBe('#06090e');
+  expect(restoredDarkTokens.textPrimary).toBe('#f8fafc');
+  expect(restoredDarkTokens.storageTheme).toBe('dark');
 }
 
 /**
