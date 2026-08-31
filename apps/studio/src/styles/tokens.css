@@ -1,21 +1,23 @@
 @layer base {
   :root {
-    /* --- Light 极简明亮语义 Token --- */
-    --ff-bg-app: #f8fafc;
-    --ff-bg-panel: #ffffff;
-    --ff-bg-canvas: #e2e8f0;
-    --ff-bg-card: #ffffff;
-    --ff-bg-hover: #f1f5f9;
-    --ff-border: #e2e8f0;
-    --ff-border-subtle: #f1f5f9;
-    --ff-text-primary: #0f172a;
-    --ff-text-secondary: #475569;
-    --ff-text-muted: #94a3b8;
+    /* --- Light 极简明亮语义 Token (RGB 通道) --- */
+    --ff-bg-app: 248 250 252;        /* #f8fafc */
+    --ff-bg-panel: 255 255 255;      /* #ffffff */
+    --ff-bg-canvas: 226 232 240;     /* #e2e8f0 */
+    --ff-bg-card: 255 255 255;       /* #ffffff */
+    --ff-bg-hover: 241 245 249;      /* #f1f5f9 */
+    --ff-border: 226 232 240;        /* #e2e8f0 */
+    --ff-border-subtle: 241 245 249; /* #f1f5f9 */
+    --ff-text-primary: 15 23 42;     /* #0f172a */
+    --ff-text-secondary: 71 85 105;  /* #475569 */
+    --ff-text-muted: 148 163 184;    /* #94a3b8 */
     
-    --ff-accent: #0284c7;
-    --ff-accent-hover: #0369a1;
+    --ff-accent: 2 132 199;          /* #0284c7 */
+    --ff-accent-hover: 3 105 161;    /* #0369a1 */
+    --ff-destructive: 239 68 68;     /* #ef4444 */
+    --ff-destructive-foreground: 255 255 255;
+    
     --ff-accent-glow: rgba(2, 132, 199, 0.2);
-    
     --ff-glow-cyan: 0 0 16px rgba(2, 132, 199, 0.3);
     --ff-glass-bg: rgba(255, 255, 255, 0.88);
     --ff-glass-border: rgba(226, 232, 240, 0.8);
@@ -23,22 +25,24 @@
   }
 
   .dark {
-    /* --- Dark 深度科技暗黑语义 Token --- */
-    --ff-bg-app: #06090e;
-    --ff-bg-panel: #0b0f19;
-    --ff-bg-canvas: #04060a;
-    --ff-bg-card: #111827;
-    --ff-bg-hover: #1e293b;
-    --ff-border: #1e293b;
-    --ff-border-subtle: #131b2e;
-    --ff-text-primary: #f8fafc;
-    --ff-text-secondary: #94a3b8;
-    --ff-text-muted: #64748b;
+    /* --- Dark 深度科技暗黑语义 Token (RGB 通道) --- */
+    --ff-bg-app: 6 9 14;             /* #06090e */
+    --ff-bg-panel: 11 15 25;         /* #0b0f19 */
+    --ff-bg-canvas: 4 6 10;          /* #04060a */
+    --ff-bg-card: 17 24 39;          /* #111827 */
+    --ff-bg-hover: 30 41 59;         /* #1e293b */
+    --ff-border: 30 41 59;           /* #1e293b */
+    --ff-border-subtle: 19 27 46;    /* #131b2e */
+    --ff-text-primary: 248 250 252;  /* #f8fafc */
+    --ff-text-secondary: 148 163 184;/* #94a3b8 */
+    --ff-text-muted: 100 116 139;    /* #64748b */
     
-    --ff-accent: #38bdf8;
-    --ff-accent-hover: #7dd3fc;
+    --ff-accent: 56 189 248;         /* #38bdf8 */
+    --ff-accent-hover: 125 211 252;  /* #7dd3fc */
+    --ff-destructive: 127 29 29;     /* #7f1d1d */
+    --ff-destructive-foreground: 248 250 252;
+    
     --ff-accent-glow: rgba(56, 189, 248, 0.35);
-    
     --ff-glow-cyan: 0 0 20px rgba(56, 189, 248, 0.5), 0 0 40px rgba(56, 189, 248, 0.2);
     --ff-glass-bg: rgba(11, 15, 25, 0.85);
     --ff-glass-border: rgba(30, 41, 59, 0.8);

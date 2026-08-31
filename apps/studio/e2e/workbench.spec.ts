@@ -45,10 +45,10 @@ async function verifyThemeToggleBehavior(page: Page): Promise<void> {
       accent: rootStyle.getPropertyValue('--ff-accent').trim(),
     };
   });
-  expect(darkTokens.bgApp).toBe('#06090e');
-  expect(darkTokens.textPrimary).toBe('#f8fafc');
-  expect(darkTokens.border).toBe('#1e293b');
-  expect(darkTokens.accent).toBe('#38bdf8');
+  expect(darkTokens.bgApp).toBe('6 9 14');
+  expect(darkTokens.textPrimary).toBe('248 250 252');
+  expect(darkTokens.border).toBe('30 41 59');
+  expect(darkTokens.accent).toBe('56 189 248');
 
   // 2. 切换为极简明亮模式 (Light)
   await themeBtn.click();
@@ -65,10 +65,10 @@ async function verifyThemeToggleBehavior(page: Page): Promise<void> {
       storageTheme: window.localStorage.getItem('theme'),
     };
   });
-  expect(lightTokens.bgApp).toBe('#f8fafc');
-  expect(lightTokens.textPrimary).toBe('#0f172a');
-  expect(lightTokens.border).toBe('#e2e8f0');
-  expect(lightTokens.accent).toBe('#0284c7');
+  expect(lightTokens.bgApp).toBe('248 250 252');
+  expect(lightTokens.textPrimary).toBe('15 23 42');
+  expect(lightTokens.border).toBe('226 232 240');
+  expect(lightTokens.accent).toBe('2 132 199');
   expect(lightTokens.storageTheme).toBe('light');
 
   // 3. 切换为跟随系统模式 (System)
@@ -88,8 +88,8 @@ async function verifyThemeToggleBehavior(page: Page): Promise<void> {
       storageTheme: window.localStorage.getItem('theme'),
     };
   });
-  expect(restoredDarkTokens.bgApp).toBe('#06090e');
-  expect(restoredDarkTokens.textPrimary).toBe('#f8fafc');
+  expect(restoredDarkTokens.bgApp).toBe('6 9 14');
+  expect(restoredDarkTokens.textPrimary).toBe('248 250 252');
   expect(restoredDarkTokens.storageTheme).toBe('dark');
 }
 

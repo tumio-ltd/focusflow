@@ -15,7 +15,7 @@
     --popover: var(--ff-bg-panel);
     --popover-foreground: var(--ff-text-primary);
     --primary: var(--ff-accent);
-    --primary-foreground: #ffffff;
+    --primary-foreground: 255 255 255;
     --secondary: var(--ff-bg-hover);
     --secondary-foreground: var(--ff-text-primary);
     --muted: var(--ff-bg-hover);
@@ -23,8 +23,8 @@
     --accent: var(--ff-accent);
     --accent-hover: var(--ff-accent-hover);
     --accent-foreground: var(--ff-text-primary);
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
+    --destructive: var(--ff-destructive);
+    --destructive-foreground: var(--ff-destructive-foreground);
     --border: var(--ff-border);
     --border-subtle: var(--ff-border-subtle);
     --input: var(--ff-border);
@@ -42,7 +42,7 @@
     --popover: var(--ff-bg-panel);
     --popover-foreground: var(--ff-text-primary);
     --primary: var(--ff-accent);
-    --primary-foreground: #06090e;
+    --primary-foreground: 6 9 14;
     --secondary: var(--ff-bg-hover);
     --secondary-foreground: var(--ff-text-primary);
     --muted: var(--ff-bg-hover);
@@ -50,8 +50,8 @@
     --accent: var(--ff-accent);
     --accent-hover: var(--ff-accent-hover);
     --accent-foreground: var(--ff-text-primary);
-    --destructive: #7f1d1d;
-    --destructive-foreground: #f8fafc;
+    --destructive: var(--ff-destructive);
+    --destructive-foreground: var(--ff-destructive-foreground);
     --border: var(--ff-border);
     --border-subtle: var(--ff-border-subtle);
     --input: var(--ff-border);
@@ -63,8 +63,8 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 

@@ -54,7 +54,7 @@ export function InfiniteCanvas({
       <div 
         className="absolute inset-0 pointer-events-none opacity-25"
         style={{
-          backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(rgb(var(--primary)) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
           backgroundPosition: `${transform.x % 24}px ${transform.y % 24}px`,
         }}
