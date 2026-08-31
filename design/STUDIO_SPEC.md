@@ -420,6 +420,13 @@ Studio 顶部导航栏提供单键循环三态主题控制器：
   - 处于 System 态：呈现 `Laptop` 图标（天空蓝 `#0284c7` 高亮）
 - **持久化机制**：基于 `next-themes` 自动将用户选中的状态写入 `localStorage.getItem('theme')`，并在页面初始化瞬间通过 inline script 注入 `html.dark` 类名，实现 0 闪烁（No FOUC）体验。
 
+#### 4. 可读性升级排版标尺 (Enhanced Readability Typographic Scale)
+为了彻底解决微小字号（$\le 11\text{px}$）在部分屏幕上的阅读费力问题，Studio 全站实行**“零低于 12px 文本”**的舒适性排版规范：
+- **`16px (text-base) font-semibold`**：弹窗大标题、顶级操作文案
+- **`14px (text-sm) font-semibold/medium`**：TopBar 标题、面板区块标题、表单输入框文本、场景卡片主标题、弹窗选项卡
+- **`12px (text-xs) font-medium / font-mono`**：标准操作按键、表单标签 Label、说明文字、Badge 徽章、Tooltip 说明、时间轴切片时长与图元状态计数
+- **`容器尺寸自适应联动`**：TopBar 高度升级为 `56px (h-14)`，右侧属性检查器宽度扩展为 `320px (w-80)`，底部时间轴高度升级为 `88px (h-22)`，场景卡片宽度扩展至 `min-w-[200px]`，确保大字号下呼吸感充足且信息紧凑。
+
 ---
 
 ## 5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)
