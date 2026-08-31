@@ -9,15 +9,15 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'md', disabled, children, ...props }, ref) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50 select-none rounded-lg';
+      'inline-flex items-center justify-center font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-50 select-none rounded-lg border border-transparent';
 
     const variants = {
-      default: 'bg-muted/40 text-foreground hover:bg-muted/80 border border-border/40 hover:border-border/70 shadow-sm',
-      secondary: 'bg-muted/40 text-foreground hover:bg-muted/80 border border-border/40 hover:border-border/70 shadow-sm',
-      outline: 'bg-muted/30 text-foreground hover:bg-muted/70 hover:text-primary border border-border/40 hover:border-primary/40 shadow-sm',
-      ghost: 'bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground border border-transparent',
-      cyan: 'bg-primary text-primary-foreground font-semibold hover:opacity-95 active:opacity-100 shadow-md shadow-primary/20 border border-primary/40',
-      destructive: 'bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20',
+      default: 'bg-muted/50 text-foreground hover:bg-muted/80 hover:text-foreground',
+      secondary: 'bg-muted/50 text-foreground hover:bg-muted/80 hover:text-foreground',
+      outline: 'bg-muted/40 text-foreground hover:bg-muted/80 hover:text-primary',
+      ghost: 'bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+      cyan: 'bg-primary text-primary-foreground font-semibold hover:opacity-95 active:opacity-100 shadow-md shadow-primary/20',
+      destructive: 'bg-destructive/15 text-destructive hover:bg-destructive/25',
     };
 
     const sizes = {

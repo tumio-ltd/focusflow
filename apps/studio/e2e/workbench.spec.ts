@@ -147,7 +147,7 @@ async function verifySceneTimelineNavigation(page: Page): Promise<void> {
 
   // 切换到第 2 个场景
   await sceneCards.nth(1).click();
-  await expect(sceneCards.nth(1)).toHaveClass(/border-primary/);
+  await expect(sceneCards.nth(1)).toHaveClass(/bg-primary/);
 
   // 点击添加新场景
   const addSceneBtn = timeline.getByRole('button', { name: /添加新场景|Add Scene/ });

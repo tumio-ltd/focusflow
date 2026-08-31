@@ -95,7 +95,7 @@ export function TopBar({
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 font-bold tracking-wide text-primary">
-          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center text-primary shadow-sm">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center text-primary">
             <Sparkles className="w-4 h-4" />
           </div>
           <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-primary to-accent-hover bg-clip-text text-transparent">
@@ -108,7 +108,7 @@ export function TopBar({
           <span>{t('modeOffline')}</span>
         </Badge>
 
-        <div className="h-4 w-px bg-border mx-0.5" />
+        <div className="h-4 w-px bg-border/40 mx-0.5" />
 
         {/* 项目标题内联编辑 */}
         {isEditingTitle ? (
@@ -143,7 +143,7 @@ export function TopBar({
       </div>
 
       {/* 2. 中间：撤销 / 重做 */}
-      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/40">
+      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl">
         <Tooltip content={t('undo')} shortcut="⌘Z">
           <Button
             size="icon"

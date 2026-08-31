@@ -121,7 +121,7 @@ export function RightInspector({
                 variant="outline"
                 data-testid="capture-camera-btn"
                 onClick={onCaptureCurrentCamera}
-                className="w-full gap-2 text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 font-medium py-2 h-auto shadow-sm"
+                className="w-full gap-2 text-xs bg-primary/15 text-primary hover:bg-primary/25 font-medium py-2 h-auto rounded-lg border border-transparent"
               >
                 <Crosshair className="w-4 h-4 text-primary" />
                 <span>{t('captureCurrentView')}</span>
@@ -152,7 +152,7 @@ export function RightInspector({
                   <Clock className="w-3.5 h-3.5 text-primary" />
                   <span>{t('cameraEasing')}</span>
                 </span>
-                <span className="font-mono text-primary bg-muted/60 px-2 py-0.5 rounded-md border border-border/40 font-semibold text-xs">
+                <span className="font-mono text-primary bg-muted/60 px-2 py-0.5 rounded-md font-semibold text-xs border border-transparent">
                   Cubic-Bezier(0.4, 0, 0.2, 1)
                 </span>
               </div>
@@ -160,7 +160,7 @@ export function RightInspector({
           )}
         </div>
 
-        <div className="h-px bg-border/60" />
+        <div className="h-px bg-border/40" />
 
         {/* 2. 当前场景图元图层列表 */}
         <div className="space-y-3">
@@ -186,7 +186,7 @@ export function RightInspector({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="过滤图元..."
-                    className="w-full bg-background/50 border border-border/40 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
+                    className="w-full bg-background/50 border border-border/30 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
                   />
                 </div>
 
@@ -209,10 +209,10 @@ export function RightInspector({
                 {filteredElements.map((el) => (
                   <div
                     key={el.id}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs transition ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs transition border border-transparent ${
                       el.active
-                        ? 'bg-muted/60 border-border/50 text-foreground shadow-sm font-medium'
-                        : 'bg-background/20 border-border/30 text-muted-foreground opacity-60 hover:opacity-100 hover:border-border/50'
+                        ? 'bg-muted/60 text-foreground font-medium shadow-none'
+                        : 'bg-background/40 text-muted-foreground opacity-60 hover:opacity-100 hover:bg-muted/30'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate flex-1 min-w-0">

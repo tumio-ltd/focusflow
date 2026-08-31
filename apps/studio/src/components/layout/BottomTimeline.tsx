@@ -108,7 +108,7 @@ export function BottomTimeline({
       className="h-20 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
     >
       {/* 1. 左侧播放控制组 */}
-      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/40 shrink-0">
+      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl shrink-0">
         <Tooltip content={t('prevScene')} shortcut="←">
           <Button
             size="icon"
@@ -145,7 +145,7 @@ export function BottomTimeline({
           </Button>
         </Tooltip>
 
-        <div className="h-4 w-px bg-border mx-1" />
+        <div className="h-4 w-px bg-border/40 mx-1" />
 
         <span className="text-xs font-mono text-muted-foreground px-1.5 font-semibold">
           {String(activeSceneIndex + 1).padStart(2, '0')} / {String(scenes.length).padStart(2, '0')}
@@ -170,22 +170,22 @@ export function BottomTimeline({
               onDrop={(e) => handleDrop(idx, e)}
               onDragEnd={handleDragEnd}
               onClick={() => onSelectScene(idx)}
-              className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-xl border cursor-pointer transition-all shrink-0 min-w-[200px] ${
+              className={`group relative flex items-center gap-3 px-3.5 py-2 rounded-xl cursor-pointer transition-all shrink-0 min-w-[200px] border border-transparent ${
                 isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
               } ${
                 isOver ? 'ring-2 ring-primary scale-105' : ''
               } ${
                 isActive
-                  ? 'border-primary/40 bg-primary/10 text-foreground shadow-md ring-1 ring-primary/30 font-medium'
-                  : 'border-border/40 bg-card/60 text-muted-foreground hover:border-border/80 hover:bg-muted/40 hover:text-foreground'
+                  ? 'bg-primary/15 text-foreground ring-1 ring-primary/40 font-medium shadow-md'
+                  : 'bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground'
               }`}
             >
               {/* 场景微缩标志指示 */}
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center border text-xs font-mono shrink-0 transition ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-mono shrink-0 transition border border-transparent ${
                   isActive
-                    ? 'bg-primary text-primary-foreground border-primary/40 font-bold shadow-sm'
-                    : 'bg-muted/60 text-muted-foreground border-border/40'
+                    ? 'bg-primary text-primary-foreground font-bold shadow-sm'
+                    : 'bg-muted/60 text-muted-foreground'
                 }`}
               >
                 {String(idx + 1).padStart(2, '0')}
