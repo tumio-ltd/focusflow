@@ -35,6 +35,20 @@
 
 ---
 
+### 1.1 项目当前状态基线与增量升级对照表 (As-Is Baseline vs. To-Be Delta Matrix)
+
+本设计规范**严格基于 FocusFlow Studio 当前代码库的真实状态（commit `ce9f1a0`）**，专注于从**“当前无硬框的可用状态”**向**“Linear 顶尖工艺质感”**的增量跨越，具体差量对比如下：
+
+| 模块维度 | 当前项目实际状态 (As-Is Baseline) | Linear 工艺级目标状态 (To-Be Craftsmanship) | 对应代码改造文件 |
+| :--- | :--- | :--- | :--- |
+| **按键与卡片质感** | 扁平透明微底色 (`bg-muted/50`)，无光照层次，略显单薄 | 引入 **1px 顶光微切面 (`shadow-keycap`)** + 底部微闭塞阴影，呈现拟物实体键帽微凸感 | `packages/config-tailwind/tailwind.config.js`<br/>`apps/studio/src/components/ui/Button.tsx` |
+| **字体与微排版** | 默认系统字体渲染，字距为 0，高分屏下笔画偶有发虚 | 注入 **`-webkit-font-smoothing: antialiased`**，标题微负字距 (`-0.015em`)，数字严格等宽 (`tnum`) | `apps/studio/src/index.css`<br/>`apps/studio/src/components/layout/` |
+| **空间景深色阶** | 仅区分背景与面板（Level 0/1），模态弹窗为纯深黑遮罩 | 建立 **严格 4 级景深矩阵 (Level 0~3)**，弹窗引入 **大光圈景深虚化 (`blur(8px) brightness(0.65)`)** | `apps/studio/src/styles/tokens.css`<br/>`apps/studio/src/components/modals/` |
+| **微交互与按压动效** | 默认 CSS `duration-150 ease`，仅背景色变化，无物理下沉 | 引入 **`cubic-bezier(0.16, 1, 0.3, 1)`** 弹性收敛曲线，Hover 悬浮微升 0.5px，Click 物理微下沉 | `apps/studio/src/components/ui/Button.tsx` |
+| **快捷键提示** | `Tooltip` 中使用纯文本字符串（如 `"⌘Z"`） | 封装 **独立实体微雕 `<Kbd>` 原子组件**，呈现立体物理凹槽微键帽 | `apps/studio/src/components/ui/Kbd.tsx`<br/>`apps/studio/src/components/ui/Tooltip.tsx` |
+
+---
+
 ## 2. 模块一：拟物物理微光与双层阴影系统 (Keycap Inset Highlight)
 
 ### 2.1 物理光学原理
