@@ -91,4 +91,38 @@
 3. 将新增用例登记于本文档对应阶段表格中，保持用例编号唯一递增。
 
 ---
+
+## 🕒 测试报告生成与多版本时间戳归档规范
+
+### 1. 测试报告查看与格式
+Playwright 在每次执行后均会自动输出交互式 HTML 可视化报告与结构化 JSON 数据：
+- **HTML 报告入口**：`apps/studio/playwright-report/index.html`
+- **JSON 数据源**：`apps/studio/playwright-report/test-results.json`
+- **本地可视化预览**：
+  ```bash
+  pnpm --filter @focusflow/studio test:e2e:report
+  ```
+
+### 2. 多版本时间戳归档机制 (Timestamped Archiving)
+为满足历史测试轨迹留存、版本发布追溯与审计需求，系统提供了自动打时间戳的报告归档工具：
+```bash
+# 执行测试后，将当前报告完整复制并打上精确时间戳归档
+pnpm --filter @focusflow/studio test:e2e:archive
+```
+- **归档路径格式**：`apps/studio/playwright-reports/report-YYYY-MM-DDTHH-mm-ss-sssZ/`
+- **归档内容**：完整包含当前测试批次的 `index.html`、失败截图、Trace 链路与 JSON 汇总数据，互不覆盖，永久可查。
+
+### 3. Git 版本控制策略与工程规范
+- **禁止提交测试报告与结果文件**：`playwright-report/`、`playwright-reports/` 和 `test-results/` 属于测试运行时产生的瞬态中间产物（Ephemeral Artifacts），包含大量二进制快照与 Trace 追踪，频繁提交会导致 Git 仓库严重膨胀。
+- **已配置 `.gitignore` 规则**：
+  ```gitignore
+  # Playwright Test Reports & Artifacts
+  playwright-report/
+  playwright-reports/
+  test-results/
+  ```
+- **CI/CD 发布实践**：在自动化构建流水线中，通过 GitHub Actions 的 `actions/upload-artifact` 步骤提取报告，或直接发布至内网静态监控看板，源码仓库仅保持核心代码与本台账文档的纯净。
+
+---
 *FocusFlow Quality & E2E Testing Working Group · 2026.08*
+
