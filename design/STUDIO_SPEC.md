@@ -29,6 +29,9 @@
   - [3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)](#33-环节二-续场景关键帧时间轴编排系统-scene--sequence-timeline)
   - [3.4 环节三：实时生成、预览与多形态导出下载 (Compilation, Preview & Exporter)](#34-环节三实时生成预览与多形态导出下载-compilation-preview--exporter)
 - [4. 前端架构与技术栈选型规范 (Frontend Architecture)](#4-前端架构与技术栈选型规范-frontend-architecture)
+  - [4.1 技术栈选型](#41-技术栈选型)
+  - [4.2 前端目录规划与多包协作架构](#42-前端目录规划与当前项目目录的架构关系-repository--monorepo-architecture)
+  - [4.3 科技双主题系统与纯 Token 语义类架构 (Theme System & Semantic Tokens Architecture)](#43-科技双主题系统与纯-token-语义类架构-theme-system--semantic-tokens-architecture)
 - [5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)](#5-服务端全栈架构rest-api-与数据模型规范-full-stack-saas-backend)
 - [6. Phase 2 研发任务分解与层级跟踪清单 (Hierarchical Task Checklist / WBS)](#6-phase-2-研发任务分解与层级跟踪清单-hierarchical-task-checklist--wbs)
 - [7. Phase 2 验收测试标准 (Acceptance Criteria)](#7-phase-2-验收测试标准-acceptance-criteria)
@@ -353,6 +356,70 @@ apps/studio/
 └── vite.config.ts               # Vite 8 配置文件 (集成 @tanstack/router-plugin)
 ```
 
+### 4.3 科技双主题系统与纯 Token 语义类架构 (Theme System & Semantic Tokens Architecture)
+
+FocusFlow Studio 采用工业级 **CSS 变量分层映射 + Tailwind 纯 Token 语义类** 设计系统，实现全站零 `dark:` 前缀硬编码、高内聚且自适应换肤的主题体系：
+
+#### 1. 完整分层架构与数据流向
+```
+                    ┌────────────────────────────────────────────────────────┐
+                    │  1. 底层物理与语义变量表 (src/styles/tokens.css)         │
+                    │     :root (Light): --ff-bg-app, --ff-text-primary, ... │
+                    │     .dark (Dark):  --ff-bg-app, --ff-text-primary, ... │
+                    └──────────────────────────┬─────────────────────────────┘
+                                               │ @import './styles/tokens.css'
+                                               ▼
+                    ┌────────────────────────────────────────────────────────┐
+                    │  2. 标准设计系统语义映射层 (src/index.css)              │
+                    │     :root / .dark:                                     │
+                    │       --background: var(--ff-bg-app);                  │
+                    │       --panel:      var(--ff-bg-panel);                │
+                    │       --canvas:     var(--ff-bg-canvas);               │
+                    │       --card:       var(--ff-bg-card);                 │
+                    │       --primary:    var(--ff-accent);                  │
+                    │       --border:     var(--ff-border);                  │
+                    └──────────────────────────┬─────────────────────────────┘
+                                               │
+                                               ▼
+                    ┌────────────────────────────────────────────────────────┐
+                    │  3. Tailwind 语义化 Token (packages/config-tailwind)   │
+                    │     bg-background, bg-panel, bg-canvas, bg-card,       │
+                    │     text-foreground, border-border, bg-primary, ...    │
+                    └──────────────────────────┬─────────────────────────────┘
+                                               │
+                                               ▼
+                    ┌────────────────────────────────────────────────────────┐
+                    │  4. UI 组件纯语义消费 (Components / Layouts / Modals)   │
+                    │     <header className="bg-panel/90 border-border" />   │
+                    │     <main className="bg-canvas" />                     │
+                    │     <Button className="bg-primary text-primary-fg" />  │
+                    └────────────────────────────────────────────────────────┘
+```
+
+#### 2. 核心语义 Token 定义与消费规范表
+| Semantic Token | Tailwind 类名 | 极简明亮 (Light) | 科技暗黑 (Dark) | 对应 UI 区域与场景 |
+| :--- | :--- | :--- | :--- | :--- |
+| `--background` | `bg-background` / `text-background` | `#f8fafc` (灰白) | `#06090e` (深黑) | Studio 最外层工作台全屏容器底色 |
+| `--panel` | `bg-panel` | `#ffffff` (纯白毛玻璃) | `#0b0f19` (暗黑毛玻璃) | 顶部栏 (TopBar)、工具箱 (Toolbox)、检查器、时间轴 |
+| `--canvas` | `bg-canvas` | `#e2e8f0` (中灰蓝) | `#04060a` (极深黑) | 无限画布 (InfiniteCanvas) 视口背景 |
+| `--card` | `bg-card` / `text-card-foreground` | `#ffffff` | `#111827` | 模板卡片、工程列表、所有模态弹窗 (Modals) 卡片 |
+| `--foreground` | `text-foreground` | `#0f172a` (深岩灰) | `#f8fafc` (浅白) | 全局主标题、主要文字内容 |
+| `--muted-foreground` | `text-muted-foreground` | `#94a3b8` (次灰) | `#64748b` (暗灰) | 副标题、占位符文字、次要说明、未激活图标 |
+| `--primary` | `bg-primary` / `text-primary` | `#0284c7` (海天蓝) | `#38bdf8` (蓝青发光) | 主按键、当前激活图元、选中场景卡片高亮、流光描边 |
+| `--primary-foreground` | `text-primary-foreground` | `#ffffff` | `#06090e` | 主强调按键内部的高对比度文字 |
+| `--border` | `border-border` | `#e2e8f0` | `#1e293b` | 全局面版边框、分割线、输入框外框 |
+| `--muted` | `bg-muted` / `hover:bg-muted` | `#f1f5f9` | `#1e293b` | 按钮悬停背景态、禁用轨道、次要背景胶囊 |
+| `--popover` | `bg-popover` / `text-popover-foreground` | `#ffffff` | `#0b0f19` | 悬浮气泡提示 (Tooltip)、下拉弹出菜单 |
+
+#### 3. TopBar 单键循环三态切换器 (3-State Cyclic Switcher)
+Studio 顶部导航栏提供单键循环三态主题控制器：
+- **状态流转**：`🌙 Dark (暗黑)` ➔ `☀️ Light (明亮)` ➔ `💻 System (跟随系统)` ➔ `🌙 Dark`
+- **动态图标指示**：
+  - 处于 Dark 态：呈现 `Moon` 图标（主题蓝青高亮）
+  - 处于 Light 态：呈现 `Sun` 图标（暖日黄 `#f59e0b` 高亮）
+  - 处于 System 态：呈现 `Laptop` 图标（天空蓝 `#0284c7` 高亮）
+- **持久化机制**：基于 `next-themes` 自动将用户选中的状态写入 `localStorage.getItem('theme')`，并在页面初始化瞬间通过 inline script 注入 `html.dark` 类名，实现 0 闪烁（No FOUC）体验。
+
 ---
 
 ## 5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)
@@ -477,9 +544,10 @@ model ProjectVersion {
   - [x] 1.1.1 初始化 React 19 + TypeScript + Vite 8 工程，集成 Tailwind CSS 与原子 UI 组件库（Button, Input, Slider, Badge, Tooltip）
   - [x] 1.1.2 搭建暗黑科技感五栏工作台响应式布局（TopBar, LeftToolbox, CenterCanvas, RightInspector, BottomTimeline）
   - [x] 1.1.3 编写 `WorkbenchLayout.tsx` 沉浸式弹性视口容器
-- [x] **1.2 Dark / Light 科技双主题系统与 Semantic Tokens**
-  - [x] 1.2.1 配置 CSS 语义化颜色变量表（`tokens.css`）与 `next-themes` 主题切换器
-  - [x] 1.2.2 顶部栏集成 `☀️ Light / 🌙 Dark / 💻 System` 三态一键切换开关与本地持久化
+- [x] **1.2 Dark / Light 科技双主题系统与 Semantic Tokens 纯语义类重构**
+  - [x] 1.2.1 配置 CSS 语义化颜色变量表（`tokens.css`）与 `next-themes` 主题切换器，建立三层设计系统 Token 映射体系
+  - [x] 1.2.2 顶部栏集成 `☀️ Light / 🌙 Dark / 💻 System` 单键循环三态切换器与 localStorage 本地持久化
+  - [x] 1.2.3 全站五栏工作台、画布、侧边栏、时间轴、各弹窗与原子 UI 全量重构为纯语义类（`bg-background`, `bg-panel`, `bg-canvas`, `border-border`, `bg-primary` 等），彻底消除 `dark:` 前缀硬编码
 - [x] **1.3 强类型多语言国际化体系 (i18n)**
   - [x] 1.3.1 集成 `i18next` + `react-i18next`，按模块拆分中英双语词条模块（`common.ts`, `toolbar.ts`, `inspector.ts`, `timeline.ts`）
   - [x] 1.3.2 配置 `src/i18n.d.ts` 声明合并，实现 TS 编译期 100% 强类型 Key 智能联想补全
