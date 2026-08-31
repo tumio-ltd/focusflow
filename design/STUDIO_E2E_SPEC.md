@@ -1,11 +1,36 @@
 # 🧪 FocusFlow Studio · E2E 端到端测试用例矩阵与规范总览
 
-> **规范定义**：本项目所有 Playwright E2E 测试用例必须遵循 **“用例逻辑 100% 抽离为独立的 async helper 函数，并在 `it()` / `test()` 块中纯净调用”** 的全局原则。  
+| 元数据项 | 说明 |
+| :--- | :--- |
+| **文档版本** | `v1.0.0` |
+| **更新日期** | `2026-08-31` |
+| **适用范围** | FocusFlow Studio（Phase 2 · 模式 A: 纯前端离线自治演播系统） |
+| **测试框架** | Playwright v1.49.0 / Chromium (Headless) |
+| **维护团队** | FocusFlow QA & Core Architecture Working Group |
+
+> **核心规范原则**：本项目所有 Playwright E2E 测试用例必须严格遵循 **“用例逻辑 100% 抽离为独立的 async helper 函数，并在 `it()` / `test()` 块中纯净调用”** 的全局准则。  
 > **文档定位**：本文件为 FocusFlow Studio 全阶段端到端测试用例的唯一权威台账。后续新增任何测试用例均需同步在此追加并维护。
 
 ---
 
-## 📊 总体用例统计看板
+## 📑 目录导航
+
+- [1. 总体用例统计看板](#1-总体用例统计看板)
+- [2. 23 项全量测试用例详细台账 (Test Cases Inventory)](#2-23-项全量测试用例详细台账-test-cases-inventory)
+  - [2.1 Stage 1: 工作台布局、主题与基础交互](#21-stage-1-工作台布局主题与基础交互)
+  - [2.2 Stage 2: 资产解析、模板中心与本地持久化](#22-stage-2-资产解析模板中心与本地持久化)
+  - [2.3 Stage 3: 可视化取景与 4 大图元标定工具链](#23-stage-3-可视化取景与-4-大图元标定工具链)
+  - [2.4 Stage 4: 场景卡片流编排与不可变历史栈](#24-stage-4-场景卡片流编排与不可变历史栈)
+  - [2.5 Stage 5: 离线编译器、ZIP 归档与演播模式](#25-stage-5-离线编译器zip-归档与演播模式)
+- [3. 后续新增用例维护规范](#3-后续新增用例维护规范)
+- [4. 测试报告生成与多版本时间戳归档规范](#4-测试报告生成与多版本时间戳归档规范)
+  - [4.1 测试报告查看与格式](#41-测试报告查看与格式)
+  - [4.2 多版本时间戳归档机制 (Timestamped Archiving)](#42-多版本时间戳归档机制-timestamped-archiving)
+  - [4.3 Git 版本控制策略与工程规范](#43-git-版本控制策略与工程规范)
+
+---
+
+## 1. 总体用例统计看板
 
 | 阶段 / 模块 | 测试套件文件 | 用例数 | 状态 | 抽离函数规范 |
 | :--- | :--- | :---: | :---: | :---: |
@@ -18,9 +43,9 @@
 
 ---
 
-## 📑 23 项全量测试用例详细台账 (Test Cases Inventory)
+## 2. 23 项全量测试用例详细台账 (Test Cases Inventory)
 
-### 🎨 Stage 1: 工作台布局、主题与基础交互
+### 2.1 Stage 1: 工作台布局、主题与基础交互
 **测试套件文件**：[`apps/studio/e2e/workbench.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/workbench.spec.ts)
 
 | 用例 ID | 测试名称 | 对应独立异步函数 | 核心测试步骤与断言逻辑 | 状态 |
@@ -33,7 +58,7 @@
 
 ---
 
-### 🖼️ Stage 2: 资产解析、模板中心与本地持久化
+### 2.2 Stage 2: 资产解析、模板中心与本地持久化
 **测试套件文件**：[`apps/studio/e2e/stage2-ingestion-storage.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage2-ingestion-storage.spec.ts)
 
 | 用例 ID | 测试名称 | 对应独立异步函数 | 核心测试步骤与断言逻辑 | 状态 |
@@ -45,7 +70,7 @@
 
 ---
 
-### 🛠️ Stage 3: 可视化取景与 4 大图元标定工具链
+### 2.3 Stage 3: 可视化取景与 4 大图元标定工具链
 **测试套件文件**：[`apps/studio/e2e/stage3-visual-tools.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage3-visual-tools.spec.ts)
 
 | 用例 ID | 测试名称 | 对应独立异步函数 | 核心测试步骤与断言逻辑 | 状态 |
@@ -58,7 +83,7 @@
 
 ---
 
-### 🎬 Stage 4: 场景卡片流编排与不可变历史栈
+### 2.4 Stage 4: 场景卡片流编排与不可变历史栈
 **测试套件文件**：[`apps/studio/e2e/stage4-timeline-history.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage4-timeline-history.spec.ts)
 
 | 用例 ID | 测试名称 | 对应独立异步函数 | 核心测试步骤与断言逻辑 | 状态 |
@@ -71,7 +96,7 @@
 
 ---
 
-### 📦 Stage 5: 离线编译器、ZIP 归档与演播模式
+### 2.5 Stage 5: 离线编译器、ZIP 归档与演播模式
 **测试套件文件**：[`apps/studio/e2e/stage5-export-compiler.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-export-compiler.spec.ts)
 
 | 用例 ID | 测试名称 | 对应独立异步函数 | 核心测试步骤与断言逻辑 | 状态 |
@@ -83,7 +108,7 @@
 
 ---
 
-## 📈 后续新增用例维护规范
+## 3. 后续新增用例维护规范
 
 当后续开发阶段（如 Stage 6 数据库协同、Stage 7 BFF 认证、Stage 8 云端渲染等）引入新测试时，请遵循以下流程：
 1. 在 `apps/studio/e2e/` 对应的 `spec.ts` 文件中，编写语义明确的独立 `async function verifyXxx(...)`；
@@ -92,9 +117,9 @@
 
 ---
 
-## 🕒 测试报告生成与多版本时间戳归档规范
+## 4. 测试报告生成与多版本时间戳归档规范
 
-### 1. 测试报告查看与格式
+### 4.1 测试报告查看与格式
 Playwright 在每次执行后均会自动输出交互式 HTML 可视化报告与结构化 JSON 数据：
 - **HTML 报告入口**：`apps/studio/playwright-report/index.html`
 - **JSON 数据源**：`apps/studio/playwright-report/test-results.json`
@@ -103,7 +128,7 @@ Playwright 在每次执行后均会自动输出交互式 HTML 可视化报告与
   pnpm --filter @focusflow/studio test:e2e:report
   ```
 
-### 2. 多版本时间戳归档机制 (Timestamped Archiving)
+### 4.2 多版本时间戳归档机制 (Timestamped Archiving)
 为满足历史测试轨迹留存、版本发布追溯与审计需求，系统提供了自动打时间戳的报告归档工具：
 ```bash
 # 执行测试后，将当前报告完整复制并打上精确时间戳归档
@@ -112,7 +137,7 @@ pnpm --filter @focusflow/studio test:e2e:archive
 - **归档路径格式**：`apps/studio/playwright-reports/report-YYYY-MM-DDTHH-mm-ss-sssZ/`
 - **归档内容**：完整包含当前测试批次的 `index.html`、失败截图、Trace 链路与 JSON 汇总数据，互不覆盖，永久可查。
 
-### 3. Git 版本控制策略与工程规范
+### 4.3 Git 版本控制策略与工程规范
 - **禁止提交测试报告与结果文件**：`playwright-report/`、`playwright-reports/` 和 `test-results/` 属于测试运行时产生的瞬态中间产物（Ephemeral Artifacts），包含大量二进制快照与 Trace 追踪，频繁提交会导致 Git 仓库严重膨胀。
 - **已配置 `.gitignore` 规则**：
   ```gitignore
@@ -125,4 +150,3 @@ pnpm --filter @focusflow/studio test:e2e:archive
 
 ---
 *FocusFlow Quality & E2E Testing Working Group · 2026.08*
-
