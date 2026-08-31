@@ -6,13 +6,15 @@ export class FocusFlowPlayer {
   viewportWidth: number;
   viewportHeight: number;
   constructor(options: PlayerOptions);
-  init(): Promise<void>;
-  goToScene(index: number): void;
+  init(): void;
+  goToStep(index: number, animate?: boolean): void;
+  goToScene(index: number, animate?: boolean): void;
   next(): void;
   prev(): void;
   play(): void;
   pause(): void;
   togglePlay(): void;
+  toggleDebugMode(forceState?: boolean): void;
   destroy(): void;
   getCurrentScene(): SceneStep | null;
   getCurrentIndex(): number;

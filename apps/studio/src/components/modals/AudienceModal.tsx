@@ -62,10 +62,10 @@ export function AudienceModal({
         onClose();
       } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
         e.preventDefault();
-        player.next();
+        playerRef.current?.next();
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
         e.preventDefault();
-        player.prev();
+        playerRef.current?.prev();
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       }

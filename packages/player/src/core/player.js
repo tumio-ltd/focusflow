@@ -422,8 +422,20 @@ export class FocusFlowPlayer {
     this.stateMachine.goTo(index, animate);
   }
 
-  next() {
-    this.stateMachine.next();
+  goToScene(index, animate = true) {
+    this.goToStep(index, animate);
+  }
+
+  getCurrentScene() {
+    return this.stateMachine.currentScene;
+  }
+
+  getCurrentIndex() {
+    return this.stateMachine.currentIndex;
+  }
+
+  getSceneCount() {
+    return this.stateMachine.totalScenes;
   }
 
   prev() {
