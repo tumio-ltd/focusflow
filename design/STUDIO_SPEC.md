@@ -474,13 +474,13 @@ FocusFlow Studio 作为高频、长时间驻留的可视化架构创作工作台
        └──────────────┘
 ```
 
-| 规格类型 | 容器尺寸 | 内边距 (Padding) | 文本排版 | 图标尺寸 | 圆角半径 | 应用区域与场景 |
+| 规格类型 | 容器尺寸 | 内边距 (Padding) | 表面微面层与边框 (Scheme A Surface) | 文本排版 | 图标尺寸 | 应用区域与场景 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`Button: sm`** | `h-8 (32px)` | `px-3 (12px)` | `text-xs (12px) font-medium` | `14px (w-3.5 h-3.5)` | `rounded-lg (8px)` | TopBar 导航动作栏、模态弹窗底部取消/确定栏、检查器一键捕获按键 |
-| **`Button: md`** | `h-9 (36px)` | `px-3.5 (14px)` | `text-xs (12px) font-medium` | `16px (w-4 h-4)` | `rounded-lg (8px)` | 首页重要引导按键、高级表单主确认按键 |
-| **`Button: lg`** | `h-10 (40px)` | `px-4 (16px)` | `text-sm (14px) font-semibold` | `18px (w-4.5 h-4.5)` | `rounded-lg (8px)` | 顶级 CTA (Call to Action) 按键 |
-| **`Button: icon`** | `h-8 w-8 (32px×32px)` | `p-0` | - | `16px (w-4 h-4)` | `rounded-lg (8px)` | 撤销/重做、主题三态切换、时间轴播放/暂停/翻页、关闭弹窗 (X) |
-| **`Toolbox Item`** | `w-10 h-10 (40px×40px)` | `p-0` | - | `20px (w-5 h-5)` | `rounded-xl (12px)` | 左侧 5 大标定工具 (Select/Box/Path/Dot/Callout) 及底部 AI 助手 |
+| **`Button: sm` (outline)** | `h-8 (32px)` | `px-3 (12px)` | `bg-muted/30 border border-border/40 hover:bg-muted/70 hover:border-primary/40` | `text-xs (12px) font-medium` | `14px (w-3.5 h-3.5)` | TopBar 导航动作栏 (模板/工程/底图/演播)、模态弹窗取消按键 |
+| **`Button: sm` (secondary)** | `h-8 (32px)` | `px-3 (12px)` | `bg-muted/40 border border-border/40 hover:bg-muted/80` | `text-xs (12px) font-medium` | `14px (w-3.5 h-3.5)` | 保存草稿按键、常规辅助次级确认按键 |
+| **`Button: sm` (cyan CTA)** | `h-8 (32px)` | `px-3 (12px)` | `bg-primary border border-primary/40 text-primary-foreground shadow-md shadow-primary/20` | `text-xs (12px) font-semibold` | `14px (w-3.5 h-3.5)` | 导出独立 HTML、弹窗核心主确认按键 |
+| **`Button: icon`** | `h-8 w-8 (32px×32px)` | `p-0` | `bg-transparent border border-transparent hover:bg-muted/60` | - | `16px (w-4 h-4)` | 撤销/重做、主题三态切换、时间轴播放/暂停/翻页、关闭弹窗 (X) |
+| **`Toolbox Item`** | `w-10 h-10 (40px×40px)` | `p-0` | Active: `bg-primary border-primary/30 ring-1 ring-primary/40` / Inactive: `hover:bg-muted/60` | - | `20px (w-5 h-5)` | 左侧 5 大标定工具 (Select/Box/Path/Dot/Callout) 及底部 AI 助手 |
 
 ---
 
