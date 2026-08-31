@@ -45,16 +45,16 @@ export function InfiniteCanvas({
     <div
       ref={containerRef}
       data-testid="infinite-canvas-container"
-      className={`relative w-full h-full overflow-hidden select-none bg-slate-200 dark:bg-slate-950 touch-none transition-colors duration-200 ${
+      className={`relative w-full h-full overflow-hidden select-none bg-canvas touch-none transition-colors duration-200 ${
         isPanning || isSpacePressed ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
       } ${className}`}
       {...pointerHandlers}
     >
       {/* 1. 科技点阵背景网格 (Grid Matrix) */}
       <div 
-        className="absolute inset-0 pointer-events-none opacity-30 dark:opacity-20"
+        className="absolute inset-0 pointer-events-none opacity-25"
         style={{
-          backgroundImage: 'radial-gradient(#38bdf8 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
           backgroundPosition: `${transform.x % 24}px ${transform.y % 24}px`,
         }}
@@ -74,20 +74,20 @@ export function InfiniteCanvas({
 
       {/* 3. 左下角抓手模式提示指示器 */}
       {isSpacePressed && (
-        <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-white/90 dark:bg-slate-900/90 border border-cyan-500/40 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs text-cyan-600 dark:text-cyan-300 shadow-xl pointer-events-none animate-in fade-in duration-100">
+        <div className="absolute bottom-6 left-6 flex items-center gap-2 bg-panel/90 border border-primary/40 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs text-primary shadow-xl pointer-events-none animate-in fade-in duration-100">
           <Hand className="w-3.5 h-3.5 animate-pulse" />
           <span>抓手平移模式 (拖拽移动画布)</span>
         </div>
       )}
 
       {/* 4. 右下角快捷缩放与视口控制浮动胶囊 */}
-      <div className="absolute bottom-6 right-6 flex items-center gap-1 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 backdrop-blur-md p-1 rounded-xl shadow-xl z-30">
+      <div className="absolute bottom-6 right-6 flex items-center gap-1 bg-panel/90 border border-border backdrop-blur-md p-1 rounded-xl shadow-xl z-30">
         <Tooltip content="缩小" shortcut="⌘ -">
           <Button
             size="icon"
             variant="ghost"
             onClick={() => zoomTo(transform.scale * 0.8)}
-            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </Button>
@@ -95,7 +95,7 @@ export function InfiniteCanvas({
 
         <span 
           onClick={resetZoom100}
-          className="text-[11px] font-mono text-cyan-600 dark:text-cyan-400 font-semibold px-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 rounded py-1 transition"
+          className="text-[11px] font-mono text-primary font-semibold px-2 cursor-pointer hover:bg-muted rounded py-1 transition"
           title="点击重置为 100%"
         >
           {zoomPercent}%
@@ -106,20 +106,20 @@ export function InfiniteCanvas({
             size="icon"
             variant="ghost"
             onClick={() => zoomTo(transform.scale * 1.25)}
-            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </Button>
         </Tooltip>
 
-        <div className="h-3.5 w-px bg-slate-200 dark:bg-slate-800 mx-0.5" />
+        <div className="h-3.5 w-px bg-border mx-0.5" />
 
         <Tooltip content="自适应视口居中" shortcut="⇧ 1">
           <Button
             size="icon"
             variant="ghost"
             onClick={() => fitToScreen()}
-            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
+            className="h-7 w-7 text-muted-foreground hover:text-primary"
           >
             <Maximize2 className="w-3.5 h-3.5" />
           </Button>
@@ -130,7 +130,7 @@ export function InfiniteCanvas({
             size="icon"
             variant="ghost"
             onClick={resetZoom100}
-            className="h-7 w-7 text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
+            className="h-7 w-7 text-muted-foreground hover:text-primary"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </Button>

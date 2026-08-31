@@ -8,6 +8,8 @@
   :root {
     --background: var(--ff-bg-app);
     --foreground: var(--ff-text-primary);
+    --panel: var(--ff-bg-panel);
+    --canvas: var(--ff-bg-canvas);
     --card: var(--ff-bg-card);
     --card-foreground: var(--ff-text-primary);
     --popover: var(--ff-bg-panel);
@@ -18,11 +20,13 @@
     --secondary-foreground: var(--ff-text-primary);
     --muted: var(--ff-bg-hover);
     --muted-foreground: var(--ff-text-secondary);
-    --accent: var(--ff-bg-hover);
+    --accent: var(--ff-accent);
+    --accent-hover: var(--ff-accent-hover);
     --accent-foreground: var(--ff-text-primary);
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
     --border: var(--ff-border);
+    --border-subtle: var(--ff-border-subtle);
     --input: var(--ff-border);
     --ring: var(--ff-accent);
     --radius: 0.5rem;
@@ -31,6 +35,8 @@
   .dark {
     --background: var(--ff-bg-app);
     --foreground: var(--ff-text-primary);
+    --panel: var(--ff-bg-panel);
+    --canvas: var(--ff-bg-canvas);
     --card: var(--ff-bg-card);
     --card-foreground: var(--ff-text-primary);
     --popover: var(--ff-bg-panel);
@@ -41,11 +47,13 @@
     --secondary-foreground: var(--ff-text-primary);
     --muted: var(--ff-bg-hover);
     --muted-foreground: var(--ff-text-secondary);
-    --accent: var(--ff-bg-hover);
+    --accent: var(--ff-accent);
+    --accent-hover: var(--ff-accent-hover);
     --accent-foreground: var(--ff-text-primary);
     --destructive: #7f1d1d;
     --destructive-foreground: #f8fafc;
     --border: var(--ff-border);
+    --border-subtle: var(--ff-border-subtle);
     --input: var(--ff-border);
     --ring: var(--ff-accent);
   }
@@ -55,8 +63,8 @@ body {
   margin: 0;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--ff-bg-app);
-  color: var(--ff-text-primary);
+  background-color: var(--background);
+  color: var(--foreground);
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 

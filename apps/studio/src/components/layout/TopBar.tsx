@@ -91,21 +91,21 @@ export function TopBar({
   };
 
   return (
-    <header className="h-13 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-4 flex items-center justify-between select-none z-30 shrink-0 transition-colors duration-200">
+    <header className="h-13 border-b border-border bg-panel/90 backdrop-blur-md px-4 flex items-center justify-between select-none z-30 shrink-0 transition-colors duration-200">
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3.5">
-        <div className="flex items-center gap-2 font-bold tracking-wide text-cyan-500 dark:text-cyan-400">
-          <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-sm shadow-cyan-500/20">
+        <div className="flex items-center gap-2 font-bold tracking-wide text-primary">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
             <Sparkles className="w-4 h-4" />
           </div>
-          <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-cyan-600 to-sky-500 dark:from-cyan-400 dark:to-sky-200 bg-clip-text text-transparent">
+          <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-primary to-accent-hover bg-clip-text text-transparent">
             {t('appName')}
           </span>
         </div>
 
         <Badge variant="cyan">{t('modeOffline')}</Badge>
 
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+        <div className="h-4 w-px bg-border mx-1" />
 
         {/* 项目标题内联编辑 */}
         {isEditingTitle ? (
@@ -117,30 +117,30 @@ export function TopBar({
               onBlur={handleTitleSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
               autoFocus
-              className="bg-slate-100 dark:bg-slate-800 border border-cyan-500/60 rounded px-2 py-0.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
+              className="bg-background border border-primary rounded px-2 py-0.5 text-xs text-foreground focus:outline-none"
             />
             <Button size="sm" variant="ghost" onClick={handleTitleSubmit} className="h-6 w-6 p-0">
-              <Check className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <Check className="w-3.5 h-3.5 text-primary" />
             </Button>
           </div>
         ) : (
           <div
             onClick={() => setIsEditingTitle(true)}
-            className="group flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800/60 cursor-pointer transition"
+            className="group flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer transition"
             title={t('editTitleTip')}
           >
-            <span className="text-xs font-medium text-slate-800 dark:text-slate-200">{currentTitle}</span>
-            <Edit3 className="w-3 h-3 text-slate-400 dark:text-slate-500 group-hover:text-cyan-500 dark:group-hover:text-cyan-400 transition" />
+            <span className="text-xs font-medium text-foreground">{currentTitle}</span>
+            <Edit3 className="w-3 h-3 text-muted-foreground group-hover:text-primary transition" />
           </div>
         )}
 
-        <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+        <span className="text-[11px] text-muted-foreground font-mono">
           {isSaved ? `• ${t('saved')}` : `• ${t('dirty')}`}
         </span>
       </div>
 
       {/* 2. 中间：撤销 / 重做 */}
-      <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950/60 p-1 rounded-lg border border-slate-200 dark:border-slate-800/80">
+      <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border">
         <Tooltip content={t('undo')} shortcut="⌘Z">
           <Button
             size="icon"
@@ -148,7 +148,7 @@ export function TopBar({
             data-testid="undo-btn"
             disabled={!canUndo}
             onClick={onUndo}
-            className="h-7 w-7 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
           >
             <Undo2 className="w-3.5 h-3.5" />
           </Button>
@@ -161,7 +161,7 @@ export function TopBar({
             data-testid="redo-btn"
             disabled={!canRedo}
             onClick={onRedo}
-            className="h-7 w-7 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
           >
             <Redo2 className="w-3.5 h-3.5" />
           </Button>
@@ -177,9 +177,9 @@ export function TopBar({
             variant="outline"
             data-testid="locale-picker"
             onClick={toggleLanguage}
-            className="h-8 text-xs gap-1.5 font-mono text-slate-700 dark:text-slate-300"
+            className="h-8 text-xs gap-1.5 font-mono text-foreground"
           >
-            <Languages className="w-3.5 h-3.5 text-slate-400" />
+            <Languages className="w-3.5 h-3.5 text-muted-foreground" />
             <span>{currentLang.toUpperCase()}</span>
           </Button>
         </Tooltip>
@@ -191,19 +191,19 @@ export function TopBar({
             variant="outline"
             data-testid="theme-toggle"
             onClick={cycleTheme}
-            className="h-8 w-8 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+            className="h-8 w-8 text-foreground hover:text-primary"
           >
             {theme === 'light' ? (
               <Sun className="w-3.5 h-3.5 text-amber-500" />
             ) : theme === 'system' ? (
               <Laptop className="w-3.5 h-3.5 text-sky-500" />
             ) : (
-              <Moon className="w-3.5 h-3.5 text-cyan-400" />
+              <Moon className="w-3.5 h-3.5 text-primary" />
             )}
           </Button>
         </Tooltip>
 
-        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+        <div className="h-4 w-px bg-border mx-1" />
 
         {/* 模板中心 */}
         <Button
@@ -211,9 +211,9 @@ export function TopBar({
           variant="outline"
           data-testid="open-templates-btn"
           onClick={onOpenTemplates}
-          className="gap-1.5 h-8 border-cyan-500/40 text-cyan-600 dark:text-cyan-300 hover:text-cyan-700 dark:hover:text-white hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
+          className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
         >
-          <LayoutTemplate className="w-3.5 h-3.5 text-cyan-500 dark:text-cyan-400" />
+          <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
           <span>{t('templatesCenter')}</span>
         </Button>
 
@@ -223,9 +223,9 @@ export function TopBar({
           variant="outline"
           data-testid="open-projects-btn"
           onClick={onOpenProjects}
-          className="gap-1.5 h-8 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="gap-1.5 h-8 border-border text-foreground hover:bg-muted"
         >
-          <FolderGit2 className="w-3.5 h-3.5 text-slate-400" />
+          <FolderGit2 className="w-3.5 h-3.5 text-muted-foreground" />
           <span>{t('projectsList')}</span>
         </Button>
 
@@ -235,7 +235,7 @@ export function TopBar({
           variant="outline"
           data-testid="open-import-btn"
           onClick={onOpenImport}
-          className="gap-1.5 h-8 border-cyan-500/40 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
+          className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
         >
           <UploadCloud className="w-3.5 h-3.5" />
           <span>{t('importAsset')}</span>
@@ -247,7 +247,7 @@ export function TopBar({
           variant="outline"
           data-testid="audience-btn"
           onClick={onOpenAudience}
-          className="gap-1.5 h-8 border-cyan-500/50 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/40"
+          className="gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10"
           title="受众全屏演播试播"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
@@ -256,7 +256,7 @@ export function TopBar({
 
         {/* 保存草稿 */}
         <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">
-          <Save className="w-3.5 h-3.5 text-slate-400" />
+          <Save className="w-3.5 h-3.5 text-muted-foreground" />
           <span>{t('saveDraft')}</span>
         </Button>
 

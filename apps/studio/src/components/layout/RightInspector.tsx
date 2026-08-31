@@ -68,25 +68,25 @@ export function RightInspector({
   const getElementIcon = (type: 'box' | 'path' | 'dot' | 'callout') => {
     switch (type) {
       case 'box':
-        return <Square className="w-3 h-3 text-cyan-500 dark:text-cyan-400" />;
+        return <Square className="w-3 h-3 text-primary" />;
       case 'path':
-        return <GitCommit className="w-3 h-3 text-sky-500 dark:text-sky-400" />;
+        return <GitCommit className="w-3 h-3 text-accent" />;
       case 'dot':
-        return <CircleDot className="w-3 h-3 text-purple-500 dark:text-purple-400" />;
+        return <CircleDot className="w-3 h-3 text-purple-500" />;
       case 'callout':
-        return <MessageSquare className="w-3 h-3 text-amber-500 dark:text-amber-400" />;
+        return <MessageSquare className="w-3 h-3 text-amber-500" />;
     }
   };
 
   return (
     <aside
       data-testid="inspector"
-      className="w-72 border-l border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto transition-colors duration-200"
+      className="w-72 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto transition-colors duration-200"
     >
       {/* 顶部标题 */}
-      <div className="h-11 px-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+      <div className="h-11 px-4 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground uppercase tracking-wider">
         <div className="flex items-center gap-2">
-          <Sliders className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+          <Sliders className="w-3.5 h-3.5 text-primary" />
           <span>{t('inspectorTitle')}</span>
         </div>
       </div>
@@ -96,10 +96,10 @@ export function RightInspector({
         <div className="space-y-3">
           <div
             onClick={() => setIsCameraOpen(!isCameraOpen)}
-            className="flex items-center justify-between font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-slate-900 dark:hover:text-white transition"
+            className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
           >
             <div className="flex items-center gap-2">
-              <Camera className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <Camera className="w-3.5 h-3.5 text-primary" />
               <span>{t('sceneCamera')}</span>
             </div>
             {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -108,7 +108,7 @@ export function RightInspector({
           {isCameraOpen && (
             <div className="space-y-3 pl-1 pt-1 animate-in fade-in duration-100">
               <div>
-                <label className="text-slate-600 dark:text-slate-400 block mb-1 text-[11px] font-medium">{t('sceneTitle')}</label>
+                <label className="text-muted-foreground block mb-1 text-[11px] font-medium">{t('sceneTitle')}</label>
                 <Input
                   value={sceneTitle}
                   onChange={(e) => onSceneTitleChange?.(e.target.value)}
@@ -121,9 +121,9 @@ export function RightInspector({
                 variant="outline"
                 data-testid="capture-camera-btn"
                 onClick={onCaptureCurrentCamera}
-                className="w-full gap-2 text-xs border-cyan-500/40 text-cyan-600 dark:text-cyan-300 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 font-medium py-1.5 h-auto"
+                className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-1.5 h-auto"
               >
-                <Crosshair className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                <Crosshair className="w-3.5 h-3.5 text-primary" />
                 <span>{t('captureCurrentView')}</span>
               </Button>
 
@@ -147,12 +147,12 @@ export function RightInspector({
                 onChange={(e) => onCameraDurationChange?.(parseFloat(e.target.value))}
               />
 
-              <div className="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400 pt-1">
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
                 <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+                  <Clock className="w-3 h-3 text-primary" />
                   <span>{t('cameraEasing')}</span>
                 </span>
-                <span className="font-mono text-cyan-600 dark:text-cyan-300 bg-slate-100 dark:bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700/50">
+                <span className="font-mono text-primary bg-muted px-1.5 py-0.5 rounded border border-border">
                   Cubic-Bezier(0.4, 0, 0.2, 1)
                 </span>
               </div>
@@ -160,16 +160,16 @@ export function RightInspector({
           )}
         </div>
 
-        <div className="h-px bg-slate-200 dark:bg-slate-800/80" />
+        <div className="h-px bg-border" />
 
         {/* 2. 当前场景图元图层列表 */}
         <div className="space-y-3">
           <div
             onClick={() => setIsLayersOpen(!isLayersOpen)}
-            className="flex items-center justify-between font-semibold text-slate-700 dark:text-slate-300 cursor-pointer hover:text-slate-900 dark:hover:text-white transition"
+            className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
           >
             <div className="flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <Layers className="w-3.5 h-3.5 text-primary" />
               <span>{t('sceneElements')} ({elements.length})</span>
             </div>
             {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -180,13 +180,13 @@ export function RightInspector({
               {/* 搜索与一键继承栏 */}
               <div className="flex items-center gap-1.5">
                 <div className="relative flex-1">
-                  <Search className="w-3 h-3 text-slate-400 absolute left-2 top-2" />
+                  <Search className="w-3 h-3 text-muted-foreground absolute left-2 top-2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="过滤图元..."
-                    className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg pl-7 pr-2 py-1 text-[11px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-cyan-500/60"
+                    className="w-full bg-background border border-border rounded-lg pl-7 pr-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary"
                   />
                 </div>
 
@@ -196,7 +196,7 @@ export function RightInspector({
                     variant="outline"
                     data-testid="inherit-scene-btn"
                     onClick={onInheritPreviousScene}
-                    className="gap-1 text-[11px] h-7 px-2 border-slate-300 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-300"
+                    className="gap-1 text-[11px] h-7 px-2 border-border hover:border-primary text-foreground hover:text-primary"
                     title="从上一幕继承图元激活状态"
                   >
                     <CopyCheck className="w-3 h-3" />
@@ -211,17 +211,17 @@ export function RightInspector({
                     key={el.id}
                     className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] transition ${
                       el.active
-                        ? 'bg-slate-100 dark:bg-slate-800/70 border-slate-300 dark:border-slate-700/80 text-slate-800 dark:text-slate-200 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800/50 text-slate-400 dark:text-slate-500 opacity-60'
+                        ? 'bg-muted/80 border-border text-foreground shadow-sm'
+                        : 'bg-background/40 border-border/50 text-muted-foreground opacity-60'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate flex-1 min-w-0">
                       <button
                         onClick={() => onToggleElement?.(el.id)}
-                        className="text-slate-400 hover:text-cyan-500 dark:hover:text-cyan-300 transition shrink-0"
+                        className="text-muted-foreground hover:text-primary transition shrink-0"
                         title={el.active ? t('hideElementTip') : t('showElementTip')}
                       >
-                        {el.active ? <Eye className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        {el.active ? <Eye className="w-3.5 h-3.5 text-primary" /> : <EyeOff className="w-3.5 h-3.5" />}
                       </button>
                       <span className="shrink-0">{getElementIcon(el.type)}</span>
                       <span className="truncate">{el.name}</span>
@@ -232,7 +232,7 @@ export function RightInspector({
                         size="icon"
                         variant="ghost"
                         onClick={() => onDeleteElement?.(el.id)}
-                        className="h-5 w-5 text-slate-400 hover:text-rose-500 dark:hover:text-rose-400"
+                        className="h-5 w-5 text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -244,12 +244,12 @@ export function RightInspector({
           )}
         </div>
 
-        <div className="h-px bg-slate-200 dark:bg-slate-800/80" />
+        <div className="h-px bg-border" />
 
         {/* 3. 视觉主题色调预设 */}
         <div className="space-y-2">
-          <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <Palette className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+          <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+            <Palette className="w-3.5 h-3.5 text-primary" />
             <span>{t('palette')}</span>
           </span>
           <div className="flex items-center gap-2 pt-1">

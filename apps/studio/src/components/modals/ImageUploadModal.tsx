@@ -97,35 +97,35 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-150">
       <div 
         data-testid="image-upload-modal"
-        className="relative w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-slate-900 dark:text-slate-100 transition-colors duration-200"
+        className="relative w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col text-card-foreground transition-colors duration-200"
       >
         {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
               <UploadCloud className="w-4 h-4" />
             </div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('modalTitle')}</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('modalTitle')}</h3>
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="text-muted-foreground hover:text-foreground transition p-1 rounded-lg hover:bg-muted"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab 选项切换 */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 bg-slate-50 dark:bg-slate-950/40">
+        <div className="flex border-b border-border px-6 bg-muted/40">
           <button
             onClick={() => { setActiveTab('file'); setError(null); }}
             className={`py-2.5 px-4 text-xs font-medium border-b-2 transition flex items-center gap-2 ${
               activeTab === 'file'
-                ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400 font-semibold'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <ImageIcon className="w-3.5 h-3.5" />
@@ -135,8 +135,8 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
             onClick={() => { setActiveTab('url'); setError(null); }}
             className={`py-2.5 px-4 text-xs font-medium border-b-2 transition flex items-center gap-2 ${
               activeTab === 'url'
-                ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400 font-semibold'
-                : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             <Link2 className="w-3.5 h-3.5" />
@@ -154,8 +154,8 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
               onClick={() => fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition ${
                 isDragging
-                  ? 'border-cyan-500 bg-cyan-50 dark:bg-cyan-950/30 shadow-lg shadow-cyan-500/20'
-                  : 'border-slate-300 dark:border-slate-700 hover:border-cyan-500/60 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800/40'
+                  ? 'border-primary bg-primary/10 shadow-lg'
+                  : 'border-border hover:border-primary/60 bg-muted/30 hover:bg-muted/50'
               }`}
             >
               <input
@@ -165,11 +165,11 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
                 onChange={handleFileInputChange}
                 className="hidden"
               />
-              <div className="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-600 dark:text-cyan-400 mb-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3">
                 <UploadCloud className="w-6 h-6 animate-pulse" />
               </div>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{t('dragDropTitle')}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('dragDropSubtitle')}</p>
+              <p className="text-sm font-medium text-foreground">{t('dragDropTitle')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('dragDropSubtitle')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -184,7 +184,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
                   {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '解析'}
                 </Button>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-muted-foreground">
                 可直接输入 AWS S3、OSS 或公开云存储中的高分辨率架构图链接
               </p>
             </div>
@@ -192,7 +192,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
 
           {/* 加载中状态 */}
           {loading && (
-            <div className="flex items-center justify-center gap-2 py-4 text-xs text-cyan-600 dark:text-cyan-400 font-medium">
+            <div className="flex items-center justify-center gap-2 py-4 text-xs text-primary font-medium">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>{t('parsing')}</span>
             </div>
@@ -200,7 +200,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
 
           {/* 错误提示 */}
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/80 text-rose-600 dark:text-rose-300 text-xs">
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -208,19 +208,19 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
 
           {/* 解析成功预览卡片 */}
           {parsedMeta && (
-            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-cyan-500/40 flex items-center gap-4 animate-in fade-in duration-200">
-              <div className="w-16 h-12 rounded-lg bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+            <div className="p-3.5 rounded-xl bg-card border border-primary/40 flex items-center gap-4 animate-in fade-in duration-200">
+              <div className="w-16 h-12 rounded-lg bg-muted border border-border overflow-hidden flex items-center justify-center shrink-0">
                 <img src={parsedMeta.url} alt="preview" className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{parsedMeta.fileName}</span>
+                  <span className="text-xs font-semibold text-foreground truncate">{parsedMeta.fileName}</span>
                   <Badge variant="cyan">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
                     {t('importSuccess')}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-1 font-mono">
                   <span>{parsedMeta.width} × {parsedMeta.height} px</span>
                   {parsedMeta.fileSize > 0 && <span>• {formatBytes(parsedMeta.fileSize)}</span>}
                 </div>
@@ -230,7 +230,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
         </div>
 
         {/* 底部按钮栏 */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-muted/40">
           <Button variant="ghost" size="sm" onClick={onClose}>
             {t('cancel')}
           </Button>

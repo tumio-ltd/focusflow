@@ -123,16 +123,16 @@ async function verifyToolSelectionBehavior(page: Page): Promise<void> {
 
   // 点击矩形高亮选框工具 (第 2 个)
   await buttons.nth(1).click();
-  await expect(buttons.nth(1)).toHaveClass(/bg-cyan-500/);
+  await expect(buttons.nth(1)).toHaveClass(/bg-primary/);
 
   // 点击贝塞尔连线工具 (第 3 个)
   await buttons.nth(2).click();
-  await expect(buttons.nth(2)).toHaveClass(/bg-cyan-500/);
-  await expect(buttons.nth(1)).not.toHaveClass(/bg-cyan-500/);
+  await expect(buttons.nth(2)).toHaveClass(/bg-primary/);
+  await expect(buttons.nth(1)).not.toHaveClass(/bg-primary/);
 
   // 恢复选择抓手工具 (第 1 个)
   await buttons.nth(0).click();
-  await expect(buttons.nth(0)).toHaveClass(/bg-cyan-500/);
+  await expect(buttons.nth(0)).toHaveClass(/bg-primary/);
 }
 
 /**
@@ -147,7 +147,7 @@ async function verifySceneTimelineNavigation(page: Page): Promise<void> {
 
   // 切换到第 2 个场景
   await sceneCards.nth(1).click();
-  await expect(sceneCards.nth(1)).toHaveClass(/border-cyan-500/);
+  await expect(sceneCards.nth(1)).toHaveClass(/border-primary/);
 
   // 点击添加新场景
   const addSceneBtn = timeline.getByRole('button', { name: /添加新场景|Add Scene/ });

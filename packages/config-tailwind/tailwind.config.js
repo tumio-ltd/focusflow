@@ -11,6 +11,14 @@ export default {
           DEFAULT: 'var(--card)',
           foreground: 'var(--card-foreground)',
         },
+        panel: {
+          DEFAULT: 'var(--panel)',
+          foreground: 'var(--foreground)',
+          border: 'var(--border)',
+        },
+        canvas: {
+          DEFAULT: 'var(--canvas)',
+        },
         popover: {
           DEFAULT: 'var(--popover)',
           foreground: 'var(--popover-foreground)',
@@ -29,13 +37,17 @@ export default {
         },
         accent: {
           DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
           foreground: 'var(--accent-foreground)',
         },
         destructive: {
           DEFAULT: 'var(--destructive)',
           foreground: 'var(--destructive-foreground)',
         },
-        border: 'var(--border)',
+        border: {
+          DEFAULT: 'var(--border)',
+          subtle: 'var(--border-subtle)',
+        },
         input: 'var(--input)',
         ring: 'var(--ring)',
       },
