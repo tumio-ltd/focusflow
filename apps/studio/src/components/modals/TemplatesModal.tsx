@@ -73,7 +73,7 @@ export function TemplatesModal({
         </div>
 
         {/* 分类 Tag 与搜索栏 */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-6 py-3.5 border-b border-border bg-muted/40">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-6 py-3.5 border-b border-border/60 bg-muted/20">
           {/* 分类过滤器 */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
             {categories.map((cat) => (
@@ -82,8 +82,8 @@ export function TemplatesModal({
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition shrink-0 ${
                   selectedCategory === cat.id
-                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-primary/15 text-primary border border-primary/30 font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-transparent'
                 }`}
               >
                 {cat.label}
@@ -99,7 +99,7 @@ export function TemplatesModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              className="w-full bg-background/50 border border-border/40 rounded-lg pl-9 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
             />
           </div>
         </div>

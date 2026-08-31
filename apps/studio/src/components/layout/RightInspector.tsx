@@ -84,7 +84,7 @@ export function RightInspector({
       className="w-80 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto transition-colors duration-200"
     >
       {/* 顶部标题 */}
-      <div className="h-12 px-4 border-b border-border flex items-center justify-between text-sm font-semibold text-foreground tracking-wide">
+      <div className="h-14 px-4 border-b border-border flex items-center justify-between text-sm font-semibold text-foreground tracking-wide">
         <div className="flex items-center gap-2">
           <Sliders className="w-4 h-4 text-primary" />
           <span>{t('inspectorTitle')}</span>
@@ -121,7 +121,7 @@ export function RightInspector({
                 variant="outline"
                 data-testid="capture-camera-btn"
                 onClick={onCaptureCurrentCamera}
-                className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-2 h-auto"
+                className="w-full gap-2 text-xs bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 hover:border-primary/40 font-medium py-2 h-auto shadow-sm"
               >
                 <Crosshair className="w-4 h-4 text-primary" />
                 <span>{t('captureCurrentView')}</span>
@@ -152,7 +152,7 @@ export function RightInspector({
                   <Clock className="w-3.5 h-3.5 text-primary" />
                   <span>{t('cameraEasing')}</span>
                 </span>
-                <span className="font-mono text-primary bg-muted px-2 py-0.5 rounded border border-border font-semibold text-xs">
+                <span className="font-mono text-primary bg-muted/60 px-2 py-0.5 rounded-md border border-border/40 font-semibold text-xs">
                   Cubic-Bezier(0.4, 0, 0.2, 1)
                 </span>
               </div>
@@ -160,7 +160,7 @@ export function RightInspector({
           )}
         </div>
 
-        <div className="h-px bg-border" />
+        <div className="h-px bg-border/60" />
 
         {/* 2. 当前场景图元图层列表 */}
         <div className="space-y-3">
@@ -186,7 +186,7 @@ export function RightInspector({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="过滤图元..."
-                    className="w-full bg-background border border-border rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                    className="w-full bg-background/50 border border-border/40 rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
                   />
                 </div>
 
@@ -196,7 +196,7 @@ export function RightInspector({
                     variant="outline"
                     data-testid="inherit-scene-btn"
                     onClick={onInheritPreviousScene}
-                    className="gap-1 text-xs h-8 px-2.5 border-border hover:border-primary text-foreground hover:text-primary"
+                    className="gap-1 text-xs h-8 px-2.5"
                     title="从上一幕继承图元激活状态"
                   >
                     <CopyCheck className="w-3.5 h-3.5" />
@@ -211,8 +211,8 @@ export function RightInspector({
                     key={el.id}
                     className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs transition ${
                       el.active
-                        ? 'bg-muted/80 border-border text-foreground shadow-sm font-medium'
-                        : 'bg-background/40 border-border/50 text-muted-foreground opacity-60'
+                        ? 'bg-muted/60 border-border/50 text-foreground shadow-sm font-medium'
+                        : 'bg-background/20 border-border/30 text-muted-foreground opacity-60 hover:opacity-100 hover:border-border/50'
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate flex-1 min-w-0">
@@ -244,7 +244,7 @@ export function RightInspector({
           )}
         </div>
 
-        <div className="h-px bg-border" />
+        <div className="h-px bg-border/60" />
 
         {/* 3. 视觉主题色调预设 */}
         <div className="space-y-2.5">

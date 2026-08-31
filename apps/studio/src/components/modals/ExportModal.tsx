@@ -95,7 +95,7 @@ export function ExportModal({
         </div>
 
         {/* 选项卡导航 */}
-        <div className="px-6 pt-4 flex gap-2 border-b border-border bg-muted/40">
+        <div className="px-6 pt-4 flex gap-2 border-b border-border/60 bg-muted/20">
           <button
             onClick={() => setActiveTab('html')}
             data-testid="tab-html"
@@ -140,7 +140,7 @@ export function ExportModal({
         <div className="p-6 space-y-4.5 text-sm">
           {activeTab === 'html' && (
             <div className="space-y-4 animate-in fade-in duration-100">
-              <div className="bg-muted/30 border border-border rounded-xl p-4.5 space-y-3">
+              <div className="bg-muted/30 border border-border/40 rounded-xl p-4.5 space-y-3">
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
@@ -151,7 +151,7 @@ export function ExportModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5 pt-2.5 border-t border-border text-xs text-muted-foreground">
+                <div className="grid grid-cols-2 gap-2.5 pt-2.5 border-t border-border/40 text-xs text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <Laptop className="w-4 h-4 text-primary" />
                     <span>跨平台双击即看</span>

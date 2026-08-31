@@ -123,7 +123,7 @@ export function ProjectManagerModal({
         </div>
 
         {/* 搜索与新建控制栏 */}
-        <div className="flex items-center gap-3 px-6 py-3.5 border-b border-border bg-muted/40">
+        <div className="flex items-center gap-3 px-6 py-3.5 border-b border-border/60 bg-muted/20">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
             <input
@@ -131,7 +131,7 @@ export function ProjectManagerModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full bg-background border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              className="w-full bg-background/50 border border-border/40 rounded-lg pl-9 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
             />
           </div>
           <Button size="sm" variant="cyan" onClick={() => { onNewProject(); onClose(); }} className="gap-1.5 font-medium">
@@ -162,12 +162,12 @@ export function ProjectManagerModal({
                   key={p.id}
                   className={`group relative flex items-center justify-between p-4 rounded-xl border transition-all ${
                     isCurrent
-                      ? 'border-primary bg-primary/10 text-foreground shadow-md ring-1 ring-primary/30'
-                      : 'border-border bg-card text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground'
+                      ? 'border-primary/40 bg-primary/10 text-foreground shadow-md ring-1 ring-primary/20'
+                      : 'border-border/40 bg-card/60 text-muted-foreground hover:border-border/80 hover:bg-muted/40 hover:text-foreground'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    <div className="w-10 h-10 rounded-xl bg-muted border border-border flex items-center justify-center text-muted-foreground shrink-0 font-mono text-sm">
+                    <div className="w-10 h-10 rounded-xl bg-muted/60 border border-border/40 flex items-center justify-center text-muted-foreground shrink-0 font-mono text-sm">
                       {isCurrent ? <span className="text-primary font-bold">●</span> : <Layers className="w-5 h-5" />}
                     </div>
 

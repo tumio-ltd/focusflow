@@ -108,7 +108,7 @@ export function BottomTimeline({
       className="h-20 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
     >
       {/* 1. 左侧播放控制组 */}
-      <div className="flex items-center gap-1 bg-background p-1 rounded-xl border border-border shrink-0">
+      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/40 shrink-0">
         <Tooltip content={t('prevScene')} shortcut="←">
           <Button
             size="icon"
@@ -176,16 +176,16 @@ export function BottomTimeline({
                 isOver ? 'ring-2 ring-primary scale-105' : ''
               } ${
                 isActive
-                  ? 'border-primary bg-primary/10 text-foreground shadow-md ring-1 ring-primary/30 font-medium'
-                  : 'border-border bg-card text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground'
+                  ? 'border-primary/40 bg-primary/10 text-foreground shadow-md ring-1 ring-primary/30 font-medium'
+                  : 'border-border/40 bg-card/60 text-muted-foreground hover:border-border/80 hover:bg-muted/40 hover:text-foreground'
               }`}
             >
               {/* 场景微缩标志指示 */}
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center border text-xs font-mono shrink-0 transition ${
                   isActive
-                    ? 'bg-primary text-primary-foreground border-primary font-bold shadow-sm'
-                    : 'bg-muted text-muted-foreground border-border'
+                    ? 'bg-primary text-primary-foreground border-primary/40 font-bold shadow-sm'
+                    : 'bg-muted/60 text-muted-foreground border-border/40'
                 }`}
               >
                 {String(idx + 1).padStart(2, '0')}
@@ -203,7 +203,7 @@ export function BottomTimeline({
                       onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle(idx)}
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-background border border-primary rounded px-2 py-0.5 text-xs text-foreground focus:outline-none w-full font-medium"
+                      className="bg-background border border-primary/50 rounded px-2 py-0.5 text-xs text-foreground focus:outline-none w-full font-medium"
                     />
                     <button
                       onClick={(e) => {
@@ -281,7 +281,7 @@ export function BottomTimeline({
           size="sm"
           data-testid="add-scene-btn"
           onClick={onAddScene}
-          className="border-dashed border-border hover:border-primary text-muted-foreground hover:text-primary gap-1.5 h-12 px-3.5 rounded-xl shrink-0 text-xs font-medium"
+          className="border-dashed border-border/60 hover:border-primary/60 bg-muted/20 hover:bg-primary/5 text-muted-foreground hover:text-primary gap-1.5 h-12 px-3.5 rounded-xl shrink-0 text-xs font-medium"
         >
           <Plus className="w-4 h-4" />
           <span>{t('addScene')}</span>

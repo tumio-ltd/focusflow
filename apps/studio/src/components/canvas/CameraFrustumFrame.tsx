@@ -34,7 +34,7 @@ export function CameraFrustumFrame({
         }}
       >
         {/* 左上角摄像机镜头标签 */}
-        <div className="absolute -top-8 left-0 flex items-center gap-1.5 bg-panel/90 border border-primary/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-mono text-primary shadow-lg font-semibold">
+        <div className="absolute -top-8 left-0 flex items-center gap-1.5 bg-panel/95 border border-primary/30 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-mono text-primary shadow-lg font-semibold">
           <Camera className="w-3.5 h-3.5 text-primary" />
           <span>
             {camera.zoom.toFixed(1)}x · ({camera.x || 0}%, {camera.y || 0}%)

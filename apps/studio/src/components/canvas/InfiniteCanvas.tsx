@@ -81,7 +81,7 @@ export function InfiniteCanvas({
       )}
 
       {/* 4. 右下角快捷缩放与视口控制浮动胶囊 */}
-      <div className="absolute bottom-6 right-6 flex items-center gap-1.5 bg-panel/90 border border-border backdrop-blur-md p-1.5 rounded-xl shadow-xl z-30">
+      <div className="absolute bottom-6 right-6 flex items-center gap-1.5 bg-panel/90 border border-border/40 backdrop-blur-md p-1.5 rounded-xl shadow-xl z-30">
         <Tooltip content="缩小" shortcut="⌘ -">
           <Button
             size="icon"

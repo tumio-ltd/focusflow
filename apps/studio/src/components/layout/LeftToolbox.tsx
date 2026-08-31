@@ -70,8 +70,8 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
               onClick={() => onToolChange(tool.id)}
               className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ${
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-md ring-2 ring-primary/30 font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted active:bg-muted/80'
+                  ? 'bg-primary text-primary-foreground shadow-md ring-1 ring-primary/40 font-semibold border border-primary/30'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted border border-transparent hover:border-border/30'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -90,7 +90,7 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
 
       {/* 底部 AI 辅助标定图标 */}
       <Tooltip content={t('aiExtraction')} position="right">
-        <div className="w-10 h-10 rounded-xl border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition cursor-help">
+        <div className="w-10 h-10 rounded-xl bg-muted/20 border border-dashed border-border/60 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/10 transition cursor-help">
           <Sparkles className="w-4.5 h-4.5" />
         </div>
       </Tooltip>

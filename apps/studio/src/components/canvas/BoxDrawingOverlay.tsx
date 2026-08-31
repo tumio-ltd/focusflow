@@ -153,7 +153,7 @@ export function BoxDrawingOverlay({
           }}
         >
           {/* 实时物理像素尺寸气泡 */}
-          <div className="absolute -top-8 left-0 bg-panel/90 border border-primary/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-mono text-primary font-semibold shadow-md">
+          <div className="absolute -top-8 left-0 bg-panel/90 border border-primary/30 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-mono text-primary font-semibold shadow-md">
             {Math.round(currentRect.w)} × {Math.round(currentRect.h)} px
           </div>
         </div>

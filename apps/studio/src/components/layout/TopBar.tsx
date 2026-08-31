@@ -11,12 +11,12 @@ import {
   Moon, 
   Languages, 
   Check, 
-  Edit3,
-  UploadCloud,
-  FolderGit2,
-  LayoutTemplate,
-  Play,
-  Laptop
+  Edit3, 
+  UploadCloud, 
+  FolderGit2, 
+  LayoutTemplate, 
+  Play, 
+  Laptop 
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -95,7 +95,7 @@ export function TopBar({
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 font-bold tracking-wide text-primary">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center text-primary shadow-sm">
             <Sparkles className="w-4 h-4" />
           </div>
           <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-primary to-accent-hover bg-clip-text text-transparent">
@@ -103,7 +103,10 @@ export function TopBar({
           </span>
         </div>
 
-        <Badge variant="cyan">{t('modeOffline')}</Badge>
+        <Badge variant="cyan" className="gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+          <span>{t('modeOffline')}</span>
+        </Badge>
 
         <div className="h-4 w-px bg-border mx-0.5" />
 
@@ -117,7 +120,7 @@ export function TopBar({
               onBlur={handleTitleSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
               autoFocus
-              className="bg-background border border-primary rounded-lg px-2.5 py-1 text-xs font-medium text-foreground focus:outline-none"
+              className="bg-background border border-primary/50 rounded-lg px-2.5 py-1 text-xs font-medium text-foreground focus:outline-none"
             />
             <Button size="icon" variant="ghost" onClick={handleTitleSubmit} className="h-7 w-7">
               <Check className="w-3.5 h-3.5 text-primary" />
@@ -126,7 +129,7 @@ export function TopBar({
         ) : (
           <div
             onClick={() => setIsEditingTitle(true)}
-            className="group flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-muted cursor-pointer transition"
+            className="group flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-muted/60 cursor-pointer transition"
             title={t('editTitleTip')}
           >
             <span className="text-xs font-semibold text-foreground">{currentTitle}</span>
@@ -140,7 +143,7 @@ export function TopBar({
       </div>
 
       {/* 2. 中间：撤销 / 重做 */}
-      <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border">
+      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/40">
         <Tooltip content={t('undo')} shortcut="⌘Z">
           <Button
             size="icon"
@@ -211,7 +214,7 @@ export function TopBar({
           variant="outline"
           data-testid="open-templates-btn"
           onClick={onOpenTemplates}
-          className="border-primary/30 text-primary hover:bg-primary/10"
+          className="gap-1.5"
         >
           <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
           <span>{t('templatesCenter')}</span>
@@ -223,7 +226,7 @@ export function TopBar({
           variant="outline"
           data-testid="open-projects-btn"
           onClick={onOpenProjects}
-          className="border-border text-foreground hover:bg-muted"
+          className="gap-1.5"
         >
           <FolderGit2 className="w-3.5 h-3.5 text-muted-foreground" />
           <span>{t('projectsList')}</span>
@@ -235,9 +238,9 @@ export function TopBar({
           variant="outline"
           data-testid="open-import-btn"
           onClick={onOpenImport}
-          className="border-primary/30 text-primary hover:bg-primary/10"
+          className="gap-1.5"
         >
-          <UploadCloud className="w-3.5 h-3.5" />
+          <UploadCloud className="w-3.5 h-3.5 text-primary" />
           <span>{t('importAsset')}</span>
         </Button>
 
@@ -247,15 +250,15 @@ export function TopBar({
           variant="outline"
           data-testid="audience-btn"
           onClick={onOpenAudience}
-          className="border-primary/40 text-primary hover:bg-primary/10"
+          className="gap-1.5"
           title="受众全屏演播试播"
         >
-          <Play className="w-3.5 h-3.5 fill-current" />
+          <Play className="w-3.5 h-3.5 fill-current text-primary" />
           <span>演播</span>
         </Button>
 
         {/* 保存草稿 */}
-        <Button size="sm" variant="secondary" onClick={onSave}>
+        <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5">
           <Save className="w-3.5 h-3.5 text-muted-foreground" />
           <span>{t('saveDraft')}</span>
         </Button>
@@ -266,7 +269,7 @@ export function TopBar({
           variant="cyan" 
           data-testid="export-btn"
           onClick={onExport} 
-          className="font-semibold"
+          className="gap-1.5 font-semibold"
         >
           <Download className="w-3.5 h-3.5" />
           <span>{t('exportHtml')}</span>
