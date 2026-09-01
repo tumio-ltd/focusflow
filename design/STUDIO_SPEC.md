@@ -232,6 +232,25 @@ FocusFlow Studio 前端采用**适配器架构（Storage & Export Adapter Patter
 * **直接拖拽定位**：直接在画布上拖拽气泡至最佳展示位置，自动换算为自适应百分比坐标（如 `left: "33%", top: "33%"`）；
 * **富文本与主题徽章**：可视化选择 5 大预设配色主题（Blue / Green / Amber / Pink / Cyan），实时预览阶梯弹入动效。
 
+#### 画布空间与像素标尺绝对对齐规范 (1:1 Physical Canvas Sizing & Coordinate Integrity)
+
+FocusFlow Studio 的中央无限画布（`InfiniteCanvas`）与视口缩放控制胶囊（`ZoomControls`）在底层渲染与空间几何上，遵循 **“绝对物理像素空间（Absolute Physical Pixel Space）”** 原则：
+
+1. **真实物理尺寸 100% 对齐底图原生分辨率**：
+   - 当创作者导入一张架构图时，图像解析器（`imageDecoder.ts`）通过浏览器原生 `Image.decode()` 提取该文件的真实自然分辨率（`img.naturalWidth × img.naturalHeight`），并写入 `dsl.meta.viewport = { width: naturalWidth, height: naturalHeight }`。
+   - `InfiniteCanvas` 的 GPU 几何变换视口层（Transform Content Layer）在 DOM 中的内联样式尺寸被严格固定为：
+     `<div style={{ width: `${contentWidth}px`, height: `${contentHeight}px` }}>`。
+   - **底层事实**：**ZoomControls 所控制的画布在底层逻辑中的真实物理大小，100% 等于当前工程上传底图的原生像素尺寸（naturalWidth × naturalHeight）**。
+
+2. **ZoomControls 缩放倍率的物理定义**：
+   - `ZoomControls` 通过 GPU 硬件加速的 CSS3 矩阵 `transform: translate3d(x, y, 0) scale(S)` 改变创作者在屏幕上的工作视野，而不改变画布的物理内宽高；
+   - **`100%`**：严格代表 **1:1 点对点物理像素对齐**（即创作者屏幕上的 1 个 CSS 像素 = 底图文件中的 1 个真实物理像素）；
+   - **`50%` / `200%`**：分别将整张 4K/5K 画布在视口中缩小至 0.5x 纵览全局，或放大至 2.0x 进行 1px 级的精细图元锚点对齐。
+
+3. **标定图元与连线坐标零漂移保证 (Zero Coordinate Drift)**：
+   - 所有选框（Box）、三次贝塞尔连线（Path）、定位脉冲圆点（Dot）的坐标系统均直接建立在该 1:1 物理像素空间上（例如 `x: 1200, y: 800, width: 320, height: 180`）；
+   - 创作者无论在画布上缩放到任何比例进行操作，写入 DSL 的坐标值永远 100% 锚定在原图的原生像素绝对坐标上，确保在导出独立 HTML、4K 视频或全屏演播时绝对没有坐标偏移或分辨率失真。
+
 ---
 
 ### 3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)
