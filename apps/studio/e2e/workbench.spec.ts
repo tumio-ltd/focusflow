@@ -107,7 +107,7 @@ async function verifyLanguageSwitchingBehavior(page: Page): Promise<void> {
 
   // 切换为英文 (EN)
   await langBtn.click();
-  await expect(page.locator('header').getByText('Export Standalone HTML')).toBeVisible();
+  await expect(page.locator('header').getByText('Export HTML')).toBeVisible();
   await expect(page.locator('[data-testid="audience-btn"]')).toHaveText(/Present/);
   await expect(page.locator('[data-testid="timeline"]').getByText('Add Scene')).toBeVisible();
 
