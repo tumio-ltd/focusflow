@@ -469,6 +469,51 @@ FocusFlow Studio 作为一款高信息密度的专业架构图演播制作工具
 
 ---
 
+### 4.5 全局快捷键引擎与交互规范 (Global Studio Keyboard Engine)
+
+为了向专业创作者提供类似桌面端 IDE / 专业图形软件（如 Figma、Blender、VS Code）的丝滑沉浸式键盘流操作体验，FocusFlow Studio 内置了统一的 **全局快捷键调度引擎（`useStudioKeyboard`）**。
+
+#### 1. 架构与防冲突调度机制 (Architecture & Context-Aware Dispatcher)
+
+```
+                     ┌──────────────────────────────────────────────────────────┐
+                     │          全局键盘事件监听器 (window.addEventListener)       │
+                     └────────────────────────────┬─────────────────────────────┘
+                                                  │
+                                                  ▼
+                        ┌─────────────────────────────────────────────────┐
+                        │ 是否处于输入聚焦态 (isInput: INPUT / TEXTAREA)? │
+                        └─────────┬─────────────────────────────┬─────────┘
+                                  │ 是                          │ 否
+                                  ▼                             ▼
+                    ┌────────────────────────────┐    ┌──────────────────────────────────┐
+                    │ 放行普通键盘输入行为，       │    │ 1. 拦截浏览器默认行为 (preventDefault)│
+                    │ 仅响应全局 ⌘Z / ⌘S 关键操作 │    │ 2. 调度 Studio 功能状态机        │
+                    └────────────────────────────┘    └──────────────────────────────────┘
+```
+
+- **全平台多键位同构（Cross-Platform Modifier Mapping）**：
+  - 自动归一化检测 `e.metaKey || e.ctrlKey`，使 Mac 用户（`⌘ Command`）与 Windows/Linux 用户（`Ctrl`）拥有完全一致的肌肉记忆。
+- **智能防冲突保护（Context-Aware Input Guard）**：
+  - 当光标位于项目标题、场景名称或搜索框等可编辑元素时，放行普通字符输入，仅在全局画布与操作区拦截系统默认行为（如阻止浏览器的 `Ctrl+S` 保存网页或 `Ctrl+E` 搜索栏跳转）。
+
+#### 2. 全局快捷键映射矩阵表 (Keyboard Shortcut Matrix)
+
+| 快捷键 (Mac / Win) | 功能分类 | 对应调度行为 | 状态机驱动与组件联动 |
+| :--- | :--- | :--- | :--- |
+| **`⌘E` / `Ctrl+E`** | **工程导出** | 一键呼出「导出演播工程 (Export Center)」模态框 | `setIsExportModalOpen(true)` ➔ 打开导出选项卡 |
+| **`⌘S` / `Ctrl+S`** | **持久化保存** | 一键手动将当前工程与 DSL 存入本地 IndexedDB | `saveProject()` ➔ 写入 IndexedDB ➔ 重置 Dirty 标记 |
+| **`F5` / `⌥P` (Alt+P)** | **全屏演播** | 立即进入「受众全屏沉浸式演播模式」 | `setIsAudienceModalOpen(true)` ➔ 挂载全屏播放器 |
+| **`⌘Z` / `Ctrl+Z`** | **历史回溯** | 撤销上一步操作 (Undo) | `undo()` ➔ Past 历史栈出栈 ➔ 画布实时响应 |
+| **`⇧⌘Z` / `Ctrl+Y`** | **历史回溯** | 重做下一步操作 (Redo) | `redo()` ➔ Future 历史栈出栈 ➔ 画布实时响应 |
+| **`1` 或 `V`** | **标定工具** | 激活「选择 / 抓手工具 (Select & Pan)」 | `setActiveTool('select')` ➔ 开启视口平移模式 |
+| **`2` 或 `R`** | **标定工具** | 激活「智能选框工具 (Sobel Box Snapping)」 | `setActiveTool('box')` ➔ 开启矩形吸附绘制 |
+| **`3` 或 `L`** | **标定工具** | 激活「三次贝塞尔拓扑流光连线 (Bezier Path)」 | `setActiveTool('path')` ➔ 开启 8 向磁吸连线 |
+| **`4` 或 `D`** | **标定工具** | 激活「雷达脉冲定位圆点 (Pulse Dot)」 | `setActiveTool('dot')` ➔ 开启坐标点放置 |
+| **`5` 或 `C`** | **标定工具** | 激活「毛玻璃解说气泡 (Callout & Badge)」 | `setActiveTool('callout')` ➔ 开启气泡定位放置 |
+
+---
+
 ## 5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)
 
 ### 5.1 与 PRODUCT_DESIGN.md 8.3 节的关联性与边界划分 (Correlation & Boundaries)
