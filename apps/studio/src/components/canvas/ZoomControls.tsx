@@ -104,7 +104,7 @@ export function ZoomControls({
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
         touchAction: 'none',
       }}
-      className={`absolute bottom-6 right-6 flex items-center gap-1 bg-panel/90 border border-border backdrop-blur-md p-1 rounded-xl shadow-2xl z-30 select-none transition-shadow ${
+      className={`absolute bottom-6 right-6 flex items-center gap-1 bg-panel/95 border border-border backdrop-blur-md p-1 rounded-xl shadow-2xl z-40 select-none transition-shadow ${
         isDragging ? 'cursor-grabbing shadow-primary/20 ring-2 ring-primary/40' : 'cursor-grab'
       } ${className}`}
     >

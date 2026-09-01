@@ -108,6 +108,14 @@ export function useCanvasGesture({
     [contentWidth, contentHeight, minScale, maxScale]
   );
 
+  // 初始化挂载与底图尺寸变更时，自动执行视口自适应居中对齐
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitToScreen();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [fitToScreen]);
+
   // 4. 1:1 原始物理分辨率对齐 (Shift + 0)
   const resetZoom100 = useCallback(() => {
     const container = containerRef.current;
