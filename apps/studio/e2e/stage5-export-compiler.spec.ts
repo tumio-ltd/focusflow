@@ -98,6 +98,20 @@ async function verifyAudienceModeFullscreen(page: Page): Promise<void> {
   await expect(audienceModal).not.toBeVisible();
 }
 
+async function verifyExportModalKeyboardShortcut(page: Page): Promise<void> {
+  const exportModal = page.locator('[data-testid="export-modal"]');
+  await expect(exportModal).not.toBeVisible();
+
+  // 按下 Control+e
+  await page.keyboard.press('Control+e');
+  await expect(exportModal).toBeVisible();
+
+  // 按 Escape 或关闭按钮关闭模态框
+  const closeBtn = exportModal.locator('button').first();
+  await closeBtn.click();
+  await expect(exportModal).not.toBeVisible();
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -119,4 +133,9 @@ test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
   test('TC504: 验证受众全屏演播模式呼出、翻页与退出', async ({ page }) => {
     await verifyAudienceModeFullscreen(page);
   });
+
+  test('TC505: 验证 Command/Control+E 快捷键唤起导出中心模态框', async ({ page }) => {
+    await verifyExportModalKeyboardShortcut(page);
+  });
 });
+

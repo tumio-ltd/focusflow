@@ -24,11 +24,10 @@ import type { ImageMeta } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
-import { useHistoryKeyboard } from '@/hooks/useHistoryKeyboard';
+import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import '@focusflow/player/styles.css';
 
 export default function App() {
-  useHistoryKeyboard();
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -216,6 +215,15 @@ export default function App() {
     const newProjectId = await createProject(tpl.title, tpl.dsl);
     console.log('Created project from template:', newProjectId);
   };
+
+  useStudioKeyboard({
+    onExport: () => setIsExportModalOpen(true),
+    onSave: handleSaveDraft,
+    onPresent: () => setIsAudienceModalOpen(true),
+    onOpenTemplates: () => setIsTemplatesModalOpen(true),
+    onOpenProjects: () => setIsProjectsModalOpen(true),
+    onOpenImport: () => setIsUploadModalOpen(true),
+  });
 
   const handleCanvasTransformChange = useCallback(
     (transform: { scale: number; x: number; y: number }, rect: { width: number; height: number }) => {
