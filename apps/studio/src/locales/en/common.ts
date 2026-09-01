@@ -19,4 +19,6 @@ export default {
   templatesCenter: 'Templates',
   projectsList: 'Projects',
   importAsset: 'Import Asset',
+  present: 'Present',
+  presentTip: 'Audience Fullscreen Presentation Preview',
 } as const;

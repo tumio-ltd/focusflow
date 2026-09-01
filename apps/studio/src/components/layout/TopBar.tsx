@@ -248,10 +248,10 @@ export function TopBar({
           data-testid="audience-btn"
           onClick={onOpenAudience}
           className="gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10"
-          title="受众全屏演播试播"
+          title={t('presentTip')}
         >
           <Play className="w-3.5 h-3.5 fill-current" />
-          <span>演播</span>
+          <span>{t('present')}</span>
         </Button>
 
         {/* 保存草稿 */}

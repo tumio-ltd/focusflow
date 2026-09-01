@@ -102,16 +102,19 @@ async function verifyLanguageSwitchingBehavior(page: Page): Promise<void> {
 
   // 初始为中文 (ZH)
   await expect(page.locator('header').getByText('导出独立 HTML')).toBeVisible();
+  await expect(page.locator('[data-testid="audience-btn"]')).toHaveText(/演播/);
   await expect(page.locator('[data-testid="timeline"]').getByText('添加新场景')).toBeVisible();
 
   // 切换为英文 (EN)
   await langBtn.click();
   await expect(page.locator('header').getByText('Export Standalone HTML')).toBeVisible();
+  await expect(page.locator('[data-testid="audience-btn"]')).toHaveText(/Present/);
   await expect(page.locator('[data-testid="timeline"]').getByText('Add Scene')).toBeVisible();
 
   // 切回中文
   await langBtn.click();
   await expect(page.locator('header').getByText('导出独立 HTML')).toBeVisible();
+  await expect(page.locator('[data-testid="audience-btn"]')).toHaveText(/演播/);
 }
 
 /**

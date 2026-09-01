@@ -19,4 +19,6 @@ export default {
   templatesCenter: '模板中心',
   projectsList: '工程列表',
   importAsset: '导入底图',
+  present: '演播',
+  presentTip: '受众全屏演播试播',
 } as const;
