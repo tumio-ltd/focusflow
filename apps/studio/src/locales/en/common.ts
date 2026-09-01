@@ -17,8 +17,13 @@ export default {
   themeSystem: 'System Theme (Click for Dark)',
   switchLang: 'Switch Language',
   templatesCenter: 'Templates',
+  templatesTip: 'Browse official architecture templates',
   projectsList: 'Projects',
+  projectsTip: 'Manage local project archives',
   importAsset: 'Import Asset',
+  importAssetTip: 'Import local image or remote URL',
   present: 'Present',
   presentTip: 'Audience Fullscreen Presentation Preview',
+  saveDraftTip: 'Save draft to local storage',
+  exportHtmlTip: 'Compile and export standalone HTML',
 } as const;

@@ -17,8 +17,13 @@ export default {
   themeSystem: '跟随系统 (点击切换深色)',
   switchLang: '切换语言',
   templatesCenter: '模板中心',
+  templatesTip: '浏览官方架构图模板',
   projectsList: '工程列表',
+  projectsTip: '本地工程历史与管理',
   importAsset: '导入底图',
+  importAssetTip: '导入本地底图或网络图片',
   present: '演播',
   presentTip: '受众全屏演播试播',
+  saveDraftTip: '保存草稿到本地存储',
+  exportHtmlTip: '编译导出独立单文件 HTML',
 } as const;

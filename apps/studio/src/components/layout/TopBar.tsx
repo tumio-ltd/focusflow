@@ -141,7 +141,7 @@ export function TopBar({
 
       {/* 2. 中间：撤销 / 重做 */}
       <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border">
-        <Tooltip content={t('undo')} shortcut="⌘Z">
+        <Tooltip content={t('undo')} shortcut="⌘Z" position="bottom">
           <Button
             size="icon"
             variant="ghost"
@@ -154,7 +154,7 @@ export function TopBar({
           </Button>
         </Tooltip>
 
-        <Tooltip content={t('redo')} shortcut="⇧⌘Z">
+        <Tooltip content={t('redo')} shortcut="⇧⌘Z" position="bottom">
           <Button
             size="icon"
             variant="ghost"
@@ -171,7 +171,7 @@ export function TopBar({
       {/* 3. 右侧：语言 + 主题 + 保存 + 一键导出 */}
       <div className="flex items-center gap-2">
         {/* 多语言切换 */}
-        <Tooltip content={t('switchLang')}>
+        <Tooltip content={t('switchLang')} position="bottom">
           <Button
             size="sm"
             variant="outline"
@@ -185,7 +185,7 @@ export function TopBar({
         </Tooltip>
 
         {/* 科技暗黑 / 极简明亮 / 跟随系统 三态循环切换 */}
-        <Tooltip content={theme === 'light' ? t('themeLight') : theme === 'system' ? t('themeSystem') : t('themeDark')}>
+        <Tooltip content={theme === 'light' ? t('themeLight') : theme === 'system' ? t('themeSystem') : t('themeDark')} position="bottom">
           <Button
             size="icon"
             variant="outline"
@@ -206,71 +206,82 @@ export function TopBar({
         <div className="h-4 w-px bg-border mx-1" />
 
         {/* 模板中心 */}
-        <Button
-          size="sm"
-          variant="outline"
-          data-testid="open-templates-btn"
-          onClick={onOpenTemplates}
-          className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
-        >
-          <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
-          <span>{t('templatesCenter')}</span>
-        </Button>
+        <Tooltip content={t('templatesTip')} position="bottom">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="open-templates-btn"
+            onClick={onOpenTemplates}
+            className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
+            <span>{t('templatesCenter')}</span>
+          </Button>
+        </Tooltip>
 
         {/* 我的项目 */}
-        <Button
-          size="sm"
-          variant="outline"
-          data-testid="open-projects-btn"
-          onClick={onOpenProjects}
-          className="gap-1.5 h-8 border-border text-foreground hover:bg-muted"
-        >
-          <FolderGit2 className="w-3.5 h-3.5 text-muted-foreground" />
-          <span>{t('projectsList')}</span>
-        </Button>
+        <Tooltip content={t('projectsTip')} position="bottom">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="open-projects-btn"
+            onClick={onOpenProjects}
+            className="gap-1.5 h-8 border-border text-foreground hover:bg-muted"
+          >
+            <FolderGit2 className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>{t('projectsList')}</span>
+          </Button>
+        </Tooltip>
 
         {/* 导入底图 */}
-        <Button
-          size="sm"
-          variant="outline"
-          data-testid="open-import-btn"
-          onClick={onOpenImport}
-          className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
-        >
-          <UploadCloud className="w-3.5 h-3.5" />
-          <span>{t('importAsset')}</span>
-        </Button>
+        <Tooltip content={t('importAssetTip')} position="bottom">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="open-import-btn"
+            onClick={onOpenImport}
+            className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>{t('importAsset')}</span>
+          </Button>
+        </Tooltip>
 
         {/* 受众全屏演播 */}
-        <Button
-          size="sm"
-          variant="outline"
-          data-testid="audience-btn"
-          onClick={onOpenAudience}
-          className="gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10"
-          title={t('presentTip')}
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          <span>{t('present')}</span>
-        </Button>
+        <Tooltip content={t('presentTip')} shortcut="F5" position="bottom">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="audience-btn"
+            onClick={onOpenAudience}
+            className="gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>{t('present')}</span>
+          </Button>
+        </Tooltip>
 
         {/* 保存草稿 */}
-        <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">
-          <Save className="w-3.5 h-3.5 text-muted-foreground" />
-          <span>{t('saveDraft')}</span>
-        </Button>
+        <Tooltip content={t('saveDraftTip')} shortcut="⌘S" position="bottom">
+          <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8">
+            <Save className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>{t('saveDraft')}</span>
+          </Button>
+        </Tooltip>
 
         {/* 导出中心 */}
-        <Button 
-          size="sm" 
-          variant="cyan" 
-          data-testid="export-btn"
-          onClick={onExport} 
-          className="gap-1.5 h-8"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>{t('exportHtml')}</span>
-        </Button>
+        <Tooltip content={t('exportHtmlTip')} shortcut="⌘E" position="bottom">
+          <Button 
+            size="sm" 
+            variant="cyan" 
+            data-testid="export-btn"
+            onClick={onExport} 
+            className="gap-1.5 h-8"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>{t('exportHtml')}</span>
+          </Button>
+        </Tooltip>
       </div>
     </header>
   );
