@@ -422,6 +422,53 @@ Studio 顶部导航栏提供单键循环三态主题控制器：
 
 ---
 
+### 4.4 专业工作台字阶与按键系统规范 (Professional Workbench Typography & Button System)
+
+FocusFlow Studio 作为一款高信息密度的专业架构图演播制作工具，在排版字阶（Typography Scale）与按键交互（Button System）上严格遵循现代生产力软件（如 Figma、Linear、VS Code、After Effects）的人机工效学（HCI）与设计规范：
+
+#### 1. 人机工效学设计依据 (HCI Theoretical Foundations)
+1. **画布视口空间最大化（Canvas Real Estate Optimization）**：
+   - 架构演播工作台的核心工作区域是中央无限画布（Infinite Canvas）。
+   - 顶部栏（TopBar）、左侧工具箱（Toolbox）、右侧属性检查器（Inspector）与底部时间轴（Timeline）均属于辅助控制容器。
+   - 采用高紧凑度的 `12px (text-xs)` 作为基础控件字号，能将周边面板的物理占用面积最小化，确保创作者拥有最大的架构图审视与标定视野。
+2. **专业认知负荷与扫视流速（Cognitive Load & Scan Velocity）**：
+   - 紧凑的字阶和图标比例，使得专业用户在单次眼跳停顿（Eye Fixation）中能够捕获更多的上下文元数据（例如时间轴中一并看清场景序号、标题、时长秒数与图元总数），大幅提升高频创作的操作流速。
+3. **清晰的视觉层级划分（Visual Hierarchy Stratification）**：
+   - 建立严格的四级字阶梯队（16px / 14px / 12px / 10-11px），避免所有文字大小相近造成的视觉重心模糊。
+
+#### 2. 工作台字阶标准规范表 (Typographic Scale Table)
+
+| 字阶角色 | 字号大小 | 行高 / 粗细 | Tailwind 类名 | 典型应用场景与 UI 元素 |
+| :--- | :--- | :--- | :--- | :--- |
+| **Hero Title** | `16px` | `line-height: 24px`<br/>`font-semibold` | `text-base font-semibold` | 模态弹窗 Header 大标题 (模板中心/工程管理/导出中心) |
+| **Section Title** | `14px` | `line-height: 20px`<br/>`font-semibold` | `text-sm font-semibold` | TopBar 当前项目标题、检查器主面板大标题 |
+| **Control Text** | `12px` | `line-height: 16px`<br/>`font-medium` | `text-xs font-medium` | TopBar 按钮文案、检查器 Label、时间轴卡片标题、输入框文字 |
+| **Meta & Counter** | `12px` | `line-height: 16px`<br/>`font-mono` | `text-xs font-mono` | 时间轴场景秒数 (`1.2s`)、镜头缩放比 (`1.0x`)、当前视口分辨率 |
+| **Micro Badge & Key** | `10~11px` | `line-height: 14px`<br/>`font-semibold` | `text-[10px] / text-[11px]` | 快捷键键帽提示 (`⌘Z`)、离线自治微徽章、图元编号指示点 |
+
+#### 3. 按键体系与尺寸规范表 (Button Scale & Variant Specification)
+
+按键组件 (`apps/studio/src/components/ui/Button.tsx`) 提供 4 种标准尺寸与 6 种语义变体：
+
+##### (1) 尺寸分级规范 (Size Scale)
+| 尺寸 | 高度 / 内边距 | 字号与间距 | 图标尺寸 | 适用 UI 区域与场景 |
+| :--- | :--- | :--- | :--- | :--- |
+| `sm` | `h-7 (28px)`<br/>`px-2.5` | `text-xs (12px)`<br/>`gap-1.5` | `w-3.5 h-3.5` | TopBar 常用功能按钮 (模板中心/工程列表/导入底图/演播/保存)、检查器次级操作 |
+| `md` | `h-8.5 (34px)`<br/>`px-3.5` | `text-xs (12px)`<br/>`gap-2` | `w-4 h-4` | 模态弹窗常规表单按钮、普通对话框操作 |
+| `lg` | `h-10 (40px)`<br/>`px-4` | `text-sm (14px)`<br/>`gap-2.5` | `w-4.5 h-4.5` | 模态弹窗主要确认提交按键、全屏模式主动作 |
+| `icon`| `h-8 w-8 (32px)`<br/>`p-0` | `-` | `w-4 h-4` | 工具箱工具项、时间轴播放控制 (Prev / Next / Play) |
+
+##### (2) 语义变体规范 (Variant System)
+| 变体名称 | 核心样式与 Token 类名 | 视觉特征与层级定位 | 典型应用场景 |
+| :--- | :--- | :--- | :--- |
+| `cyan` | `bg-primary text-primary-foreground font-semibold hover:opacity-90 active:opacity-100 shadow-md shadow-primary/20` | 高饱和亮色实心，全屏第一视觉焦点 | TopBar “导出独立 HTML”、时间轴“播放”主按键 |
+| `outline` | `bg-transparent text-foreground hover:bg-muted border border-border` | 透明底 + 精细外边框，悬停浮现微底 | TopBar 常用操作（模板/列表/底图/演播）、检查器捕获视角 |
+| `secondary` | `bg-secondary text-secondary-foreground hover:bg-muted border border-border` | 次要面层底色，低调稳重 | 弹窗取消按键、次级选项卡 |
+| `ghost` | `bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground` | 零边框幽灵按键，融入背景 | 撤销/重做、关闭 (X)、时间轴翻页箭头 |
+| `destructive` | `bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30` | 警示红底与柔和红边 | 删除工程、清空所有图元 |
+
+---
+
 ## 5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)
 
 ### 5.1 与 PRODUCT_DESIGN.md 8.3 节的关联性与边界划分 (Correlation & Boundaries)
