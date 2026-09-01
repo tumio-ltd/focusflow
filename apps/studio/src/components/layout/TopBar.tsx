@@ -206,7 +206,7 @@ export function TopBar({
         <div className="h-4 w-px bg-border mx-0.5" />
 
         {/* 模板中心 */}
-        <Tooltip content={t('templatesTip')} position="bottom">
+        <Tooltip content={t('templatesTip')} position="bottom" align="end">
           <Button
             size="sm"
             variant="outline"
@@ -220,7 +220,7 @@ export function TopBar({
         </Tooltip>
 
         {/* 我的项目 */}
-        <Tooltip content={t('projectsTip')} position="bottom">
+        <Tooltip content={t('projectsTip')} position="bottom" align="end">
           <Button
             size="sm"
             variant="outline"
@@ -234,7 +234,7 @@ export function TopBar({
         </Tooltip>
 
         {/* 导入底图 */}
-        <Tooltip content={t('importAssetTip')} position="bottom">
+        <Tooltip content={t('importAssetTip')} position="bottom" align="end">
           <Button
             size="sm"
             variant="outline"
@@ -248,7 +248,7 @@ export function TopBar({
         </Tooltip>
 
         {/* 受众全屏演播 */}
-        <Tooltip content={t('presentTip')} shortcut="F5" position="bottom">
+        <Tooltip content={t('presentTip')} shortcut="F5" position="bottom" align="end">
           <Button
             size="sm"
             variant="outline"
@@ -262,7 +262,7 @@ export function TopBar({
         </Tooltip>
 
         {/* 保存草稿 */}
-        <Tooltip content={t('saveDraftTip')} shortcut="⌘S" position="bottom">
+        <Tooltip content={t('saveDraftTip')} shortcut="⌘S" position="bottom" align="end">
           <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8 px-2 sm:px-2.5">
             <Save className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="hidden xl:inline">{t('saveDraft')}</span>
@@ -270,7 +270,7 @@ export function TopBar({
         </Tooltip>
 
         {/* 导出中心 */}
-        <Tooltip content={t('exportHtmlTip')} shortcut="⌘E" position="bottom">
+        <Tooltip content={t('exportHtmlTip')} shortcut="⌘E" position="bottom" align="end">
           <Button 
             size="sm" 
             variant="cyan" 
