@@ -25,7 +25,7 @@ export function ZoomControls({
   className = '',
 }: ZoomControlsProps) {
   const { t } = useTranslation();
-  const zoomPercent = Math.round(scale * 100);
+  const zoomPercent = isNaN(scale) ? 100 : Math.round(scale * 100);
 
   // 相对默认右下角 (bottom-6 right-6) 的偏移量 (x, y)
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -164,7 +164,7 @@ export function ZoomControls({
           size="icon"
           variant="ghost"
           data-testid="fit-screen-btn"
-          onClick={onFitToScreen}
+          onClick={() => onFitToScreen()}
           className="h-7 w-7 text-muted-foreground hover:text-primary"
         >
           <Maximize2 className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export function ZoomControls({
           size="icon"
           variant="ghost"
           data-testid="reset-100-btn"
-          onClick={onResetZoom100}
+          onClick={() => onResetZoom100()}
           className="h-7 w-7 text-muted-foreground hover:text-primary"
         >
           <RotateCcw className="w-3.5 h-3.5" />

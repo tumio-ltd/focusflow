@@ -84,7 +84,8 @@ export function useCanvasGesture({
 
   // 3. 视口自适应居中算法 (Fit-to-Screen / Shift + 1)
   const fitToScreen = useCallback(
-    (padding = 48) => {
+    (customPadding?: number | unknown) => {
+      const padding = typeof customPadding === 'number' ? customPadding : 48;
       const container = containerRef.current;
       if (!container) return;
 
@@ -92,16 +93,19 @@ export function useCanvasGesture({
       const availableW = Math.max(rect.width - padding * 2, 100);
       const availableH = Math.max(rect.height - padding * 2, 100);
 
-      const scaleX = availableW / contentWidth;
-      const scaleY = availableH / contentHeight;
-      const targetScale = Math.min(Math.max(Math.min(scaleX, scaleY), minScale), maxScale);
+      const safeContentW = contentWidth || 1920;
+      const safeContentH = contentHeight || 1080;
+      const scaleX = availableW / safeContentW;
+      const scaleY = availableH / safeContentH;
+      const rawScale = Math.min(scaleX, scaleY);
+      const targetScale = isNaN(rawScale) ? 1.0 : Math.min(Math.max(rawScale, minScale), maxScale);
 
-      const nextX = (rect.width - contentWidth * targetScale) / 2;
-      const nextY = (rect.height - contentHeight * targetScale) / 2;
+      const nextX = (rect.width - safeContentW * targetScale) / 2;
+      const nextY = (rect.height - safeContentH * targetScale) / 2;
 
       setTransform({
-        x: nextX,
-        y: nextY,
+        x: isNaN(nextX) ? 0 : nextX,
+        y: isNaN(nextY) ? 0 : nextY,
         scale: targetScale,
       });
     },

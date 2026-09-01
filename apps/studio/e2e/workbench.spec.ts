@@ -171,6 +171,7 @@ async function verifyZoomControlsAndDragging(page: Page): Promise<void> {
   const zoomInBtn = page.locator('[data-testid="zoom-in-btn"]');
   const zoomOutBtn = page.locator('[data-testid="zoom-out-btn"]');
   const resetBtn = page.locator('[data-testid="reset-100-btn"]');
+  const fitBtn = page.locator('[data-testid="fit-screen-btn"]');
 
   await expect(zoomInBtn).toBeVisible();
   await zoomInBtn.click();
@@ -179,6 +180,11 @@ async function verifyZoomControlsAndDragging(page: Page): Promise<void> {
   await zoomOutBtn.click();
   await resetBtn.click();
   await expect(capsule).toContainText('100%');
+
+  // 验证点击自适应居中按钮不会出现 NaN%
+  await fitBtn.click();
+  await expect(capsule).not.toContainText('NaN%');
+  await expect(capsule).toContainText(/%/);
 
   // 2. 验证拖拽手柄移动胶囊
   const dragHandle = page.locator('[data-testid="zoom-drag-handle"]');
