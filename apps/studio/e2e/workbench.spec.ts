@@ -160,6 +160,46 @@ async function verifySceneTimelineNavigation(page: Page): Promise<void> {
   await expect(timeline.locator('div.group')).toHaveCount(3);
 }
 
+/**
+ * 6. 验证独立视口缩放控制胶囊 (ZoomControls) 缩放与拖拽移动
+ */
+async function verifyZoomControlsAndDragging(page: Page): Promise<void> {
+  const capsule = page.locator('[data-testid="zoom-controls-capsule"]');
+  await expect(capsule).toBeVisible();
+
+  // 1. 验证缩放按钮交互
+  const zoomInBtn = page.locator('[data-testid="zoom-in-btn"]');
+  const zoomOutBtn = page.locator('[data-testid="zoom-out-btn"]');
+  const resetBtn = page.locator('[data-testid="reset-100-btn"]');
+
+  await expect(zoomInBtn).toBeVisible();
+  await zoomInBtn.click();
+  await expect(capsule).toContainText(/%/);
+
+  await zoomOutBtn.click();
+  await resetBtn.click();
+  await expect(capsule).toContainText('100%');
+
+  // 2. 验证拖拽手柄移动胶囊
+  const dragHandle = page.locator('[data-testid="zoom-drag-handle"]');
+  await expect(dragHandle).toBeVisible();
+  const handleBox = await dragHandle.boundingBox();
+  expect(handleBox).not.toBeNull();
+
+  if (handleBox) {
+    const startX = handleBox.x + handleBox.width / 2;
+    const startY = handleBox.y + handleBox.height / 2;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX - 80, startY - 60, { steps: 5 });
+    await page.mouse.up();
+
+    const boundingBoxAfter = await capsule.boundingBox();
+    expect(boundingBoxAfter).not.toBeNull();
+  }
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 1 E2E Workbench Test Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -185,4 +225,9 @@ test.describe('FocusFlow Studio Stage 1 E2E Workbench Test Suite', () => {
   test('TC05: 验证底部时间轴场景选择与新增场景', async ({ page }) => {
     await verifySceneTimelineNavigation(page);
   });
+
+  test('TC06: 验证独立视口缩放控制胶囊 (ZoomControls) 缩放与拖拽移动', async ({ page }) => {
+    await verifyZoomControlsAndDragging(page);
+  });
 });
+

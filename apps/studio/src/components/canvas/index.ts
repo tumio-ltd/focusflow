@@ -5,3 +5,4 @@ export * from './PathDrawingOverlay';
 export * from './DotDrawingOverlay';
 export * from './CalloutOverlay';
 export * from './CanvasOverlay';
+export * from './ZoomControls';

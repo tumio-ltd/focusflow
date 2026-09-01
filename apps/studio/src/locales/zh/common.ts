@@ -26,4 +26,9 @@ export default {
   presentTip: '受众全屏演播试播',
   saveDraftTip: '保存草稿到本地存储',
   exportHtmlTip: '编译导出独立单文件 HTML',
+  zoomIn: '放大画布',
+  zoomOut: '缩小画布',
+  resetZoom: '重置缩放为 100%',
+  fitToScreen: '自适应视口居中',
+  dragToMove: '按住拖拽移动控制条',
 } as const;

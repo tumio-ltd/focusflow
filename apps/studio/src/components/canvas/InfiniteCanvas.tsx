@@ -1,13 +1,7 @@
 import React, { ReactNode } from 'react';
-import { 
-  ZoomIn, 
-  ZoomOut, 
-  Maximize2, 
-  RotateCcw, 
-  Hand 
-} from 'lucide-react';
+import { Hand } from 'lucide-react';
 import { useCanvasGesture } from '@/hooks/useCanvasGesture';
-import { Button, Tooltip } from '@/components/ui';
+import { ZoomControls } from './ZoomControls';
 
 export interface InfiniteCanvasProps {
   children?: ReactNode;
@@ -38,8 +32,6 @@ export function InfiniteCanvas({
     contentHeight,
     onTransformChange,
   });
-
-  const zoomPercent = Math.round(transform.scale * 100);
 
   return (
     <div
@@ -80,62 +72,13 @@ export function InfiniteCanvas({
         </div>
       )}
 
-      {/* 4. 右下角快捷缩放与视口控制浮动胶囊 */}
-      <div className="absolute bottom-6 right-6 flex items-center gap-1 bg-panel/90 border border-border backdrop-blur-md p-1 rounded-xl shadow-xl z-30">
-        <Tooltip content="缩小" shortcut="⌘ -">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => zoomTo(transform.scale * 0.8)}
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          >
-            <ZoomOut className="w-3.5 h-3.5" />
-          </Button>
-        </Tooltip>
-
-        <span 
-          onClick={resetZoom100}
-          className="text-[11px] font-mono text-primary font-semibold px-2 cursor-pointer hover:bg-muted rounded py-1 transition"
-          title="点击重置为 100%"
-        >
-          {zoomPercent}%
-        </span>
-
-        <Tooltip content="放大" shortcut="⌘ +">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => zoomTo(transform.scale * 1.25)}
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-          >
-            <ZoomIn className="w-3.5 h-3.5" />
-          </Button>
-        </Tooltip>
-
-        <div className="h-3.5 w-px bg-border mx-0.5" />
-
-        <Tooltip content="自适应视口居中" shortcut="⇧ 1">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => fitToScreen()}
-            className="h-7 w-7 text-muted-foreground hover:text-primary"
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-          </Button>
-        </Tooltip>
-
-        <Tooltip content="100% 原始大小" shortcut="⇧ 0">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={resetZoom100}
-            className="h-7 w-7 text-muted-foreground hover:text-primary"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </Button>
-        </Tooltip>
-      </div>
+      {/* 4. 独立可拖拽移动的快捷缩放与视口控制浮动胶囊 */}
+      <ZoomControls
+        scale={transform.scale}
+        onZoomTo={zoomTo}
+        onFitToScreen={fitToScreen}
+        onResetZoom100={resetZoom100}
+      />
     </div>
   );
 }

@@ -26,4 +26,9 @@ export default {
   presentTip: 'Audience Fullscreen Presentation Preview',
   saveDraftTip: 'Save draft to local storage',
   exportHtmlTip: 'Compile and export standalone HTML',
+  zoomIn: 'Zoom In',
+  zoomOut: 'Zoom Out',
+  resetZoom: 'Reset Zoom to 100%',
+  fitToScreen: 'Fit to Viewport',
+  dragToMove: 'Drag to Move Control Bar',
 } as const;
