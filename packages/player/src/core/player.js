@@ -115,7 +115,7 @@ export class FocusFlowPlayer {
         <!-- 3-Layer Visual Stack -->
         <div class="focusflow-wrap" id="_ff_wrap">
           <!-- Layer 0: Base Image -->
-          <img class="focusflow-img" id="_ff_img" src="${assetUrl}" alt="${this.dsl.meta?.title || 'Architecture'}" />
+          <img class="focusflow-img" id="_ff_img" src="${assetUrl}" crossorigin="anonymous" alt="${this.dsl.meta?.title || 'Architecture'}" />
 
           <!-- Layer 0.5: Dynamic Image Overlays -->
           <div class="focusflow-overlay-images" id="_ff_overlay_images"></div>

@@ -41,13 +41,40 @@ export class SobelEdgeSnapper {
 
     if (!ctx) return;
 
+    if (img.crossOrigin !== 'anonymous') {
+      try {
+        img.crossOrigin = 'anonymous';
+      } catch {
+        // ignore
+      }
+    }
+
     const cacheImageData = () => {
       try {
         ctx.drawImage(img, 0, 0, viewportWidth, viewportHeight);
         this.imgData = ctx.getImageData(0, 0, viewportWidth, viewportHeight).data;
         this.isReady = true;
-      } catch (err) {
-        console.warn('[FocusFlow] SobelEdgeSnapper: unable to read image pixels (CORS).', err);
+      } catch {
+        // 若直接 getImageData 触发浏览器 CORS Tainted Canvas 拦截，尝试通过 CORS Blob 异步光栅化
+        if (img.src && !img.src.startsWith('data:') && !img.src.startsWith('blob:')) {
+          fetch(img.src, { mode: 'cors' })
+            .then((res) => {
+              if (!res.ok) throw new Error('Fetch failed');
+              return res.blob();
+            })
+            .then((blob) => createImageBitmap(blob))
+            .then((bitmap) => {
+              ctx.drawImage(bitmap, 0, 0, viewportWidth, viewportHeight);
+              this.imgData = ctx.getImageData(0, 0, viewportWidth, viewportHeight).data;
+              this.isReady = true;
+            })
+            .catch(() => {
+              // 远端资源未配置 Access-Control-Allow-Origin 时，优雅降级为纯手动选框模式
+              this.isReady = false;
+            });
+        } else {
+          this.isReady = false;
+        }
       }
     };
 
