@@ -19,6 +19,8 @@
 ## 目录 (Table of Contents)
 
 - [1. Phase 2 核心定位与业务使命](#1-phase-2-核心定位与业务使命)
+  - [1.1 阶段演进定位](#11-阶段演进定位)
+  - [1.2 核心价值与 3 步闭环](#12-核心价值与-3-步闭环)
 - [2. 系统整体架构：双模式运行体系 (Client-Only vs Cloud SaaS)](#2-系统整体架构双模式运行体系-client-only-vs-cloud-saas)
   - [2.1 模式 A (Client-Only) 纯前端零后端离线闭环机制与战略价值](#21-模式-a-client-only-纯前端零后端离线闭环机制与战略价值)
   - [2.2 模式 A 与 模式 B (云端全栈 SaaS) 清晰边界与全方位对比矩阵](#22-模式-a-与-模式-b-云端全栈-saas-清晰边界与全方位对比矩阵)
@@ -32,7 +34,13 @@
   - [4.1 技术栈选型](#41-技术栈选型)
   - [4.2 前端目录规划与多包协作架构](#42-前端目录规划与当前项目目录的架构关系-repository--monorepo-architecture)
   - [4.3 科技双主题系统与纯 Token 语义类架构 (Theme System & Semantic Tokens Architecture)](#43-科技双主题系统与纯-token-语义类架构-theme-system--semantic-tokens-architecture)
+  - [4.4 专业工作台字阶与按键系统规范 (Professional Workbench Typography & Button System)](#44-专业工作台字阶与按键系统规范-professional-workbench-typography--button-system)
+  - [4.5 全局快捷键引擎与交互规范 (Global Studio Keyboard Engine)](#45-全局快捷键引擎与交互规范-global-studio-keyboard-engine)
 - [5. 服务端全栈架构、REST API 与数据模型规范 (Full-Stack SaaS Backend)](#5-服务端全栈架构rest-api-与数据模型规范-full-stack-saas-backend)
+  - [5.1 与 PRODUCT_DESIGN.md 8.3 节的关联性与边界划分 (Correlation & Boundaries)](#51-与-product_designmd-83-节的关联性与边界划分-correlation--boundaries)
+  - [5.2 服务端全栈多服务架构与选型 (Multi-App Backend Architecture)](#52-服务端全栈多服务架构与选型-multi-app-backend-architecture)
+  - [5.3 核心数据模型 (Prisma Schema)](#53-核心数据模型-packagesdatabaseprismaschemaprisma)
+  - [5.4 核心 RESTful API 契约](#54-核心-restful-api-契约)
 - [6. Phase 2 研发任务分解与层级跟踪清单 (Hierarchical Task Checklist / WBS)](#6-phase-2-研发任务分解与层级跟踪清单-hierarchical-task-checklist--wbs)
 - [7. Phase 2 验收测试标准 (Acceptance Criteria)](#7-phase-2-验收测试标准-acceptance-criteria)
 
