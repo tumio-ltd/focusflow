@@ -234,12 +234,9 @@ export function CameraFrustumFrame({
           </>
         )}
 
-        {/* 视口中心准星 (物理隔离为独立 24×24px GPU 合成层，呼吸重绘被完全闭环在 24px 内部，绝不外溢到 5120px 边框) */}
-        <div
-          className="absolute left-1/2 top-1/2 w-6 h-6 flex items-center justify-center text-cyan-400/40 pointer-events-none transform-gpu will-change-transform [contain:strict]"
-          style={{ transform: 'translate3d(-50%, -50%, 0)' }}
-        >
-          <Crosshair className="w-6 h-6 animate-pulse" />
+        {/* 视口中心准星 (静态精准十字准星，零 CSS 动画，彻底杜绝 60fps 持续重绘) */}
+        <div className="absolute inset-0 flex items-center justify-center text-cyan-400/50 pointer-events-none">
+          <Crosshair className="w-6 h-6" />
         </div>
 
         {/* 四角缩放手柄 */}
