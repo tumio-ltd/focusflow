@@ -103,9 +103,9 @@ export function BoxDrawingOverlay({
     if (rawW >= 30 && rawH >= 20) {
       let finalBounds = { x: rawX, y: rawY, width: rawW, height: rawH };
 
-      // 若开启了智能吸附且未按住 Option / Alt，则触发 Sobel 窄带边缘极大值贴合
+      // 若开启了智能吸附且未按住 Option / Alt，则触发自适应四边独立边缘极大值贴合
       if (isSmartSnapEnabled && !e.altKey) {
-        finalBounds = globalEdgeSnapper.snapRectBounds(finalBounds, 24);
+        finalBounds = globalEdgeSnapper.snapRectBounds(finalBounds);
       }
 
       const newBox: ElementBox = {
