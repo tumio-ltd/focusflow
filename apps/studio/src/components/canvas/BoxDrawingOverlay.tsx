@@ -17,6 +17,7 @@ export function BoxDrawingOverlay({
   onBoxCreated,
 }: BoxDrawingOverlayProps) {
   const isSmartSnapEnabled = useEditorStore((s) => s.isSmartSnapEnabled);
+  const activeDrawingColor = useEditorStore((s) => s.activeDrawingColor);
   const [isDrawing, setIsDrawing] = useState(false);
   const [dragRect, setDragRect] = useState<{
     startX: number;
@@ -92,7 +93,7 @@ export function BoxDrawingOverlay({
           height: Math.round(snapped.height),
           rx: 16,
           ry: 16,
-          style: { stroke: '#38bdf8', strokeWidth: 4, glow: true },
+          style: { stroke: activeDrawingColor || '#38bdf8', strokeWidth: 4, glow: true },
         };
         onBoxCreated(newBox);
       }
@@ -117,7 +118,7 @@ export function BoxDrawingOverlay({
         height: Math.round(finalBounds.height),
         rx: 16,
         ry: 16,
-        style: { stroke: '#38bdf8', strokeWidth: 4, glow: true },
+        style: { stroke: activeDrawingColor || '#38bdf8', strokeWidth: 4, glow: true },
       };
 
       onBoxCreated(newBox);

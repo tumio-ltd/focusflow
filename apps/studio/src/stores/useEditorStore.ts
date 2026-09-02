@@ -9,11 +9,13 @@ export interface EditorState {
   isHUDVisible: boolean;
   isSmartSnapEnabled: boolean;
   isCrosshairEnabled: boolean;
+  activeDrawingColor: string;
   cursorCoords: { x: number; y: number } | null;
   
   // Actions
   setActiveTool: (tool: ToolType) => void;
   setSelectedElementId: (id: string | null) => void;
+  setActiveDrawingColor: (color: string) => void;
   setActiveSceneIndex: (index: number) => void;
   setIsPlaying: (isPlaying: boolean) => void;
   togglePlay: () => void;
@@ -26,6 +28,7 @@ export interface EditorState {
 export const useEditorStore = create<EditorState>((set) => ({
   activeTool: 'select',
   selectedElementId: null,
+  activeDrawingColor: '#38bdf8',
   activeSceneIndex: 0,
   isPlaying: false,
   isHUDVisible: true,
@@ -35,6 +38,7 @@ export const useEditorStore = create<EditorState>((set) => ({
 
   setActiveTool: (activeTool) => set({ activeTool }),
   setSelectedElementId: (selectedElementId) => set({ selectedElementId }),
+  setActiveDrawingColor: (activeDrawingColor) => set({ activeDrawingColor }),
   setActiveSceneIndex: (activeSceneIndex) => set({ activeSceneIndex }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),

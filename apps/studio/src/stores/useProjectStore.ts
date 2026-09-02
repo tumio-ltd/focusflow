@@ -129,6 +129,8 @@ export interface ProjectState {
   addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
   addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
+  updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
+  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
   undo: () => void;
@@ -581,6 +583,54 @@ export const useProjectStore = create<ProjectState>((set) => ({
       });
 
       const nextDSL = { ...state.dsl, elements, scenes };
+      return pushHistory(state, nextDSL);
+    }),
+
+  updateBoxBounds: (boxId, bounds) =>
+    set((state) => {
+      const boxes = state.dsl.elements.boxes?.map((b: ElementBox) =>
+        b.id === boxId
+          ? {
+              ...b,
+              x: Math.round(bounds.x),
+              y: Math.round(bounds.y),
+              width: Math.round(bounds.width),
+              height: Math.round(bounds.height),
+            }
+          : b
+      ) || [];
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          boxes,
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  updateElementStyle: (elementId, style) =>
+    set((state) => {
+      const elements = { ...state.dsl.elements };
+      // 1. Check boxes
+      if (elements.boxes?.some((b: ElementBox) => b.id === elementId)) {
+        elements.boxes = elements.boxes.map((b: ElementBox) =>
+          b.id === elementId ? { ...b, style: { ...(b.style || {}), ...style } } : b
+        );
+      }
+      // 2. Check paths
+      if (elements.paths?.some((p: ElementPath) => p.id === elementId)) {
+        elements.paths = elements.paths.map((p: ElementPath) =>
+          p.id === elementId ? { ...p, style: { ...(p.style || {}), ...style } } : p
+        );
+      }
+      // 3. Check dots
+      if (elements.dots?.some((d: ElementDot) => d.id === elementId)) {
+        elements.dots = elements.dots.map((d: ElementDot) =>
+          d.id === elementId ? { ...d, style: { ...(d.style || {}), ...style } } : d
+        );
+      }
+      const nextDSL = { ...state.dsl, elements };
       return pushHistory(state, nextDSL);
     }),
 

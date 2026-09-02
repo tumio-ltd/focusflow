@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
+import { useEditorStore, useProjectStore } from '@/stores';
 
 function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: number; viewportHeight: number }) {
   const pixelRef = useRef<HTMLSpanElement>(null);
@@ -133,6 +134,12 @@ function RightInspectorComponent({
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [hasCopiedCoords, setHasCopiedCoords] = useState(false);
+
+  const selectedElementId = useEditorStore((s) => s.selectedElementId);
+  const setSelectedElementId = useEditorStore((s) => s.setSelectedElementId);
+  const activeDrawingColor = useEditorStore((s) => s.activeDrawingColor);
+  const setActiveDrawingColor = useEditorStore((s) => s.setActiveDrawingColor);
+  const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
 
   const filteredElements = elements.filter((el) =>
     el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -338,51 +345,61 @@ function RightInspectorComponent({
               </div>
 
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5 no-scrollbar">
-                {filteredElements.map((el) => (
-                  <div
-                    key={el.id}
-                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] transition ${
-                      el.active
-                        ? 'bg-muted/80 border-border text-foreground shadow-sm'
-                        : 'bg-background/40 border-border/50 text-muted-foreground opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onToggleElement?.(el.id);
-                        }}
-                        className="text-muted-foreground hover:text-primary transition shrink-0 p-0.5 cursor-pointer"
-                        title={el.active ? t('hideElementTip') : t('showElementTip')}
-                        data-action="toggle-element"
-                      >
-                        {el.active ? <Eye className="w-3.5 h-3.5 text-primary" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      </button>
-                      <span className="shrink-0">{getElementIcon(el.type)}</span>
-                      <span className="truncate">{el.name}</span>
-                    </div>
+                {filteredElements.map((el) => {
+                  const isSelected = selectedElementId === el.id;
+                  return (
+                    <div
+                      key={el.id}
+                      onClick={() => setSelectedElementId(isSelected ? null : el.id)}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] transition cursor-pointer ${
+                        isSelected
+                          ? 'bg-primary/20 border-primary text-foreground shadow-sm ring-1 ring-primary/40'
+                          : el.active
+                          ? 'bg-muted/80 border-border text-foreground shadow-sm hover:border-primary/50'
+                          : 'bg-background/40 border-border/50 text-muted-foreground opacity-60 hover:opacity-100'
+                      }`}
+                      title={isSelected ? '已在画布中选中 (可直接拖拽调整)' : '点击选中此图元'}
+                    >
+                      <div className="flex items-center gap-2 truncate flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onToggleElement?.(el.id);
+                          }}
+                          className="text-muted-foreground hover:text-primary transition shrink-0 p-0.5 cursor-pointer"
+                          title={el.active ? t('hideElementTip') : t('showElementTip')}
+                          data-action="toggle-element"
+                        >
+                          {el.active ? <Eye className="w-3.5 h-3.5 text-primary" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        </button>
+                        <span className="shrink-0">{getElementIcon(el.type)}</span>
+                        <span className="truncate">{el.name}</span>
+                      </div>
 
-                    <div className="flex items-center gap-1 shrink-0 ml-1">
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onDeleteElement?.(el.id);
-                        }}
-                        className="h-5 w-5 text-muted-foreground hover:text-destructive cursor-pointer"
-                        data-action="delete-element"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      <div className="flex items-center gap-1 shrink-0 ml-1">
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (selectedElementId === el.id) {
+                              setSelectedElementId(null);
+                            }
+                            onDeleteElement?.(el.id);
+                          }}
+                          className="h-5 w-5 text-muted-foreground hover:text-destructive cursor-pointer"
+                          data-action="delete-element"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -390,20 +407,59 @@ function RightInspectorComponent({
 
         <div className="h-px bg-border" />
 
-        {/* 3. 视觉主题色调预设 */}
+        {/* 3. 视觉主题色调预设 & 选色器 */}
         <div className="space-y-2">
-          <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
-            <Palette className="w-3.5 h-3.5 text-primary" />
-            <span>{t('palette')}</span>
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+              <Palette className="w-3.5 h-3.5 text-primary" />
+              <span>{t('palette')}</span>
+            </span>
+            {selectedElementId && (
+              <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[120px]">
+                {selectedElementId}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2 pt-1">
-            {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7'].map((c) => (
-              <div
-                key={c}
-                style={{ backgroundColor: c }}
-                className="w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20"
+            {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
+              const isCurrentActive = activeDrawingColor === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  style={{ backgroundColor: c }}
+                  onClick={() => {
+                    setActiveDrawingColor(c);
+                    if (selectedElementId) {
+                      updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                    }
+                  }}
+                  className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
+                    isCurrentActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : ''
+                  }`}
+                  title={`设为颜色 ${c}`}
+                />
+              );
+            })}
+
+            {/* 自定义拾色器 */}
+            <label
+              className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
+              title="自定义 HEX 颜色"
+            >
+              <input
+                type="color"
+                value={activeDrawingColor}
+                onChange={(e) => {
+                  const newColor = e.target.value;
+                  setActiveDrawingColor(newColor);
+                  if (selectedElementId) {
+                    updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
+                  }
+                }}
+                className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
               />
-            ))}
+            </label>
           </div>
         </div>
 

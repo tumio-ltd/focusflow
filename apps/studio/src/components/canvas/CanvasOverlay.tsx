@@ -5,6 +5,7 @@ import type { CameraConfig } from '@/utils/cameraMath';
 import { useEditorStore } from '@/stores';
 import { CameraFrustumFrame } from './CameraFrustumFrame';
 import { BoxDrawingOverlay } from './BoxDrawingOverlay';
+import { BoxTransformOverlay } from './BoxTransformOverlay';
 import { PathDrawingOverlay } from './PathDrawingOverlay';
 import { DotDrawingOverlay } from './DotDrawingOverlay';
 import { CalloutOverlay } from './CalloutOverlay';
@@ -210,6 +211,14 @@ function CanvasOverlayComponent({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
+      {/* 0. 选中框元拖拽/拉伸/变色控制图层 */}
+      <BoxTransformOverlay
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
+        active={activeTool === 'select'}
+        boxes={boxes}
+      />
+
       {/* 1. 智能选框绘制图层 */}
       <BoxDrawingOverlay
         contentWidth={contentWidth}
