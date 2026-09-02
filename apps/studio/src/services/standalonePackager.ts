@@ -1,4 +1,5 @@
 import type { FocusFlowDSL } from '@focusflow/dsl';
+import { blobToDataUrl } from '@/utils/imageDecoder';
 // @ts-ignore
 import playerCss from '@focusflow/player/styles.css?raw';
 // @ts-ignore
@@ -9,6 +10,20 @@ import playerIife from '@focusflow/player/dist/focusflow.iife.js?raw';
  */
 export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> {
   const title = dsl.meta?.title || 'FocusFlow 架构演进演示';
+
+  // 深拷贝 DSL，避免篡改原对象
+  const exportDSL = JSON.parse(JSON.stringify(dsl));
+
+  // 若底图为当前会话临时 blob: URL，自动转为内嵌 Base64 Data URL 确保脱机完全可移植
+  if (exportDSL.asset?.url?.startsWith('blob:')) {
+    try {
+      const resp = await fetch(exportDSL.asset.url);
+      const blob = await resp.blob();
+      exportDSL.asset.url = await blobToDataUrl(blob);
+    } catch (e) {
+      console.warn('Failed to embed blob image as base64 in standalone HTML:', e);
+    }
+  }
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -46,7 +61,7 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
 
   <script>
     (function() {
-      const dsl = ${JSON.stringify(dsl, null, 2)};
+      const dsl = ${JSON.stringify(exportDSL, null, 2)};
       const container = document.getElementById('focusflow-root');
       if (container && window.FocusFlow && window.FocusFlow.FocusFlowPlayer) {
         const player = new window.FocusFlow.FocusFlowPlayer({

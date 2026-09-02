@@ -67,6 +67,11 @@ export const useStorageStore = create<StorageState>((set, get) => ({
   openProject: async (id) => {
     const record = await getProjectRecord(id);
     if (record) {
+      // 关键会话保鲜机制：若工程包含持久化的底层二进制图片 (imageBlob)，自动在当前会话中重新生成有效的 ObjectURL
+      if (record.imageBlob && record.dsl?.asset) {
+        const freshUrl = URL.createObjectURL(record.imageBlob);
+        record.dsl.asset.url = freshUrl;
+      }
       await setCurrentProjectId(id);
       set({ currentProjectId: id });
     }
@@ -125,6 +130,9 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       imageBlob: target.imageBlob,
     };
     newRecord.dsl.meta.title = newRecord.title;
+    if (newRecord.imageBlob && newRecord.dsl?.asset) {
+      newRecord.dsl.asset.url = URL.createObjectURL(newRecord.imageBlob);
+    }
 
     await saveProjectRecord(newRecord);
     const list = await getProjectIndex();
