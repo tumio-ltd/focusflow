@@ -21,6 +21,9 @@ export interface CanvasOverlayProps {
   onPathCreated: (path: ElementPath) => void;
   onDotCreated: (dot: ElementDot) => void;
   onCalloutCreated: (callout: CalloutItem) => void;
+  onlyCoordinates?: boolean;
+  showFrustumOnly?: boolean;
+  showCrosshairAndFrustum?: boolean;
 }
 
 import { coordinateBus } from '@/utils/coordinateBus';
@@ -95,6 +98,9 @@ function CanvasOverlayComponent({
   onPathCreated,
   onDotCreated,
   onCalloutCreated,
+  onlyCoordinates = false,
+  showFrustumOnly = false,
+  showCrosshairAndFrustum = false,
 }: CanvasOverlayProps) {
   const rafRef = React.useRef<number | null>(null);
   const lastCoordsRef = React.useRef<{ x: number; y: number } | null>(null);
@@ -141,6 +147,59 @@ function CanvasOverlayComponent({
     lastCoordsRef.current = null;
     coordinateBus.emit(null);
   }, []);
+
+  if (onlyCoordinates) {
+    return (
+      <div
+        className="absolute inset-0 z-10"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
+      />
+    );
+  }
+
+  if (showFrustumOnly) {
+    return (
+      <div
+        className="absolute inset-0 z-10"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
+      >
+        {/* 5. 摄像机安全取景框 (Frustum) */}
+        <CameraFrustumFrame
+          camera={camera}
+          naturalWidth={contentWidth}
+          naturalHeight={contentHeight}
+          visible={!isPlaying}
+          activeTool={activeTool}
+          onCameraChange={onCameraChange}
+        />
+      </div>
+    );
+  }
+
+  if (showCrosshairAndFrustum) {
+    return (
+      <div
+        className="absolute inset-0 z-10"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
+      >
+        {/* 5. 摄像机安全取景框 (Frustum) */}
+        <CameraFrustumFrame
+          camera={camera}
+          naturalWidth={contentWidth}
+          naturalHeight={contentHeight}
+          visible={!isPlaying}
+          activeTool={activeTool}
+          onCameraChange={onCameraChange}
+        />
+
+        {/* 6. 十字激光准星标定辅助线 (Laser Crosshair) */}
+        <LaserCrosshairOverlay />
+      </div>
+    );
+  }
 
   return (
     <div

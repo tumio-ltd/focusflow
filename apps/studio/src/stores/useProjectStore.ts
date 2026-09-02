@@ -15,12 +15,12 @@ const MAX_HISTORY = 50;
 const defaultInitialDSL: FocusFlowDSL = {
   meta: {
     title: '微服务电商架构演进演示',
-    viewport: { width: 1920, height: 1459 },
+    viewport: { width: 5120, height: 2880 },
     theme: { mode: 'dark' },
     controls: { showHUDButton: true, autoplay: false, interval: 3800, showControls: false }
   },
   asset: {
-    url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80'
+    url: '/01-system_architecture_dark.png'
   },
   elements: {
     boxes: [

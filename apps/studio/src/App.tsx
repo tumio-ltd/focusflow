@@ -385,10 +385,10 @@ export default function App() {
             onTransformChange={handleCanvasTransformChange}
           >
             <div className="w-full h-full relative">
-              {/* 底层 FocusFlow 播放器挂载容器 */}
+              {/* [特性 2] 底层 FocusFlow 播放器挂载容器 - 真实加载工程底图 */}
               <div ref={containerRef} className="w-full h-full absolute inset-0 pointer-events-none" />
 
-              {/* 统一交互标定绘制层 (选框 / 连线 / 脉冲圆点 / 解说气泡 / 取景框) */}
+              {/* [特性 6] 四大标定标注工具全量图层 (选框 / 连线 / 圆点 / 气泡 / 取景框 / 激光准星) */}
               <CanvasOverlay
                 contentWidth={dsl.meta.viewport.width}
                 contentHeight={dsl.meta.viewport.height}
@@ -409,6 +409,30 @@ export default function App() {
               />
             </div>
           </InfiniteCanvas>
+        }
+        bottomTimeline={
+          <BottomTimeline
+            scenes={timelineScenes}
+            activeSceneIndex={activeSceneIndex}
+            onSelectScene={handleSelectScene}
+            onAddScene={addScene}
+            onDuplicateScene={duplicateScene}
+            onDeleteScene={(idx) => {
+              deleteScene(idx);
+              if (activeSceneIndex >= dsl.scenes.length - 1) {
+                setActiveSceneIndex(Math.max(0, dsl.scenes.length - 2));
+              }
+            }}
+            onReorderScenes={(source, target) => {
+              reorderScenes(source, target);
+              setActiveSceneIndex(target);
+            }}
+            onUpdateSceneTitle={(idx, title) => updateSceneTitle(idx, title)}
+            isPlaying={isPlaying}
+            onTogglePlay={handleTogglePlay}
+            onNext={handleNext}
+            onPrev={handlePrev}
+          />
         }
         rightInspector={
           <RightInspector
@@ -446,30 +470,6 @@ export default function App() {
             onToggleSmartSnap={toggleSmartSnap}
             isCrosshairEnabled={isCrosshairEnabled}
             onToggleCrosshair={toggleCrosshair}
-          />
-        }
-        bottomTimeline={
-          <BottomTimeline
-            scenes={timelineScenes}
-            activeSceneIndex={activeSceneIndex}
-            onSelectScene={handleSelectScene}
-            onAddScene={addScene}
-            onDuplicateScene={duplicateScene}
-            onDeleteScene={(idx) => {
-              deleteScene(idx);
-              if (activeSceneIndex >= dsl.scenes.length - 1) {
-                setActiveSceneIndex(Math.max(0, dsl.scenes.length - 2));
-              }
-            }}
-            onReorderScenes={(source, target) => {
-              reorderScenes(source, target);
-              setActiveSceneIndex(target);
-            }}
-            onUpdateSceneTitle={(idx, title) => updateSceneTitle(idx, title)}
-            isPlaying={isPlaying}
-            onTogglePlay={handleTogglePlay}
-            onNext={handleNext}
-            onPrev={handlePrev}
           />
         }
       />

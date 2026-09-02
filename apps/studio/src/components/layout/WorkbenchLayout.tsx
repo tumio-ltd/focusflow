@@ -1,11 +1,11 @@
 import React, { ReactNode } from 'react';
 
 export interface WorkbenchLayoutProps {
-  topBar: ReactNode;
-  leftToolbox: ReactNode;
-  centerCanvas: ReactNode;
-  rightInspector: ReactNode;
-  bottomTimeline: ReactNode;
+  topBar?: ReactNode;
+  leftToolbox?: ReactNode;
+  centerCanvas?: ReactNode;
+  rightInspector?: ReactNode;
+  bottomTimeline?: ReactNode;
 }
 
 export function WorkbenchLayout({
