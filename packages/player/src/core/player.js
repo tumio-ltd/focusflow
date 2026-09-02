@@ -539,6 +539,40 @@ export class FocusFlowPlayer {
     this.wrapEl.style.top = `${offsetY}px`;
   }
 
+  clearElements() {
+    if (this.svgEl) {
+      const children = Array.from(this.svgEl.children);
+      children.forEach(child => {
+        if (child.tagName.toLowerCase() !== 'defs') {
+          child.remove();
+        }
+      });
+    }
+    if (this.overlayImagesLayerEl) {
+      this.overlayImagesLayerEl.innerHTML = '';
+    }
+    if (this.calloutLayerEl) {
+      this.calloutLayerEl.innerHTML = '';
+    }
+    this.elementsMap.clear();
+    this.calloutsMap.clear();
+  }
+
+  updateDSL(newDSL) {
+    if (!newDSL) return;
+    this.dsl = newDSL;
+    if (this.stateMachine) {
+      this.stateMachine.scenes = newDSL.scenes || [];
+    }
+    this.clearElements();
+    this.renderElements();
+    const curIdx = this.stateMachine ? this.stateMachine.currentIndex : 0;
+    const curScene = this.dsl.scenes?.[curIdx] || this.dsl.scenes?.[0];
+    if (curScene) {
+      this.applyScene(curIdx, curScene, false);
+    }
+  }
+
   destroy() {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

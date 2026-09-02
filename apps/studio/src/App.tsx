@@ -193,6 +193,13 @@ export default function App() {
     }
   }, [activeSceneIndex, isPlaying]);
 
+  // 3.3 当工程图元或场景激活配置变动时，实时同步刷新画布上的图元呈现
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.updateDSL(dsl);
+    }
+  }, [dsl.elements, dsl.scenes]);
+
   const handleSelectScene = (index: number) => {
     setActiveSceneIndex(index);
   };
@@ -307,8 +314,17 @@ export default function App() {
   };
 
   // 提取当前场景图元信息用于 Inspector 展示 (通过 useMemo 保持引用稳定，阻断侧边栏重绘)
-  const inspectorElements = useMemo(
-    () => [
+  const inspectorElements = useMemo(() => {
+    const allCalloutsMap = new Map<string, CalloutItem>();
+    dsl.scenes.forEach((s) => {
+      (s.activeElements.callouts || []).forEach((c) => {
+        if (!allCalloutsMap.has(c.id)) {
+          allCalloutsMap.set(c.id, c);
+        }
+      });
+    });
+
+    return [
       ...(dsl.elements.boxes || []).map((b) => ({
         id: b.id,
         type: 'box' as const,
@@ -327,15 +343,14 @@ export default function App() {
         name: d.id,
         active: activeScene?.activeElements.dots?.includes(d.id) || false,
       })),
-      ...(activeScene?.activeElements.callouts || []).map((c) => ({
+      ...Array.from(allCalloutsMap.values()).map((c) => ({
         id: c.id,
         type: 'callout' as const,
         name: c.title || c.id,
-        active: true,
+        active: activeScene?.activeElements.callouts?.some((sc) => sc.id === c.id) || false,
       })),
-    ],
-    [dsl.elements, activeScene?.activeElements]
-  );
+    ];
+  }, [dsl.elements, dsl.scenes, activeScene?.activeElements]);
 
   // 时间轴场景列表记忆化
   const timelineScenes = useMemo(
@@ -455,14 +470,16 @@ export default function App() {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);
               const isPath = dsl.elements.paths?.some((p) => p.id === id);
               const isDot = dsl.elements.dots?.some((d) => d.id === id);
-              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : 'images';
+              const isCallout = dsl.scenes.some((s) => s.activeElements.callouts?.some((c) => c.id === id));
+              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : isCallout ? 'callouts' : 'images';
               toggleElementInScene(activeSceneIndex, type, id);
             }}
             onDeleteElement={(id) => {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);
               const isPath = dsl.elements.paths?.some((p) => p.id === id);
               const isDot = dsl.elements.dots?.some((d) => d.id === id);
-              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : 'images';
+              const isCallout = dsl.scenes.some((s) => s.activeElements.callouts?.some((c) => c.id === id));
+              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : isCallout ? 'callouts' : 'images';
               deleteElement(type, id);
             }}
             viewport={dsl.meta.viewport}

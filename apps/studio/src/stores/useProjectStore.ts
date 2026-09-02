@@ -119,7 +119,7 @@ export interface ProjectState {
   deleteScene: (index: number) => void;
   toggleElementInScene: (
     sceneIndex: number, 
-    elementType: 'boxes' | 'paths' | 'dots' | 'images', 
+    elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', 
     elementId: string
   ) => void;
   inheritPreviousSceneElements: (targetSceneIndex: number) => void;
@@ -127,7 +127,7 @@ export interface ProjectState {
   addPath: (path: ElementPath, activeInSceneIndex?: number) => void;
   addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
   addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
-  deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images', elementId: string) => void;
+  deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
   undo: () => void;
@@ -348,6 +348,28 @@ export const useProjectStore = create<ProjectState>((set) => ({
       const scene = scenes[sceneIndex];
       if (!scene) return state;
 
+      if (elementType === 'callouts') {
+        const callouts = scene.activeElements.callouts || [];
+        const exists = callouts.some((c) => c.id === elementId);
+        let nextCallouts;
+        if (exists) {
+          nextCallouts = callouts.filter((c) => c.id !== elementId);
+        } else {
+          const allCallouts = state.dsl.scenes.flatMap((s) => s.activeElements.callouts || []);
+          const found = allCallouts.find((c) => c.id === elementId);
+          nextCallouts = found ? [...callouts, found] : callouts;
+        }
+        scenes[sceneIndex] = {
+          ...scene,
+          activeElements: {
+            ...scene.activeElements,
+            callouts: nextCallouts,
+          },
+        };
+        const nextDSL = { ...state.dsl, scenes };
+        return pushHistory(state, nextDSL);
+      }
+
       const activeList = scene.activeElements[elementType] || [];
       const nextActiveList = activeList.includes(elementId)
         ? activeList.filter((id) => id !== elementId)
@@ -508,13 +530,24 @@ export const useProjectStore = create<ProjectState>((set) => ({
         elements.images = elements.images?.filter((i: ElementImage) => i.id !== elementId) || [];
       }
 
-      const scenes = state.dsl.scenes.map((s) => ({
-        ...s,
-        activeElements: {
-          ...s.activeElements,
-          [elementType]: s.activeElements[elementType]?.filter((id) => id !== elementId) || [],
-        },
-      }));
+      const scenes = state.dsl.scenes.map((s) => {
+        if (elementType === 'callouts') {
+          return {
+            ...s,
+            activeElements: {
+              ...s.activeElements,
+              callouts: s.activeElements.callouts?.filter((c) => c.id !== elementId) || [],
+            },
+          };
+        }
+        return {
+          ...s,
+          activeElements: {
+            ...s.activeElements,
+            [elementType]: s.activeElements[elementType]?.filter((id) => id !== elementId) || [],
+          },
+        };
+      });
 
       const nextDSL = { ...state.dsl, elements, scenes };
       return pushHistory(state, nextDSL);

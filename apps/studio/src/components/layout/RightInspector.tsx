@@ -346,9 +346,15 @@ function RightInspectorComponent({
                   >
                     <div className="flex items-center gap-2 truncate flex-1 min-w-0">
                       <button
-                        onClick={() => onToggleElement?.(el.id)}
-                        className="text-muted-foreground hover:text-primary transition shrink-0"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onToggleElement?.(el.id);
+                        }}
+                        className="text-muted-foreground hover:text-primary transition shrink-0 p-0.5 cursor-pointer"
                         title={el.active ? t('hideElementTip') : t('showElementTip')}
+                        data-action="toggle-element"
                       >
                         {el.active ? <Eye className="w-3.5 h-3.5 text-primary" /> : <EyeOff className="w-3.5 h-3.5" />}
                       </button>
@@ -358,10 +364,16 @@ function RightInspectorComponent({
 
                     <div className="flex items-center gap-1 shrink-0 ml-1">
                       <Button
+                        type="button"
                         size="icon"
                         variant="ghost"
-                        onClick={() => onDeleteElement?.(el.id)}
-                        className="h-5 w-5 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDeleteElement?.(el.id);
+                        }}
+                        className="h-5 w-5 text-muted-foreground hover:text-destructive cursor-pointer"
+                        data-action="delete-element"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
