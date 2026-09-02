@@ -234,8 +234,11 @@ export function CameraFrustumFrame({
           </>
         )}
 
-        {/* 视口中心准星 */}
-        <div className="absolute inset-0 flex items-center justify-center text-cyan-400/40 pointer-events-none">
+        {/* 视口中心准星 (物理隔离为独立 24×24px GPU 合成层，呼吸重绘被完全闭环在 24px 内部，绝不外溢到 5120px 边框) */}
+        <div
+          className="absolute left-1/2 top-1/2 w-6 h-6 flex items-center justify-center text-cyan-400/40 pointer-events-none transform-gpu will-change-transform [contain:strict]"
+          style={{ transform: 'translate3d(-50%, -50%, 0)' }}
+        >
           <Crosshair className="w-6 h-6 animate-pulse" />
         </div>
 
@@ -245,25 +248,25 @@ export function CameraFrustumFrame({
             <div
               data-testid="camera-handle-nw"
               onPointerDown={(e) => handleCornerResizeDown('nw', e)}
-              className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nwse-resize hover:scale-125 transition-transform"
+              className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nwse-resize hover:scale-110"
               title="按住等比例缩放镜头"
             />
             <div
               data-testid="camera-handle-ne"
               onPointerDown={(e) => handleCornerResizeDown('ne', e)}
-              className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nesw-resize hover:scale-125 transition-transform"
+              className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nesw-resize hover:scale-110"
               title="按住等比例缩放镜头"
             />
             <div
               data-testid="camera-handle-sw"
               onPointerDown={(e) => handleCornerResizeDown('sw', e)}
-              className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nesw-resize hover:scale-125 transition-transform"
+              className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nesw-resize hover:scale-110"
               title="按住等比例缩放镜头"
             />
             <div
               data-testid="camera-handle-se"
               onPointerDown={(e) => handleCornerResizeDown('se', e)}
-              className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nwse-resize hover:scale-125 transition-transform"
+              className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nwse-resize hover:scale-110"
               title="按住等比例缩放镜头"
             />
           </>
