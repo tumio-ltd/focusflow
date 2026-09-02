@@ -75,7 +75,7 @@ export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
         return;
       }
 
-      // 1 ~ 5 -> 切换工具
+      // 1 ~ 6 -> 切换工具
       if (e.key === '1' || e.key === 'v' || e.key === 'V') {
         setActiveTool('select');
       } else if (e.key === '2' || e.key === 'r' || e.key === 'R') {
@@ -84,8 +84,10 @@ export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
         setActiveTool('path');
       } else if (e.key === '4' || e.key === 'd' || e.key === 'D') {
         setActiveTool('dot');
-      } else if (e.key === '5' || e.key === 'c' || e.key === 'C') {
+      } else if (e.key === '5' || e.key === 'c' || e.key === 'C' || e.key === 't' || e.key === 'T') {
         setActiveTool('callout');
+      } else if (e.key === '6' || e.key === 'i' || e.key === 'I') {
+        setActiveTool('image');
       }
     };
 

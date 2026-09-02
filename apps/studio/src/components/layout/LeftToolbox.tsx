@@ -6,11 +6,12 @@ import {
   GitCommit, 
   CircleDot, 
   MessageSquare,
+  Image as ImageIcon,
   Sparkles
 } from 'lucide-react';
 import { Tooltip } from '@/components/ui';
 
-export type ToolType = 'select' | 'box' | 'path' | 'dot' | 'callout';
+export type ToolType = 'select' | 'box' | 'path' | 'dot' | 'callout' | 'image';
 
 export interface LeftToolboxProps {
   activeTool: ToolType;
@@ -51,6 +52,12 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
       label: t('callout'),
       shortcut: '5 / T',
       icon: MessageSquare,
+    },
+    {
+      id: 'image' as ToolType,
+      label: t('image', '插图'),
+      shortcut: '6 / I',
+      icon: ImageIcon,
     },
   ];
 

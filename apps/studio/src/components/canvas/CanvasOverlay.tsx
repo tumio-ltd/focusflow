@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import type { ElementBox, ElementPath, ElementDot, CalloutItem } from '@focusflow/dsl';
+import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem } from '@focusflow/dsl';
 import type { ToolType } from '@/components/layout';
 import type { CameraConfig } from '@/utils/cameraMath';
 import { useEditorStore } from '@/stores';
@@ -8,6 +8,7 @@ import { BoxDrawingOverlay } from './BoxDrawingOverlay';
 import { PathDrawingOverlay } from './PathDrawingOverlay';
 import { DotDrawingOverlay } from './DotDrawingOverlay';
 import { CalloutOverlay } from './CalloutOverlay';
+import { ImageDrawingOverlay } from './ImageDrawingOverlay';
 
 export interface CanvasOverlayProps {
   contentWidth: number;
@@ -21,6 +22,7 @@ export interface CanvasOverlayProps {
   onPathCreated: (path: ElementPath) => void;
   onDotCreated: (dot: ElementDot) => void;
   onCalloutCreated: (callout: CalloutItem) => void;
+  onImageCreated?: (image: ElementImage) => void;
   onlyCoordinates?: boolean;
   showFrustumOnly?: boolean;
   showCrosshairAndFrustum?: boolean;
@@ -98,6 +100,7 @@ function CanvasOverlayComponent({
   onPathCreated,
   onDotCreated,
   onCalloutCreated,
+  onImageCreated,
   onlyCoordinates = false,
   showFrustumOnly = false,
   showCrosshairAndFrustum = false,
@@ -240,6 +243,16 @@ function CanvasOverlayComponent({
         active={activeTool === 'callout'}
         onCalloutCreated={onCalloutCreated}
       />
+
+      {/* 4.1 场景局部插图/下钻子图放置图层 */}
+      {onImageCreated && (
+        <ImageDrawingOverlay
+          contentWidth={contentWidth}
+          contentHeight={contentHeight}
+          active={activeTool === 'image'}
+          onImageCreated={onImageCreated}
+        />
+      )}
 
       {/* 5. 摄像机安全取景框 (Frustum) */}
       <CameraFrustumFrame

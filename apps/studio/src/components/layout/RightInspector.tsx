@@ -18,6 +18,7 @@ import {
   GitCommit,
   CircleDot,
   MessageSquare,
+  Image as ImageIcon,
   Target,
   Sparkles,
   Check,
@@ -89,7 +90,7 @@ export interface RightInspectorProps {
   onInheritPreviousScene?: () => void;
   elements?: {
     id: string;
-    type: 'box' | 'path' | 'dot' | 'callout';
+    type: 'box' | 'path' | 'dot' | 'callout' | 'image';
     name: string;
     active: boolean;
   }[];
@@ -121,7 +122,7 @@ function RightInspectorComponent({
   onToggleElement,
   onDeleteElement,
   viewport = { width: 1920, height: 1080 },
-  isSmartSnapEnabled = true,
+  isSmartSnapEnabled = false,
   onToggleSmartSnap,
   isCrosshairEnabled = false,
   onToggleCrosshair,
@@ -138,7 +139,7 @@ function RightInspectorComponent({
     el.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getElementIcon = (type: 'box' | 'path' | 'dot' | 'callout') => {
+  const getElementIcon = (type: 'box' | 'path' | 'dot' | 'callout' | 'image') => {
     switch (type) {
       case 'box':
         return <Square className="w-3 h-3 text-cyan-400" />;
@@ -148,6 +149,8 @@ function RightInspectorComponent({
         return <CircleDot className="w-3 h-3 text-purple-500" />;
       case 'callout':
         return <MessageSquare className="w-3 h-3 text-amber-500" />;
+      case 'image':
+        return <ImageIcon className="w-3 h-3 text-blue-400" />;
     }
   };
 

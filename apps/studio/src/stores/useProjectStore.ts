@@ -127,6 +127,7 @@ export interface ProjectState {
   addPath: (path: ElementPath, activeInSceneIndex?: number) => void;
   addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
   addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
+  addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
@@ -512,6 +513,36 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
       const nextDSL = {
         ...state.dsl,
+        scenes,
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  addImage: (image, activeInSceneIndex = 0) =>
+    set((state) => {
+      const images = [...(state.dsl.elements.images || []), image];
+      const scenes = [...state.dsl.scenes];
+      const targetScene = scenes[activeInSceneIndex];
+
+      if (targetScene) {
+        const currentImages = targetScene.activeElements.images || [];
+        if (!currentImages.includes(image.id)) {
+          scenes[activeInSceneIndex] = {
+            ...targetScene,
+            activeElements: {
+              ...targetScene.activeElements,
+              images: [...currentImages, image.id],
+            },
+          };
+        }
+      }
+
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          images,
+        },
         scenes,
       };
       return pushHistory(state, nextDSL);

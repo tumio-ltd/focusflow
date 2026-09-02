@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
-import type { ElementBox, ElementPath, ElementDot, CalloutItem } from '@focusflow/dsl';
+import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem } from '@focusflow/dsl';
 import { 
   WorkbenchLayout, 
   TopBar, 
@@ -73,6 +73,7 @@ export default function App() {
     addPath,
     addDot,
     addCallout,
+    addImage,
     toggleElementInScene,
     inheritPreviousSceneElements,
     deleteElement,
@@ -313,6 +314,10 @@ export default function App() {
     addCallout(callout, activeSceneIndex);
   };
 
+  const handleImageCreated = (image: ElementImage) => {
+    addImage(image, activeSceneIndex);
+  };
+
   // 提取当前场景图元信息用于 Inspector 展示 (通过 useMemo 保持引用稳定，阻断侧边栏重绘)
   const inspectorElements = useMemo(() => {
     const allCalloutsMap = new Map<string, CalloutItem>();
@@ -342,6 +347,12 @@ export default function App() {
         type: 'dot' as const,
         name: d.id,
         active: activeScene?.activeElements.dots?.includes(d.id) || false,
+      })),
+      ...(dsl.elements.images || []).map((img) => ({
+        id: img.id,
+        type: 'image' as const,
+        name: img.id,
+        active: activeScene?.activeElements.images?.includes(img.id) || false,
       })),
       ...Array.from(allCalloutsMap.values()).map((c) => ({
         id: c.id,
@@ -421,6 +432,7 @@ export default function App() {
                 onPathCreated={handlePathCreated}
                 onDotCreated={handleDotCreated}
                 onCalloutCreated={handleCalloutCreated}
+                onImageCreated={handleImageCreated}
               />
             </div>
           </InfiniteCanvas>
@@ -470,16 +482,18 @@ export default function App() {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);
               const isPath = dsl.elements.paths?.some((p) => p.id === id);
               const isDot = dsl.elements.dots?.some((d) => d.id === id);
+              const isImage = dsl.elements.images?.some((i) => i.id === id);
               const isCallout = dsl.scenes.some((s) => s.activeElements.callouts?.some((c) => c.id === id));
-              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : isCallout ? 'callouts' : 'images';
+              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : isImage ? 'images' : isCallout ? 'callouts' : 'boxes';
               toggleElementInScene(activeSceneIndex, type, id);
             }}
             onDeleteElement={(id) => {
               const isBox = dsl.elements.boxes?.some((b) => b.id === id);
               const isPath = dsl.elements.paths?.some((p) => p.id === id);
               const isDot = dsl.elements.dots?.some((d) => d.id === id);
+              const isImage = dsl.elements.images?.some((i) => i.id === id);
               const isCallout = dsl.scenes.some((s) => s.activeElements.callouts?.some((c) => c.id === id));
-              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : isCallout ? 'callouts' : 'images';
+              const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : isImage ? 'images' : isCallout ? 'callouts' : 'boxes';
               deleteElement(type, id);
             }}
             viewport={dsl.meta.viewport}
