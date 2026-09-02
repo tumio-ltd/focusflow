@@ -28,6 +28,13 @@ export function CameraFrustumFrame({
   const rect = cameraToFrustumRect(camera, naturalWidth, naturalHeight);
   const isInteractive = activeTool === 'select' && !!onCameraChange;
 
+  // 当取景框处于全景状态 (例如 zoom <= 1.05) 时，边框向内微调 2px 避让，杜绝与底图外边框在同一个亚像素栅格上重叠冲突
+  const isFullOverview = camera.zoom <= 1.05 && Math.abs(camera.x || 0) < 1 && Math.abs(camera.y || 0) < 1;
+  const frameX = isFullOverview ? rect.x + 2 : rect.x;
+  const frameY = isFullOverview ? rect.y + 2 : rect.y;
+  const frameWidth = isFullOverview ? Math.max(10, rect.width - 4) : rect.width;
+  const frameHeight = isFullOverview ? Math.max(10, rect.height - 4) : rect.height;
+
   // 1. 拖拽平移取景框 (Drag-to-Move)
   const handlePointerDownMove = (e: React.PointerEvent) => {
     if (!isInteractive) return;
@@ -167,23 +174,25 @@ export function CameraFrustumFrame({
         tabIndex={isInteractive ? 0 : undefined}
         onKeyDown={handleKeyDown}
         data-testid="camera-frustum-frame"
-        className={`absolute border-2 rounded-xl transition-shadow duration-150 select-none outline-none pointer-events-none ${
+        className={`absolute border-2 rounded-xl transform-gpu select-none outline-none pointer-events-none ${
           isSelected || isDragging || isResizing
-            ? 'border-cyan-300 shadow-[0_0_35px_rgba(56,189,248,0.45)] ring-1 ring-cyan-400'
-            : 'border-cyan-400/80 shadow-[0_0_25px_rgba(56,189,248,0.2)]'
+            ? 'border-cyan-300 shadow-[inset_0_0_25px_rgba(56,189,248,0.35)] ring-1 ring-inset ring-cyan-400/50'
+            : 'border-cyan-400/80 shadow-[inset_0_0_15px_rgba(56,189,248,0.15)]'
         }`}
         style={{
-          left: `${rect.x}px`,
-          top: `${rect.y}px`,
-          width: `${rect.width}px`,
-          height: `${rect.height}px`,
+          left: `${frameX}px`,
+          top: `${frameY}px`,
+          width: `${frameWidth}px`,
+          height: `${frameHeight}px`,
         }}
       >
-        {/* 左上角摄像机镜头标签 (可抓取拖拽平移取景框) */}
+        {/* 左上角摄像机镜头标签 (当贴顶时放置在内部，避免被顶层 overflow-hidden 截断裁切) */}
         <div
           data-testid="camera-frustum-badge"
           onPointerDown={handlePointerDownMove}
-          className={`absolute -top-7 left-0 flex items-center gap-1.5 bg-cyan-950/90 border border-cyan-500/60 backdrop-blur-md px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg ${
+          className={`absolute ${
+            frameY < 32 ? 'top-1.5 left-1.5' : '-top-7 left-0'
+          } flex items-center gap-1.5 bg-cyan-950/90 border border-cyan-500/60 backdrop-blur-md px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg ${
             isInteractive ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/90 hover:border-cyan-400' : 'pointer-events-none'
           }`}
         >
