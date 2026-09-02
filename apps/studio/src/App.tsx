@@ -17,7 +17,8 @@ import {
   ProjectManagerModal, 
   TemplatesModal,
   AudienceModal,
-  ExportModal
+  ExportModal,
+  DslEditorModal
 } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import { type ImageMeta, parseImageUrl } from '@/utils/imageDecoder';
@@ -35,6 +36,7 @@ export default function App() {
   const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
   const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isDslModalOpen, setIsDslModalOpen] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 视口变换与容器尺寸跟踪 (使用 useRef 隔离高频手势平移，避免触发根组件与侧边栏 Re-render)
@@ -394,6 +396,7 @@ export default function App() {
             onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
             onOpenAudience={() => setIsAudienceModalOpen(true)}
+            onOpenDslEditor={() => setIsDslModalOpen(true)}
             onSave={handleSaveDraft}
             onExport={() => setIsExportModalOpen(true)}
           />
@@ -535,6 +538,13 @@ export default function App() {
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         dsl={dsl}
+      />
+
+      <DslEditorModal
+        isOpen={isDslModalOpen}
+        onClose={() => setIsDslModalOpen(false)}
+        dsl={dsl}
+        onApplyDSL={setDSL}
       />
     </>
   );

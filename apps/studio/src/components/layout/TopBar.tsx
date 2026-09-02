@@ -17,7 +17,8 @@ import {
   LayoutTemplate,
   Play,
   Laptop,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Code2
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -34,6 +35,7 @@ export interface TopBarProps {
   onOpenProjects?: () => void;
   onOpenImport?: () => void;
   onOpenAudience?: () => void;
+  onOpenDslEditor?: () => void;
   showPlayerControls?: boolean;
   onTogglePlayerControls?: () => void;
   isSaved?: boolean;
@@ -52,6 +54,7 @@ function TopBarComponent({
   onOpenProjects,
   onOpenImport,
   onOpenAudience,
+  onOpenDslEditor,
   showPlayerControls = false,
   onTogglePlayerControls,
   isSaved = true,
@@ -281,6 +284,20 @@ function TopBarComponent({
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="hidden 2xl:inline">{t('playerControls')}</span>
+          </Button>
+        </Tooltip>
+
+        {/* 实时 DSL JSON 代码编辑器 */}
+        <Tooltip content="实时查看与编辑 DSL JSON" position="bottom" align="end">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="dsl-editor-btn"
+            onClick={onOpenDslEditor}
+            className="gap-1.5 h-8 px-2 sm:px-2.5 border-border text-foreground hover:text-primary hover:border-primary/50"
+          >
+            <Code2 className="w-3.5 h-3.5 text-primary" />
+            <span className="font-mono text-xs font-semibold">DSL</span>
           </Button>
         </Tooltip>
 
