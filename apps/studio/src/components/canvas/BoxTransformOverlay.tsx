@@ -233,7 +233,7 @@ export function BoxTransformOverlay({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 z-20 pointer-events-auto"
+      className="absolute inset-0 z-20 pointer-events-none"
       onPointerDown={handleBackgroundPointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -253,7 +253,7 @@ export function BoxTransformOverlay({
               e.stopPropagation();
               setSelectedElementId(b.id);
             }}
-            className={`absolute border border-dashed rounded-xl cursor-pointer transition-all ${
+            className={`absolute border border-dashed rounded-xl cursor-pointer transition-all pointer-events-auto ${
               isActiveInScene
                 ? 'border-white/20 hover:border-primary/80 hover:bg-primary/5'
                 : 'border-white/10 opacity-40 hover:opacity-100 hover:border-primary/50'
