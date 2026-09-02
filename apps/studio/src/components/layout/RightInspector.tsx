@@ -172,7 +172,7 @@ function RightInspectorComponent({
   return (
     <aside
       data-testid="inspector"
-      className="w-72 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto transition-colors duration-200"
+      className="w-72 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto"
     >
       {/* 顶部标题 */}
       <div className="h-11 px-4 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground uppercase tracking-wider">

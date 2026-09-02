@@ -37,7 +37,7 @@ export function InfiniteCanvas({
     <div
       ref={containerRef}
       data-testid="infinite-canvas-container"
-      className={`relative w-full h-full overflow-hidden select-none bg-canvas touch-none transition-colors duration-200 ${
+      className={`relative w-full h-full overflow-hidden select-none bg-canvas touch-none ${
         isPanning || isSpacePressed ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
       } ${className}`}
       {...pointerHandlers}
