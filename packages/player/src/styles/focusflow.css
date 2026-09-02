@@ -166,6 +166,23 @@
   }
 }
 
+/* Glowing Pulse Animation */
+.ff-path.ff-path-pulse {
+  animation: ffPathPulse 2s ease-in-out infinite alternate !important;
+}
+
+@keyframes ffPathPulse {
+  0% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.35;
+  }
+}
+
 /* Pulse Anchor Dots */
 .ff-dot {
   opacity: 0;

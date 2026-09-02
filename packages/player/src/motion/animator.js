@@ -17,7 +17,7 @@ export class MotionAnimator {
     this.elementsMap.forEach((meta) => {
       const el = meta.dom;
       el.style.transition = 'none';
-      el.classList.remove('active', 'ff-stream');
+      el.classList.remove('active', 'ff-stream', 'ff-path-pulse');
 
       if (meta.type === 'box') {
         el.style.strokeDashoffset = `${meta.perimeter}`;
@@ -77,9 +77,21 @@ export class MotionAnimator {
           if (meta.data.style?.flowSpeed) {
             el.style.animationDuration = `${(1.5 / meta.data.style.flowSpeed).toFixed(2)}s`;
           }
+          el.classList.remove('ff-path-pulse');
           el.classList.add('active', 'ff-stream');
+        } else if (mode === 'pulse') {
+          // Glowing Pulse (Solid line with neon breathing opacity)
+          el.style.strokeDasharray = 'none';
+          el.style.strokeDashoffset = '0';
+          el.style.transition = `opacity 0.4s ease ${delay}s`;
+          el.classList.remove('ff-stream');
+          el.classList.add('active', 'ff-path-pulse');
         } else {
-          // One-shot Draw-in
+          // One-shot Draw-in (Solid line drawn sequentially from start to end)
+          el.classList.remove('ff-stream', 'ff-path-pulse');
+          el.style.strokeDasharray = `${meta.length}`;
+          el.style.strokeDashoffset = `${meta.length}`;
+          void el.getBoundingClientRect(); // trigger reflow
           el.style.transition = `stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1) ${delay}s, opacity 0.4s ease ${delay}s`;
           el.classList.add('active');
           el.style.strokeDashoffset = '0';
