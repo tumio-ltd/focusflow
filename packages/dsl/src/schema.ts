@@ -18,6 +18,7 @@ export interface FocusFlowDSL {
       [key: string]: string | undefined;
     };
     controls?: {
+      showControls?: boolean; // 是否展示独立播放器悬浮控制栏 (默认 true)
       autoplay?: boolean;      // 页面加载后是否默认自动循环播放 (默认 false)
       interval?: number;      // 自动轮播每屏停留时长 (毫秒，默认 3800ms)
       showPlayBtn?: boolean;  // 是否展示播放/暂停按钮 (默认 true)
@@ -132,6 +133,15 @@ export interface PlayerOptions {
   container: string | HTMLElement;
   dsl: FocusFlowDSL;
   debug?: boolean;
+  basePath?: string;
+  autoplay?: boolean;
   autoPlayInterval?: number;
+  enableKeyboard?: boolean;
+  disableCamera?: boolean;
+  showControls?: boolean;
+  showPlayBtn?: boolean;
+  showCounter?: boolean;
+  showProgress?: boolean;
+  showHUDButton?: boolean;
   onSceneChange?: (sceneIndex: number, scene: SceneStep) => void;
 }

@@ -206,6 +206,26 @@ async function verifyZoomControlsAndDragging(page: Page): Promise<void> {
   }
 }
 
+/**
+ * 7. 验证独立播放控制栏显隐切换 (Standalone Player Controls Toggle)
+ */
+async function verifyPlayerControlsToggle(page: Page): Promise<void> {
+  const toggleBtn = page.locator('[data-testid="toggle-player-controls-btn"]');
+  await expect(toggleBtn).toBeVisible();
+
+  const controls = page.locator('.focusflow-controls');
+  // 默认情况下 Studio 内底层播放器控制栏隐藏
+  await expect(controls).toBeHidden();
+
+  // 点击开启
+  await toggleBtn.click();
+  await expect(controls).toBeVisible();
+
+  // 再次点击关闭
+  await toggleBtn.click();
+  await expect(controls).toBeHidden();
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 1 E2E Workbench Test Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -234,6 +254,10 @@ test.describe('FocusFlow Studio Stage 1 E2E Workbench Test Suite', () => {
 
   test('TC06: 验证独立视口缩放控制胶囊 (ZoomControls) 缩放与拖拽移动', async ({ page }) => {
     await verifyZoomControlsAndDragging(page);
+  });
+
+  test('TC07: 验证底图独立播放控制栏显隐控制与状态响应', async ({ page }) => {
+    await verifyPlayerControlsToggle(page);
   });
 });
 

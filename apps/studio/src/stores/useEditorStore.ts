@@ -7,6 +7,9 @@ export interface EditorState {
   activeSceneIndex: number;
   isPlaying: boolean;
   isHUDVisible: boolean;
+  isSmartSnapEnabled: boolean;
+  isCrosshairEnabled: boolean;
+  cursorCoords: { x: number; y: number } | null;
   
   // Actions
   setActiveTool: (tool: ToolType) => void;
@@ -15,6 +18,9 @@ export interface EditorState {
   setIsPlaying: (isPlaying: boolean) => void;
   togglePlay: () => void;
   toggleHUD: () => void;
+  toggleSmartSnap: () => void;
+  toggleCrosshair: () => void;
+  setCursorCoords: (coords: { x: number; y: number } | null) => void;
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -23,6 +29,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   activeSceneIndex: 0,
   isPlaying: false,
   isHUDVisible: true,
+  isSmartSnapEnabled: true,
+  isCrosshairEnabled: false,
+  cursorCoords: null,
 
   setActiveTool: (activeTool) => set({ activeTool }),
   setSelectedElementId: (selectedElementId) => set({ selectedElementId }),
@@ -30,4 +39,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   toggleHUD: () => set((state) => ({ isHUDVisible: !state.isHUDVisible })),
+  toggleSmartSnap: () => set((state) => ({ isSmartSnapEnabled: !state.isSmartSnapEnabled })),
+  toggleCrosshair: () => set((state) => ({ isCrosshairEnabled: !state.isCrosshairEnabled })),
+  setCursorCoords: (cursorCoords) => set({ cursorCoords }),
 }));

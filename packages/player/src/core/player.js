@@ -32,12 +32,15 @@ export class FocusFlowPlayer {
 
     // Controls configurations (Options override meta.controls)
     const metaControls = this.dsl.meta?.controls || {};
+    this.showControls = options.showControls !== undefined ? !!options.showControls : (metaControls.showControls ?? true);
     this.autoplay = options.autoplay !== undefined ? !!options.autoplay : (metaControls.autoplay ?? false);
     this.autoplayInterval = options.autoPlayInterval || options.interval || metaControls.interval || 3800;
     this.showPlayBtn = options.showPlayBtn !== undefined ? !!options.showPlayBtn : (metaControls.showPlayBtn ?? true);
     this.showCounter = options.showCounter !== undefined ? !!options.showCounter : (metaControls.showCounter ?? true);
     this.showProgress = options.showProgress !== undefined ? !!options.showProgress : (metaControls.showProgress ?? true);
     this.showHUDButton = options.showHUDButton !== undefined ? !!options.showHUDButton : (metaControls.showHUDButton ?? true);
+    this.enableKeyboard = options.enableKeyboard !== undefined ? !!options.enableKeyboard : true;
+    this.disableCamera = !!options.disableCamera;
 
     this.viewportWidth = this.dsl.meta?.viewport?.width || 5120;
     this.viewportHeight = this.dsl.meta?.viewport?.height || 2880;
@@ -65,7 +68,7 @@ export class FocusFlowPlayer {
     this.buildDOM();
     
     // Initialize sub-engines
-    this.camera = new CameraKinematics(this.wrapEl, this.viewportWidth, this.viewportHeight);
+    this.camera = new CameraKinematics(this.wrapEl, this.viewportWidth, this.viewportHeight, { disabled: this.disableCamera });
     this.geometry = new GeometryCalculator(this.svgEl, this.viewportWidth, this.viewportHeight);
     this.router = new BezierRouter(this.elementsMap);
     this.animator = new MotionAnimator(this.elementsMap, this.calloutsMap);
@@ -89,8 +92,48 @@ export class FocusFlowPlayer {
       this.hud.activate();
     }
 
+    // Auto-compute stage layout fitting exact base aspect ratio
+    this.updateStageLayout();
+
+    if (typeof window !== 'undefined' && window.ResizeObserver && this.container) {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.updateStageLayout();
+      });
+      this.resizeObserver.observe(this.container);
+    }
+
     // Go to step 0 immediately
     this.goToStep(0, false);
+
+    // Auto-calibrate viewport to base image natural dimensions if mismatched
+    if (this.imgEl) {
+      const calibrateSelf = () => {
+        const natW = this.imgEl.naturalWidth;
+        const natH = this.imgEl.naturalHeight;
+        if (natW > 0 && natH > 0 && (this.viewportWidth !== natW || this.viewportHeight !== natH)) {
+          this.viewportWidth = natW;
+          this.viewportHeight = natH;
+          if (this.svgEl) {
+            this.svgEl.setAttribute('viewBox', `0 0 ${natW} ${natH}`);
+          }
+          if (this.geometry) {
+            this.geometry.viewportWidth = natW;
+            this.geometry.viewportHeight = natH;
+          }
+          if (this.camera) {
+            this.camera.baseWidth = natW;
+            this.camera.baseHeight = natH;
+          }
+        }
+        this.updateStageLayout();
+      };
+
+      if (this.imgEl.complete && this.imgEl.naturalWidth > 0) {
+        calibrateSelf();
+      } else {
+        this.imgEl.addEventListener('load', calibrateSelf, { once: true });
+      }
+    }
 
     // Trigger autoplay if enabled
     if (this.autoplay) {
@@ -139,7 +182,7 @@ export class FocusFlowPlayer {
         </div>
 
         <!-- Floating Bottom Controls -->
-        <div class="focusflow-controls">
+        <div class="focusflow-controls"${this.showControls ? '' : ' style="display:none;"'}>
           <button class="ff-play-btn" id="_ff_play_btn" title="播放 / 暂停 (快捷键: P)">▶</button>
           <div class="ff-scene-counter" id="_ff_scene_counter" title="当前场景进度">
             <span class="ff-counter-cur">01</span>
@@ -147,12 +190,6 @@ export class FocusFlowPlayer {
             <span class="ff-counter-total">01</span>
           </div>
           <div class="ff-step-tabs" id="_ff_tabs"></div>
-          <div class="ff-controls-divider"></div>
-          <button class="ff-hud-toggle-btn" id="_ff_hud_toggle_btn" title="点击打开/关闭标定助手 (快捷键: ${typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad|Macintosh/.test(navigator.userAgent || navigator.platform || '') ? '⌘+Shift+D' : 'Ctrl+Shift+D'})">
-            <span class="ff-btn-icon">🎯</span>
-            <span class="ff-btn-text">标定助手</span>
-            <span class="ff-shortcut-badge">${typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad|Macintosh/.test(navigator.userAgent || navigator.platform || '') ? '⌘+Shift+D' : 'Ctrl+Shift+D'}</span>
-          </button>
         </div>
       </div>
     `;
@@ -178,6 +215,11 @@ export class FocusFlowPlayer {
     }
 
     // Controls visibility switches
+    if (!this.showControls) {
+      const controls = this.container.querySelector('.focusflow-controls');
+      if (controls) controls.style.display = 'none';
+    }
+
     if (!this.showProgress) {
       const progressTrack = this.container.querySelector('.focusflow-progress-track');
       if (progressTrack) progressTrack.style.display = 'none';
@@ -189,12 +231,6 @@ export class FocusFlowPlayer {
 
     if (!this.showCounter && this.sceneCounterEl) {
       this.sceneCounterEl.style.display = 'none';
-    }
-
-    if (!this.showHUDButton) {
-      if (this.hudToggleBtnEl) this.hudToggleBtnEl.style.display = 'none';
-      const divider = this.container.querySelector('.ff-controls-divider');
-      if (divider) divider.style.display = 'none';
     }
 
     // Build Tabs
@@ -438,8 +474,20 @@ export class FocusFlowPlayer {
     return this.stateMachine.totalScenes;
   }
 
+  next() {
+    this.stateMachine.next();
+  }
+
   prev() {
     this.stateMachine.prev();
+  }
+
+  play() {
+    this.stateMachine.play();
+  }
+
+  pause() {
+    this.stateMachine.pause();
   }
 
   togglePlay() {
@@ -452,7 +500,50 @@ export class FocusFlowPlayer {
     }
   }
 
+  setShowControls(show) {
+    this.showControls = !!show;
+    const controls = this.container.querySelector('.focusflow-controls');
+    if (controls) {
+      controls.style.display = this.showControls ? '' : 'none';
+    }
+  }
+
+  updateStageLayout() {
+    if (!this.container || !this.wrapEl) return;
+    if (this.disableCamera) {
+      // In studio mode, wrap occupies 100% of container so infinite canvas controls absolute coordinates
+      this.wrapEl.style.width = '100%';
+      this.wrapEl.style.height = '100%';
+      this.wrapEl.style.left = '0px';
+      this.wrapEl.style.top = '0px';
+      return;
+    }
+
+    const stageW = this.container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1920);
+    const stageH = this.container.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 1080);
+    const natW = this.viewportWidth || this.dsl.meta?.viewport?.width || 1920;
+    const natH = this.viewportHeight || this.dsl.meta?.viewport?.height || 1080;
+
+    if (stageW <= 0 || stageH <= 0 || natW <= 0 || natH <= 0) return;
+
+    const scale = Math.min(stageW / natW, stageH / natH);
+    const fitW = natW * scale;
+    const fitH = natH * scale;
+
+    const offsetX = (stageW - fitW) / 2;
+    const offsetY = (stageH - fitH) / 2;
+
+    this.wrapEl.style.width = `${fitW}px`;
+    this.wrapEl.style.height = `${fitH}px`;
+    this.wrapEl.style.left = `${offsetX}px`;
+    this.wrapEl.style.top = `${offsetY}px`;
+  }
+
   destroy() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
     this.events.unbind();
     this.stateMachine.destroy();
     if (this.hud) this.hud.destroy();

@@ -17,7 +17,7 @@ export interface LeftToolboxProps {
   onToolChange: (tool: ToolType) => void;
 }
 
-export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
+function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
   const { t } = useTranslation('toolbar');
 
   const tools = [
@@ -57,7 +57,7 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
   return (
     <aside 
       data-testid="toolbox" 
-      className="w-14 border-r border-border bg-panel/80 backdrop-blur-md flex flex-col items-center py-4 gap-3 select-none z-20 shrink-0 transition-colors duration-200"
+      className="w-14 border-r border-border bg-panel flex flex-col items-center py-4 gap-3 select-none z-20 shrink-0"
     >
       {tools.map((tool) => {
         const Icon = tool.icon;
@@ -97,3 +97,5 @@ export function LeftToolbox({ activeTool, onToolChange }: LeftToolboxProps) {
     </aside>
   );
 }
+
+export const LeftToolbox = React.memo(LeftToolboxComponent);

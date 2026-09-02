@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import type { ElementBox } from '@focusflow/dsl';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
+import { useEditorStore } from '@/stores';
 
 export interface BoxDrawingOverlayProps {
   contentWidth: number;
@@ -15,6 +16,7 @@ export function BoxDrawingOverlay({
   active,
   onBoxCreated,
 }: BoxDrawingOverlayProps) {
+  const isSmartSnapEnabled = useEditorStore((s) => s.isSmartSnapEnabled);
   const [isDrawing, setIsDrawing] = useState(false);
   const [dragRect, setDragRect] = useState<{
     startX: number;
@@ -78,7 +80,7 @@ export function BoxDrawingOverlay({
     setDragRect(null);
 
     // 单击吸附判定 (移动距离 < 10px)
-    if (rawW < 10 && rawH < 10) {
+    if (rawW < 10 && rawH < 10 && isSmartSnapEnabled) {
       const snapped = globalEdgeSnapper.snapPoint(rawX, rawY);
       if (snapped) {
         const newBox: ElementBox = {
@@ -101,8 +103,8 @@ export function BoxDrawingOverlay({
     if (rawW >= 30 && rawH >= 20) {
       let finalBounds = { x: rawX, y: rawY, width: rawW, height: rawH };
 
-      // 若未按住 Option / Alt，则触发 Sobel 窄带边缘极大值贴合
-      if (!e.altKey) {
+      // 若开启了智能吸附且未按住 Option / Alt，则触发 Sobel 窄带边缘极大值贴合
+      if (isSmartSnapEnabled && !e.altKey) {
         finalBounds = globalEdgeSnapper.snapRectBounds(finalBounds, 24);
       }
 

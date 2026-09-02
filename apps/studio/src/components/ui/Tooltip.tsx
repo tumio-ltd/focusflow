@@ -1,4 +1,5 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, useRef, useCallback, useEffect, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
 
 export interface TooltipProps {
@@ -14,59 +15,92 @@ export function Tooltip({
   content,
   shortcut,
   position = 'top',
-  align = 'center',
   children,
   className,
 }: TooltipProps) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<number | null>(null);
 
-  const getPositionClass = () => {
-    if (position === 'top') {
-      if (align === 'start') return 'bottom-full left-0 mb-2';
-      if (align === 'end') return 'bottom-full right-0 mb-2';
-      return 'bottom-full left-1/2 -translate-x-1/2 mb-2';
+  const handleMouseEnter = useCallback(() => {
+    timerRef.current = window.setTimeout(() => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      let x = rect.left + rect.width / 2;
+      let y = rect.top;
+
+      if (position === 'top') {
+        y = rect.top - 6;
+      } else if (position === 'bottom') {
+        y = rect.bottom + 6;
+      } else if (position === 'right') {
+        x = rect.right + 6;
+        y = rect.top + rect.height / 2;
+      } else if (position === 'left') {
+        x = rect.left - 6;
+        y = rect.top + rect.height / 2;
+      }
+
+      setCoords({ x, y });
+    }, 400);
+  }, [position]);
+
+  const handleMouseLeave = useCallback(() => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
-    if (position === 'bottom') {
-      if (align === 'start') return 'top-full left-0 mt-2';
-      if (align === 'end') return 'top-full right-0 mt-2';
-      return 'top-full left-1/2 -translate-x-1/2 mt-2';
-    }
-    if (position === 'left') {
-      return 'right-full top-1/2 -translate-y-1/2 mr-2';
-    }
-    if (position === 'right') {
-      return 'left-full top-1/2 -translate-y-1/2 ml-2';
-    }
-    return 'bottom-full left-1/2 -translate-x-1/2 mb-2';
-  };
+    setCoords(null);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div
-      className={cn('relative inline-flex', className)}
-      onMouseEnter={() => setIsVisible(true)}
-      onMouseLeave={() => setIsVisible(false)}
-    >
-      {children}
-      {isVisible && (
+    <>
+      <div
+        ref={triggerRef}
+        className={cn('inline-flex', className)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {children}
+      </div>
+
+      {coords && typeof document !== 'undefined' && createPortal(
         <div
           className={cn(
-            'absolute z-50 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap pointer-events-none select-none flex items-center gap-2',
-            'bg-slate-900/95 text-slate-100 dark:bg-[#131924]/95 dark:text-slate-100',
-            'border border-slate-700/80 dark:border-white/15',
-            'rounded-lg backdrop-blur-md',
-            'shadow-[0_8px_24px_-4px_rgba(0,0,0,0.7),0_2px_6px_rgba(0,0,0,0.5),inset_0_1px_0_0_rgba(255,255,255,0.1)]',
-            'animate-in fade-in zoom-in-95 duration-100 ease-out',
-            getPositionClass()
+            'fixed z-[9999] px-2.5 py-1.5 text-xs font-medium whitespace-nowrap pointer-events-none select-none flex items-center gap-2',
+            'bg-slate-900 text-slate-100 dark:bg-[#111722] dark:text-slate-100',
+            'border border-slate-700 dark:border-white/20',
+            'rounded-lg shadow-xl'
           )}
+          style={{
+            left: `${Math.round(coords.x)}px`,
+            top: `${Math.round(coords.y)}px`,
+            transform: position === 'top' 
+              ? 'translate(-50%, -100%)' 
+              : position === 'bottom' 
+              ? 'translate(-50%, 0)' 
+              : position === 'right' 
+              ? 'translate(0, -50%)' 
+              : 'translate(-100%, -50%)',
+          }}
         >
           <span>{content}</span>
           {shortcut && (
-            <kbd className="px-1.5 py-0.5 bg-white/10 dark:bg-white/10 border border-white/15 rounded text-[10px] font-mono text-cyan-400 font-semibold shadow-[inset_0_-1px_0_rgba(255,255,255,0.1)]">
+            <kbd className="px-1.5 py-0.5 bg-white/10 dark:bg-white/10 border border-white/15 rounded text-[10px] font-mono text-cyan-400 font-semibold">
               {shortcut}
             </kbd>
           )}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }

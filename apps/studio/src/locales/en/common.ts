@@ -31,4 +31,7 @@ export default {
   resetZoom: 'Reset Zoom to 100%',
   fitToScreen: 'Fit to Viewport',
   dragToMove: 'Drag to Move Control Bar',
+  showPlayerControls: 'Show Standalone Player Controls',
+  hidePlayerControls: 'Hide Standalone Player Controls',
+  playerControls: 'Player Bar',
 } as const;

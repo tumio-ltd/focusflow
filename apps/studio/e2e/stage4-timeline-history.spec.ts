@@ -107,7 +107,9 @@ async function verifyTimelinePlaybackControls(page: Page): Promise<void> {
   const playBtn = page.locator('[data-testid="timeline-play-btn"]');
   await expect(playBtn).toBeVisible();
   await playBtn.click(); // 开始播放
+  await page.waitForTimeout(300);
   await playBtn.click(); // 暂停播放
+  await page.waitForTimeout(300);
 
   // 验证时间轴总时长标签展示
   const timeline = page.locator('[data-testid="timeline"]');

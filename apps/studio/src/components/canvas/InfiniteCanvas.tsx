@@ -52,13 +52,14 @@ export function InfiniteCanvas({
         }}
       />
 
-      {/* 2. 核心 GPU 几何变换视口层 (Transform Content Layer) */}
+      {/* 2. 核心 GPU 几何变换视口层 (Transform Content Layer - 原生零延迟 GPU 变换，禁止 CSS 缓动插值抖动) */}
       <div
-        className="absolute origin-top-left will-change-transform transition-transform duration-75 ease-out shadow-2xl"
+        className="absolute origin-top-left will-change-transform border border-border/40 shadow-xl"
         style={{
           width: `${contentWidth}px`,
           height: `${contentHeight}px`,
-          transform: `translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`,
+          transform: `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scale(${transform.scale})`,
+          backfaceVisibility: 'hidden',
         }}
       >
         {children}

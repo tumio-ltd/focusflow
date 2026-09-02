@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
 import type { ElementBox, ElementPath, ElementDot, CalloutItem } from '@focusflow/dsl';
 import { 
@@ -20,7 +20,7 @@ import {
   ExportModal
 } from '@/components/modals';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
-import type { ImageMeta } from '@/utils/imageDecoder';
+import { type ImageMeta, parseImageUrl } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
@@ -37,19 +37,21 @@ export default function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 视口变换与容器尺寸跟踪
-  const [canvasTransform, setCanvasTransform] = useState({ scale: 1, x: 0, y: 0 });
-  const [containerRect, setContainerRect] = useState({ width: 1920, height: 1080 });
+  // 视口变换与容器尺寸跟踪 (使用 useRef 隔离高频手势平移，避免触发根组件与侧边栏 Re-render)
+  const canvasTransformRef = useRef({ scale: 1, x: 0, y: 0 });
+  const containerRectRef = useRef({ width: 1920, height: 1080 });
 
-  // Zustand Store Hooks
-  const { 
-    activeTool, 
-    setActiveTool, 
-    activeSceneIndex, 
-    setActiveSceneIndex, 
-    isPlaying, 
-    togglePlay 
-  } = useEditorStore();
+  // Zustand Store Hooks (使用原子 Selector 独立订阅，禁止订阅高频 cursorCoords 状态)
+  const activeTool = useEditorStore((s) => s.activeTool);
+  const setActiveTool = useEditorStore((s) => s.setActiveTool);
+  const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
+  const setActiveSceneIndex = useEditorStore((s) => s.setActiveSceneIndex);
+  const isPlaying = useEditorStore((s) => s.isPlaying);
+  const togglePlay = useEditorStore((s) => s.togglePlay);
+  const isSmartSnapEnabled = useEditorStore((s) => s.isSmartSnapEnabled);
+  const toggleSmartSnap = useEditorStore((s) => s.toggleSmartSnap);
+  const isCrosshairEnabled = useEditorStore((s) => s.isCrosshairEnabled);
+  const toggleCrosshair = useEditorStore((s) => s.toggleCrosshair);
 
   const {
     dsl,
@@ -74,6 +76,8 @@ export default function App() {
     toggleElementInScene,
     inheritPreviousSceneElements,
     deleteElement,
+    calibrateViewport,
+    toggleShowPlayerControls,
     markSaved,
   } = useProjectStore();
 
@@ -135,19 +139,37 @@ export default function App() {
         container: containerRef.current,
         dsl,
         debug: false,
+        disableCamera: true, // 编辑工作台内底图保持 1:1 绝对空间，运镜由 InfiniteCanvas 与 Frustum 取景框协同展现
+        enableKeyboard: false, // 禁用内部全局按键监听，由 Studio 统一调度快捷键与抓手平移
+        showControls: !!dsl.meta.controls?.showControls,
         onSceneChange: (index: number) => {
           setActiveSceneIndex(index);
         },
       });
 
       playerRef.current = player;
-      // 预先缓存底图像素到 Sobel 空间分析器
+      // 预先缓存底图像素到 Sobel 空间分析器，并在底图载入时自动校准画布物理 Viewport (消除黑边与比例失真)
       if (player.imgEl) {
-        globalEdgeSnapper.setImageElement(
-          player.imgEl,
-          dsl.meta.viewport.width,
-          dsl.meta.viewport.height
-        );
+        const handleImageReady = () => {
+          const natW = player.imgEl?.naturalWidth || 0;
+          const natH = player.imgEl?.naturalHeight || 0;
+          if (natW > 0 && natH > 0) {
+            const currentViewport = useProjectStore.getState().dsl.meta.viewport;
+            if (currentViewport.width !== natW || currentViewport.height !== natH) {
+              console.log(
+                `[FocusFlow] Auto-calibrating canvas viewport to image natural size: ${natW}×${natH} (was ${currentViewport.width}×${currentViewport.height})`
+              );
+              calibrateViewport({ width: natW, height: natH });
+            }
+            globalEdgeSnapper.setImageElement(player.imgEl!, natW, natH);
+          }
+        };
+
+        if (player.imgEl.complete && player.imgEl.naturalWidth > 0) {
+          handleImageReady();
+        } else {
+          player.imgEl.addEventListener('load', handleImageReady, { once: true });
+        }
       }
 
       return () => {
@@ -157,11 +179,22 @@ export default function App() {
     } catch (err) {
       console.warn('Player init warning:', err);
     }
-  }, [dsl, setActiveSceneIndex]);
+  }, [dsl.asset?.url, currentProjectId, setActiveSceneIndex, calibrateViewport]);
+
+  // 3.1 同步播放器独立控制栏显隐
+  useEffect(() => {
+    playerRef.current?.setShowControls(!!dsl.meta.controls?.showControls);
+  }, [dsl.meta.controls?.showControls]);
+
+  // 3.2 同步当前场景切换 (非自动演播状态下同步底图图元)
+  useEffect(() => {
+    if (!isPlaying) {
+      playerRef.current?.goToStep(activeSceneIndex, false);
+    }
+  }, [activeSceneIndex, isPlaying]);
 
   const handleSelectScene = (index: number) => {
     setActiveSceneIndex(index);
-    playerRef.current?.goToStep(index);
   };
 
   const handleTogglePlay = () => {
@@ -211,8 +244,20 @@ export default function App() {
     setDSL(tpl.dsl);
     setActiveSceneIndex(0);
 
+    // 自动嗅探模板底图真实尺寸校准 Viewport
+    if (tpl.dsl.asset?.url) {
+      try {
+        const meta = await parseImageUrl(tpl.dsl.asset.url, tpl.title);
+        if (meta.width > 0 && meta.height > 0) {
+          calibrateViewport({ width: meta.width, height: meta.height });
+        }
+      } catch (e) {
+        console.warn('Template image parse error:', e);
+      }
+    }
+
     // 创建对应的新工程
-    const newProjectId = await createProject(tpl.title, tpl.dsl);
+    const newProjectId = await createProject(tpl.title, useProjectStore.getState().dsl);
     console.log('Created project from template:', newProjectId);
   };
 
@@ -227,23 +272,23 @@ export default function App() {
 
   const handleCanvasTransformChange = useCallback(
     (transform: { scale: number; x: number; y: number }, rect: { width: number; height: number }) => {
-      setCanvasTransform(transform);
-      setContainerRect(rect);
+      canvasTransformRef.current = transform;
+      containerRectRef.current = rect;
     },
     []
   );
 
   // 一键捕获当前视口为当前场景摄像机参数
-  const handleCaptureCurrentCamera = () => {
+  const handleCaptureCurrentCamera = useCallback(() => {
     const newCamera = captureCanvasToCamera(
-      canvasTransform,
-      containerRect,
+      canvasTransformRef.current,
+      containerRectRef.current,
       dsl.meta.viewport.width,
       dsl.meta.viewport.height,
       activeScene?.camera.duration || 1.2
     );
     updateSceneCamera(activeSceneIndex, newCamera);
-  };
+  }, [dsl.meta.viewport.width, dsl.meta.viewport.height, activeScene?.camera.duration, updateSceneCamera, activeSceneIndex]);
 
   const handleBoxCreated = (box: ElementBox) => {
     addBox(box, activeSceneIndex);
@@ -261,33 +306,49 @@ export default function App() {
     addCallout(callout, activeSceneIndex);
   };
 
-  // 提取当前场景图元信息用于 Inspector 展示
-  const inspectorElements = [
-    ...(dsl.elements.boxes || []).map((b) => ({
-      id: b.id,
-      type: 'box' as const,
-      name: b.id,
-      active: activeScene?.activeElements.boxes?.includes(b.id) || false,
-    })),
-    ...(dsl.elements.paths || []).map((p) => ({
-      id: p.id,
-      type: 'path' as const,
-      name: p.id,
-      active: activeScene?.activeElements.paths?.includes(p.id) || false,
-    })),
-    ...(dsl.elements.dots || []).map((d) => ({
-      id: d.id,
-      type: 'dot' as const,
-      name: d.id,
-      active: activeScene?.activeElements.dots?.includes(d.id) || false,
-    })),
-    ...(activeScene?.activeElements.callouts || []).map((c) => ({
-      id: c.id,
-      type: 'callout' as const,
-      name: c.title || c.id,
-      active: true,
-    })),
-  ];
+  // 提取当前场景图元信息用于 Inspector 展示 (通过 useMemo 保持引用稳定，阻断侧边栏重绘)
+  const inspectorElements = useMemo(
+    () => [
+      ...(dsl.elements.boxes || []).map((b) => ({
+        id: b.id,
+        type: 'box' as const,
+        name: b.id,
+        active: activeScene?.activeElements.boxes?.includes(b.id) || false,
+      })),
+      ...(dsl.elements.paths || []).map((p) => ({
+        id: p.id,
+        type: 'path' as const,
+        name: p.id,
+        active: activeScene?.activeElements.paths?.includes(p.id) || false,
+      })),
+      ...(dsl.elements.dots || []).map((d) => ({
+        id: d.id,
+        type: 'dot' as const,
+        name: d.id,
+        active: activeScene?.activeElements.dots?.includes(d.id) || false,
+      })),
+      ...(activeScene?.activeElements.callouts || []).map((c) => ({
+        id: c.id,
+        type: 'callout' as const,
+        name: c.title || c.id,
+        active: true,
+      })),
+    ],
+    [dsl.elements, activeScene?.activeElements]
+  );
+
+  // 时间轴场景列表记忆化
+  const timelineScenes = useMemo(
+    () =>
+      dsl.scenes.map((s) => ({
+        id: s.id,
+        title: s.title,
+        duration: s.camera.duration || 1.2,
+        zoom: s.camera.zoom,
+        boxCount: s.activeElements.boxes?.length || 0,
+      })),
+    [dsl.scenes]
+  );
 
   return (
     <>
@@ -301,6 +362,8 @@ export default function App() {
             onUndo={undo}
             onRedo={redo}
             isSaved={!isDirty}
+            showPlayerControls={!!dsl.meta.controls?.showControls}
+            onTogglePlayerControls={toggleShowPlayerControls}
             onOpenTemplates={() => setIsTemplatesModalOpen(true)}
             onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
@@ -338,6 +401,7 @@ export default function App() {
                 }}
                 boxes={dsl.elements.boxes || []}
                 isPlaying={isPlaying}
+                onCameraChange={(cam) => updateSceneCamera(activeSceneIndex, cam)}
                 onBoxCreated={handleBoxCreated}
                 onPathCreated={handlePathCreated}
                 onDotCreated={handleDotCreated}
@@ -352,6 +416,11 @@ export default function App() {
             onSceneTitleChange={(title) => updateSceneTitle(activeSceneIndex, title)}
             cameraZoom={activeScene?.camera.zoom}
             onCameraZoomChange={(zoom) => updateSceneCamera(activeSceneIndex, { zoom })}
+            cameraX={activeScene?.camera.x ?? 0}
+            onCameraXChange={(x) => updateSceneCamera(activeSceneIndex, { x })}
+            cameraY={activeScene?.camera.y ?? 0}
+            onCameraYChange={(y) => updateSceneCamera(activeSceneIndex, { y })}
+            onCameraReset={() => updateSceneCamera(activeSceneIndex, { x: 0, y: 0 })}
             cameraDuration={activeScene?.camera.duration || 1.2}
             onCameraDurationChange={(duration) => updateSceneCamera(activeSceneIndex, { duration })}
             onCaptureCurrentCamera={handleCaptureCurrentCamera}
@@ -372,17 +441,16 @@ export default function App() {
               const type = isBox ? 'boxes' : isPath ? 'paths' : isDot ? 'dots' : 'images';
               deleteElement(type, id);
             }}
+            viewport={dsl.meta.viewport}
+            isSmartSnapEnabled={isSmartSnapEnabled}
+            onToggleSmartSnap={toggleSmartSnap}
+            isCrosshairEnabled={isCrosshairEnabled}
+            onToggleCrosshair={toggleCrosshair}
           />
         }
         bottomTimeline={
           <BottomTimeline
-            scenes={dsl.scenes.map((s) => ({
-              id: s.id,
-              title: s.title,
-              duration: s.camera.duration || 1.2,
-              zoom: s.camera.zoom,
-              boxCount: s.activeElements.boxes?.length || 0,
-            }))}
+            scenes={timelineScenes}
             activeSceneIndex={activeSceneIndex}
             onSelectScene={handleSelectScene}
             onAddScene={addScene}

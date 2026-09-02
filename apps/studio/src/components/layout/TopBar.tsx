@@ -16,7 +16,8 @@ import {
   FolderGit2,
   LayoutTemplate,
   Play,
-  Laptop
+  Laptop,
+  SlidersHorizontal
 } from 'lucide-react';
 import { Button, Badge, Tooltip } from '@/components/ui';
 
@@ -33,10 +34,12 @@ export interface TopBarProps {
   onOpenProjects?: () => void;
   onOpenImport?: () => void;
   onOpenAudience?: () => void;
+  showPlayerControls?: boolean;
+  onTogglePlayerControls?: () => void;
   isSaved?: boolean;
 }
 
-export function TopBar({
+function TopBarComponent({
   title,
   onTitleChange,
   canUndo = false,
@@ -49,6 +52,8 @@ export function TopBar({
   onOpenProjects,
   onOpenImport,
   onOpenAudience,
+  showPlayerControls = false,
+  onTogglePlayerControls,
   isSaved = true,
 }: TopBarProps) {
   const { t, i18n } = useTranslation('common');
@@ -91,7 +96,7 @@ export function TopBar({
   };
 
   return (
-    <header className="h-13 border-b border-border bg-panel/90 backdrop-blur-md px-4 flex items-center justify-between select-none z-30 shrink-0 transition-colors duration-200">
+    <header className="h-14 border-b border-border bg-panel px-4 flex items-center justify-between select-none z-30 shrink-0">
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3 min-w-0 max-w-[42%] shrink">
         <div className="flex items-center gap-2 font-bold tracking-wide text-primary shrink-0">
@@ -261,6 +266,24 @@ export function TopBar({
           </Button>
         </Tooltip>
 
+        {/* 底图独立播放控制栏显隐切换 */}
+        <Tooltip content={showPlayerControls ? t('hidePlayerControls') : t('showPlayerControls')} position="bottom" align="end">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="toggle-player-controls-btn"
+            onClick={onTogglePlayerControls}
+            className={`gap-1.5 h-8 px-2 sm:px-2.5 ${
+              showPlayerControls
+                ? 'bg-primary/20 text-primary border-primary font-medium'
+                : 'border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span className="hidden 2xl:inline">{t('playerControls')}</span>
+          </Button>
+        </Tooltip>
+
         {/* 保存草稿 */}
         <Tooltip content={t('saveDraftTip')} shortcut="⌘S" position="bottom" align="end">
           <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8 px-2 sm:px-2.5">
@@ -286,3 +309,5 @@ export function TopBar({
     </header>
   );
 }
+
+export const TopBar = React.memo(TopBarComponent);

@@ -38,7 +38,7 @@ export interface BottomTimelineProps {
   onPrev?: () => void;
 }
 
-export function BottomTimeline({
+function BottomTimelineComponent({
   scenes = [
     { id: 'scene-0', title: '01 全局总览架构', duration: 1.2, boxCount: 1, zoom: 1.0 },
     { id: 'scene-1', title: '02 网关流量过滤与路由', duration: 1.5, boxCount: 2, zoom: 1.8 },
@@ -105,7 +105,7 @@ export function BottomTimeline({
   return (
     <footer
       data-testid="timeline"
-      className="h-20 border-t border-border bg-panel/90 backdrop-blur-md px-4 flex items-center gap-4 select-none z-20 shrink-0 transition-colors duration-200"
+      className="h-20 border-t border-border bg-panel px-4 flex items-center gap-4 select-none z-20 shrink-0"
     >
       {/* 1. 左侧播放控制组 */}
       <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border shrink-0">
@@ -170,7 +170,7 @@ export function BottomTimeline({
               onDrop={(e) => handleDrop(idx, e)}
               onDragEnd={handleDragEnd}
               onClick={() => onSelectScene(idx)}
-              className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all shrink-0 min-w-[180px] ${
+              className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-colors duration-150 shrink-0 min-w-[180px] ${
                 isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
               } ${
                 isOver ? 'ring-2 ring-primary scale-105' : ''
@@ -296,3 +296,5 @@ export function BottomTimeline({
     </footer>
   );
 }
+
+export const BottomTimeline = React.memo(BottomTimelineComponent);

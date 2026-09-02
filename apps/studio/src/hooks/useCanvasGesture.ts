@@ -143,25 +143,35 @@ export function useCanvasGesture({
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      if (e.ctrlKey || e.metaKey) {
-        // 双指捏合或 Ctrl+滚轮 ➔ 缩放
-        const zoomFactor = Math.exp(-e.deltaY * 0.005);
+      // 判断操作意图：
+      // 1. 如果有水平方向分量且未按修饰键 (如触控板双指横向滑动) ➔ 视口平移
+      // 2. 纯纵向滚轮 (鼠标滚轮上下滚动) 或 按住 Ctrl/Cmd/Alt ➔ 以鼠标光标为中心自适应平滑缩放
+      const isPinchOrModifier = e.ctrlKey || e.metaKey || e.altKey;
+      const isHorizontalTrackpadPan = Math.abs(e.deltaX) > 0 && !isPinchOrModifier;
+
+      if (isHorizontalTrackpadPan) {
+        panBy(-e.deltaX, -e.deltaY);
+      } else {
+        // 鼠标滚轮灵敏度自适应：行模式 (deltaMode === 1) 与像素模式
+        const sensitivity = e.deltaMode === 1 ? 0.05 : 0.0025;
+        const zoomFactor = Math.exp(-e.deltaY * sensitivity);
+
         setTransform((prev) => {
           const targetScale = prev.scale * zoomFactor;
+          const clampedScale = Math.min(Math.max(targetScale, minScale), maxScale);
+          if (clampedScale === prev.scale) return prev;
+
           const rect = container.getBoundingClientRect();
           const Px = e.clientX - rect.left;
           const Py = e.clientY - rect.top;
-          const clampedScale = Math.min(Math.max(targetScale, minScale), maxScale);
           const ratio = clampedScale / prev.scale;
+
           return {
             x: Px - (Px - prev.x) * ratio,
             y: Py - (Py - prev.y) * ratio,
             scale: clampedScale,
           };
         });
-      } else {
-        // 普通鼠标滚轮 / 触摸板滑动 ➔ 平移
-        panBy(-e.deltaX, -e.deltaY);
       }
     };
 

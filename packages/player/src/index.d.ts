@@ -15,6 +15,8 @@ export class FocusFlowPlayer {
   pause(): void;
   togglePlay(): void;
   toggleDebugMode(forceState?: boolean): void;
+  setShowControls(show: boolean): void;
+  toggleControls(): void;
   destroy(): void;
   getCurrentScene(): SceneStep | null;
   getCurrentIndex(): number;

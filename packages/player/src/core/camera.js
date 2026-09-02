@@ -4,10 +4,11 @@
  */
 
 export class CameraKinematics {
-  constructor(wrapElement, baseWidth = 5120, baseHeight = 2880) {
+  constructor(wrapElement, baseWidth = 5120, baseHeight = 2880, options = {}) {
     this.wrap = wrapElement;
     this.baseWidth = baseWidth;
     this.baseHeight = baseHeight;
+    this.disabled = !!options?.disabled;
     this.currentCamera = { zoom: 1.0, x: 0, y: 0, duration: 1.2 };
   }
 
@@ -17,6 +18,10 @@ export class CameraKinematics {
    * @param {boolean} animate - Whether to apply CSS transition
    */
   apply(camera, animate = true) {
+    if (this.disabled) {
+      this.wrap.style.transform = 'none';
+      return;
+    }
     const zoom = Math.max(1.0, Math.min(3.5, camera.zoom || 1.0));
     const duration = camera.duration !== undefined ? camera.duration : 1.2;
 
@@ -31,7 +36,7 @@ export class CameraKinematics {
       this.wrap.style.transition = `transform ${duration}s cubic-bezier(0.4, 0.0, 0.2, 1.0)`;
     }
 
-    this.wrap.style.transform = `scale(${zoom}) translate(${clamped.x}%, ${clamped.y}%)`;
+    this.wrap.style.transform = `scale(${zoom}) translate(${-clamped.x}%, ${-clamped.y}%)`;
   }
 
   /**

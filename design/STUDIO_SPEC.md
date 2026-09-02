@@ -9,6 +9,7 @@
 > - 🏗️ [MONOREPO_SPEC.md (Monorepo 工程化架构与改造规格)](file:///Users/xt/WebstormProjects/focusflow/design/MONOREPO_SPEC.md)
 > - 📐 [MVP_SPEC.md (Phase 1 播放引擎与 HUD 执行规格)](file:///Users/xt/WebstormProjects/focusflow/design/MVP_SPEC.md)
 > - 📐 [MOTION_ENGINE_SPEC.md (动效数学与渲染规格)](file:///Users/xt/WebstormProjects/focusflow/design/MOTION_ENGINE_SPEC.md)
+> - 📷 [CAMERA_FRUSTUM_SPEC.md (运镜摄像机与取景框数学原理与交互设计规范)](file:///Users/xt/WebstormProjects/focusflow/design/CAMERA_FRUSTUM_SPEC.md)
 > - 🔍 [EDGE_SNAPPER_ALGORITHM.md (智能边缘吸附与 Auto-Refine 算法专刊)](file:///Users/xt/WebstormProjects/focusflow/docs/EDGE_SNAPPER_ALGORITHM.md)
 > 
 > **适用对象**：前端架构师、全栈工程师、UI/UX 设计师、后端开发  
@@ -28,6 +29,8 @@
 - [3. 创作端 3 步闭环核心功能系统深度设计](#3-创作端-3-步闭环核心功能系统深度设计)
   - [3.1 环节一：项目创建与资产导入系统 (Project Ingestion)](#31-环节一项目创建与资产导入系统-project-ingestion)
   - [3.2 环节二：可视化无限画布与 4 大编辑工具 (Infinite Canvas & Tools)](#32-环节二可视化无限画布与-4-大编辑工具-infinite-canvas--tools)
+    - [3.2.4 标定助手与独立播放控制栏职责解耦规范 (Calibration Assistant & Player Controls Decoupling)](#标定助手与独立播放控制栏职责解耦规范-calibration-assistant--player-controls-decoupling)
+    - [3.2.5 运镜摄像机与安全取景框数学原理与交互规范 (Camera Kinematics & Frustum Specification)](#325-运镜摄像机-camera-与安全取景框-frustum-数学原理与交互规范)
   - [3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)](#33-环节二-续场景关键帧时间轴编排系统-scene--sequence-timeline)
   - [3.4 环节三：实时生成、预览与多形态导出下载 (Compilation, Preview & Exporter)](#34-环节三实时生成预览与多形态导出下载-compilation-preview--exporter)
 - [4. 前端架构与技术栈选型规范 (Frontend Architecture)](#4-前端架构与技术栈选型规范-frontend-architecture)
@@ -250,6 +253,42 @@ FocusFlow Studio 的中央无限画布（`InfiniteCanvas`）与视口缩放控�
 3. **标定图元与连线坐标零漂移保证 (Zero Coordinate Drift)**：
    - 所有选框（Box）、三次贝塞尔连线（Path）、定位脉冲圆点（Dot）的坐标系统均直接建立在该 1:1 物理像素空间上（例如 `x: 1200, y: 800, width: 320, height: 180`）；
    - 创作者无论在画布上缩放到任何比例进行操作，写入 DSL 的坐标值永远 100% 锚定在原图的原生像素绝对坐标上，确保在导出独立 HTML、4K 视频或全屏演播时绝对没有坐标偏移或分辨率失真。
+
+#### 标定助手与独立播放控制栏职责解耦规范 (Calibration Assistant & Player Controls Decoupling)
+
+为彻底解决 Phase 1 (MVP) 遗留的功能耦合，提升 Studio 创作体验与导出播放纯净度，FocusFlow 确立了严格的职责解耦边界：
+
+1. **底图载入时自动校准画布 Viewport 机制 (Auto-Calibration of Viewport on Ingestion)**：
+   - 在创作者上传底图或切换演示模板时，`imageDecoder.ts` / `ingestNewAsset` 自动异步调用浏览器原生 `Image.decode()`，瞬间读取图像物理自然分辨率（`naturalWidth × naturalHeight`）；
+   - 动态更新当前工程 DSL `meta.viewport = { width: naturalWidth, height: naturalHeight }`，使 Studio 无限画布的物理尺寸与底图 100% 严丝合缝匹配，彻底杜绝黑边或变形。
+
+2. **独立播放控制栏纯净化 (Standalone Player Controls Streamlining)**：
+   - 从底图播放引擎（`@focusflow/player`）的浮动控制栏（`.focusflow-controls`）中**彻底移除 MVP 阶段硬编码的 `🎯 标定助手` 按钮及分隔线**；
+   - 播放条职责严格回归到“演播控制”本身（播放/暂停、当前幕/总幕数指示器、场景标签切换）；
+   - 支持通过 `showControls: false` 与 Studio 顶部控制栏及导出模态框实现无缝关联配置。
+
+3. **右侧属性检查器常驻「🎯 标定助手 (Precision Calibration HUD)」**：
+   - 将创作者在标定与排版过程中高频使用的度量工具，固定集成于 `RightInspector.tsx` 底部折叠面板中：
+     - **底图原生基准分辨率徽章**：实时显示当前底图的物理像素尺寸（如 `1920 × 1459 px`）；
+     - **实时双模物理度量读数**：随着鼠标在画布上滑行，实时高频刷新当前光标所在的绝对物理像素坐标 `(X, Y)` 与相对宽高百分比 `(L%, T%)`；
+     - **✨ 智能边缘贴合开关 (`isSmartSnapEnabled`)**：控制框选与单点吸附时是否调用 Sobel 窄带极值对齐算法；
+     - **🎯 激光十字准星开关 (`isCrosshairEnabled`)**：开启后在画布呈现跟随光标的 X/Y 全屏发光对齐线与坐标微徽章；
+     - **📋 一键复制坐标 JSON**：将当前物理像素与百分比位置导出为标准 JSON，便于创作者与开发者快速复用。
+
+#### 3.2.5 运镜摄像机 (Camera) 与安全取景框 (Frustum) 数学原理与交互规范
+> 详细数学推导、安全边界算法与多模交互设计请参阅独立技术专刊：[CAMERA_FRUSTUM_SPEC.md](file:///Users/xt/WebstormProjects/focusflow/design/CAMERA_FRUSTUM_SPEC.md)
+
+1. **4 大核心几何与运动学理论规则**：
+   - **规则 1（纵横比锁定）**：取景框严格锁定底图原生物理纵横比 $\frac{W_{\text{frame}}}{H_{\text{frame}}} \equiv \frac{W_{\text{nat}}}{H_{\text{nat}}}$，消除任何屏幕比例差异带来的拉伸失真；
+   - **规则 2（防穿帮镜头底限）**：限制 $\text{Zoom} \ge 1.0\text{x}$，避免全屏演播时镜头拉远导致底图四周露出黑边穿帮；
+   - **规则 3（防露白安全视口钳位）**：实施 $|T_x|, |T_y| \le \frac{Z-1}{2Z} \times 100\% \times 1.15$ 安全边界约束，杜绝视角超出底图可视范围；
+   - **规则 4（相对铺满映射与物理中心反解）**：以 $\text{baseScale} = \min(W_{\text{cont}}/W_{\text{nat}}, H_{\text{cont}}/H_{\text{nat}})$ 为 1.0x 基准，自适应反解屏幕中心绝对坐标。
+2. **多模态协同交互微调体系**：
+   - **一键捕获**：宏观平移缩放至目标区域后一键捕获；
+   - **画布直接拖拽**：在选择模式下按住青色取景框直接拖动对齐，受安全边界实时吸附；
+   - **四角手柄缩放**：四角交互手柄等比例推拉镜头放大倍率（$1.0\text{x} \sim 3.5\text{x}$）；
+   - **检查器数值精调与复位**：水平偏移 (X) 与 垂直偏移 (Y) 精确数值滑块控制 + 一键居中复位；
+   - **键盘方向键微控**：选中取景框后使用键盘 `↑ ↓ ← →` 0.5% 步长（Shift: 2.0%）像素级对齐。
 
 ---
 
@@ -708,9 +747,13 @@ model ProjectVersion {
 - [x] **3.4 脉冲定位圆点与解说气泡组件 (Pulse Dot & Callout Badges)**
   - [x] 3.4.1 编写 `DotDrawingOverlay.tsx` 单击放置脉冲圆点与涟漪动效
   - [x] 3.4.2 编写 `CalloutOverlay.tsx` 支持智能选框挂载/绝对定位与发光主题色
-  - [x] 3.4.3 编写 `CanvasOverlay.tsx` 统一调度 5 大标定图层状态机
-- [x] **3.5 质量门禁与 Playwright E2E 自动化测试**
-  - [x] 3.5.1 编写 `stage3-visual-tools.spec.ts` 端到端全流程测试套件并 100% 验证通过
+  - [x] 3.4.3 编写 `CanvasOverlay.tsx` 统一调度 5 大标定图层状态机与十字准星跟随层
+- [x] **3.5 标定助手与独立播放控制栏职责解耦 (Precision Calibration HUD & Player Decoupling)**
+  - [x] 3.5.1 从 `@focusflow/player` 浮动控制栏中移除 MVP 阶段硬编码的标定助手按钮，回归纯粹演播控制
+  - [x] 3.5.2 在 `RightInspector.tsx` 底部常驻集成「🎯 标定助手」控制卡片（底图自然分辨率、实时物理/百分比坐标度量、Sobel 吸附开关、激光十字准星开关与 JSON 复制）
+  - [x] 3.5.3 在 `useEditorStore.ts` 中打通 `isSmartSnapEnabled`、`isCrosshairEnabled` 与 `cursorCoords` 状态联动
+- [x] **3.6 质量门禁与 Playwright E2E 自动化测试**
+  - [x] 3.6.1 编写 `stage3-visual-tools.spec.ts` 端到端全流程测试套件（含 TC306 标定助手与十字准星交互测试）并 100% 验证通过
 
 ---
 

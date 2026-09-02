@@ -43,6 +43,8 @@ export function AudienceModal({
         container: containerRef.current,
         dsl,
         debug: false,
+        showControls: false,
+        enableKeyboard: false, // 由 AudienceModal 统一拦截并调度快捷键，防止与播放内核双重触发
         onSceneChange: (index: number) => {
           setCurrentSceneIdx(index);
         },

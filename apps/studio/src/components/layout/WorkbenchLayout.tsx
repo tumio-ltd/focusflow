@@ -16,7 +16,7 @@ export function WorkbenchLayout({
   bottomTimeline,
 }: WorkbenchLayoutProps) {
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-foreground overflow-hidden select-none transition-colors duration-200">
+    <div className="fixed inset-0 flex flex-col bg-background text-foreground overflow-hidden select-none">
       {/* 1. 顶部全局控制台 (TopBar) */}
       {topBar}
 
@@ -26,7 +26,7 @@ export function WorkbenchLayout({
         {leftToolbox}
 
         {/* 中央交互式视口画布 */}
-        <main data-testid="canvas-viewport" className="flex-1 relative overflow-hidden bg-canvas flex items-center justify-center transition-colors duration-200">
+        <main data-testid="canvas-viewport" className="flex-1 relative overflow-hidden bg-canvas flex items-center justify-center">
           {centerCanvas}
         </main>
 

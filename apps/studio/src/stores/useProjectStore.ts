@@ -15,9 +15,9 @@ const MAX_HISTORY = 50;
 const defaultInitialDSL: FocusFlowDSL = {
   meta: {
     title: '微服务电商架构演进演示',
-    viewport: { width: 1920, height: 1080 },
+    viewport: { width: 1920, height: 1459 },
     theme: { mode: 'dark' },
-    controls: { showHUDButton: true, autoplay: false, interval: 3800 }
+    controls: { showHUDButton: true, autoplay: false, interval: 3800, showControls: false }
   },
   asset: {
     url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1920&q=80'
@@ -128,6 +128,8 @@ export interface ProjectState {
   addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
   addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images', elementId: string) => void;
+  calibrateViewport: (viewport: { width: number; height: number }) => void;
+  toggleShowPlayerControls: () => void;
   undo: () => void;
   redo: () => void;
   markSaved: () => void;
@@ -152,6 +154,27 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
   setDSL: (dsl) =>
     set((state) => pushHistory(state, dsl)),
+
+  calibrateViewport: (viewport) =>
+    set((state) => {
+      const { width, height } = viewport;
+      if (
+        !width ||
+        !height ||
+        (state.dsl.meta.viewport.width === width && state.dsl.meta.viewport.height === height)
+      ) {
+        return state;
+      }
+      return {
+        dsl: {
+          ...state.dsl,
+          meta: {
+            ...state.dsl.meta,
+            viewport: { width, height },
+          },
+        },
+      };
+    }),
 
   ingestNewAsset: (meta) =>
     set((state) => {
@@ -194,6 +217,22 @@ export const useProjectStore = create<ProjectState>((set) => ({
         meta: {
           ...state.dsl.meta,
           title,
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  toggleShowPlayerControls: () =>
+    set((state) => {
+      const currentShow = state.dsl.meta?.controls?.showControls ?? false;
+      const nextDSL = {
+        ...state.dsl,
+        meta: {
+          ...state.dsl.meta,
+          controls: {
+            ...(state.dsl.meta?.controls || {}),
+            showControls: !currentShow,
+          },
         },
       };
       return pushHistory(state, nextDSL);

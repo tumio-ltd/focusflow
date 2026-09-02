@@ -45,7 +45,6 @@
 /* Base Fit Wrapper (Handles Scale & Pan Transform) */
 .focusflow-wrap {
   position: absolute;
-  inset: 0;
   transform-origin: center center;
   transition: transform 1.2s cubic-bezier(0.4, 0.0, 0.2, 1.0);
   will-change: transform;
@@ -55,7 +54,7 @@
 .focusflow-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: fill;
   display: block;
   pointer-events: none;
   z-index: 1;

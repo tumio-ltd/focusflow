@@ -11,8 +11,12 @@ export interface StudioKeyboardOptions {
 }
 
 export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
-  const { undo, redo, past, future } = useProjectStore();
-  const { setActiveTool, togglePlay } = useEditorStore();
+  const undo = useProjectStore((s) => s.undo);
+  const redo = useProjectStore((s) => s.redo);
+  const past = useProjectStore((s) => s.past);
+  const future = useProjectStore((s) => s.future);
+  const setActiveTool = useEditorStore((s) => s.setActiveTool);
+  const togglePlay = useEditorStore((s) => s.togglePlay);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

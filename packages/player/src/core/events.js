@@ -11,7 +11,9 @@ export class EventManager {
   }
 
   bind() {
-    window.addEventListener('keydown', this.handleKeyDown);
+    if (this.player.enableKeyboard !== false) {
+      window.addEventListener('keydown', this.handleKeyDown);
+    }
     window.addEventListener('resize', this.handleResize);
   }
 

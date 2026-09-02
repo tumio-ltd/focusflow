@@ -24,15 +24,15 @@ export function cameraToFrustumRect(
   const frameWidth = naturalWidth / zoom;
   const frameHeight = naturalHeight / zoom;
 
-  // 中心点物理坐标：Xcenter = W/2 * (1 + x/100)
-  const centerX = (naturalWidth / 2) * (1 + (camera.x || 0) / 100);
-  const centerY = (naturalHeight / 2) * (1 + (camera.y || 0) / 100);
+  // camera.x > 0 表示镜头聚焦在底图中心右侧，camera.y > 0 表示镜头聚焦在底图中心下方
+  const centerX = (naturalWidth / 2) + ((camera.x || 0) / 100) * naturalWidth;
+  const centerY = (naturalHeight / 2) + ((camera.y || 0) / 100) * naturalHeight;
 
   return {
-    x: centerX - frameWidth / 2,
-    y: centerY - frameHeight / 2,
-    width: frameWidth,
-    height: frameHeight,
+    x: Math.round(centerX - frameWidth / 2),
+    y: Math.round(centerY - frameHeight / 2),
+    width: Math.round(frameWidth),
+    height: Math.round(frameHeight),
   };
 }
 
@@ -49,15 +49,32 @@ export function frustumRectToCamera(
   const centerX = rect.x + rect.width / 2;
   const centerY = rect.y + rect.height / 2;
 
-  // x = ((centerX - W/2) / (W/2)) * 100
-  const x = Math.round((((centerX - naturalWidth / 2) / (naturalWidth / 2)) * 100) * 10) / 10;
-  const y = Math.round((((centerY - naturalHeight / 2) / (naturalHeight / 2)) * 100) * 10) / 10;
+  const x = Math.round(((centerX - naturalWidth / 2) / naturalWidth * 100) * 10) / 10;
+  const y = Math.round(((centerY - naturalHeight / 2) / naturalHeight * 100) * 10) / 10;
 
   return {
     zoom: Math.round(zoom * 10) / 10,
     x,
     y,
     duration,
+  };
+}
+
+/**
+ * 依据安全视口约束 |Tx|, |Ty| <= ((Z - 1) / (2 * Z)) * 100% 校验与钳位镜头偏移
+ */
+export function clampCameraBounds(zoom: number, x: number, y: number): { x: number; y: number } {
+  if (zoom <= 1.0) {
+    return { x: 0, y: 0 };
+  }
+  const maxOffset = ((zoom - 1.0) / (2.0 * zoom)) * 100;
+  // 留出 15% 视觉缓冲余量提升创作者取景自由度
+  const safeLimit = maxOffset * 1.15;
+  const clampedX = Math.max(-safeLimit, Math.min(safeLimit, x));
+  const clampedY = Math.max(-safeLimit, Math.min(safeLimit, y));
+  return {
+    x: Math.round(clampedX * 10) / 10,
+    y: Math.round(clampedY * 10) / 10,
   };
 }
 
@@ -71,11 +88,11 @@ export function captureCanvasToCamera(
   naturalHeight: number,
   duration = 1.2
 ): CameraConfig {
-  // 视口在画布中的中心点
+  // 当前工作台容器中心点在底图物理坐标系中的绝对坐标
   const viewportCenterX = (containerRect.width / 2 - transform.x) / transform.scale;
   const viewportCenterY = (containerRect.height / 2 - transform.y) / transform.scale;
 
-  // 基础缩放倍率 (Fit-to-Screen)
+  // 计算基准自适应铺满缩放倍率 (Fit-to-Screen)
   const baseScale = Math.min(
     containerRect.width / naturalWidth,
     containerRect.height / naturalHeight
@@ -83,13 +100,15 @@ export function captureCanvasToCamera(
 
   const zoom = Math.max(transform.scale / (baseScale || 1), 1.0);
 
-  const x = Math.round((((viewportCenterX - naturalWidth / 2) / (naturalWidth / 2)) * 100) * 10) / 10;
-  const y = Math.round((((viewportCenterY - naturalHeight / 2) / (naturalHeight / 2)) * 100) * 10) / 10;
+  // 计算镜头相对于底图中心点的偏移百分比 (x > 0 偏右, y > 0 偏下)
+  const x = Math.round(((viewportCenterX - naturalWidth / 2) / naturalWidth * 100) * 10) / 10;
+  const y = Math.round(((viewportCenterY - naturalHeight / 2) / naturalHeight * 100) * 10) / 10;
+  const clamped = clampCameraBounds(zoom, x, y);
 
   return {
     zoom: Math.round(zoom * 10) / 10,
-    x: Math.max(Math.min(x, 100), -100),
-    y: Math.max(Math.min(y, 100), -100),
+    x: clamped.x,
+    y: clamped.y,
     duration,
   };
 }

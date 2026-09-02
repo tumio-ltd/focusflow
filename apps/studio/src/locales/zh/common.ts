@@ -31,4 +31,7 @@ export default {
   resetZoom: '重置缩放为 100%',
   fitToScreen: '自适应视口居中',
   dragToMove: '按住拖拽移动控制条',
+  showPlayerControls: '显示底图独立播放控制栏',
+  hidePlayerControls: '隐藏底图独立播放控制栏',
+  playerControls: '播放控制栏',
 } as const;

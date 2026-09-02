@@ -50,6 +50,22 @@ export class StateMachine {
     this.goTo(this.scenes.length - 1, true);
   }
 
+  play() {
+    if (!this.isPlaying) {
+      this.isPlaying = true;
+      this.startPlayTimer();
+      this.onPlayStateChange(this.isPlaying);
+    }
+  }
+
+  pause() {
+    if (this.isPlaying) {
+      this.isPlaying = false;
+      this.stopPlayTimer();
+      this.onPlayStateChange(this.isPlaying);
+    }
+  }
+
   togglePlay() {
     this.isPlaying = !this.isPlaying;
     if (this.isPlaying) {
