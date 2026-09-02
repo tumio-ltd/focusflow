@@ -74,6 +74,9 @@ export class MotionAnimator {
           // Flowing Dashed Stream
           el.style.transition = `opacity 0.4s ease ${delay}s`;
           el.style.opacity = '0.95';
+          if (meta.data.style?.flowSpeed) {
+            el.style.animationDuration = `${(1.5 / meta.data.style.flowSpeed).toFixed(2)}s`;
+          }
           el.classList.add('active', 'ff-stream');
         } else {
           // One-shot Draw-in

@@ -66,6 +66,7 @@ export interface ElementPath {
     mode?: 'draw' | 'stream' | 'pulse'; // 动画模式
     speed?: number;
     flowSpeed?: number;
+    glow?: boolean;
   };
 }
 

@@ -315,6 +315,10 @@ export class FocusFlowPlayer {
         pathEl.setAttribute('filter', 'url(#ff-glow)');
       }
 
+      if (pathData.style?.flowSpeed) {
+        pathEl.style.animationDuration = `${(1.5 / pathData.style.flowSpeed).toFixed(2)}s`;
+      }
+
       this.svgEl.appendChild(pathEl);
 
       // Auto measure path length

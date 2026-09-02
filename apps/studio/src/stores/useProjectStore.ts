@@ -130,7 +130,7 @@ export interface ProjectState {
   addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
-  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean }) => void;
+  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
   undo: () => void;

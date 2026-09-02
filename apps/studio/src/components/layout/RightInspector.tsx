@@ -25,7 +25,9 @@ import {
   Copy,
   Scan,
   Move,
-  RotateCcw
+  RotateCcw,
+  Zap,
+  Gauge
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
@@ -140,6 +142,9 @@ function RightInspectorComponent({
   const activeDrawingColor = useEditorStore((s) => s.activeDrawingColor);
   const setActiveDrawingColor = useEditorStore((s) => s.setActiveDrawingColor);
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
+  const dsl = useProjectStore((s) => s.dsl);
+
+  const selectedPath = dsl.elements?.paths?.find((p) => p.id === selectedElementId);
 
   const filteredElements = elements.filter((el) =>
     el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -462,6 +467,110 @@ function RightInspectorComponent({
             </label>
           </div>
         </div>
+
+        {/* 3.1 Path 专属高级参数控制区 */}
+        {selectedPath && (
+          <>
+            <div className="h-px bg-border" />
+            <div className="space-y-3 bg-muted/40 border border-primary/20 rounded-xl p-3 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between font-semibold text-foreground">
+                <div className="flex items-center gap-1.5 text-primary text-[11px] font-bold">
+                  <Zap className="w-3.5 h-3.5 text-primary" />
+                  <span>连线高级参数 (Path Settings)</span>
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[90px]">
+                  {selectedPath.id}
+                </span>
+              </div>
+
+              {/* 1. 动画流动模式选择 */}
+              <div className="space-y-1.5">
+                <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                  <span>动画流动模式</span>
+                  <span className="font-mono text-primary uppercase text-[10px]">
+                    {selectedPath.style?.mode || 'draw'}
+                  </span>
+                </label>
+                <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
+                  {[
+                    { id: 'stream', label: '🌊 流光粒子', desc: '能量粒子沿虚线高速流动' },
+                    { id: 'draw', label: '✍️ 生长绘制', desc: '沿路径延时生长画入' },
+                    { id: 'pulse', label: '💓 呼吸律动', desc: '整条连线呼吸发光' },
+                  ].map((m) => {
+                    const isActive = (selectedPath.style?.mode || 'draw') === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => updateElementStyle(selectedPath.id, { mode: m.id as any })}
+                        className={`text-[10px] py-1 px-1 rounded font-medium transition cursor-pointer text-center truncate ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                        }`}
+                        title={m.desc}
+                      >
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. 线条粗细调节 */}
+              <div className="space-y-1.5">
+                <Slider
+                  label="线条粗细"
+                  valueDisplay={`${selectedPath.style?.strokeWidth || 5} px`}
+                  min="1"
+                  max="14"
+                  step="1"
+                  value={selectedPath.style?.strokeWidth || 5}
+                  onChange={(e) => updateElementStyle(selectedPath.id, { strokeWidth: parseFloat(e.target.value) })}
+                />
+              </div>
+
+              {/* 3. 流光速度调节 (仅在 stream 模式下显示) */}
+              {(selectedPath.style?.mode === 'stream') && (
+                <div className="space-y-1.5 pt-1">
+                  <Slider
+                    label="流光速度倍率"
+                    valueDisplay={`${(selectedPath.style?.flowSpeed || 1.8).toFixed(1)}x`}
+                    min="0.5"
+                    max="5.0"
+                    step="0.1"
+                    value={selectedPath.style?.flowSpeed || 1.8}
+                    onChange={(e) => updateElementStyle(selectedPath.id, { flowSpeed: parseFloat(e.target.value) })}
+                  />
+                </div>
+              )}
+
+              {/* 4. 霓虹光晕开关 */}
+              <div className="pt-1 border-t border-border/50 flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  <span>霓虹外发光滤镜</span>
+                </span>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedPath.style?.glow !== false}
+                    onChange={(e) => updateElementStyle(selectedPath.id, { glow: e.target.checked })}
+                    className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
+                  />
+                </label>
+              </div>
+
+              {/* 5. 端点拓扑信息 */}
+              {(selectedPath.from || selectedPath.to) && (
+                <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-1.5 rounded border border-border flex flex-col gap-0.5">
+                  <div className="truncate">起点: <span className="text-foreground">{selectedPath.from || '自由贝塞尔'}</span></div>
+                  <div className="truncate">终点: <span className="text-foreground">{selectedPath.to || '自由贝塞尔'}</span></div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
 
         <div className="h-px bg-border" />
 
