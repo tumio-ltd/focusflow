@@ -105,6 +105,11 @@ export interface CalloutItem {
   theme?: 'blue' | 'pink' | 'green' | 'amber' | string;
   title: string;
   desc: string;
+  style?: {
+    fontSize?: number;
+    titleFontSize?: number;
+    maxWidth?: number;
+  };
 }
 
 export interface SceneStep {

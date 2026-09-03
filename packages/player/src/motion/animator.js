@@ -131,13 +131,15 @@ export class MotionAnimator {
 
     // 5. Staggered Callouts Arrival
     callouts.forEach((calloutData, index) => {
-      const meta = this.calloutsMap.get(calloutData.id);
+      const calloutId = typeof calloutData === 'string' ? calloutData : calloutData?.id;
+      const meta = this.calloutsMap.get(calloutId);
       if (meta && meta.dom) {
         const el = meta.dom;
         const delay = 0.45 + index * 0.25; // Stagger formula: T_delay = T_base + i * Delta_T
 
-        // Check if position is near right edge (left > 75%) and adjust origin
-        const leftPercent = parseFloat(calloutData.position.left) || 50;
+        // Check if position is near right edge (left > 70%) and adjust origin
+        const rawLeft = meta.data?.position?.left || (typeof calloutData === 'object' ? calloutData?.position?.left : '50%');
+        const leftPercent = String(rawLeft).endsWith('%') ? parseFloat(rawLeft) : 50;
         if (leftPercent > 70) {
           el.style.transformOrigin = 'right center';
         } else {

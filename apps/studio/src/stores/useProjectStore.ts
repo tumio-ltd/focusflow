@@ -112,8 +112,8 @@ export interface ProjectState {
   updateMetaTitle: (title: string) => void;
   updateSceneCamera: (sceneIndex: number, camera: Partial<SceneStep['camera']>) => void;
   updateSceneTitle: (sceneIndex: number, title: string) => void;
-  addScene: () => void;
-  insertScene: (index: number) => void;
+  addScene: (initialCamera?: SceneStep['camera']) => void;
+  insertScene: (index: number, initialCamera?: SceneStep['camera']) => void;
   reorderScenes: (sourceIndex: number, targetIndex: number) => void;
   duplicateScene: (index: number) => void;
   deleteScene: (index: number) => void;
@@ -131,6 +131,7 @@ export interface ProjectState {
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
   updateDotPosition: (dotId: string, position: { cx: number; cy: number }) => void;
+  updateCallout: (calloutId: string, updates: Partial<CalloutItem>) => void;
   updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
@@ -271,13 +272,13 @@ export const useProjectStore = create<ProjectState>((set) => ({
       return pushHistory(state, nextDSL);
     }),
 
-  addScene: () =>
+  addScene: (initialCamera) =>
     set((state) => {
       const newIndex = state.dsl.scenes.length;
       const newScene: SceneStep = {
         id: `scene-${Date.now()}`,
         title: `${String(newIndex + 1).padStart(2, '0')} 新建场景`,
-        camera: { zoom: 1.2, x: 0, y: 0, duration: 1.2 },
+        camera: initialCamera ? { ...initialCamera } : { zoom: 1.2, x: 0, y: 0, duration: 1.2 },
         activeElements: {
           boxes: [],
           paths: [],
@@ -291,12 +292,12 @@ export const useProjectStore = create<ProjectState>((set) => ({
       return pushHistory(state, nextDSL);
     }),
 
-  insertScene: (index) =>
+  insertScene: (index, initialCamera) =>
     set((state) => {
       const newScene: SceneStep = {
         id: `scene-${Date.now()}`,
         title: `${String(index + 1).padStart(2, '0')} 插入场景`,
-        camera: { zoom: 1.2, x: 0, y: 0, duration: 1.2 },
+        camera: initialCamera ? { ...initialCamera } : { zoom: 1.2, x: 0, y: 0, duration: 1.2 },
         activeElements: {
           boxes: [],
           paths: [],
@@ -631,6 +632,41 @@ export const useProjectStore = create<ProjectState>((set) => ({
       return pushHistory(state, nextDSL);
     }),
 
+  updateCallout: (calloutId, updates) =>
+    set((state) => {
+      let modified = false;
+      const scenes = state.dsl.scenes.map((s) => {
+        if (!s.activeElements?.callouts) return s;
+        const exists = s.activeElements.callouts.some((c) => c.id === calloutId);
+        if (!exists) return s;
+        modified = true;
+        return {
+          ...s,
+          activeElements: {
+            ...s.activeElements,
+            callouts: s.activeElements.callouts.map((c) =>
+              c.id === calloutId
+                ? {
+                    ...c,
+                    ...updates,
+                    position: updates.position
+                      ? { ...c.position, ...updates.position }
+                      : c.position,
+                    style: updates.style
+                      ? { ...(c.style || {}), ...updates.style }
+                      : c.style,
+                  }
+                : c
+            ),
+          },
+        };
+      });
+
+      if (!modified) return state;
+      const nextDSL = { ...state.dsl, scenes };
+      return pushHistory(state, nextDSL);
+    }),
+
   updateElementStyle: (elementId, style) =>
     set((state) => {
       const elements = { ...state.dsl.elements };
@@ -660,7 +696,38 @@ export const useProjectStore = create<ProjectState>((set) => ({
           } : d
         );
       }
-      const nextDSL = { ...state.dsl, elements };
+
+      // 4. Check callouts
+      let isCallout = false;
+      const scenes = state.dsl.scenes.map((s) => {
+        if (!s.activeElements?.callouts) return s;
+        if (s.activeElements.callouts.some((c) => c.id === elementId)) {
+          isCallout = true;
+          return {
+            ...s,
+            activeElements: {
+              ...s.activeElements,
+              callouts: s.activeElements.callouts.map((c) => {
+                if (c.id !== elementId) return c;
+                const color = style.stroke || style.fill;
+                let theme = c.theme;
+                if (color) {
+                  if (color.includes('38bdf8')) theme = 'blue';
+                  else if (color.includes('34d399')) theme = 'green';
+                  else if (color.includes('fbbf24')) theme = 'amber';
+                  else if (color.includes('f472b6') || color.includes('f43f5e') || color.includes('ec4899')) theme = 'pink';
+                  else if (color.includes('a855f7')) theme = 'purple';
+                  else theme = color;
+                }
+                return { ...c, theme };
+              }),
+            },
+          };
+        }
+        return s;
+      });
+
+      const nextDSL = { ...state.dsl, elements, ...(isCallout ? { scenes } : {}) };
       return pushHistory(state, nextDSL);
     }),
 

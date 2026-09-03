@@ -7,6 +7,7 @@ import { CameraFrustumFrame } from './CameraFrustumFrame';
 import { BoxDrawingOverlay } from './BoxDrawingOverlay';
 import { BoxTransformOverlay } from './BoxTransformOverlay';
 import { DotTransformOverlay } from './DotTransformOverlay';
+import { CalloutTransformOverlay } from './CalloutTransformOverlay';
 import { PathDrawingOverlay } from './PathDrawingOverlay';
 import { DotDrawingOverlay } from './DotDrawingOverlay';
 import { CalloutOverlay } from './CalloutOverlay';
@@ -227,6 +228,14 @@ function CanvasOverlayComponent({
         contentHeight={contentHeight}
         active={activeTool === 'select'}
         dots={dots}
+      />
+
+      {/* 0.2 选中解说气泡拖拽平移/调色控制图层 */}
+      <CalloutTransformOverlay
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
+        active={activeTool === 'select'}
+        boxes={boxes}
       />
 
       {/* 1. 智能选框绘制图层 */}

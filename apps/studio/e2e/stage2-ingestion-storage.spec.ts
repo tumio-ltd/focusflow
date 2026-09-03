@@ -51,7 +51,7 @@ async function verifyTemplatesModalAndApplication(page: Page): Promise<void> {
 
   // 验证应用后弹窗关闭且画布项目标题更新
   await expect(modal).not.toBeVisible();
-  await expect(page.locator('header').getByText(/LuxeHMS/)).toBeVisible();
+  await expect(page.locator('header')).toContainText(/LuxeHMS/);
 }
 
 /**

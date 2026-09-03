@@ -116,6 +116,35 @@ async function verifyTimelinePlaybackControls(page: Page): Promise<void> {
   await expect(timeline).toContainText(/总时长|Total Duration/i);
 }
 
+/**
+ * 6. 验证新建场景智能继承当前视口 (Smart Viewport Inheritance) 与 Studio 画布播放平滑联动运镜
+ */
+async function verifySmartCameraInheritanceAndPlaybackKinematics(page: Page): Promise<void> {
+  // 1. 验证新建场景时自动继承当前视口镜头
+  const addSceneBtn = page.locator('[data-testid="timeline"] button:has(svg.lucide-plus)');
+  await expect(addSceneBtn).toBeVisible();
+  await addSceneBtn.click();
+  await page.waitForTimeout(400);
+
+  // 验证新场景卡片成功挂载并自动高亮激活
+  const lastSceneCard = page.locator('[data-testid="timeline"] .cursor-pointer').last();
+  await expect(lastSceneCard).toBeVisible();
+
+  // 2. 验证 Studio 底栏点击播放时，画布内容层自动进入平滑运镜变换
+  const playBtn = page.locator('[data-testid="timeline-play-btn"]');
+  await playBtn.click();
+  await page.waitForTimeout(300);
+
+  // 校验内容层被赋予了 GPU 缓动过渡样式
+  const contentLayer = page.locator('[data-testid="infinite-canvas-container"] > div').nth(1);
+  const transitionStyle = await contentLayer.getAttribute('style');
+  expect(transitionStyle).toContain('transition: transform');
+
+  // 暂停播放
+  await playBtn.click();
+  await page.waitForTimeout(300);
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -140,5 +169,9 @@ test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
 
   test('TC405: 验证演播控制条播放、暂停与上一幕/下一幕切换', async ({ page }) => {
     await verifyTimelinePlaybackControls(page);
+  });
+
+  test('TC406: 验证新建场景智能继承当前视口与 Studio 画布播放平滑联动运镜', async ({ page }) => {
+    await verifySmartCameraInheritanceAndPlaybackKinematics(page);
   });
 });

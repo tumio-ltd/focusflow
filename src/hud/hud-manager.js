@@ -273,7 +273,12 @@ export class HUDManager {
       },
       theme: "blue",
       title: "模块标题 (Title)",
-      desc: "在此输入解说文本或功能特性..."
+      desc: "在此输入解说文本或功能特性...",
+      style: {
+        fontSize: 12,
+        titleFontSize: 11,
+        maxWidth: 320
+      }
     };
 
     const jsonStr = JSON.stringify(calloutObj, null, 2);

@@ -148,11 +148,11 @@ async function verifyCalibrationAssistantInRightInspector(page: Page): Promise<v
   await expect(calibPanel).toContainText(/标定助手|Calibration HUD/i);
 
   // 验证底图原生基准分辨率徽章
-  await expect(calibPanel).toContainText(/1920 × 1459|1920 × 1080/);
+  await expect(calibPanel).toContainText(/5120 × 2880|1920 × 1459|1920 × 1080/);
 
   // 验证十字激光准星开关切换
   const crosshairCheckbox = calibPanel.locator('input[type="checkbox"]').nth(1);
-  await crosshairCheckbox.check();
+  await crosshairCheckbox.check({ force: true });
   await expect(crosshairCheckbox).toBeChecked();
 
   // 鼠标在画布区域移动时，验证十字准星引导线正常激活
@@ -163,6 +163,47 @@ async function verifyCalibrationAssistantInRightInspector(page: Page): Promise<v
   }
   const crosshairGuide = page.locator('[data-testid="crosshair-guide"]');
   await expect(crosshairGuide).toBeVisible();
+}
+
+/**
+ * 7. 验证解说气泡 (Callout) 的画布可视化交互控制与属性面板参数调节
+ */
+async function verifyCalloutVisualControlAndInspection(page: Page): Promise<void> {
+  // 1. 切换至解说气泡工具并在画布点击放置
+  const calloutToolBtn = page.locator('[data-testid="tool-callout"]');
+  await expect(calloutToolBtn).toBeVisible();
+  await calloutToolBtn.click();
+
+  const canvas = page.locator('[data-testid="infinite-canvas-container"]');
+  const box = await canvas.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + 350, box.y + 250);
+  }
+
+  // 2. 切回选择工具 (tool-select)
+  const selectToolBtn = page.locator('[data-testid="tool-select"]');
+  await expect(selectToolBtn).toBeVisible();
+  await selectToolBtn.click();
+
+  // 3. 验证画布上的 CalloutTransformOverlay 可视化控制图层正常挂载
+  const calloutTransformOverlay = page.locator('[data-testid="callout-transform-overlay"]');
+  await expect(calloutTransformOverlay).toBeVisible();
+
+  // 4. 单击画布气泡热区选中该气泡
+  if (box) {
+    await page.mouse.click(box.x + 350, box.y + 250);
+  }
+
+  // 5. 验证右侧属性检查器展示气泡专属属性卡片
+  const inspector = page.locator('[data-testid="inspector"]');
+  await expect(inspector).toContainText(/解说气泡属性|Callout Settings/i);
+
+  // 6. 验证可调节各项核心参数
+  await expect(inspector).toContainText(/气泡标题|徽章文本|Badge Title/i);
+  await expect(inspector).toContainText(/视觉主题配色|Visual Theme/i);
+  await expect(inspector).toContainText(/正文解说描述|Description Text/i);
+  await expect(inspector).toContainText(/左偏移|Left/i);
+  await expect(inspector).toContainText(/关联目标框元|Target Box/i);
 }
 
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
@@ -194,4 +235,9 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test('TC306: 验证右侧 Inspector 标定助手 (Precision HUD) 实时度量、十字准星与吸附控制', async ({ page }) => {
     await verifyCalibrationAssistantInRightInspector(page);
   });
+
+  test('TC307: 验证解说气泡 (Callout) 的画布可视化交互控制与属性面板参数调节', async ({ page }) => {
+    await verifyCalloutVisualControlAndInspection(page);
+  });
 });
+

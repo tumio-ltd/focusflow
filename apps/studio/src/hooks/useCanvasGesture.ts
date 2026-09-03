@@ -135,6 +135,36 @@ export function useCanvasGesture({
     });
   }, [contentWidth, contentHeight]);
 
+  // 4.1 摄像机视口协同运镜定位 (Fly-to-Camera 协同算法)
+  const flyToCamera = useCallback(
+    (camera: { zoom: number; x: number; y: number }) => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const natW = contentWidth || 1920;
+      const natH = contentHeight || 1080;
+      if (rect.width <= 0 || rect.height <= 0 || natW <= 0 || natH <= 0) return;
+
+      const baseScale = Math.min(rect.width / natW, rect.height / natH);
+      const zoom = Math.max(camera.zoom || 1.0, 1.0);
+      const targetScale = Math.min(Math.max(baseScale * zoom, minScale), maxScale);
+
+      const centerX = (natW / 2) + ((camera.x || 0) / 100) * natW;
+      const centerY = (natH / 2) + ((camera.y || 0) / 100) * natH;
+
+      const targetX = rect.width / 2 - centerX * targetScale;
+      const targetY = rect.height / 2 - centerY * targetScale;
+
+      setTransform({
+        x: targetX,
+        y: targetY,
+        scale: targetScale,
+      });
+    },
+    [contentWidth, contentHeight, minScale, maxScale]
+  );
+
   // 5. 监听滚轮事件 (Wheel)
   useEffect(() => {
     const container = containerRef.current;
@@ -254,6 +284,7 @@ export function useCanvasGesture({
     panBy,
     fitToScreen,
     resetZoom100,
+    flyToCamera,
     isPanning,
     isSpacePressed,
     pointerHandlers: {

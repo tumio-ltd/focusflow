@@ -109,6 +109,11 @@ export interface CalloutItem {
   desc: string;
   titleI18n?: Record<string, string>; // 双语国际化: { zh: "鉴权中心", en: "Auth Center" }
   descI18n?: Record<string, string>;
+  style?: {
+    fontSize?: number;        // 正文字体大小 (px，默认 12)
+    titleFontSize?: number;   // 标题徽章字体大小 (px，默认 11)
+    maxWidth?: number;        // 气泡最大宽度 (px，默认 320)
+  };
 }
 
 export interface SceneStep {

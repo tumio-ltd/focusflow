@@ -8,6 +8,7 @@
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
+      "development": "./src/index.js",
       "import": "./dist/focusflow.es.js"
     },
     "./dist/*": "./dist/*",

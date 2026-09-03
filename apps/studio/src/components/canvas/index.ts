@@ -7,4 +7,5 @@ export * from './CalloutOverlay';
 export * from './CanvasOverlay';
 export * from './BoxTransformOverlay';
 export * from './DotTransformOverlay';
+export * from './CalloutTransformOverlay';
 export * from './ZoomControls';

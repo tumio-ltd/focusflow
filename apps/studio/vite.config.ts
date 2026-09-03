@@ -5,9 +5,10 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': resolve(import.meta.dirname, './src'),
-    },
+    alias: [
+      { find: '@', replacement: resolve(import.meta.dirname, './src') },
+      { find: /^@focusflow\/player$/, replacement: resolve(import.meta.dirname, '../../packages/player/src/index.js') },
+    ],
   },
   server: {
     port: 5174,

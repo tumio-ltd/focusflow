@@ -11,6 +11,16 @@ import { BezierRouter } from '../motion/bezier-router.js';
 import { MotionAnimator } from '../motion/animator.js';
 import { HUDManager } from '../hud/hud-manager.js';
 
+function normalizeCoord(coord, base) {
+  if (coord === undefined || coord === null) return '0%';
+  const str = String(coord).trim();
+  if (str.endsWith('%')) return str;
+  const num = parseFloat(str);
+  if (isNaN(num)) return '0%';
+  const baseDim = base > 0 ? base : 1920;
+  return `${((num / baseDim) * 100).toFixed(2)}%`;
+}
+
 export class FocusFlowPlayer {
   constructor(options) {
     if (!options || !options.dsl) {
@@ -197,6 +207,11 @@ export class FocusFlowPlayer {
       if (divider) divider.style.display = 'none';
     }
 
+    const controls = this.container.querySelector('.focusflow-controls');
+    if (controls) {
+      controls.style.display = this.showControls ? 'flex' : 'none';
+    }
+
     // Build Tabs
     this.tabsContainerEl.innerHTML = (this.dsl.scenes || []).map((scene, idx) => `
       <button class="ff-tab-btn ${idx === 0 ? 'active' : ''}" data-index="${idx}">
@@ -343,19 +358,30 @@ export class FocusFlowPlayer {
     });
 
     // 5. Render Callouts
+    const baseW = this.viewportWidth || this.dsl.meta?.viewport?.width || 1920;
+    const baseH = this.viewportHeight || this.dsl.meta?.viewport?.height || 1080;
+
     (this.dsl.scenes || []).forEach(scene => {
       (scene.activeElements?.callouts || []).forEach(callout => {
         if (!this.calloutsMap.has(callout.id)) {
           const cardEl = document.createElement('div');
           cardEl.setAttribute('id', callout.id);
           cardEl.setAttribute('class', 'ff-callout');
-          cardEl.style.left = callout.position.left;
-          cardEl.style.top = callout.position.top;
+          // 自动将任意坐标格式 (px / 纯数字 / %) 归一化为基准百分比，杜绝高分底图/全屏缩放时溢出隐形
+          cardEl.style.left = normalizeCoord(callout.position?.left, baseW);
+          cardEl.style.top = normalizeCoord(callout.position?.top, baseH);
+          cardEl.style.width = 'max-content';
+
+          if (callout.style?.maxWidth) {
+            cardEl.style.maxWidth = `${callout.style.maxWidth}px`;
+          }
 
           const theme = callout.theme || 'blue';
+          const titleFs = callout.style?.titleFontSize ? `style="font-size: ${callout.style.titleFontSize}px"` : '';
+          const descFs = callout.style?.fontSize ? `style="font-size: ${callout.style.fontSize}px; line-height: 1.45;"` : '';
           cardEl.innerHTML = `
-            <div class="ff-badge ${theme}">${callout.title}</div>
-            <div class="ff-desc">${callout.desc}</div>
+            <div class="ff-badge ${theme}" ${titleFs}>${callout.title}</div>
+            <div class="ff-desc" ${descFs}>${callout.desc}</div>
           `;
 
           this.calloutLayerEl.appendChild(cardEl);
@@ -432,6 +458,14 @@ export class FocusFlowPlayer {
 
   togglePlay() {
     this.stateMachine.togglePlay();
+  }
+
+  setShowControls(show) {
+    this.showControls = !!show;
+    const controls = this.container.querySelector('.focusflow-controls');
+    if (controls) {
+      controls.style.display = this.showControls ? 'flex' : 'none';
+    }
   }
 
   toggleDebugMode(forceState) {

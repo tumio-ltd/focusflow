@@ -54,6 +54,7 @@ export default function App() {
   const toggleSmartSnap = useEditorStore((s) => s.toggleSmartSnap);
   const isCrosshairEnabled = useEditorStore((s) => s.isCrosshairEnabled);
   const toggleCrosshair = useEditorStore((s) => s.toggleCrosshair);
+  const setSelectedElementId = useEditorStore((s) => s.setSelectedElementId);
 
   const {
     dsl,
@@ -300,24 +301,42 @@ export default function App() {
     updateSceneCamera(activeSceneIndex, newCamera);
   }, [dsl.meta.viewport.width, dsl.meta.viewport.height, activeScene?.camera.duration, updateSceneCamera, activeSceneIndex]);
 
+  // 新建场景智能继承当前视口 (Smart Viewport Inheritance)
+  const handleAddScene = useCallback(() => {
+    const currentCamera = captureCanvasToCamera(
+      canvasTransformRef.current,
+      containerRectRef.current,
+      dsl.meta.viewport.width,
+      dsl.meta.viewport.height,
+      1.2
+    );
+    addScene(currentCamera);
+    setActiveSceneIndex(dsl.scenes.length);
+  }, [dsl.meta.viewport.width, dsl.meta.viewport.height, dsl.scenes.length, addScene, setActiveSceneIndex]);
+
   const handleBoxCreated = (box: ElementBox) => {
     addBox(box, activeSceneIndex);
+    setSelectedElementId(box.id);
   };
 
   const handlePathCreated = (path: ElementPath) => {
     addPath(path, activeSceneIndex);
+    setSelectedElementId(path.id);
   };
 
   const handleDotCreated = (dot: ElementDot) => {
     addDot(dot, activeSceneIndex);
+    setSelectedElementId(dot.id);
   };
 
   const handleCalloutCreated = (callout: CalloutItem) => {
     addCallout(callout, activeSceneIndex);
+    setSelectedElementId(callout.id);
   };
 
   const handleImageCreated = (image: ElementImage) => {
     addImage(image, activeSceneIndex);
+    setSelectedElementId(image.id);
   };
 
   // 提取当前场景图元信息用于 Inspector 展示 (通过 useMemo 保持引用稳定，阻断侧边栏重绘)
@@ -359,7 +378,7 @@ export default function App() {
       ...Array.from(allCalloutsMap.values()).map((c) => ({
         id: c.id,
         type: 'callout' as const,
-        name: c.title || c.id,
+        name: c.title && c.title !== c.id ? `${c.id} (${c.title})` : c.id,
         active: activeScene?.activeElements.callouts?.some((sc) => sc.id === c.id) || false,
       })),
     ];
@@ -411,6 +430,8 @@ export default function App() {
           <InfiniteCanvas
             contentWidth={dsl.meta.viewport.width}
             contentHeight={dsl.meta.viewport.height}
+            camera={activeScene?.camera}
+            isPlaying={isPlaying}
             onTransformChange={handleCanvasTransformChange}
           >
             <div className="w-full h-full relative">
@@ -445,7 +466,7 @@ export default function App() {
             scenes={timelineScenes}
             activeSceneIndex={activeSceneIndex}
             onSelectScene={handleSelectScene}
-            onAddScene={addScene}
+            onAddScene={handleAddScene}
             onDuplicateScene={duplicateScene}
             onDeleteScene={(idx) => {
               deleteScene(idx);

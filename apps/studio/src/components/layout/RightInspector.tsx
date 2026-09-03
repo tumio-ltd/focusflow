@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
+import { calculateAdaptiveCalloutStyle } from '@/utils/calloutTypography';
 import { useEditorStore, useProjectStore } from '@/stores';
 
 function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: number; viewportHeight: number }) {
@@ -145,6 +146,7 @@ function RightInspectorComponent({
   const setActiveDrawingColor = useEditorStore((s) => s.setActiveDrawingColor);
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
   const updateDotPosition = useProjectStore((s) => s.updateDotPosition);
+  const updateCallout = useProjectStore((s) => s.updateCallout);
   const dsl = useProjectStore((s) => s.dsl);
 
   // 当在画布或列表中选中任何图元时，自动平滑切入【图元属性】Tab
@@ -154,9 +156,20 @@ function RightInspectorComponent({
     }
   }, [selectedElementId]);
 
+  const allCallouts = React.useMemo(() => {
+    const map = new Map<string, any>();
+    dsl.scenes.forEach((s) => {
+      (s.activeElements?.callouts || []).forEach((c) => {
+        if (!map.has(c.id)) map.set(c.id, c);
+      });
+    });
+    return Array.from(map.values());
+  }, [dsl.scenes]);
+
   const selectedBox = dsl.elements?.boxes?.find((b) => b.id === selectedElementId);
   const selectedPath = dsl.elements?.paths?.find((p) => p.id === selectedElementId);
   const selectedDot = dsl.elements?.dots?.find((d) => d.id === selectedElementId);
+  const selectedCallout = allCallouts.find((c) => c.id === selectedElementId);
 
   const filteredElements = elements.filter((el) =>
     el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -197,9 +210,116 @@ function RightInspectorComponent({
     setTimeout(() => setHasCopiedCoords(false), 2000);
   };
 
+  // 渲染图层层级列表组件 (在【场景运镜】与【图元属性】双 Tab 中保持常驻可用)
+  const renderLayerHierarchyList = () => (
+    <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="layer-hierarchy-panel">
+      <div
+        onClick={() => setIsLayersOpen(!isLayersOpen)}
+        className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
+      >
+        <div className="flex items-center gap-2">
+          <Layers className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs font-bold text-foreground">{t('layerList', '图层层级列表')}</span>
+          <span className="text-[10px] text-muted-foreground font-mono font-normal">
+            ({elements.length})
+          </span>
+        </div>
+        {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+      </div>
+
+      {isLayersOpen && (
+        <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+          {/* 图元搜索框 */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+            <Input
+              placeholder={t('searchElement', '搜索图元名称或 ID...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 text-xs bg-background h-8"
+            />
+          </div>
+
+          {/* 继承前幕全部图元按钮 */}
+          {canInherit && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onInheritPreviousScene}
+              className="w-full gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10 h-7"
+            >
+              <CopyCheck className="w-3.5 h-3.5" />
+              <span>{t('inheritPrevious', '从上一幕继承图元')}</span>
+            </Button>
+          )}
+
+          {/* 图元项目列表 */}
+          <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+            {filteredElements.length === 0 ? (
+              <div className="text-center py-4 text-xs text-muted-foreground">
+                {t('noElements', '暂无图元')}
+              </div>
+            ) : (
+              filteredElements.map((el) => {
+                const isSelected = selectedElementId === el.id;
+                return (
+                  <div
+                    key={el.id}
+                    onClick={() => setSelectedElementId(el.id)}
+                    className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition cursor-pointer ${
+                      isSelected
+                        ? 'bg-primary/15 border-primary text-foreground font-semibold ring-1 ring-primary/40'
+                        : 'bg-background/80 border-border text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate flex-1 min-w-0 pr-2">
+                      {getElementIcon(el.type)}
+                      <span className="truncate">{el.name}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 shrink-0">
+                      {/* 显隐切换按钮 */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleElement?.(el.id);
+                        }}
+                        className={`p-1 rounded hover:bg-muted ${
+                          el.active ? 'text-primary' : 'text-muted-foreground opacity-40'
+                        }`}
+                        title={el.active ? t('activeInScene', '在当前场景激活展示') : t('hiddenInScene', '在当前场景隐藏')}
+                      >
+                        {el.active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                      </button>
+
+                      {/* 删除图元按钮 */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteElement?.(el.id);
+                        }}
+                        className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
+                        title={t('deleteElement', '删除图元')}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <aside
-      data-testid="right-inspector"
+      data-testid="inspector"
+      id="right-inspector"
       className="w-80 h-full border-l border-border bg-panel flex flex-col select-none z-20 shrink-0 text-foreground transition-colors duration-200"
     >
       {/* 1. 顶部 Header 与实时 HUD */}
@@ -334,6 +454,7 @@ function RightInspectorComponent({
                     <Button
                       size="sm"
                       variant="ghost"
+                      data-testid="reset-camera-center-btn"
                       onClick={onCameraReset}
                       className="h-7 text-[11px] gap-1 text-muted-foreground hover:text-foreground px-2"
                     >
@@ -424,6 +545,9 @@ function RightInspectorComponent({
                 </div>
               )}
             </div>
+
+            {/* 1.3 图元层级列表 (Layer Hierarchy List - 场景维度常驻) */}
+            {renderLayerHierarchyList()}
           </div>
         )}
 
@@ -688,8 +812,248 @@ function RightInspectorComponent({
               </div>
             )}
 
-            {/* Case D: 未选中任何图元时的提示 */}
-            {!selectedBox && !selectedPath && !selectedDot && (
+            {/* Case D: 选中 Callout */}
+            {selectedCallout && (
+              <div className="space-y-3 bg-muted/40 border border-primary/30 rounded-xl p-3 shadow-md animate-in fade-in duration-150">
+                <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
+                  <div className="flex items-center gap-1.5 text-sky-400 text-xs font-bold">
+                    <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
+                    <span>{t('calloutSettings', '解说气泡属性')}</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                    {selectedCallout.id}
+                  </span>
+                </div>
+
+                {/* 气泡标题 / 徽章文本 */}
+                <div className="space-y-1">
+                  <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                    <span>{t('calloutTitle', '徽章标题')}</span>
+                    <span className="font-mono text-sky-400 font-bold text-[10px] uppercase">{selectedCallout.theme || 'blue'}</span>
+                  </label>
+                  <Input
+                    value={selectedCallout.title}
+                    onChange={(e) => updateCallout(selectedCallout.id, { title: e.target.value })}
+                    placeholder="请输入气泡标题..."
+                    className="text-xs bg-background h-8 font-medium"
+                  />
+                </div>
+
+                {/* 主题配色切换 */}
+                <div className="space-y-1.5">
+                  <label className="text-muted-foreground text-[10px] font-medium">
+                    {t('calloutTheme', '视觉主题配色')}
+                  </label>
+                  <div className="grid grid-cols-5 gap-1 bg-background p-1 rounded-lg border border-border">
+                    {[
+                      { id: 'blue', label: '科技蓝', color: '#38bdf8' },
+                      { id: 'green', label: '高可用', color: '#34d399' },
+                      { id: 'amber', label: '预警黄', color: '#fbbf24' },
+                      { id: 'pink', label: '品红', color: '#f472b6' },
+                      { id: 'purple', label: '霓虹紫', color: '#a855f7' },
+                    ].map((thm) => {
+                      const isActive = (selectedCallout.theme || 'blue') === thm.id;
+                      return (
+                        <button
+                          key={thm.id}
+                          type="button"
+                          onClick={() => updateCallout(selectedCallout.id, { theme: thm.id })}
+                          className={`text-[9px] py-1 px-0.5 rounded font-medium transition cursor-pointer flex flex-col items-center gap-1 ${
+                            isActive
+                              ? 'bg-primary/20 text-primary border border-primary/40 font-bold shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: thm.color }} />
+                          <span className="truncate">{thm.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 正文解说描述 */}
+                <div className="space-y-1">
+                  <label className="text-muted-foreground text-[10px] font-medium">
+                    {t('calloutDesc', '正文解说描述')}
+                  </label>
+                  <textarea
+                    value={selectedCallout.desc}
+                    onChange={(e) => updateCallout(selectedCallout.id, { desc: e.target.value })}
+                    placeholder="输入架构原理解说、协议说明或高并发应对策略..."
+                    rows={3}
+                    className="w-full text-xs bg-background border border-border rounded-md p-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none leading-relaxed"
+                  />
+                </div>
+
+                {/* 字体大小微调 (Font Size Controls) */}
+                <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border/50">
+                  <Slider
+                    label={t('calloutFontSize', '正文字体大小')}
+                    valueDisplay={`${selectedCallout.style?.fontSize || 12} px`}
+                    min="10"
+                    max="36"
+                    step="1"
+                    value={selectedCallout.style?.fontSize || 12}
+                    onChange={(e) =>
+                      updateCallout(selectedCallout.id, {
+                        style: { ...(selectedCallout.style || {}), fontSize: parseFloat(e.target.value) },
+                      })
+                    }
+                  />
+                  <Slider
+                    label={t('calloutTitleFontSize', '标题徽章大小')}
+                    valueDisplay={`${selectedCallout.style?.titleFontSize || 11} px`}
+                    min="9"
+                    max="32"
+                    step="1"
+                    value={selectedCallout.style?.titleFontSize || 11}
+                    onChange={(e) =>
+                      updateCallout(selectedCallout.id, {
+                        style: { ...(selectedCallout.style || {}), titleFontSize: parseFloat(e.target.value) },
+                      })
+                    }
+                  />
+                </div>
+
+                {/* 卡片最大宽度调节 */}
+                <Slider
+                  label={t('calloutMaxWidth', '气泡最大宽度')}
+                  valueDisplay={`${selectedCallout.style?.maxWidth || 320} px`}
+                  min="200"
+                  max="800"
+                  step="10"
+                  value={selectedCallout.style?.maxWidth || 320}
+                  onChange={(e) =>
+                    updateCallout(selectedCallout.id, {
+                      style: { ...(selectedCallout.style || {}), maxWidth: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+
+                {/* 坐标精确微调 */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                      <span>{t('calloutPosX', '左偏移 (Left)')}</span>
+                      <span className="font-mono text-sky-400 font-bold text-[10px]">px</span>
+                    </label>
+                    <Input
+                      type="number"
+                      value={parseInt(selectedCallout.position.left) || 0}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        updateCallout(selectedCallout.id, {
+                          position: { ...selectedCallout.position, left: `${val}px` },
+                        });
+                      }}
+                      className="text-xs bg-background h-7 font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                      <span>{t('calloutPosY', '上偏移 (Top)')}</span>
+                      <span className="font-mono text-sky-400 font-bold text-[10px]">px</span>
+                    </label>
+                    <Input
+                      type="number"
+                      value={parseInt(selectedCallout.position.top) || 0}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        updateCallout(selectedCallout.id, {
+                          position: { ...selectedCallout.position, top: `${val}px` },
+                        });
+                      }}
+                      className="text-xs bg-background h-7 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* 关联目标框元 (Target Box Binding) */}
+                <div className="space-y-1.5 pt-1 border-t border-border/50">
+                  <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                    <span>{t('calloutTargetBox', '关联目标框元')}</span>
+                    {selectedCallout.targetBoxId && (
+                      <span className="font-mono text-emerald-400 text-[10px]">已绑定</span>
+                    )}
+                  </label>
+                  <select
+                    value={selectedCallout.targetBoxId || ''}
+                    onChange={(e) => {
+                      const boxId = e.target.value || undefined;
+                      updateCallout(selectedCallout.id, { targetBoxId: boxId });
+                    }}
+                    className="w-full text-xs bg-background border border-border rounded-md px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value="">{t('calloutNoTarget', '无绑定 (自由浮动)')}</option>
+                    {(dsl.elements?.boxes || []).map((b) => (
+                      <option key={b.id} value={b.id}>
+                        📦 {b.id} ({b.width}×{b.height} @ {b.x},{b.y})
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* 快捷对齐按钮 */}
+                  {selectedCallout.targetBoxId && (() => {
+                    const tBox = (dsl.elements?.boxes || []).find((b) => b.id === selectedCallout.targetBoxId);
+                    if (!tBox) return null;
+                    return (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateCallout(selectedCallout.id, {
+                                position: {
+                                  left: `${Math.round(tBox.x + 20)}px`,
+                                  top: `${Math.round(Math.max(20, tBox.y - 80))}px`,
+                                },
+                              });
+                            }}
+                            className="flex-1 text-[9px] bg-secondary/80 hover:bg-secondary text-secondary-foreground py-1 px-2 rounded border border-border transition cursor-pointer"
+                          >
+                            ⬆️ {t('calloutAlignAbove', '对齐至框元上方')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateCallout(selectedCallout.id, {
+                                position: {
+                                  left: `${Math.round(tBox.x + tBox.width + 20)}px`,
+                                  top: `${Math.round(tBox.y + 10)}px`,
+                                },
+                              });
+                            }}
+                            className="flex-1 text-[9px] bg-secondary/80 hover:bg-secondary text-secondary-foreground py-1 px-2 rounded border border-border transition cursor-pointer"
+                          >
+                            ➡️ {t('calloutAlignRight', '对齐至框元右侧')}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const adaptive = calculateAdaptiveCalloutStyle({
+                              viewportWidth: dsl.meta.viewport.width,
+                              viewportHeight: dsl.meta.viewport.height,
+                              targetBox: tBox,
+                            });
+                            updateCallout(selectedCallout.id, { style: adaptive });
+                          }}
+                          className="w-full text-[9px] bg-primary/10 hover:bg-primary/20 text-primary py-1 px-2 rounded border border-primary/30 transition cursor-pointer flex items-center justify-center gap-1 font-medium"
+                        >
+                          <Sparkles className="w-2.5 h-2.5" />
+                          <span>{t('calloutAutoAdaptStyle', '一键匹配目标框元尺寸与字号')}</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Case E: 未选中任何图元时的提示 */}
+            {!selectedBox && !selectedPath && !selectedDot && !selectedCallout && (
               <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
                 <Info className="w-4 h-4 text-muted-foreground mx-auto" />
                 <p className="text-xs font-medium text-foreground">{t('noElementSelected', '未选中图元')}</p>
@@ -722,6 +1086,14 @@ function RightInspectorComponent({
                         setActiveDrawingColor(c);
                         if (selectedElementId) {
                           updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                          if (selectedCallout) {
+                            let theme = 'blue';
+                            if (c.includes('34d399')) theme = 'green';
+                            else if (c.includes('fbbf24')) theme = 'amber';
+                            else if (c.includes('f472b6') || c.includes('f43f5e') || c.includes('ec4899')) theme = 'pink';
+                            else if (c.includes('a855f7')) theme = 'purple';
+                            updateCallout(selectedCallout.id, { theme });
+                          }
                         }
                       }}
                       className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
@@ -745,6 +1117,9 @@ function RightInspectorComponent({
                       setActiveDrawingColor(newColor);
                       if (selectedElementId) {
                         updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
+                        if (selectedCallout) {
+                          updateCallout(selectedCallout.id, { theme: newColor });
+                        }
                       }
                     }}
                     className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
@@ -753,109 +1128,8 @@ function RightInspectorComponent({
               </div>
             </div>
 
-            {/* 2.3 图元层级列表 (Layer Hierarchy List) */}
-            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3">
-              <div
-                onClick={() => setIsLayersOpen(!isLayersOpen)}
-                className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
-              >
-                <div className="flex items-center gap-2">
-                  <Layers className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-bold text-foreground">{t('layerList', '图层层级列表')}</span>
-                  <span className="text-[10px] text-muted-foreground font-mono font-normal">
-                    ({elements.length})
-                  </span>
-                </div>
-                {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
-              </div>
-
-              {isLayersOpen && (
-                <div className="space-y-2 pt-1 animate-in fade-in duration-150">
-                  {/* 图元搜索框 */}
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
-                    <Input
-                      placeholder={t('searchElement', '搜索图元名称或 ID...')}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-8 text-xs bg-background h-8"
-                    />
-                  </div>
-
-                  {/* 继承前幕全部图元按钮 */}
-                  {canInherit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={onInheritPreviousScene}
-                      className="w-full gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10 h-7"
-                    >
-                      <CopyCheck className="w-3.5 h-3.5" />
-                      <span>{t('inheritPrevious', '从上一幕继承图元')}</span>
-                    </Button>
-                  )}
-
-                  {/* 图元项目列表 */}
-                  <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
-                    {filteredElements.length === 0 ? (
-                      <div className="text-center py-4 text-xs text-muted-foreground">
-                        {t('noElements', '暂无图元')}
-                      </div>
-                    ) : (
-                      filteredElements.map((el) => {
-                        const isSelected = selectedElementId === el.id;
-                        return (
-                          <div
-                            key={el.id}
-                            onClick={() => setSelectedElementId(el.id)}
-                            className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition cursor-pointer ${
-                              isSelected
-                                ? 'bg-primary/15 border-primary text-foreground font-semibold ring-1 ring-primary/40'
-                                : 'bg-background/80 border-border text-foreground hover:bg-muted'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 truncate flex-1 min-w-0 pr-2">
-                              {getElementIcon(el.type)}
-                              <span className="truncate">{el.name}</span>
-                            </div>
-
-                            <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 shrink-0">
-                              {/* 显隐切换按钮 */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onToggleElement?.(el.id);
-                                }}
-                                className={`p-1 rounded hover:bg-muted ${
-                                  el.active ? 'text-primary' : 'text-muted-foreground opacity-40'
-                                }`}
-                                title={el.active ? t('activeInScene', '在当前场景激活展示') : t('hiddenInScene', '在当前场景隐藏')}
-                              >
-                                {el.active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                              </button>
-
-                              {/* 删除图元按钮 */}
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteElement?.(el.id);
-                                }}
-                                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
-                                title={t('deleteElement', '删除图元')}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* 2.3 图元层级列表 (Layer Hierarchy List - 图元属性维度常驻) */}
+            {renderLayerHierarchyList()}
           </div>
         )}
       </div>

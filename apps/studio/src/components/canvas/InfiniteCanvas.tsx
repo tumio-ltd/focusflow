@@ -1,13 +1,16 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Hand } from 'lucide-react';
 import { useCanvasGesture } from '@/hooks/useCanvasGesture';
 import { ZoomControls } from './ZoomControls';
+import type { CameraConfig } from '@/utils/cameraMath';
 
 export interface InfiniteCanvasProps {
   children?: ReactNode;
   contentWidth?: number;
   contentHeight?: number;
   className?: string;
+  camera?: CameraConfig;
+  isPlaying?: boolean;
   onTransformChange?: (transform: { scale: number; x: number; y: number }, containerRect: { width: number; height: number }) => void;
 }
 
@@ -16,6 +19,8 @@ export function InfiniteCanvas({
   contentWidth = 1920,
   contentHeight = 1080,
   className = '',
+  camera,
+  isPlaying = false,
   onTransformChange,
 }: InfiniteCanvasProps) {
   const {
@@ -24,6 +29,7 @@ export function InfiniteCanvas({
     zoomTo,
     fitToScreen,
     resetZoom100,
+    flyToCamera,
     isPanning,
     isSpacePressed,
     pointerHandlers,
@@ -32,6 +38,13 @@ export function InfiniteCanvas({
     contentHeight,
     onTransformChange,
   });
+
+  // 当处于播放态时，随着场景切换自动协同平滑运镜飞向当前场景摄像机
+  useEffect(() => {
+    if (isPlaying && camera) {
+      flyToCamera(camera);
+    }
+  }, [isPlaying, camera?.zoom, camera?.x, camera?.y, camera?.duration, flyToCamera]);
 
   return (
     <div
@@ -48,17 +61,20 @@ export function InfiniteCanvas({
         style={{
           backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
-          backgroundPosition: `${transform.x % 24}px ${transform.y % 24}px`,
+          backgroundPosition: `${((transform.x % 24) + 24) % 24}px ${((transform.y % 24) + 24) % 24}px`,
         }}
       />
 
-      {/* 2. 核心 GPU 几何变换视口层 (Transform Content Layer - 原生零延迟 GPU 变换，禁止 CSS 缓动插值抖动) */}
+      {/* 2. 核心 GPU 几何变换视口层 (Transform Content Layer - 亚像素高精浮点变换，杜绝整数化量化阶跃抖动) */}
       <div
         className="absolute origin-top-left will-change-transform border border-border/40 shadow-xl"
         style={{
           width: `${contentWidth}px`,
           height: `${contentHeight}px`,
-          transform: `translate3d(${Math.round(transform.x)}px, ${Math.round(transform.y)}px, 0) scale(${transform.scale})`,
+          transform: `translate3d(${transform.x.toFixed(2)}px, ${transform.y.toFixed(2)}px, 0) scale(${transform.scale})`,
+          transition: isPlaying
+            ? `transform ${camera?.duration !== undefined ? camera.duration : 1.2}s cubic-bezier(0.4, 0.0, 0.2, 1.0)`
+            : 'none',
           backfaceVisibility: 'hidden',
         }}
       >

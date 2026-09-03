@@ -174,7 +174,7 @@ export function CameraFrustumFrame({
         tabIndex={isInteractive ? 0 : undefined}
         onKeyDown={handleKeyDown}
         data-testid="camera-frustum-frame"
-        className={`absolute border-2 rounded-xl transform-gpu select-none outline-none pointer-events-none ${
+        className={`absolute border-2 rounded-xl select-none outline-none pointer-events-none ${
           isSelected || isDragging || isResizing
             ? 'border-cyan-300 shadow-[inset_0_0_25px_rgba(56,189,248,0.35)] ring-1 ring-inset ring-cyan-400/50'
             : 'border-cyan-400/80 shadow-[inset_0_0_15px_rgba(56,189,248,0.15)]'
