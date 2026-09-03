@@ -130,7 +130,7 @@ export interface ProjectState {
   addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
-  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number }) => void;
+  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
   undo: () => void;
@@ -615,7 +615,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
       // 1. Check boxes
       if (elements.boxes?.some((b: ElementBox) => b.id === elementId)) {
         elements.boxes = elements.boxes.map((b: ElementBox) =>
-          b.id === elementId ? { ...b, style: { ...(b.style || {}), ...style } } : b
+          b.id === elementId ? { 
+            ...b, 
+            rx: style.rx !== undefined ? style.rx : b.rx,
+            style: { ...(b.style || {}), ...style } 
+          } : b
         );
       }
       // 2. Check paths

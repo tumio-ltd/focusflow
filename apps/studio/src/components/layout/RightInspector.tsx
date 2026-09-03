@@ -27,7 +27,10 @@ import {
   Move,
   RotateCcw,
   Zap,
-  Gauge
+  Gauge,
+  Film,
+  SlidersHorizontal,
+  Info
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
@@ -59,16 +62,16 @@ function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: 
   }, [viewportWidth, viewportHeight]);
 
   return (
-    <div className="space-y-1.5 font-mono text-[11px]">
-      <div className="flex items-center justify-between bg-muted/40 px-2 py-1 rounded border border-border/40">
-        <span className="text-muted-foreground">📐 像素:</span>
-        <span ref={pixelRef} className="text-primary font-semibold">
+    <div className="space-y-1 font-mono text-[11px]">
+      <div className="flex items-center justify-between bg-muted/40 px-2 py-0.5 rounded border border-border/40">
+        <span className="text-muted-foreground text-[10px]">📐 物理像素:</span>
+        <span ref={pixelRef} className="text-primary font-semibold text-[10px]">
           X: -- , Y: --
         </span>
       </div>
-      <div className="flex items-center justify-between bg-muted/40 px-2 py-1 rounded border border-border/40">
-        <span className="text-muted-foreground">📍 相对:</span>
-        <span ref={percentRef} className="text-emerald-400 font-semibold">
+      <div className="flex items-center justify-between bg-muted/40 px-2 py-0.5 rounded border border-border/40">
+        <span className="text-muted-foreground text-[10px]">📍 相对百分比:</span>
+        <span ref={percentRef} className="text-emerald-400 font-semibold text-[10px]">
           L: --% , T: --%
         </span>
       </div>
@@ -131,6 +134,7 @@ function RightInspectorComponent({
   onToggleCrosshair,
 }: RightInspectorProps) {
   const { t } = useTranslation('inspector');
+  const [activeTab, setActiveTab] = useState<'scene' | 'elements'>('scene');
   const [isCameraOpen, setIsCameraOpen] = useState(true);
   const [isLayersOpen, setIsLayersOpen] = useState(true);
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(true);
@@ -144,6 +148,14 @@ function RightInspectorComponent({
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
   const dsl = useProjectStore((s) => s.dsl);
 
+  // 当在画布或列表中选中任何图元时，自动平滑切入【图元属性】Tab
+  useEffect(() => {
+    if (selectedElementId) {
+      setActiveTab('elements');
+    }
+  }, [selectedElementId]);
+
+  const selectedBox = dsl.elements?.boxes?.find((b) => b.id === selectedElementId);
   const selectedPath = dsl.elements?.paths?.find((p) => p.id === selectedElementId);
 
   const filteredElements = elements.filter((el) =>
@@ -158,367 +170,378 @@ function RightInspectorComponent({
       case 'path':
         return <GitCommit className="w-3 h-3 text-emerald-400" />;
       case 'dot':
-        return <CircleDot className="w-3 h-3 text-purple-500" />;
+        return <CircleDot className="w-3 h-3 text-amber-400" />;
       case 'callout':
-        return <MessageSquare className="w-3 h-3 text-amber-500" />;
+        return <MessageSquare className="w-3 h-3 text-purple-400" />;
       case 'image':
-        return <ImageIcon className="w-3 h-3 text-blue-400" />;
+        return <ImageIcon className="w-3 h-3 text-pink-400" />;
     }
   };
 
-  const handleCopyCoordsJSON = () => {
+  const copyCoordinatesJson = () => {
     const coords = coordinateBus.get();
-    const data = {
-      x: coords ? Math.round(coords.x) : 0,
-      y: coords ? Math.round(coords.y) : 0,
-      percentX: coords && viewport.width ? Number(((coords.x / viewport.width) * 100).toFixed(2)) : 0,
-      percentY: coords && viewport.height ? Number(((coords.y / viewport.height) * 100).toFixed(2)) : 0,
-      viewportWidth: viewport.width,
-      viewportHeight: viewport.height,
-    };
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    if (!coords) return;
+    const json = JSON.stringify(
+      {
+        pixel: { x: Math.round(coords.x), y: Math.round(coords.y) },
+        percent: {
+          left: Number(((coords.x / viewport.width) * 100).toFixed(2)),
+          top: Number(((coords.y / viewport.height) * 100).toFixed(2)),
+        },
+      },
+      null,
+      2
+    );
+    navigator.clipboard.writeText(json);
     setHasCopiedCoords(true);
     setTimeout(() => setHasCopiedCoords(false), 2000);
   };
 
   return (
     <aside
-      data-testid="inspector"
-      className="w-72 border-l border-border bg-panel/80 backdrop-blur-md flex flex-col select-none z-20 shrink-0 overflow-y-auto"
+      data-testid="right-inspector"
+      className="w-80 h-full border-l border-border bg-panel flex flex-col select-none z-20 shrink-0 text-foreground transition-colors duration-200"
     >
-      {/* 顶部标题 */}
-      <div className="h-11 px-4 border-b border-border flex items-center justify-between text-xs font-semibold text-foreground uppercase tracking-wider">
-        <div className="flex items-center gap-2">
-          <Sliders className="w-3.5 h-3.5 text-primary" />
-          <span>{t('inspectorTitle')}</span>
+      {/* 1. 顶部 Header 与实时 HUD */}
+      <div className="p-3 border-b border-border space-y-2 bg-muted/20">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sliders className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-foreground">属性检查器 (Inspector)</span>
+          </div>
+          <span className="text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded">
+            {viewport.width} × {viewport.height}
+          </span>
         </div>
+
+        {/* 实时坐标浮窗 */}
+        <LiveCoordinatesHUD viewportWidth={viewport.width} viewportHeight={viewport.height} />
       </div>
 
-      <div className="p-4 space-y-5 text-xs">
-        {/* 1. 场景镜头配置折叠面板 */}
-        <div className="space-y-3">
-          <div
-            onClick={() => setIsCameraOpen(!isCameraOpen)}
-            className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
-          >
-            <div className="flex items-center gap-2">
-              <Camera className="w-3.5 h-3.5 text-primary" />
-              <span>{t('sceneCamera')}</span>
-            </div>
-            {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          </div>
+      {/* 2. 核心双 Tab 导航条 */}
+      <div className="px-3 pt-2.5 pb-2 border-b border-border flex gap-1.5 bg-muted/40 shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveTab('scene')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer ${
+            activeTab === 'scene'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          }`}
+        >
+          <Film className="w-3.5 h-3.5" />
+          <span>🎬 场景运镜</span>
+        </button>
 
-          {isCameraOpen && (
-            <div className="space-y-3 pl-1 pt-1 animate-in fade-in duration-100">
-              <div>
-                <label className="text-muted-foreground block mb-1 text-[11px] font-medium">{t('sceneTitle')}</label>
-                <Input
-                  value={sceneTitle}
-                  onChange={(e) => onSceneTitleChange?.(e.target.value)}
-                  placeholder={t('sceneTitlePlaceholder')}
-                />
-              </div>
-
-              <Button
-                size="sm"
-                variant="outline"
-                data-testid="capture-camera-btn"
-                onClick={onCaptureCurrentCamera}
-                className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-1.5 h-auto"
-              >
-                <Crosshair className="w-3.5 h-3.5 text-primary" />
-                <span>{t('captureCurrentView')}</span>
-              </Button>
-
-              <Slider
-                label={t('cameraZoom')}
-                valueDisplay={`${cameraZoom.toFixed(1)}x`}
-                min="1.0"
-                max="3.5"
-                step="0.1"
-                value={cameraZoom}
-                onChange={(e) => onCameraZoomChange?.(parseFloat(e.target.value))}
-              />
-
-              {/* 水平与垂直运镜偏移精确数值调节 */}
-              <div className="grid grid-cols-2 gap-2 pt-0.5">
-                <Slider
-                  label={t('cameraX')}
-                  valueDisplay={`${cameraX > 0 ? '+' : ''}${cameraX.toFixed(1)}%`}
-                  min="-50.0"
-                  max="50.0"
-                  step="0.5"
-                  value={cameraX}
-                  onChange={(e) => onCameraXChange?.(parseFloat(e.target.value))}
-                />
-                <Slider
-                  label={t('cameraY')}
-                  valueDisplay={`${cameraY > 0 ? '+' : ''}${cameraY.toFixed(1)}%`}
-                  min="-50.0"
-                  max="50.0"
-                  step="0.5"
-                  value={cameraY}
-                  onChange={(e) => onCameraYChange?.(parseFloat(e.target.value))}
-                />
-              </div>
-
-              {/* 交互提示与一键居中复位 */}
-              <div className="flex items-center justify-between pt-0.5 pb-1 text-[11px] text-muted-foreground">
-                <span className="flex items-center gap-1 text-[10px] text-cyan-400/80">
-                  <Move className="w-3 h-3 text-cyan-400 shrink-0" />
-                  <span className="truncate" title={t('dragCameraTip')}>{t('dragCameraTip')}</span>
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  data-testid="reset-camera-center-btn"
-                  onClick={onCameraReset}
-                  className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-foreground gap-1 shrink-0"
-                  title={t('cameraReset')}
-                >
-                  <RotateCcw className="w-2.5 h-2.5" />
-                  <span>复位</span>
-                </Button>
-              </div>
-
-              <Slider
-                label={t('cameraDuration')}
-                valueDisplay={`${cameraDuration.toFixed(1)}s`}
-                min="0.5"
-                max="4.0"
-                step="0.1"
-                value={cameraDuration}
-                onChange={(e) => onCameraDurationChange?.(parseFloat(e.target.value))}
-              />
-
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-primary" />
-                  <span>{t('cameraEasing')}</span>
-                </span>
-                <span className="font-mono text-primary bg-muted px-1.5 py-0.5 rounded border border-border">
-                  Cubic-Bezier(0.4, 0, 0.2, 1)
-                </span>
-              </div>
-            </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab('elements')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition cursor-pointer relative ${
+            activeTab === 'elements'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          }`}
+        >
+          <Palette className="w-3.5 h-3.5" />
+          <span>🎨 图元属性</span>
+          {selectedElementId && (
+            <span className="w-2 h-2 rounded-full bg-cyan-400 absolute top-1 right-1.5 animate-pulse" />
           )}
-        </div>
+        </button>
+      </div>
 
-        <div className="h-px bg-border" />
-
-        {/* 2. 当前场景图元图层列表 */}
-        <div className="space-y-3">
-          <div
-            onClick={() => setIsLayersOpen(!isLayersOpen)}
-            className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
-          >
-            <div className="flex items-center gap-2">
-              <Layers className="w-3.5 h-3.5 text-primary" />
-              <span>{t('sceneElements')} ({elements.length})</span>
-            </div>
-            {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          </div>
-
-          {isLayersOpen && (
-            <div className="space-y-2 pt-1 animate-in fade-in duration-100">
-              {/* 搜索与一键继承栏 */}
-              <div className="flex items-center gap-1.5">
-                <div className="relative flex-1">
-                  <Search className="w-3 h-3 text-muted-foreground absolute left-2 top-2" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('filterElementsPlaceholder')}
-                    className="w-full bg-background border border-border rounded-lg pl-7 pr-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary"
-                  />
+      {/* 3. Tab 内容区 (滚动容器) */}
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-4">
+        {/* =========================================================================
+            TAB 1: 🎬 场景与运镜 (Scene & Camera & Calibration)
+           ========================================================================= */}
+        {activeTab === 'scene' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* 1.1 摄像机镜头与运镜控制卡片 */}
+            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3">
+              <div
+                onClick={() => setIsCameraOpen(!isCameraOpen)}
+                className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
+              >
+                <div className="flex items-center gap-2">
+                  <Camera className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-xs font-bold text-foreground">{t('cameraControls')}</span>
                 </div>
+                {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+              </div>
 
-                {canInherit && (
+              {isCameraOpen && (
+                <div className="space-y-3 pt-1 animate-in fade-in duration-150">
+                  {/* 分幕标题 */}
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground text-[10px] font-medium">{t('sceneTitle')}</label>
+                    <Input
+                      value={sceneTitle}
+                      onChange={(e) => onSceneTitleChange?.(e.target.value)}
+                      placeholder={t('sceneTitlePlaceholder')}
+                      className="text-xs bg-background h-8"
+                    />
+                  </div>
+
+                  {/* 一键捕获当前视野为关键帧 */}
                   <Button
                     size="sm"
                     variant="outline"
-                    data-testid="inherit-scene-btn"
-                    onClick={onInheritPreviousScene}
-                    className="gap-1 text-[11px] h-7 px-2 border-border hover:border-primary text-foreground hover:text-primary"
-                    title="从上一幕继承图元激活状态"
+                    data-testid="capture-camera-btn"
+                    onClick={onCaptureCurrentCamera}
+                    className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-1.5 h-auto"
                   >
-                    <CopyCheck className="w-3 h-3" />
-                    <span>继承</span>
+                    <Crosshair className="w-3.5 h-3.5 text-primary" />
+                    <span>{t('captureCurrentView')}</span>
                   </Button>
-                )}
-              </div>
 
-              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5 no-scrollbar">
-                {filteredElements.map((el) => {
-                  const isSelected = selectedElementId === el.id;
-                  return (
-                    <div
-                      key={el.id}
-                      onClick={() => setSelectedElementId(isSelected ? null : el.id)}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-[11px] transition cursor-pointer ${
-                        isSelected
-                          ? 'bg-primary/20 border-primary text-foreground shadow-sm ring-1 ring-primary/40'
-                          : el.active
-                          ? 'bg-muted/80 border-border text-foreground shadow-sm hover:border-primary/50'
-                          : 'bg-background/40 border-border/50 text-muted-foreground opacity-60 hover:opacity-100'
-                      }`}
-                      title={isSelected ? '已在画布中选中 (可直接拖拽调整)' : '点击选中此图元'}
+                  {/* 运镜缩放倍率 */}
+                  <Slider
+                    label={t('cameraZoom')}
+                    valueDisplay={`${cameraZoom.toFixed(1)}x`}
+                    min="1.0"
+                    max="3.5"
+                    step="0.1"
+                    value={cameraZoom}
+                    onChange={(e) => onCameraZoomChange?.(parseFloat(e.target.value))}
+                  />
+
+                  {/* 水平与垂直运镜偏移精确数值调节 */}
+                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                    <Slider
+                      label={t('cameraX')}
+                      valueDisplay={`${cameraX > 0 ? '+' : ''}${cameraX.toFixed(1)}%`}
+                      min="-50.0"
+                      max="50.0"
+                      step="0.5"
+                      value={cameraX}
+                      onChange={(e) => onCameraXChange?.(parseFloat(e.target.value))}
+                    />
+                    <Slider
+                      label={t('cameraY')}
+                      valueDisplay={`${cameraY > 0 ? '+' : ''}${cameraY.toFixed(1)}%`}
+                      min="-50.0"
+                      max="50.0"
+                      step="0.5"
+                      value={cameraY}
+                      onChange={(e) => onCameraYChange?.(parseFloat(e.target.value))}
+                    />
+                  </div>
+
+                  {/* 一键居中复位 */}
+                  <div className="pt-1 flex items-center justify-between border-t border-border/50">
+                    <span className="text-[10px] text-muted-foreground">重置镜头焦点为全景居中</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={onCameraReset}
+                      className="h-7 text-[11px] gap-1 text-muted-foreground hover:text-foreground px-2"
                     >
-                      <div className="flex items-center gap-2 truncate flex-1 min-w-0">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onToggleElement?.(el.id);
-                          }}
-                          className="text-muted-foreground hover:text-primary transition shrink-0 p-0.5 cursor-pointer"
-                          title={el.active ? t('hideElementTip') : t('showElementTip')}
-                          data-action="toggle-element"
-                        >
-                          {el.active ? <Eye className="w-3.5 h-3.5 text-primary" /> : <EyeOff className="w-3.5 h-3.5" />}
-                        </button>
-                        <span className="shrink-0">{getElementIcon(el.type)}</span>
-                        <span className="truncate">{el.name}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1 shrink-0 ml-1">
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (selectedElementId === el.id) {
-                              setSelectedElementId(null);
-                            }
-                            onDeleteElement?.(el.id);
-                          }}
-                          className="h-5 w-5 text-muted-foreground hover:text-destructive cursor-pointer"
-                          data-action="delete-element"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      <RotateCcw className="w-3 h-3" />
+                      <span>{t('resetCenter')}</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="h-px bg-border" />
-
-        {/* 3. 视觉主题色调预设 & 选色器 */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
-              <Palette className="w-3.5 h-3.5 text-primary" />
-              <span>{t('palette')}</span>
-            </span>
-            {selectedElementId && (
-              <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[120px]">
-                {selectedElementId}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 pt-1">
-            {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
-              const isCurrentActive = activeDrawingColor === c;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  style={{ backgroundColor: c }}
-                  onClick={() => {
-                    setActiveDrawingColor(c);
-                    if (selectedElementId) {
-                      updateElementStyle(selectedElementId, { stroke: c, fill: c });
-                    }
-                  }}
-                  className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
-                    isCurrentActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : ''
-                  }`}
-                  title={`设为颜色 ${c}`}
-                />
-              );
-            })}
-
-            {/* 自定义拾色器 */}
-            <label
-              className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
-              title="自定义 HEX 颜色"
-            >
-              <input
-                type="color"
-                value={activeDrawingColor}
-                onChange={(e) => {
-                  const newColor = e.target.value;
-                  setActiveDrawingColor(newColor);
-                  if (selectedElementId) {
-                    updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
-                  }
-                }}
-                className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
-              />
-            </label>
-          </div>
-        </div>
-
-        {/* 3.1 Path 专属高级参数控制区 */}
-        {selectedPath && (
-          <>
-            <div className="h-px bg-border" />
-            <div className="space-y-3 bg-muted/40 border border-primary/20 rounded-xl p-3 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between font-semibold text-foreground">
-                <div className="flex items-center gap-1.5 text-primary text-[11px] font-bold">
-                  <Zap className="w-3.5 h-3.5 text-primary" />
-                  <span>连线高级参数 (Path Settings)</span>
+            {/* 1.2 标定助手常驻控制面板 (Calibration Assistant HUD) */}
+            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="calibration-assistant-panel">
+              <div
+                onClick={() => setIsCalibrationOpen(!isCalibrationOpen)}
+                className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
+              >
+                <div className="flex items-center gap-2">
+                  <Target className="w-3.5 h-3.5 text-primary animate-pulse" />
+                  <span className="text-xs font-bold text-primary">{t('calibrationTitle')}</span>
                 </div>
-                <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[90px]">
-                  {selectedPath.id}
-                </span>
+                {isCalibrationOpen ? <ChevronDown className="w-3.5 h-3.5 text-primary" /> : <ChevronRight className="w-3.5 h-3.5" />}
               </div>
 
-              {/* 1. 动画流动模式选择 */}
-              <div className="space-y-1.5">
-                <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
-                  <span>动画流动模式</span>
-                  <span className="font-mono text-primary uppercase text-[10px]">
-                    {selectedPath.style?.mode || 'draw'}
+              {isCalibrationOpen && (
+                <div className="space-y-3 pt-1 animate-in fade-in duration-150">
+                  {/* 底图原生分辨率只读展示 */}
+                  <div className="flex items-center justify-between bg-muted/60 p-2 rounded-lg border border-border text-xs">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Scan className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>{t('baseImageRes')}</span>
+                    </span>
+                    <span className="font-mono text-cyan-400 font-bold">
+                      {viewport.width} × {viewport.height}
+                    </span>
+                  </div>
+
+                  {/* 智能边缘贴合开关 */}
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border/60">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-primary" />
+                        <span>{t('smartSnap')}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{t('smartSnapDesc')}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isSmartSnapEnabled}
+                        onChange={onToggleSmartSnap}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+
+                  {/* 激光十字准星开关 */}
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border/60">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Crosshair className="w-3.5 h-3.5 text-primary" />
+                        <span>{t('laserCrosshair')}</span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">{t('laserCrosshairDesc')}</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isCrosshairEnabled}
+                        onChange={onToggleCrosshair}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                  </div>
+
+                  {/* 一键复制当前坐标 JSON */}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={copyCoordinatesJson}
+                    className="w-full gap-2 text-xs text-muted-foreground hover:text-foreground h-8 border border-border"
+                  >
+                    {hasCopiedCoords ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{hasCopiedCoords ? t('copiedJson') : t('copyCoordsJson')}</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 2: 🎨 图元属性 (Polymorphic Element Cards & Layer Hierarchy)
+           ========================================================================= */}
+        {activeTab === 'elements' && (
+          <div className="space-y-4 animate-in fade-in duration-150">
+            {/* 2.1 多态专属可视化控制卡片 */}
+            {/* Case A: 选中 Box */}
+            {selectedBox && (
+              <div className="space-y-3 bg-muted/40 border border-primary/30 rounded-xl p-3 shadow-md animate-in fade-in duration-150">
+                <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
+                  <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
+                    <Square className="w-3.5 h-3.5 text-primary" />
+                    <span>方框属性 (Box Settings)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                    {selectedBox.id}
                   </span>
-                </label>
-                <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
-                  {[
-                    { id: 'stream', label: '🌊 流光粒子', desc: '能量粒子沿虚线高速流动' },
-                    { id: 'draw', label: '✍️ 生长绘制', desc: '沿路径延时生长画入' },
-                    { id: 'pulse', label: '💓 呼吸律动', desc: '整条连线呼吸发光' },
-                  ].map((m) => {
-                    const isActive = (selectedPath.style?.mode || 'draw') === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => updateElementStyle(selectedPath.id, { mode: m.id as any })}
-                        className={`text-[10px] py-1 px-1 rounded font-medium transition cursor-pointer text-center truncate ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                        }`}
-                        title={m.desc}
-                      >
-                        {m.label}
-                      </button>
-                    );
-                  })}
+                </div>
+
+                {/* 尺寸与坐标读数 */}
+                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-background/80 p-2 rounded-lg border border-border text-muted-foreground">
+                  <div>X: <span className="text-foreground font-semibold">{selectedBox.x}px</span></div>
+                  <div>Y: <span className="text-foreground font-semibold">{selectedBox.y}px</span></div>
+                  <div>W: <span className="text-foreground font-semibold">{selectedBox.width}px</span></div>
+                  <div>H: <span className="text-foreground font-semibold">{selectedBox.height}px</span></div>
+                </div>
+
+                {/* 描边粗细 Slider */}
+                <Slider
+                  label="描边粗细"
+                  valueDisplay={`${selectedBox.style?.strokeWidth || 6} px`}
+                  min="1"
+                  max="14"
+                  step="1"
+                  value={selectedBox.style?.strokeWidth || 6}
+                  onChange={(e) => updateElementStyle(selectedBox.id, { strokeWidth: parseFloat(e.target.value) })}
+                />
+
+                {/* 边框圆角 Slider */}
+                <Slider
+                  label="边框圆角"
+                  valueDisplay={`${selectedBox.rx !== undefined ? selectedBox.rx : 16} px`}
+                  min="0"
+                  max="32"
+                  step="1"
+                  value={selectedBox.rx !== undefined ? selectedBox.rx : 16}
+                  onChange={(e) => updateElementStyle(selectedBox.id, { rx: parseFloat(e.target.value) })}
+                />
+
+                {/* 霓虹发光滤镜开关 */}
+                <div className="pt-1 border-t border-border/50 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    <span>霓虹外发光滤镜</span>
+                  </span>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedBox.style?.glow !== false}
+                      onChange={(e) => updateElementStyle(selectedBox.id, { glow: e.target.checked })}
+                      className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
+                    />
+                  </label>
                 </div>
               </div>
+            )}
 
-              {/* 2. 线条粗细调节 */}
-              <div className="space-y-1.5">
+            {/* Case B: 选中 Path */}
+            {selectedPath && (
+              <div className="space-y-3 bg-muted/40 border border-primary/30 rounded-xl p-3 shadow-md animate-in fade-in duration-150">
+                <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
+                  <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
+                    <Zap className="w-3.5 h-3.5 text-primary" />
+                    <span>连线高级参数 (Path Settings)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                    {selectedPath.id}
+                  </span>
+                </div>
+
+                {/* 动画流动模式选择 */}
+                <div className="space-y-1.5">
+                  <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                    <span>动画流动模式</span>
+                    <span className="font-mono text-primary uppercase text-[10px]">
+                      {selectedPath.style?.mode || 'draw'}
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
+                    {[
+                      { id: 'stream', label: '🌊 流光粒子', desc: '能量粒子沿虚线高速流动' },
+                      { id: 'draw', label: '✍️ 生长绘制', desc: '沿路径延时生长画入' },
+                      { id: 'pulse', label: '💓 呼吸律动', desc: '整条连线呼吸发光' },
+                    ].map((m) => {
+                      const isActive = (selectedPath.style?.mode || 'draw') === m.id;
+                      return (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => updateElementStyle(selectedPath.id, { mode: m.id as any })}
+                          className={`text-[10px] py-1 px-1 rounded font-medium transition cursor-pointer text-center truncate ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                          title={m.desc}
+                        >
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 线条粗细调节 */}
                 <Slider
                   label="线条粗细"
                   valueDisplay={`${selectedPath.style?.strokeWidth || 5} px`}
@@ -528,11 +551,9 @@ function RightInspectorComponent({
                   value={selectedPath.style?.strokeWidth || 5}
                   onChange={(e) => updateElementStyle(selectedPath.id, { strokeWidth: parseFloat(e.target.value) })}
                 />
-              </div>
 
-              {/* 3. 流光速度调节 (仅在 stream 模式下显示) */}
-              {(selectedPath.style?.mode === 'stream') && (
-                <div className="space-y-1.5 pt-1">
+                {/* 流光速度调节 (仅在 stream 模式下显示) */}
+                {selectedPath.style?.mode === 'stream' && (
                   <Slider
                     label="流光速度倍率"
                     valueDisplay={`${(selectedPath.style?.flowSpeed || 1.8).toFixed(1)}x`}
@@ -542,118 +563,204 @@ function RightInspectorComponent({
                     value={selectedPath.style?.flowSpeed || 1.8}
                     onChange={(e) => updateElementStyle(selectedPath.id, { flowSpeed: parseFloat(e.target.value) })}
                   />
-                </div>
-              )}
-
-              {/* 4. 霓虹光晕开关 */}
-              <div className="pt-1 border-t border-border/50 flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  <span>霓虹外发光滤镜</span>
-                </span>
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectedPath.style?.glow !== false}
-                    onChange={(e) => updateElementStyle(selectedPath.id, { glow: e.target.checked })}
-                    className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
-                  />
-                </label>
-              </div>
-
-              {/* 5. 端点拓扑信息 */}
-              {(selectedPath.from || selectedPath.to) && (
-                <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-1.5 rounded border border-border flex flex-col gap-0.5">
-                  <div className="truncate">起点: <span className="text-foreground">{selectedPath.from || '自由贝塞尔'}</span></div>
-                  <div className="truncate">终点: <span className="text-foreground">{selectedPath.to || '自由贝塞尔'}</span></div>
-                </div>
-              )}
-            </div>
-          </>
-        )}
-
-        <div className="h-px bg-border" />
-
-        {/* 4. 标定助手常驻控制面板 (Calibration Assistant HUD) */}
-        <div className="space-y-3" data-testid="calibration-assistant-panel">
-          <div
-            onClick={() => setIsCalibrationOpen(!isCalibrationOpen)}
-            className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
-          >
-            <div className="flex items-center gap-2">
-              <Target className="w-3.5 h-3.5 text-primary animate-pulse" />
-              <span className="text-primary font-bold">{t('calibrationTitle')}</span>
-            </div>
-            {isCalibrationOpen ? <ChevronDown className="w-3.5 h-3.5 text-primary" /> : <ChevronRight className="w-3.5 h-3.5" />}
-          </div>
-
-          {isCalibrationOpen && (
-            <div className="space-y-3 pt-1 animate-in fade-in duration-100 bg-background/50 border border-primary/20 rounded-xl p-3 shadow-inner">
-              {/* 底图原生分辨率 */}
-              <div className="flex items-center justify-between text-[11px] pb-2 border-b border-border/60">
-                <span className="text-muted-foreground flex items-center gap-1.5">
-                  <Scan className="w-3 h-3 text-primary" />
-                  <span>{t('baseResolution')}</span>
-                </span>
-                <span className="font-mono text-primary font-medium bg-primary/10 border border-primary/30 px-2 py-0.5 rounded text-[10px]">
-                  {viewport.width} × {viewport.height}
-                </span>
-              </div>
-
-              {/* 实时光标坐标读数 (隔离在独立微组件中，0 级重渲染穿透) */}
-              <LiveCoordinatesHUD viewportWidth={viewport.width} viewportHeight={viewport.height} />
-
-              {/* 智能贴合与十字准星开关 */}
-              <div className="space-y-2 pt-1 border-t border-border/60">
-                <label className="flex items-center justify-between cursor-pointer group">
-                  <span className="flex items-center gap-1.5 text-[11px] text-foreground group-hover:text-primary transition" title={t('smartSnapDesc')}>
-                    <Sparkles className="w-3 h-3 text-accent" />
-                    <span>{t('smartSnap')}</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={isSmartSnapEnabled}
-                    onChange={onToggleSmartSnap}
-                    className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
-                  />
-                </label>
-
-                <label className="flex items-center justify-between cursor-pointer group">
-                  <span className="flex items-center gap-1.5 text-[11px] text-foreground group-hover:text-primary transition" title={t('crosshairDesc')}>
-                    <Crosshair className="w-3 h-3 text-primary" />
-                    <span>{t('crosshairGuide')}</span>
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={isCrosshairEnabled}
-                    onChange={onToggleCrosshair}
-                    className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
-                  />
-                </label>
-              </div>
-
-              {/* 快捷复制坐标 JSON */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleCopyCoordsJSON}
-                className="w-full gap-1.5 text-[11px] h-7 border-border hover:border-primary text-foreground hover:text-primary font-medium"
-              >
-                {hasCopiedCoords ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-400">{t('copiedCoords')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span>{t('copyCoords')}</span>
-                  </>
                 )}
-              </Button>
+
+                {/* 霓虹光晕开关 */}
+                <div className="pt-1 border-t border-border/50 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    <span>霓虹外发光滤镜</span>
+                  </span>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedPath.style?.glow !== false}
+                      onChange={(e) => updateElementStyle(selectedPath.id, { glow: e.target.checked })}
+                      className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
+                    />
+                  </label>
+                </div>
+
+                {/* 端点拓扑信息 */}
+                {(selectedPath.from || selectedPath.to) && (
+                  <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-1.5 rounded border border-border flex flex-col gap-0.5">
+                    <div className="truncate">起点: <span className="text-foreground">{selectedPath.from || '自由贝塞尔'}</span></div>
+                    <div className="truncate">终点: <span className="text-foreground">{selectedPath.to || '自由贝塞尔'}</span></div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Case C: 未选中任何图元时的提示 */}
+            {!selectedBox && !selectedPath && (
+              <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
+                <Info className="w-4 h-4 text-muted-foreground mx-auto" />
+                <p className="text-xs font-medium text-foreground">未选中图元</p>
+                <p className="text-[10px] text-muted-foreground">在下方列表或画布上单击图元即可进行属性微调</p>
+              </div>
+            )}
+
+            {/* 2.2 调色板 (Palette) */}
+            <div className="space-y-2 bg-muted/20 border border-border rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-primary" />
+                  <span>视觉主题色调 (Palette)</span>
+                </span>
+                {selectedElementId && (
+                  <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[100px]">
+                    {selectedElementId}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
+                  const isCurrentActive = activeDrawingColor === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      style={{ backgroundColor: c }}
+                      onClick={() => {
+                        setActiveDrawingColor(c);
+                        if (selectedElementId) {
+                          updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                        }
+                      }}
+                      className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
+                        isCurrentActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : ''
+                      }`}
+                      title={`设为颜色 ${c}`}
+                    />
+                  );
+                })}
+
+                {/* 自定义拾色器 */}
+                <label
+                  className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
+                  title="自定义 HEX 颜色"
+                >
+                  <input
+                    type="color"
+                    value={activeDrawingColor}
+                    onChange={(e) => {
+                      const newColor = e.target.value;
+                      setActiveDrawingColor(newColor);
+                      if (selectedElementId) {
+                        updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
+                      }
+                    }}
+                    className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
+                  />
+                </label>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* 2.3 图元层级列表 (Layer Hierarchy List) */}
+            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3">
+              <div
+                onClick={() => setIsLayersOpen(!isLayersOpen)}
+                className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
+              >
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-primary" />
+                  <span className="text-xs font-bold text-foreground">{t('layerList')}</span>
+                  <span className="text-[10px] text-muted-foreground font-mono font-normal">
+                    ({elements.length})
+                  </span>
+                </div>
+                {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+              </div>
+
+              {isLayersOpen && (
+                <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                  {/* 图元搜索框 */}
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
+                    <Input
+                      placeholder={t('searchElement')}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 text-xs bg-background h-8"
+                    />
+                  </div>
+
+                  {/* 继承前幕全部图元按钮 */}
+                  {canInherit && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={onInheritPreviousScene}
+                      className="w-full gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10 h-7"
+                    >
+                      <CopyCheck className="w-3.5 h-3.5" />
+                      <span>{t('inheritPrevious')}</span>
+                    </Button>
+                  )}
+
+                  {/* 图元项目列表 */}
+                  <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
+                    {filteredElements.length === 0 ? (
+                      <div className="text-center py-4 text-xs text-muted-foreground">
+                        {t('noElements')}
+                      </div>
+                    ) : (
+                      filteredElements.map((el) => {
+                        const isSelected = selectedElementId === el.id;
+                        return (
+                          <div
+                            key={el.id}
+                            onClick={() => setSelectedElementId(el.id)}
+                            className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-primary/15 border-primary text-foreground font-semibold ring-1 ring-primary/40'
+                                : 'bg-background/80 border-border text-foreground hover:bg-muted'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate flex-1 min-w-0 pr-2">
+                              {getElementIcon(el.type)}
+                              <span className="truncate">{el.name}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 shrink-0">
+                              {/* 显隐切换按钮 */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onToggleElement?.(el.id);
+                                }}
+                                className={`p-1 rounded hover:bg-muted ${
+                                  el.active ? 'text-primary' : 'text-muted-foreground opacity-40'
+                                }`}
+                                title={el.active ? t('activeInScene') : t('hiddenInScene')}
+                              >
+                                {el.active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                              </button>
+
+                              {/* 删除图元按钮 */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDeleteElement?.(el.id);
+                                }}
+                                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
+                                title={t('deleteElement')}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
