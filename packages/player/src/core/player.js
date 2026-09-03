@@ -343,6 +343,10 @@ export class FocusFlowPlayer {
         circleEl.setAttribute('filter', 'url(#ff-glow)');
       }
 
+      if (dotData.style?.pulse === false) {
+        circleEl.style.animation = 'none';
+      }
+
       this.svgEl.appendChild(circleEl);
       this.elementsMap.set(dotData.id, { data: dotData, dom: circleEl, type: 'dot' });
     });

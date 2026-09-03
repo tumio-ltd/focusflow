@@ -106,6 +106,11 @@ export class MotionAnimator {
       if (meta && meta.dom) {
         const el = meta.dom;
         el.style.transition = 'opacity 0.6s ease 0.6s';
+        if (meta.data.style?.pulse === false) {
+          el.style.animation = 'none';
+        } else {
+          el.style.animation = '';
+        }
         el.classList.add('active');
         el.style.opacity = '1';
       }

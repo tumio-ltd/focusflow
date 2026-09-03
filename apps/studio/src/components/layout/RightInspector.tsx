@@ -157,6 +157,7 @@ function RightInspectorComponent({
 
   const selectedBox = dsl.elements?.boxes?.find((b) => b.id === selectedElementId);
   const selectedPath = dsl.elements?.paths?.find((p) => p.id === selectedElementId);
+  const selectedDot = dsl.elements?.dots?.find((d) => d.id === selectedElementId);
 
   const filteredElements = elements.filter((el) =>
     el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -591,8 +592,72 @@ function RightInspectorComponent({
               </div>
             )}
 
-            {/* Case C: 未选中任何图元时的提示 */}
-            {!selectedBox && !selectedPath && (
+            {/* Case C: 选中 Dot */}
+            {selectedDot && (
+              <div className="space-y-3 bg-muted/40 border border-primary/30 rounded-xl p-3 shadow-md animate-in fade-in duration-150">
+                <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
+                  <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
+                    <CircleDot className="w-3.5 h-3.5 text-amber-400" />
+                    <span>脉冲圆点属性 (Dot Settings)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                    {selectedDot.id}
+                  </span>
+                </div>
+
+                {/* 圆心坐标读数 */}
+                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-background/80 p-2 rounded-lg border border-border text-muted-foreground">
+                  <div>CX: <span className="text-foreground font-semibold">{selectedDot.cx}px</span></div>
+                  <div>CY: <span className="text-foreground font-semibold">{selectedDot.cy}px</span></div>
+                </div>
+
+                {/* 半径大小调节 */}
+                <Slider
+                  label="圆点半径 (Radius)"
+                  valueDisplay={`${selectedDot.r !== undefined ? selectedDot.r : 8} px`}
+                  min="4"
+                  max="30"
+                  step="1"
+                  value={selectedDot.r !== undefined ? selectedDot.r : 8}
+                  onChange={(e) => updateElementStyle(selectedDot.id, { r: parseFloat(e.target.value) })}
+                />
+
+                {/* 动态呼吸脉冲开关 */}
+                <div className="pt-1 border-t border-border/50 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Gauge className="w-3 h-3 text-amber-400" />
+                    <span>0.85x~1.25x 呼吸脉冲</span>
+                  </span>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedDot.style?.pulse !== false}
+                      onChange={(e) => updateElementStyle(selectedDot.id, { pulse: e.target.checked })}
+                      className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
+                    />
+                  </label>
+                </div>
+
+                {/* 霓虹外发光开关 */}
+                <div className="pt-1 border-t border-border/50 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    <span>霓虹外发光滤镜</span>
+                  </span>
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedDot.style?.glow !== false}
+                      onChange={(e) => updateElementStyle(selectedDot.id, { glow: e.target.checked })}
+                      className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Case D: 未选中任何图元时的提示 */}
+            {!selectedBox && !selectedPath && !selectedDot && (
               <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
                 <Info className="w-4 h-4 text-muted-foreground mx-auto" />
                 <p className="text-xs font-medium text-foreground">未选中图元</p>

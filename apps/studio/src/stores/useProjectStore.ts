@@ -130,7 +130,7 @@ export interface ProjectState {
   addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
-  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number }) => void;
+  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
   undo: () => void;
@@ -631,7 +631,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
       // 3. Check dots
       if (elements.dots?.some((d: ElementDot) => d.id === elementId)) {
         elements.dots = elements.dots.map((d: ElementDot) =>
-          d.id === elementId ? { ...d, style: { ...(d.style || {}), ...style } } : d
+          d.id === elementId ? { 
+            ...d, 
+            r: style.r !== undefined ? style.r : d.r,
+            style: { ...(d.style || {}), ...style } 
+          } : d
         );
       }
       const nextDSL = { ...state.dsl, elements };

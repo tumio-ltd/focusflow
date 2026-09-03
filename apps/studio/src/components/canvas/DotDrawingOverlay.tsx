@@ -1,5 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import type { ElementDot } from '@focusflow/dsl';
+import { useEditorStore } from '@/stores';
 
 export interface DotDrawingOverlayProps {
   contentWidth: number;
@@ -15,6 +16,8 @@ export function DotDrawingOverlay({
   onDotCreated,
 }: DotDrawingOverlayProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const activeDrawingColor = useEditorStore((s) => s.activeDrawingColor);
+  const setSelectedElementId = useEditorStore((s) => s.setSelectedElementId);
 
   const getCanvasCoords = useCallback((e: React.PointerEvent) => {
     if (!overlayRef.current) return { x: 0, y: 0 };
@@ -42,13 +45,14 @@ export function DotDrawingOverlay({
       cy: Math.round(coords.y),
       r: 8,
       style: {
-        fill: '#38bdf8',
+        fill: activeDrawingColor || '#38bdf8',
         glow: true,
         pulse: true,
       },
     };
 
     onDotCreated(newDot);
+    setSelectedElementId(newDot.id);
   };
 
   if (!active) return null;
