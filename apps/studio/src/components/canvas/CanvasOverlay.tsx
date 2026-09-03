@@ -2,10 +2,11 @@ import React, { useCallback } from 'react';
 import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem } from '@focusflow/dsl';
 import type { ToolType } from '@/components/layout';
 import type { CameraConfig } from '@/utils/cameraMath';
-import { useEditorStore } from '@/stores';
+import { useEditorStore, useProjectStore } from '@/stores';
 import { CameraFrustumFrame } from './CameraFrustumFrame';
 import { BoxDrawingOverlay } from './BoxDrawingOverlay';
 import { BoxTransformOverlay } from './BoxTransformOverlay';
+import { DotTransformOverlay } from './DotTransformOverlay';
 import { PathDrawingOverlay } from './PathDrawingOverlay';
 import { DotDrawingOverlay } from './DotDrawingOverlay';
 import { CalloutOverlay } from './CalloutOverlay';
@@ -106,6 +107,7 @@ function CanvasOverlayComponent({
   showFrustumOnly = false,
   showCrosshairAndFrustum = false,
 }: CanvasOverlayProps) {
+  const dots = useProjectStore((s) => s.dsl.elements.dots || []);
   const rafRef = React.useRef<number | null>(null);
   const lastCoordsRef = React.useRef<{ x: number; y: number } | null>(null);
 
@@ -217,6 +219,14 @@ function CanvasOverlayComponent({
         contentHeight={contentHeight}
         active={activeTool === 'select'}
         boxes={boxes}
+      />
+
+      {/* 0.1 选中圆点拖拽平移控制图层 */}
+      <DotTransformOverlay
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
+        active={activeTool === 'select'}
+        dots={dots}
       />
 
       {/* 1. 智能选框绘制图层 */}

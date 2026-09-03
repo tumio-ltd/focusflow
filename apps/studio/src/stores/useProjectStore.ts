@@ -130,6 +130,7 @@ export interface ProjectState {
   addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
   deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
   updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
+  updateDotPosition: (dotId: string, position: { cx: number; cy: number }) => void;
   updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
@@ -604,6 +605,27 @@ export const useProjectStore = create<ProjectState>((set) => ({
         elements: {
           ...state.dsl.elements,
           boxes,
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  updateDotPosition: (dotId, position) =>
+    set((state) => {
+      const dots = state.dsl.elements.dots?.map((d: ElementDot) =>
+        d.id === dotId
+          ? {
+              ...d,
+              cx: Math.round(position.cx),
+              cy: Math.round(position.cy),
+            }
+          : d
+      ) || [];
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          dots,
         },
       };
       return pushHistory(state, nextDSL);

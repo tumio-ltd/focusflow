@@ -146,6 +146,7 @@ function RightInspectorComponent({
   const activeDrawingColor = useEditorStore((s) => s.activeDrawingColor);
   const setActiveDrawingColor = useEditorStore((s) => s.setActiveDrawingColor);
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
+  const updateDotPosition = useProjectStore((s) => s.updateDotPosition);
   const dsl = useProjectStore((s) => s.dsl);
 
   // 当在画布或列表中选中任何图元时，自动平滑切入【图元属性】Tab
@@ -605,10 +606,43 @@ function RightInspectorComponent({
                   </span>
                 </div>
 
-                {/* 圆心坐标读数 */}
-                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-background/80 p-2 rounded-lg border border-border text-muted-foreground">
-                  <div>CX: <span className="text-foreground font-semibold">{selectedDot.cx}px</span></div>
-                  <div>CY: <span className="text-foreground font-semibold">{selectedDot.cy}px</span></div>
+                {/* 圆心坐标调节 */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                      <span>CX (X 坐标)</span>
+                      <span className="font-mono text-amber-400 font-bold text-[10px]">px</span>
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={viewport.width}
+                      value={selectedDot.cx}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        updateDotPosition(selectedDot.id, { cx: val, cy: selectedDot.cy });
+                      }}
+                      className="text-xs bg-background h-7 font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                      <span>CY (Y 坐标)</span>
+                      <span className="font-mono text-amber-400 font-bold text-[10px]">px</span>
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={viewport.height}
+                      value={selectedDot.cy}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 0;
+                        updateDotPosition(selectedDot.id, { cx: selectedDot.cx, cy: val });
+                      }}
+                      className="text-xs bg-background h-7 font-mono"
+                    />
+                  </div>
                 </div>
 
                 {/* 半径大小调节 */}
