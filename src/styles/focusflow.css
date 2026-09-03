@@ -49,6 +49,8 @@
   transform-origin: center center;
   transition: transform 1.2s cubic-bezier(0.4, 0.0, 0.2, 1.0);
   will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Layer 0: Image Layer */
@@ -59,6 +61,11 @@
   display: block;
   pointer-events: none;
   z-index: 1;
+  /* 铁律 10 落地：大图极限缩小高质量抗混叠重采样与防走样频闪 */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Layer 0.5: Dynamic Image Overlays (Deep-Dive & Mockups) */

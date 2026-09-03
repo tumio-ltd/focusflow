@@ -1052,84 +1052,94 @@ function RightInspectorComponent({
               </div>
             )}
 
-            {/* Case E: 未选中任何图元时的提示 */}
-            {!selectedBox && !selectedPath && !selectedDot && !selectedCallout && (
-              <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
-                <Info className="w-4 h-4 text-muted-foreground mx-auto" />
-                <p className="text-xs font-medium text-foreground">{t('noElementSelected', '未选中图元')}</p>
-                <p className="text-[10px] text-muted-foreground">{t('noElementSelectedDesc', '在下方列表或画布上单击图元即可进行属性微调')}</p>
-              </div>
-            )}
+            {/* 2.2 调色板渲染函数 (Palette) */}
+            {(() => {
+              const renderPalette = () => (
+                <div className="space-y-2 bg-muted/20 border border-border rounded-xl p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5 text-primary" />
+                      <span>{t('themePalette', '视觉主题色调')}</span>
+                    </span>
+                    {selectedElementId && (
+                      <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[100px]">
+                        {selectedElementId}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
+                      const isCurrentActive = activeDrawingColor === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          style={{ backgroundColor: c }}
+                          onClick={() => {
+                            setActiveDrawingColor(c);
+                            if (selectedElementId) {
+                              updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                              if (selectedCallout) {
+                                let theme = 'blue';
+                                if (c.includes('34d399')) theme = 'green';
+                                else if (c.includes('fbbf24')) theme = 'amber';
+                                else if (c.includes('f472b6') || c.includes('f43f5e') || c.includes('ec4899')) theme = 'pink';
+                                else if (c.includes('a855f7')) theme = 'purple';
+                                updateCallout(selectedCallout.id, { theme });
+                              }
+                            }
+                          }}
+                          className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
+                            isCurrentActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : ''
+                          }`}
+                          title={`设为颜色 ${c}`}
+                        />
+                      );
+                    })}
 
-            {/* 2.2 调色板 (Palette) */}
-            <div className="space-y-2 bg-muted/20 border border-border rounded-xl p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-primary" />
-                  <span>{t('themePalette', '视觉主题色调')}</span>
-                </span>
-                {selectedElementId && (
-                  <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[100px]">
-                    {selectedElementId}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 pt-1">
-                {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
-                  const isCurrentActive = activeDrawingColor === c;
-                  return (
-                    <button
-                      key={c}
-                      type="button"
-                      style={{ backgroundColor: c }}
-                      onClick={() => {
-                        setActiveDrawingColor(c);
-                        if (selectedElementId) {
-                          updateElementStyle(selectedElementId, { stroke: c, fill: c });
-                          if (selectedCallout) {
-                            let theme = 'blue';
-                            if (c.includes('34d399')) theme = 'green';
-                            else if (c.includes('fbbf24')) theme = 'amber';
-                            else if (c.includes('f472b6') || c.includes('f43f5e') || c.includes('ec4899')) theme = 'pink';
-                            else if (c.includes('a855f7')) theme = 'purple';
-                            updateCallout(selectedCallout.id, { theme });
+                    {/* 自定义拾色器 */}
+                    <label
+                      className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
+                      title={t('customHex', '自定义 HEX 颜色')}
+                    >
+                      <input
+                        type="color"
+                        value={activeDrawingColor}
+                        onChange={(e) => {
+                          const newColor = e.target.value;
+                          setActiveDrawingColor(newColor);
+                          if (selectedElementId) {
+                            updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
+                            if (selectedCallout) {
+                              updateCallout(selectedCallout.id, { theme: newColor });
+                            }
                           }
-                        }
-                      }}
-                      className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
-                        isCurrentActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : ''
-                      }`}
-                      title={`设为颜色 ${c}`}
-                    />
-                  );
-                })}
+                        }}
+                        className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
+                      />
+                    </label>
+                  </div>
+                </div>
+              );
 
-                {/* 自定义拾色器 */}
-                <label
-                  className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
-                  title={t('customHex', '自定义 HEX 颜色')}
-                >
-                  <input
-                    type="color"
-                    value={activeDrawingColor}
-                    onChange={(e) => {
-                      const newColor = e.target.value;
-                      setActiveDrawingColor(newColor);
-                      if (selectedElementId) {
-                        updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
-                        if (selectedCallout) {
-                          updateCallout(selectedCallout.id, { theme: newColor });
-                        }
-                      }
-                    }}
-                    className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* 2.3 图元层级列表 (Layer Hierarchy List - 图元属性维度常驻) */}
-            {renderLayerHierarchyList()}
+              return !selectedBox && !selectedPath && !selectedDot && !selectedCallout ? (
+                <>
+                  <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
+                    <Info className="w-4 h-4 text-muted-foreground mx-auto" />
+                    <p className="text-xs font-medium text-foreground">{t('noElementSelected', '未选中图元')}</p>
+                    <p className="text-[10px] text-muted-foreground">{t('noElementSelectedDesc', '在下方列表或画布上单击图元即可进行属性微调')}</p>
+                  </div>
+                  {/* 铁律 11 落地：图元层级列表绝对置顶于调色板之上，彻底杜绝折叠线遮挡 */}
+                  {renderLayerHierarchyList()}
+                  {renderPalette()}
+                </>
+              ) : (
+                <>
+                  {renderPalette()}
+                  {renderLayerHierarchyList()}
+                </>
+              );
+            })()}
           </div>
         )}
       </div>
