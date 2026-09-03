@@ -202,7 +202,7 @@ export function DotTransformOverlay({
 
           {/* 顶部微型悬浮工具栏 */}
           <div
-            className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/95 border border-amber-500/40 rounded-lg px-2 py-1 shadow-2xl backdrop-blur-md pointer-events-auto z-30 animate-in fade-in duration-100"
+            className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/95 border border-amber-500/40 rounded-lg px-2 py-1 shadow-2xl pointer-events-auto z-30 animate-in fade-in duration-100"
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-[10px] font-mono text-amber-300 font-bold px-1 border-r border-slate-700">

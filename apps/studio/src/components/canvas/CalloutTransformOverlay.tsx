@@ -288,7 +288,7 @@ export function CalloutTransformOverlay({
               e.stopPropagation();
               setSelectedElementId(c.id);
             }}
-            className="absolute rounded-xl border border-dashed border-white/25 hover:border-sky-400/90 hover:bg-sky-400/10 transition-all duration-150 p-2.5 cursor-pointer pointer-events-auto select-none group backdrop-blur-[2px]"
+            className="absolute rounded-xl border border-dashed border-white/25 hover:border-sky-400/90 hover:bg-sky-400/10 transition-all duration-150 p-2.5 cursor-pointer pointer-events-auto select-none group bg-slate-900/60"
             title={`点击选中并调节解说气泡: ${c.title || c.id}`}
           >
             <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition">
@@ -328,69 +328,55 @@ export function CalloutTransformOverlay({
           >
           {/* 顶部微型悬浮工具栏 */}
           <div
-            className="absolute -top-10 left-0 flex items-center gap-1 bg-slate-900/95 border border-slate-700/80 rounded-lg px-2 py-1 shadow-2xl backdrop-blur-md pointer-events-auto z-30 animate-in fade-in duration-100"
+            className="absolute -top-10 left-0 flex items-center gap-1 bg-slate-900/95 border border-slate-700/80 rounded-lg px-2 py-1 shadow-2xl pointer-events-auto z-30 animate-in fade-in duration-100"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-1 pr-1 border-r border-slate-700">
               <MessageSquare className="w-3 h-3 text-sky-400" />
-              <span className="text-[10px] font-mono text-slate-200 font-bold">
-                {currentX}, {currentY}
+              <span className="text-[10px] font-mono text-sky-300 font-bold">
+                {selectedCallout.id}
               </span>
             </div>
 
-            {/* 快速主题色彩切换 */}
-            {THEME_OPTIONS.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                style={{ backgroundColor: opt.color }}
-                onClick={() => updateCallout(selectedCallout.id, { theme: opt.id })}
-                className={`w-3.5 h-3.5 rounded-full border transition cursor-pointer ${
-                  (selectedCallout.theme || 'blue') === opt.id
-                    ? 'ring-2 ring-white scale-125 border-white'
-                    : 'border-white/30 hover:scale-125'
-                }`}
-                title={`切换为主题色: ${opt.name}`}
-              />
-            ))}
+            {/* 快速调色 */}
+            <div className="flex items-center gap-1 px-1">
+              {['blue', 'green', 'amber', 'pink', 'purple'].map((theme) => {
+                const colorMap: Record<string, string> = {
+                  blue: '#38bdf8',
+                  green: '#34d399',
+                  amber: '#fbbf24',
+                  pink: '#f43f5e',
+                  purple: '#a855f7',
+                };
+                const hex = colorMap[theme];
+                const isActive = (selectedCallout.theme || 'blue') === theme;
+                return (
+                  <button
+                    key={theme}
+                    type="button"
+                    onClick={() => updateCallout(selectedCallout.id, { theme })}
+                    style={{ backgroundColor: hex }}
+                    className={`w-3.5 h-3.5 rounded-full border border-white/20 hover:scale-125 transition cursor-pointer ${
+                      isActive ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-900 scale-110' : ''
+                    }`}
+                    title={`切换配色: ${theme}`}
+                  />
+                );
+              })}
+            </div>
 
-            {targetBox && (
-              <div
-                className="flex items-center gap-0.5 px-1 bg-slate-800 rounded text-[9px] text-sky-300 font-mono"
-                title={`已关联框元: ${targetBox.id}`}
-              >
-                <LinkIcon className="w-2.5 h-2.5" />
-                <span className="truncate max-w-[50px]">{targetBox.id}</span>
-              </div>
-            )}
-
-            <div className="w-px h-3 bg-slate-700 mx-0.5" />
-
-            {/* 删除按钮 */}
+            {/* 快捷删除 */}
             <button
               type="button"
-              onClick={() => {
-                deleteElement('callouts', selectedCallout.id);
-                setSelectedElementId(null);
-              }}
-              className="p-1 rounded text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer"
-              title="删除气泡 (Delete)"
+              onClick={() => deleteElement('callouts', selectedCallout.id)}
+              className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition cursor-pointer border-l border-slate-700 pl-1.5"
+              title="删除此气泡"
             >
               <Trash2 className="w-3 h-3" />
             </button>
-
-            {/* 取消选中 */}
-            <button
-              type="button"
-              onClick={() => setSelectedElementId(null)}
-              className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
-              title="取消选择 (Esc)"
-            >
-              <X className="w-3 h-3" />
-            </button>
           </div>
 
-          {/* 选中的霓虹外发光卡片与拖拽外壳 */}
+          {/* 气泡卡片主体 (支持拖拽移动) */}
           <div
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
@@ -398,7 +384,7 @@ export function CalloutTransformOverlay({
             style={{
               maxWidth: selectedCallout.style?.maxWidth ? `${selectedCallout.style.maxWidth}px` : undefined,
             }}
-            className={`relative rounded-xl border-2 ${currentTheme.border} ${currentTheme.glow} bg-slate-900/90 backdrop-blur-md p-3.5 cursor-move active:cursor-grabbing group hover:border-opacity-100 transition shadow-2xl`}
+            className={`relative rounded-xl border-2 ${currentTheme.border} ${currentTheme.glow} bg-slate-900/95 p-3.5 cursor-move active:cursor-grabbing group hover:border-opacity-100 transition shadow-2xl`}
             title="按住拖拽移动解说气泡位置"
           >
             {/* 拖拽指示器角标 */}

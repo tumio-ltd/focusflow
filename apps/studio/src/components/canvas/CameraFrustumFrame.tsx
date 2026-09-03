@@ -174,11 +174,7 @@ export function CameraFrustumFrame({
         tabIndex={isInteractive ? 0 : undefined}
         onKeyDown={handleKeyDown}
         data-testid="camera-frustum-frame"
-        className={`absolute border-2 rounded-xl select-none outline-none pointer-events-none ${
-          isSelected || isDragging || isResizing
-            ? 'border-cyan-300 shadow-[inset_0_0_25px_rgba(56,189,248,0.35)] ring-1 ring-inset ring-cyan-400/50'
-            : 'border-cyan-400/80 shadow-[inset_0_0_15px_rgba(56,189,248,0.15)]'
-        }`}
+        className="absolute rounded-xl select-none outline-none pointer-events-none"
         style={{
           left: `${frameX}px`,
           top: `${frameY}px`,
@@ -186,14 +182,30 @@ export function CameraFrustumFrame({
           height: `${frameHeight}px`,
         }}
       >
-        {/* 左上角摄像机镜头标签 (当贴顶时放置在内部，避免被顶层 overflow-hidden 截断裁切) */}
+        {/* 矢量非缩放恒定捕镜框边框 (Non-Scaling Stroke) - 无论画布缩放到多小，始终恒定 2px 物理屏幕像素，彻底杜绝 0.2px 边框移动时的亚像素频闪 */}
+        <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible">
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            rx="12"
+            ry="12"
+            fill={isSelected || isDragging || isResizing ? 'rgba(56, 189, 248, 0.04)' : 'none'}
+            stroke={isSelected || isDragging || isResizing ? '#67e8f9' : 'rgba(34, 211, 238, 0.85)'}
+            strokeWidth={isSelected || isDragging || isResizing ? 2.5 : 2}
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
+        {/* 左上角摄像机镜头标签 (移除 backdrop-blur-md，杜绝平移画布时触发全屏高斯模糊重绘) */}
         <div
           data-testid="camera-frustum-badge"
           onPointerDown={handlePointerDownMove}
           className={`absolute ${
             frameY < 32 ? 'top-1.5 left-1.5' : '-top-7 left-0'
-          } flex items-center gap-1.5 bg-cyan-950/90 border border-cyan-500/60 backdrop-blur-md px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg ${
-            isInteractive ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/90 hover:border-cyan-400' : 'pointer-events-none'
+          } flex items-center gap-1.5 bg-cyan-950/95 border border-cyan-500/60 px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg ${
+            isInteractive ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/95 hover:border-cyan-400' : 'pointer-events-none'
           }`}
         >
           <Camera className="w-3 h-3 text-cyan-400" />
@@ -268,12 +280,16 @@ export function CameraFrustumFrame({
             />
           </>
         ) : (
-          <>
-            <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-cyan-300 pointer-events-none" />
-            <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-cyan-300 pointer-events-none" />
-            <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-cyan-300 pointer-events-none" />
-            <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-cyan-300 pointer-events-none" />
-          </>
+          <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible">
+            {/* 非交互状态下的四角 L 型直角标识 (Non-Scaling Stroke) */}
+            <path
+              d={`M 0 16 L 0 0 L 16 0 M ${frameWidth - 16} 0 L ${frameWidth} 0 L ${frameWidth} 16 M 0 ${frameHeight - 16} L 0 ${frameHeight} L 16 ${frameHeight} M ${frameWidth - 16} ${frameHeight} L ${frameWidth} ${frameHeight} L ${frameWidth} ${frameHeight - 16}`}
+              fill="none"
+              stroke="#67e8f9"
+              strokeWidth="2.5"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
         )}
       </div>
     </div>

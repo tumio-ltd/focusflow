@@ -67,7 +67,7 @@ export function InfiniteCanvas({
 
       {/* 2. 核心 GPU 几何变换视口层 (Transform Content Layer - 亚像素高精浮点变换，杜绝整数化量化阶跃抖动) */}
       <div
-        className="absolute origin-top-left will-change-transform border border-border/40 shadow-xl"
+        className="absolute origin-top-left will-change-transform shadow-2xl"
         style={{
           width: `${contentWidth}px`,
           height: `${contentHeight}px`,
@@ -80,6 +80,20 @@ export function InfiniteCanvas({
           WebkitFontSmoothing: 'antialiased',
         }}
       >
+        {/* 矢量非缩放恒定画布外边框 (Non-Scaling Stroke) - 恒定 1.5 物理屏幕像素，彻底杜绝移动画布时 0.1px 边框的闪烁频闪 */}
+        <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible z-20">
+          <rect
+            x="0"
+            y="0"
+            width="100%"
+            height="100%"
+            fill="none"
+            stroke="hsl(var(--border) / 0.6)"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
         {children}
       </div>
 

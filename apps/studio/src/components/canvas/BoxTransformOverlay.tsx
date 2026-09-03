@@ -275,7 +275,7 @@ export function BoxTransformOverlay({
             className="absolute inset-2 cursor-move flex items-center justify-center bg-primary/5 hover:bg-primary/10 rounded-lg transition"
             title="按住鼠标左键平移此高亮框 (支持松手磁吸)"
           >
-            <span className="opacity-0 group-hover:opacity-80 transition bg-background/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-mono text-primary flex items-center gap-1 shadow-sm">
+            <span className="opacity-0 group-hover:opacity-80 transition bg-background/95 px-2 py-0.5 rounded text-[10px] font-mono text-primary flex items-center gap-1 shadow-sm">
               <Move className="w-3 h-3" />
               <span>拖拽移动</span>
             </span>
@@ -283,7 +283,7 @@ export function BoxTransformOverlay({
 
           {/* Top Floating Mini Toolbar */}
           <div
-            className="absolute -top-10 left-0 flex items-center gap-1.5 bg-panel/95 border border-primary/40 px-2 py-1 rounded-lg shadow-xl backdrop-blur-md z-30"
+            className="absolute -top-10 left-0 flex items-center gap-1.5 bg-panel/95 border border-primary/40 px-2 py-1 rounded-lg shadow-xl z-30"
             onPointerDown={(e) => e.stopPropagation()}
           >
             <span className="text-[10px] font-mono text-primary font-bold pr-1 border-r border-border">
