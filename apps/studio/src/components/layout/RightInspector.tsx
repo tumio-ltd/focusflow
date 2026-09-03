@@ -10,7 +10,6 @@ import {
   ChevronDown, 
   ChevronRight, 
   Palette,
-  Clock,
   Crosshair,
   CopyCheck,
   Search,
@@ -24,12 +23,10 @@ import {
   Check,
   Copy,
   Scan,
-  Move,
   RotateCcw,
   Zap,
   Gauge,
   Film,
-  SlidersHorizontal,
   Info
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
@@ -37,6 +34,7 @@ import { coordinateBus } from '@/utils/coordinateBus';
 import { useEditorStore, useProjectStore } from '@/stores';
 
 function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: number; viewportHeight: number }) {
+  const { t } = useTranslation('inspector');
   const pixelRef = useRef<HTMLSpanElement>(null);
   const percentRef = useRef<HTMLSpanElement>(null);
 
@@ -64,13 +62,13 @@ function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: 
   return (
     <div className="space-y-1 font-mono text-[11px]">
       <div className="flex items-center justify-between bg-muted/40 px-2 py-0.5 rounded border border-border/40">
-        <span className="text-muted-foreground text-[10px]">📐 物理像素:</span>
+        <span className="text-muted-foreground text-[10px]">{t('pixelCoord', '📐 物理像素')}:</span>
         <span ref={pixelRef} className="text-primary font-semibold text-[10px]">
           X: -- , Y: --
         </span>
       </div>
       <div className="flex items-center justify-between bg-muted/40 px-2 py-0.5 rounded border border-border/40">
-        <span className="text-muted-foreground text-[10px]">📍 相对百分比:</span>
+        <span className="text-muted-foreground text-[10px]">{t('percentCoord', '📍 相对百分比')}:</span>
         <span ref={percentRef} className="text-emerald-400 font-semibold text-[10px]">
           L: --% , T: --%
         </span>
@@ -209,7 +207,7 @@ function RightInspectorComponent({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold text-foreground">属性检查器 (Inspector)</span>
+            <span className="text-xs font-bold text-foreground">{t('inspectorTitle', '属性检查器')}</span>
           </div>
           <span className="text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded">
             {viewport.width} × {viewport.height}
@@ -232,7 +230,7 @@ function RightInspectorComponent({
           }`}
         >
           <Film className="w-3.5 h-3.5" />
-          <span>🎬 场景运镜</span>
+          <span>{t('tabScene', '🎬 场景运镜')}</span>
         </button>
 
         <button
@@ -245,7 +243,7 @@ function RightInspectorComponent({
           }`}
         >
           <Palette className="w-3.5 h-3.5" />
-          <span>🎨 图元属性</span>
+          <span>{t('tabElements', '🎨 图元属性')}</span>
           {selectedElementId && (
             <span className="w-2 h-2 rounded-full bg-cyan-400 absolute top-1 right-1.5 animate-pulse" />
           )}
@@ -267,7 +265,7 @@ function RightInspectorComponent({
               >
                 <div className="flex items-center gap-2">
                   <Camera className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-bold text-foreground">{t('cameraControls')}</span>
+                  <span className="text-xs font-bold text-foreground">{t('cameraControls', '场景运镜控制')}</span>
                 </div>
                 {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
               </div>
@@ -276,11 +274,11 @@ function RightInspectorComponent({
                 <div className="space-y-3 pt-1 animate-in fade-in duration-150">
                   {/* 分幕标题 */}
                   <div className="space-y-1">
-                    <label className="text-muted-foreground text-[10px] font-medium">{t('sceneTitle')}</label>
+                    <label className="text-muted-foreground text-[10px] font-medium">{t('sceneTitle', '分幕标题')}</label>
                     <Input
                       value={sceneTitle}
                       onChange={(e) => onSceneTitleChange?.(e.target.value)}
-                      placeholder={t('sceneTitlePlaceholder')}
+                      placeholder={t('sceneTitlePlaceholder', '请输入分幕标题')}
                       className="text-xs bg-background h-8"
                     />
                   </div>
@@ -294,12 +292,12 @@ function RightInspectorComponent({
                     className="w-full gap-2 text-xs border-primary/40 text-primary hover:bg-primary/10 font-medium py-1.5 h-auto"
                   >
                     <Crosshair className="w-3.5 h-3.5 text-primary" />
-                    <span>{t('captureCurrentView')}</span>
+                    <span>{t('captureCurrentView', '捕获当前画布视角')}</span>
                   </Button>
 
                   {/* 运镜缩放倍率 */}
                   <Slider
-                    label={t('cameraZoom')}
+                    label={t('cameraZoom', '运镜放大倍率')}
                     valueDisplay={`${cameraZoom.toFixed(1)}x`}
                     min="1.0"
                     max="3.5"
@@ -311,7 +309,7 @@ function RightInspectorComponent({
                   {/* 水平与垂直运镜偏移精确数值调节 */}
                   <div className="grid grid-cols-2 gap-2 pt-0.5">
                     <Slider
-                      label={t('cameraX')}
+                      label={t('cameraX', '水平偏移 (X)')}
                       valueDisplay={`${cameraX > 0 ? '+' : ''}${cameraX.toFixed(1)}%`}
                       min="-50.0"
                       max="50.0"
@@ -320,7 +318,7 @@ function RightInspectorComponent({
                       onChange={(e) => onCameraXChange?.(parseFloat(e.target.value))}
                     />
                     <Slider
-                      label={t('cameraY')}
+                      label={t('cameraY', '垂直偏移 (Y)')}
                       valueDisplay={`${cameraY > 0 ? '+' : ''}${cameraY.toFixed(1)}%`}
                       min="-50.0"
                       max="50.0"
@@ -332,7 +330,7 @@ function RightInspectorComponent({
 
                   {/* 一键居中复位 */}
                   <div className="pt-1 flex items-center justify-between border-t border-border/50">
-                    <span className="text-[10px] text-muted-foreground">重置镜头焦点为全景居中</span>
+                    <span className="text-[10px] text-muted-foreground">{t('resetCenterTip', '重置镜头焦点为全景居中')}</span>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -340,7 +338,7 @@ function RightInspectorComponent({
                       className="h-7 text-[11px] gap-1 text-muted-foreground hover:text-foreground px-2"
                     >
                       <RotateCcw className="w-3 h-3" />
-                      <span>{t('resetCenter')}</span>
+                      <span>{t('resetCenter', '镜头居中复位')}</span>
                     </Button>
                   </div>
                 </div>
@@ -355,7 +353,7 @@ function RightInspectorComponent({
               >
                 <div className="flex items-center gap-2">
                   <Target className="w-3.5 h-3.5 text-primary animate-pulse" />
-                  <span className="text-xs font-bold text-primary">{t('calibrationTitle')}</span>
+                  <span className="text-xs font-bold text-primary">{t('calibrationTitle', '标定助手 (HUD)')}</span>
                 </div>
                 {isCalibrationOpen ? <ChevronDown className="w-3.5 h-3.5 text-primary" /> : <ChevronRight className="w-3.5 h-3.5" />}
               </div>
@@ -366,7 +364,7 @@ function RightInspectorComponent({
                   <div className="flex items-center justify-between bg-muted/60 p-2 rounded-lg border border-border text-xs">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <Scan className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>{t('baseImageRes')}</span>
+                      <span>{t('baseImageRes', '底图原生基准')}</span>
                     </span>
                     <span className="font-mono text-cyan-400 font-bold">
                       {viewport.width} × {viewport.height}
@@ -378,9 +376,9 @@ function RightInspectorComponent({
                     <div className="space-y-0.5">
                       <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-primary" />
-                        <span>{t('smartSnap')}</span>
+                        <span>{t('smartSnap', '智能边缘吸附')}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">{t('smartSnapDesc')}</p>
+                      <p className="text-[10px] text-muted-foreground">{t('smartSnapDesc', '框选时自动贴合图元边缘')}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -398,9 +396,9 @@ function RightInspectorComponent({
                     <div className="space-y-0.5">
                       <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                         <Crosshair className="w-3.5 h-3.5 text-primary" />
-                        <span>{t('laserCrosshair')}</span>
+                        <span>{t('laserCrosshair', '十字激光准星')}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">{t('laserCrosshairDesc')}</p>
+                      <p className="text-[10px] text-muted-foreground">{t('laserCrosshairDesc', '在画布显示 X/Y 轴全屏辅助对齐线')}</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -421,7 +419,7 @@ function RightInspectorComponent({
                     className="w-full gap-2 text-xs text-muted-foreground hover:text-foreground h-8 border border-border"
                   >
                     {hasCopiedCoords ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{hasCopiedCoords ? t('copiedJson') : t('copyCoordsJson')}</span>
+                    <span>{hasCopiedCoords ? t('copiedJson', '坐标已复制') : t('copyCoordsJson', '复制坐标 JSON')}</span>
                   </Button>
                 </div>
               )}
@@ -441,7 +439,7 @@ function RightInspectorComponent({
                 <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
                   <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
                     <Square className="w-3.5 h-3.5 text-primary" />
-                    <span>方框属性 (Box Settings)</span>
+                    <span>{t('boxSettings', '方框属性')}</span>
                   </div>
                   <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
                     {selectedBox.id}
@@ -458,7 +456,7 @@ function RightInspectorComponent({
 
                 {/* 描边粗细 Slider */}
                 <Slider
-                  label="描边粗细"
+                  label={t('strokeWidth', '描边粗细')}
                   valueDisplay={`${selectedBox.style?.strokeWidth || 6} px`}
                   min="1"
                   max="14"
@@ -469,7 +467,7 @@ function RightInspectorComponent({
 
                 {/* 边框圆角 Slider */}
                 <Slider
-                  label="边框圆角"
+                  label={t('cornerRadius', '边框圆角')}
                   valueDisplay={`${selectedBox.rx !== undefined ? selectedBox.rx : 16} px`}
                   min="0"
                   max="32"
@@ -482,7 +480,7 @@ function RightInspectorComponent({
                 <div className="pt-1 border-t border-border/50 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-primary" />
-                    <span>霓虹外发光滤镜</span>
+                    <span>{t('neonGlow', '霓虹外发光滤镜')}</span>
                   </span>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -502,7 +500,7 @@ function RightInspectorComponent({
                 <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
                   <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
                     <Zap className="w-3.5 h-3.5 text-primary" />
-                    <span>连线高级参数 (Path Settings)</span>
+                    <span>{t('pathSettings', '连线高级参数')}</span>
                   </div>
                   <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
                     {selectedPath.id}
@@ -512,16 +510,16 @@ function RightInspectorComponent({
                 {/* 动画流动模式选择 */}
                 <div className="space-y-1.5">
                   <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
-                    <span>动画流动模式</span>
+                    <span>{t('flowMode', '动画流动模式')}</span>
                     <span className="font-mono text-primary uppercase text-[10px]">
                       {selectedPath.style?.mode || 'draw'}
                     </span>
                   </label>
                   <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
                     {[
-                      { id: 'stream', label: '🌊 流光粒子', desc: '能量粒子沿虚线高速流动' },
-                      { id: 'draw', label: '✍️ 生长绘制', desc: '沿路径延时生长画入' },
-                      { id: 'pulse', label: '💓 呼吸律动', desc: '整条连线呼吸发光' },
+                      { id: 'stream', label: t('modeStream', '🌊 流光粒子'), desc: t('modeStreamDesc', '能量粒子沿虚线高速流动') },
+                      { id: 'draw', label: t('modeDraw', '✍️ 生长绘制'), desc: t('modeDrawDesc', '沿路径延时生长画入') },
+                      { id: 'pulse', label: t('modePulse', '💓 呼吸律动'), desc: t('modePulseDesc', '整条连线呼吸发光') },
                     ].map((m) => {
                       const isActive = (selectedPath.style?.mode || 'draw') === m.id;
                       return (
@@ -545,7 +543,7 @@ function RightInspectorComponent({
 
                 {/* 线条粗细调节 */}
                 <Slider
-                  label="线条粗细"
+                  label={t('strokeWidth', '描边粗细')}
                   valueDisplay={`${selectedPath.style?.strokeWidth || 5} px`}
                   min="1"
                   max="14"
@@ -557,7 +555,7 @@ function RightInspectorComponent({
                 {/* 流光速度调节 (仅在 stream 模式下显示) */}
                 {selectedPath.style?.mode === 'stream' && (
                   <Slider
-                    label="流光速度倍率"
+                    label={t('flowSpeed', '流光速度倍率')}
                     valueDisplay={`${(selectedPath.style?.flowSpeed || 1.8).toFixed(1)}x`}
                     min="0.5"
                     max="5.0"
@@ -571,7 +569,7 @@ function RightInspectorComponent({
                 <div className="pt-1 border-t border-border/50 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-primary" />
-                    <span>霓虹外发光滤镜</span>
+                    <span>{t('neonGlow', '霓虹外发光滤镜')}</span>
                   </span>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -586,8 +584,8 @@ function RightInspectorComponent({
                 {/* 端点拓扑信息 */}
                 {(selectedPath.from || selectedPath.to) && (
                   <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-1.5 rounded border border-border flex flex-col gap-0.5">
-                    <div className="truncate">起点: <span className="text-foreground">{selectedPath.from || '自由贝塞尔'}</span></div>
-                    <div className="truncate">终点: <span className="text-foreground">{selectedPath.to || '自由贝塞尔'}</span></div>
+                    <div className="truncate">{t('startPoint', '起点')}: <span className="text-foreground">{selectedPath.from || t('freeBezier', '自由贝塞尔')}</span></div>
+                    <div className="truncate">{t('endPoint', '终点')}: <span className="text-foreground">{selectedPath.to || t('freeBezier', '自由贝塞尔')}</span></div>
                   </div>
                 )}
               </div>
@@ -599,7 +597,7 @@ function RightInspectorComponent({
                 <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
                   <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
                     <CircleDot className="w-3.5 h-3.5 text-amber-400" />
-                    <span>脉冲圆点属性 (Dot Settings)</span>
+                    <span>{t('dotSettings', '脉冲圆点属性')}</span>
                   </div>
                   <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
                     {selectedDot.id}
@@ -610,7 +608,7 @@ function RightInspectorComponent({
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
                     <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
-                      <span>CX (X 坐标)</span>
+                      <span>{t('coordX', 'CX (X 坐标)')}</span>
                       <span className="font-mono text-amber-400 font-bold text-[10px]">px</span>
                     </label>
                     <Input
@@ -628,7 +626,7 @@ function RightInspectorComponent({
 
                   <div className="space-y-1">
                     <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
-                      <span>CY (Y 坐标)</span>
+                      <span>{t('coordY', 'CY (Y 坐标)')}</span>
                       <span className="font-mono text-amber-400 font-bold text-[10px]">px</span>
                     </label>
                     <Input
@@ -647,7 +645,7 @@ function RightInspectorComponent({
 
                 {/* 半径大小调节 */}
                 <Slider
-                  label="圆点半径 (Radius)"
+                  label={t('dotRadius', '圆点半径')}
                   valueDisplay={`${selectedDot.r !== undefined ? selectedDot.r : 8} px`}
                   min="4"
                   max="30"
@@ -660,7 +658,7 @@ function RightInspectorComponent({
                 <div className="pt-1 border-t border-border/50 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Gauge className="w-3 h-3 text-amber-400" />
-                    <span>0.85x~1.25x 呼吸脉冲</span>
+                    <span>{t('dotPulse', '0.85x~1.25x 呼吸脉冲')}</span>
                   </span>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -676,7 +674,7 @@ function RightInspectorComponent({
                 <div className="pt-1 border-t border-border/50 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-primary" />
-                    <span>霓虹外发光滤镜</span>
+                    <span>{t('neonGlow', '霓虹外发光滤镜')}</span>
                   </span>
                   <label className="flex items-center cursor-pointer">
                     <input
@@ -694,8 +692,8 @@ function RightInspectorComponent({
             {!selectedBox && !selectedPath && !selectedDot && (
               <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
                 <Info className="w-4 h-4 text-muted-foreground mx-auto" />
-                <p className="text-xs font-medium text-foreground">未选中图元</p>
-                <p className="text-[10px] text-muted-foreground">在下方列表或画布上单击图元即可进行属性微调</p>
+                <p className="text-xs font-medium text-foreground">{t('noElementSelected', '未选中图元')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('noElementSelectedDesc', '在下方列表或画布上单击图元即可进行属性微调')}</p>
               </div>
             )}
 
@@ -704,7 +702,7 @@ function RightInspectorComponent({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Palette className="w-3.5 h-3.5 text-primary" />
-                  <span>视觉主题色调 (Palette)</span>
+                  <span>{t('themePalette', '视觉主题色调')}</span>
                 </span>
                 {selectedElementId && (
                   <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[100px]">
@@ -737,7 +735,7 @@ function RightInspectorComponent({
                 {/* 自定义拾色器 */}
                 <label
                   className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
-                  title="自定义 HEX 颜色"
+                  title={t('customHex', '自定义 HEX 颜色')}
                 >
                   <input
                     type="color"
@@ -763,7 +761,7 @@ function RightInspectorComponent({
               >
                 <div className="flex items-center gap-2">
                   <Layers className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-bold text-foreground">{t('layerList')}</span>
+                  <span className="text-xs font-bold text-foreground">{t('layerList', '图层层级列表')}</span>
                   <span className="text-[10px] text-muted-foreground font-mono font-normal">
                     ({elements.length})
                   </span>
@@ -777,7 +775,7 @@ function RightInspectorComponent({
                   <div className="relative">
                     <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-muted-foreground" />
                     <Input
-                      placeholder={t('searchElement')}
+                      placeholder={t('searchElement', '搜索图元名称或 ID...')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-8 text-xs bg-background h-8"
@@ -793,7 +791,7 @@ function RightInspectorComponent({
                       className="w-full gap-1.5 text-xs border-primary/30 text-primary hover:bg-primary/10 h-7"
                     >
                       <CopyCheck className="w-3.5 h-3.5" />
-                      <span>{t('inheritPrevious')}</span>
+                      <span>{t('inheritPrevious', '从上一幕继承图元')}</span>
                     </Button>
                   )}
 
@@ -801,7 +799,7 @@ function RightInspectorComponent({
                   <div className="space-y-1 max-h-56 overflow-y-auto pr-1">
                     {filteredElements.length === 0 ? (
                       <div className="text-center py-4 text-xs text-muted-foreground">
-                        {t('noElements')}
+                        {t('noElements', '暂无图元')}
                       </div>
                     ) : (
                       filteredElements.map((el) => {
@@ -832,7 +830,7 @@ function RightInspectorComponent({
                                 className={`p-1 rounded hover:bg-muted ${
                                   el.active ? 'text-primary' : 'text-muted-foreground opacity-40'
                                 }`}
-                                title={el.active ? t('activeInScene') : t('hiddenInScene')}
+                                title={el.active ? t('activeInScene', '在当前场景激活展示') : t('hiddenInScene', '在当前场景隐藏')}
                               >
                                 {el.active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                               </button>
@@ -845,7 +843,7 @@ function RightInspectorComponent({
                                   onDeleteElement?.(el.id);
                                 }}
                                 className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
-                                title={t('deleteElement')}
+                                title={t('deleteElement', '删除图元')}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
