@@ -268,43 +268,28 @@ export function useCanvasGesture({
       const clampedScale = Math.min(Math.max(targetScale, minScale), maxScale);
       if (clampedScale === prev.scale) return;
 
-      // 铁律 9 落地：极小缩放比 (< 0.25) 逆向投影杠杆阻尼与微颤滤波
       const rawPx = e.clientX - rect.left;
       const rawPy = e.clientY - rect.top;
 
-      let Px = rawPx;
-      let Py = rawPy;
+      // 连续手势世界坐标锁定方程：缩放手势期间保持锚定世界坐标系点连续，杜绝死区阈值跳跃抖动
+      const isOngoingGesture = activeFocalPointRef.current && (now - activeFocalPointRef.current.lastTime < 180);
+      let worldX: number;
+      let worldY: number;
 
-      const isOngoingGesture = activeFocalPointRef.current && (now - activeFocalPointRef.current.lastTime < 160);
-      if (isOngoingGesture && activeFocalPointRef.current) {
-        const lastFP = activeFocalPointRef.current;
-        const dx = rawPx - lastFP.x;
-        const dy = rawPy - lastFP.y;
-        const distSq = dx * dx + dy * dy;
-
-        // 在小比例下 (scale < 0.25)，分母 1/scale 达到 4~10 倍杠杆
-        // 人类手指在触控板表面生理微颤 (≤ 2.5px)，强制锁定原锚点，杜绝 10 倍放大抽动
-        const deadband = clampedScale < 0.25 ? 6.25 : 1.0;
-        if (distSq < deadband) {
-          Px = lastFP.x;
-          Py = lastFP.y;
-        } else {
-          // 超出死区时施加低通滤波平滑追踪光标
-          const alpha = clampedScale < 0.25 ? 0.35 : 0.75;
-          Px = lastFP.x + dx * alpha;
-          Py = lastFP.y + dy * alpha;
-          activeFocalPointRef.current = { x: Px, y: Py, lastTime: now };
-        }
+      if (isOngoingGesture && activeFocalPointRef.current && 'worldX' in activeFocalPointRef.current) {
+        worldX = (activeFocalPointRef.current as any).worldX;
+        worldY = (activeFocalPointRef.current as any).worldY;
+        activeFocalPointRef.current.lastTime = now;
       } else {
-        activeFocalPointRef.current = { x: Px, y: Py, lastTime: now };
+        worldX = (rawPx - prev.x) / prev.scale;
+        worldY = (rawPy - prev.y) / prev.scale;
+        activeFocalPointRef.current = { worldX, worldY, lastTime: now } as any;
       }
-      lastWheelTimeRef.current = now;
 
-      // 实时计算下一帧目标矩阵
-      const ratio = clampedScale / prev.scale;
+      // 实时计算下一帧目标矩阵 (严格连续，0 累积截断阶跃)
       const nextTransform: CanvasTransform = {
-        x: Px - (Px - prev.x) * ratio,
-        y: Py - (Py - prev.y) * ratio,
+        x: rawPx - worldX * clampedScale,
+        y: rawPy - worldY * clampedScale,
         scale: clampedScale,
       };
 

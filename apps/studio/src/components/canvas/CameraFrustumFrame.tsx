@@ -195,15 +195,6 @@ export function CameraFrustumFrame({
             vectorEffect="non-scaling-stroke"
           />
 
-          {/* 工业级四角 L 型标尺 (Non-Scaling Stroke) */}
-          <path
-            d={`M 0 20 L 0 0 L 20 0 M ${frameWidth - 20} 0 L ${frameWidth} 0 L ${frameWidth} 20 M 0 ${frameHeight - 20} L 0 ${frameHeight} L 20 ${frameHeight} M ${frameWidth - 20} ${frameHeight} L ${frameWidth} ${frameHeight} L ${frameWidth} ${frameHeight - 20}`}
-            fill="none"
-            stroke="#67e8f9"
-            strokeWidth="3"
-            vectorEffect="non-scaling-stroke"
-          />
-
           {/* 视口中心精准标定准星 (SVG 恒定线宽，彻底告别位图图标缩放走样) */}
           <g transform={`translate(${frameWidth / 2}, ${frameHeight / 2})`}>
             <circle cx="0" cy="0" r="12" fill="none" stroke="rgba(34, 211, 238, 0.45)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
@@ -212,16 +203,6 @@ export function CameraFrustumFrame({
             <line x1="0" y1="-18" x2="0" y2="-5" stroke="rgba(34, 211, 238, 0.6)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
             <line x1="0" y1="5" x2="0" y2="18" stroke="rgba(34, 211, 238, 0.6)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
           </g>
-
-          {/* 交互状态下的四角视觉手柄 (Non-Scaling Stroke，恒定 8px，杜绝 HTML Div 缩放闪烁) */}
-          {isInteractive && (
-            <>
-              <rect x="-4" y="-4" width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-              <rect x={frameWidth - 4} y="-4" width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-              <rect x="-4" y={frameHeight - 4} width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-              <rect x={frameWidth - 4} y={frameHeight - 4} width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            </>
-          )}
         </svg>
 
         {/* 左上角摄像机镜头标签 */}

@@ -67,7 +67,7 @@ export function InfiniteCanvas({
 
       {/* 2. 核心 GPU 几何变换视口层 (Transform Content Layer - 亚像素高精浮点变换，杜绝整数化量化阶跃抖动) */}
       <div
-        className="absolute origin-top-left will-change-transform shadow-2xl"
+        className="absolute origin-top-left shadow-2xl"
         style={{
           width: `${contentWidth}px`,
           height: `${contentHeight}px`,
@@ -82,22 +82,19 @@ export function InfiniteCanvas({
           WebkitFontSmoothing: 'antialiased',
         }}
       >
-        {/* 矢量非缩放恒定画布外边框 (Non-Scaling Stroke) - 恒定 1.5 物理屏幕像素，彻底杜绝移动画布时 0.1px 边框的闪烁频闪 */}
-        <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible z-20">
-          <rect
-            x="0"
-            y="0"
-            width="100%"
-            height="100%"
-            fill="none"
-            stroke="hsl(var(--border) / 0.6)"
-            strokeWidth="1.5"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-
         {children}
       </div>
+
+      {/* 2.1 屏幕坐标系绝对画布外轮廓 (Screen-Space Canvas Border - 恒定 1px 屏幕绝对像素，彻底杜绝缩放闪烁) */}
+      <div
+        className="absolute pointer-events-none border border-border/60 shadow-2xl z-10"
+        style={{
+          left: `${transform.x}px`,
+          top: `${transform.y}px`,
+          width: `${contentWidth * transform.scale}px`,
+          height: `${contentHeight * transform.scale}px`,
+        }}
+      />
 
       {/* 3. 左下角抓手模式提示指示器 */}
       {isSpacePressed && (
