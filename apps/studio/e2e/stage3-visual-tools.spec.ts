@@ -210,6 +210,24 @@ async function verifyCalloutVisualControlAndInspection(page: Page): Promise<void
   await expect(inspector).toContainText(/正文解说描述|Description Text/i);
   await expect(inspector).toContainText(/左偏移|Left/i);
   await expect(inspector).toContainText(/关联目标框元|Target Box/i);
+
+  // 7. 验证工具栏关闭图标按钮存在，点击可取消选中
+  const closeBtn = calloutTransformOverlay.locator('button[title*="取消选择"], button[title*="取消选中"]').first();
+  await expect(closeBtn).toBeVisible();
+  await closeBtn.click();
+  await expect(inspector).toContainText(/未选中图元|No Element Selected/i);
+
+  // 8. 重新点击气泡选中，并测试快捷删除图标按钮
+  if (box) {
+    await page.mouse.click(box.x + 350, box.y + 250);
+  }
+  await expect(inspector).toContainText(/解说气泡属性|Callout Settings/i);
+  const deleteBtn = calloutTransformOverlay.locator('button[title*="删除气泡"]').first();
+  await expect(deleteBtn).toBeVisible();
+  await deleteBtn.click();
+
+  // 9. 验证气泡被彻底删除，画布及右侧面板均恢复为未选中状态
+  await expect(inspector).toContainText(/未选中图元|No Element Selected/i);
 }
 
 /**

@@ -579,9 +579,21 @@ function RightInspectorComponent({
                     <Square className="w-3.5 h-3.5 text-primary" />
                     <span>{t('boxSettings', '方框属性')}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                    {selectedBox.id}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                      {selectedBox.id}
+                    </span>
+                    {onDeleteElement && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteElement(selectedBox.id)}
+                        className="p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded transition cursor-pointer"
+                        title={t('deleteElement', '删除图元')}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* 尺寸与坐标读数 */}
@@ -737,9 +749,21 @@ function RightInspectorComponent({
                     <CircleDot className="w-3.5 h-3.5 text-amber-400" />
                     <span>{t('dotSettings', '脉冲圆点属性')}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                    {selectedDot.id}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                      {selectedDot.id}
+                    </span>
+                    {onDeleteElement && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteElement(selectedDot.id)}
+                        className="p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded transition cursor-pointer"
+                        title={t('deleteElement', '删除图元')}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* 圆心坐标调节 */}
@@ -834,9 +858,21 @@ function RightInspectorComponent({
                     <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
                     <span>{t('calloutSettings', '解说气泡属性')}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                    {selectedCallout.id}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                      {selectedCallout.id}
+                    </span>
+                    {onDeleteElement && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteElement(selectedCallout.id)}
+                        className="p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded transition cursor-pointer"
+                        title={t('deleteElement', '删除图元')}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* 气泡标题 / 徽章文本 */}

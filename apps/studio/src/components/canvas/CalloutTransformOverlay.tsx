@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { ElementBox, CalloutItem } from '@focusflow/dsl';
 import { Trash2, X, Move, MessageSquare, Link as LinkIcon } from 'lucide-react';
 import { useEditorStore, useProjectStore } from '@/stores';
@@ -82,17 +82,40 @@ export function CalloutTransformOverlay({
   const currentScene = dsl.scenes[activeSceneIndex];
   const activeCallouts = currentScene?.activeElements?.callouts || [];
 
-  // 聚合所有场景可能选中的 Callout
-  const allCalloutsMap = useRef<Map<string, CalloutItem>>(new Map());
-  dsl.scenes.forEach((s) => {
-    (s.activeElements.callouts || []).forEach((c) => {
-      allCalloutsMap.current.set(c.id, c);
+  // 聚合所有场景可能选中的 Callout (响应式计算，删除后立即同步更新)
+  const allCalloutsMap = useMemo(() => {
+    const map = new Map<string, CalloutItem>();
+    dsl.scenes.forEach((s) => {
+      (s.activeElements?.callouts || []).forEach((c) => {
+        map.set(c.id, c);
+      });
     });
-  });
+    return map;
+  }, [dsl.scenes]);
 
   const selectedCallout =
     activeCallouts.find((c) => c.id === selectedElementId) ||
-    allCalloutsMap.current.get(selectedElementId || '');
+    allCalloutsMap.get(selectedElementId || '');
+
+  const handleDelete = useCallback(
+    (e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      e?.preventDefault();
+      if (!selectedCallout) return;
+      deleteElement('callouts', selectedCallout.id);
+      setSelectedElementId(null);
+    },
+    [selectedCallout, deleteElement, setSelectedElementId]
+  );
+
+  const handleClose = useCallback(
+    (e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      e?.preventDefault();
+      setSelectedElementId(null);
+    },
+    [setSelectedElementId]
+  );
 
   const [dragState, setDragState] = useState<{
     startPointerX: number;
@@ -131,17 +154,17 @@ export function CalloutTransformOverlay({
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         e.stopPropagation();
-        deleteElement('callouts', selectedCallout.id);
-        setSelectedElementId(null);
+        handleDelete();
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        setSelectedElementId(null);
+        e.stopPropagation();
+        handleClose();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCallout, active, deleteElement, setSelectedElementId]);
+  }, [selectedCallout, active, handleDelete, handleClose]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (!selectedCallout) return;
@@ -328,7 +351,8 @@ export function CalloutTransformOverlay({
           >
           {/* 顶部微型悬浮工具栏 */}
           <div
-            className="absolute -top-10 left-0 flex items-center gap-1 bg-slate-900/95 border border-slate-700/80 rounded-lg px-2 py-1 shadow-2xl pointer-events-auto z-30 animate-in fade-in duration-100"
+            className="absolute -top-10 left-0 flex items-center gap-1.5 bg-slate-900/95 border border-slate-700/80 rounded-lg px-2 py-1 shadow-2xl backdrop-blur-md pointer-events-auto z-30 animate-in fade-in duration-100 select-none"
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-1 pr-1 border-r border-slate-700">
@@ -340,39 +364,55 @@ export function CalloutTransformOverlay({
 
             {/* 快速调色 */}
             <div className="flex items-center gap-1 px-1">
-              {['blue', 'green', 'amber', 'pink', 'purple'].map((theme) => {
-                const colorMap: Record<string, string> = {
-                  blue: '#38bdf8',
-                  green: '#34d399',
-                  amber: '#fbbf24',
-                  pink: '#f43f5e',
-                  purple: '#a855f7',
-                };
-                const hex = colorMap[theme];
-                const isActive = (selectedCallout.theme || 'blue') === theme;
+              {THEME_OPTIONS.map((opt) => {
+                const isActive = (selectedCallout.theme || 'blue') === opt.id;
                 return (
                   <button
-                    key={theme}
+                    key={opt.id}
                     type="button"
-                    onClick={() => updateCallout(selectedCallout.id, { theme })}
-                    style={{ backgroundColor: hex }}
-                    className={`w-3.5 h-3.5 rounded-full border border-white/20 hover:scale-125 transition cursor-pointer ${
-                      isActive ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-900 scale-110' : ''
+                    style={{ backgroundColor: opt.color }}
+                    onClick={() => updateCallout(selectedCallout.id, { theme: opt.id })}
+                    className={`w-3.5 h-3.5 rounded-full border transition cursor-pointer ${
+                      isActive
+                        ? 'ring-2 ring-white scale-125 border-white'
+                        : 'border-white/30 hover:scale-125'
                     }`}
-                    title={`切换配色: ${theme}`}
+                    title={`切换配色: ${opt.name}`}
                   />
                 );
               })}
             </div>
 
+            {targetBox && (
+              <div
+                className="flex items-center gap-0.5 px-1 bg-slate-800 rounded text-[9px] text-sky-300 font-mono border border-slate-700/60"
+                title={`已关联框元: ${targetBox.id}`}
+              >
+                <LinkIcon className="w-2.5 h-2.5" />
+                <span className="truncate max-w-[60px]">{targetBox.id}</span>
+              </div>
+            )}
+
+            <div className="w-px h-3 bg-slate-700 mx-0.5" />
+
             {/* 快捷删除 */}
             <button
               type="button"
-              onClick={() => deleteElement('callouts', selectedCallout.id)}
-              className="p-1 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition cursor-pointer border-l border-slate-700 pl-1.5"
-              title="删除此气泡"
+              onClick={handleDelete}
+              className="p-1 rounded text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer"
+              title="删除气泡 (Delete)"
             >
               <Trash2 className="w-3 h-3" />
+            </button>
+
+            {/* 取消选中 / 关闭 */}
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+              title="取消选择 (Esc)"
+            >
+              <X className="w-3 h-3" />
             </button>
           </div>
 
@@ -387,9 +427,18 @@ export function CalloutTransformOverlay({
             className={`relative rounded-xl border-2 ${currentTheme.border} ${currentTheme.glow} bg-slate-900/95 p-3.5 cursor-move active:cursor-grabbing group hover:border-opacity-100 transition shadow-2xl`}
             title="按住拖拽移动解说气泡位置"
           >
-            {/* 拖拽指示器角标 */}
-            <div className="absolute top-2 right-2 flex items-center gap-1 text-slate-400 group-hover:text-white transition">
-              <Move className="w-3.5 h-3.5 animate-pulse" />
+            {/* 拖拽指示器角标与快捷关闭按钮 */}
+            <div className="absolute top-2 right-2 flex items-center gap-1.5 text-slate-400 group-hover:text-white transition">
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={handleClose}
+                className="p-0.5 hover:bg-white/20 text-slate-400 hover:text-white rounded transition cursor-pointer"
+                title="取消选中 / 关闭 (Esc)"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+              <Move className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
             </div>
 
             {/* 徽章标题 */}
