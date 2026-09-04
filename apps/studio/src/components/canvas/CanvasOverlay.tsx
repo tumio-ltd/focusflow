@@ -55,9 +55,9 @@ function CanvasOverlayComponent({
 }: CanvasOverlayProps) {
   const dsl = useProjectStore((s) => s.dsl);
   const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
-  const dots = useProjectStore((s) => s.dsl.elements.dots || []);
-  const images = useProjectStore((s) => s.dsl.elements.images || []);
   const currentScene = dsl.scenes[activeSceneIndex];
+  const dots = dsl.elements.dots || [];
+  const images = dsl.elements.images || [];
   const activeBoxIds = currentScene?.activeElements?.boxes || [];
   const activeImageIds = currentScene?.activeElements?.images || [];
   const rafRef = React.useRef<number | null>(null);
