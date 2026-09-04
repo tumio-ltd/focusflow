@@ -1,4 +1,5 @@
 import React, { useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import type { ElementImage } from '@focusflow/dsl';
 import { Image as ImageIcon, Upload, Check, X } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
@@ -107,8 +108,8 @@ export function ImageDrawingOverlay({
         onPointerDown={handlePointerDown}
       />
 
-      {isModalOpen && clickPos && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      {isModalOpen && clickPos && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 pointer-events-auto">
           <div className="bg-card border border-border rounded-xl shadow-2xl p-5 max-w-md w-full space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
@@ -188,7 +189,8 @@ export function ImageDrawingOverlay({
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
