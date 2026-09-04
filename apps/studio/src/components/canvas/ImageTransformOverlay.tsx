@@ -38,6 +38,10 @@ export function ImageTransformOverlay({
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
   const deleteElement = useProjectStore((s) => s.deleteElement);
 
+  const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
+  const dsl = useProjectStore((s) => s.dsl);
+  const resolvedActiveImageIds = activeImageIds ?? dsl.scenes[activeSceneIndex]?.activeElements?.images ?? [];
+
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [isRatioLocked, setIsRatioLocked] = useState(true);
 
@@ -88,6 +92,10 @@ export function ImageTransformOverlay({
     if (e.target === containerRef.current) {
       const coords = getCanvasCoords(e);
       const hitImage = [...images].reverse().find((img) => {
+        const isActiveInScene = resolvedActiveImageIds.includes(img.id);
+        const isVisible = isActiveInScene && (img.style?.opacity === undefined || img.style.opacity > 0);
+        if (!isVisible) return false;
+
         return (
           coords.x >= img.x &&
           coords.x <= img.x + img.width &&
@@ -266,8 +274,12 @@ export function ImageTransformOverlay({
       {/* 1. Render interactive hit areas for unselected images */}
       {images.map((img) => {
         const isSelected = img.id === selectedElementId;
-        const isActiveInScene = activeImageIds?.includes(img.id) ?? true;
+        const isActiveInScene = resolvedActiveImageIds.includes(img.id);
+        const isVisible = isActiveInScene && (img.style?.opacity === undefined || img.style.opacity > 0);
         if (isSelected) return null;
+
+        // 核心修复：处于不可见状态的插图，严禁渲染交互热区，彻底杜绝遮挡下方框元、圆点与气泡
+        if (!isVisible) return null;
 
         return (
           <div
@@ -277,11 +289,7 @@ export function ImageTransformOverlay({
               e.stopPropagation();
               setSelectedElementId(img.id);
             }}
-            className={`absolute border border-dashed rounded-xl cursor-pointer transition-all pointer-events-auto group/hit ${
-              isActiveInScene
-                ? 'border-pink-500/30 hover:border-pink-400 hover:bg-pink-500/10'
-                : 'border-white/10 opacity-40 hover:opacity-100 hover:border-pink-400/50'
-            }`}
+            className="absolute border border-dashed rounded-xl cursor-pointer transition-all pointer-events-auto group/hit border-pink-500/30 hover:border-pink-400 hover:bg-pink-500/10"
             title={`点击选中插图: ${img.id}`}
           >
             <span className="absolute top-1.5 left-1.5 opacity-0 group-hover/hit:opacity-90 transition bg-panel/90 text-pink-400 border border-pink-500/30 px-1.5 py-0.5 rounded text-[10px] font-mono flex items-center gap-1 shadow">

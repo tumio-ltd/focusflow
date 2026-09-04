@@ -271,6 +271,7 @@ function RightInspectorComponent({
                 return (
                   <div
                     key={el.id}
+                    data-testid={`layer-item-${el.id}`}
                     onClick={() => setSelectedElementId(el.id)}
                     className={`group flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition cursor-pointer ${
                       isSelected
@@ -287,6 +288,7 @@ function RightInspectorComponent({
                       {/* 显隐切换按钮 */}
                       <button
                         type="button"
+                        data-testid={`layer-toggle-eye-${el.id}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleElement?.(el.id);

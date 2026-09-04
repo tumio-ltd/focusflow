@@ -142,8 +142,9 @@ export function DotTransformOverlay({
       {/* 1. Render interactive hit areas for unselected dots */}
       {dots.map((d) => {
         const isSelected = d.id === selectedElementId;
-        const isActiveInScene = activeDotIds?.includes(d.id) ?? true;
+        const isActiveInScene = activeDotIds?.includes(d.id) ?? false;
         if (isSelected) return null;
+        if (!isActiveInScene) return null;
 
         const hitRadius = Math.max(d.r || 8, 12);
         const leftPct = (d.cx / contentWidth) * 100;
@@ -163,11 +164,7 @@ export function DotTransformOverlay({
               e.stopPropagation();
               setSelectedElementId(d.id);
             }}
-            className={`absolute rounded-full border border-dashed cursor-pointer transition-all pointer-events-auto flex items-center justify-center group ${
-              isActiveInScene
-                ? 'border-amber-400/40 hover:border-amber-400 hover:bg-amber-400/10 hover:scale-125'
-                : 'border-white/20 opacity-40 hover:opacity-100 hover:border-amber-400/60'
-            }`}
+            className="absolute rounded-full border border-dashed cursor-pointer transition-all pointer-events-auto flex items-center justify-center group border-amber-400/40 hover:border-amber-400 hover:bg-amber-400/10 hover:scale-125"
             title={`点击选中并移动圆点: ${d.id}`}
           >
             <div className="w-2 h-2 rounded-full bg-amber-400/60 opacity-0 group-hover:opacity-100 transition" />

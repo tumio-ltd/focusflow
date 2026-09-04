@@ -270,6 +270,25 @@ async function verifyImageVisualControlAndInspection(page: Page): Promise<void> 
   await expect(inspector).toContainText(/等比锁定|自由比例|Lock Aspect Ratio/i);
   await expect(inspector).toContainText(/插图圆角|Border Radius/i);
   await expect(inspector).toContainText(/进场展开动效|Entrance Animation/i);
+
+  // 8. 验证插图在不可见状态下不遮挡图元且不渲染拦截热区
+  // 取消选中插图 (点击工具栏的 X 关闭按钮)
+  const closeBtn = imageTransformOverlay.locator('button[title*="取消选中"]').first();
+  if (await closeBtn.isVisible()) {
+    await closeBtn.click();
+  }
+
+  // 验证在当前场景激活可见时，拥有 1 个待选中的命中框
+  const hitAreas = imageTransformOverlay.locator('.group\\/hit');
+  await expect(hitAreas).toHaveCount(1);
+
+  // 在图层列表中找到该 img- 图元对应的显隐切换按钮并点击设为隐藏 (不可见)
+  const imgEyeBtn = inspector.locator('button[data-testid^="layer-toggle-eye-img-"]').first();
+  await expect(imgEyeBtn).toBeVisible();
+  await imgEyeBtn.click();
+
+  // 核心断言：处于不可见状态的插图彻底移除交互热区 (count 为 0)，绝不遮挡画布下方图元
+  await expect(hitAreas).toHaveCount(0);
 }
 
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数

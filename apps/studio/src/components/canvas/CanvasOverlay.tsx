@@ -53,8 +53,13 @@ function CanvasOverlayComponent({
   showFrustumOnly = false,
   showCrosshairAndFrustum = false,
 }: CanvasOverlayProps) {
+  const dsl = useProjectStore((s) => s.dsl);
+  const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
   const dots = useProjectStore((s) => s.dsl.elements.dots || []);
   const images = useProjectStore((s) => s.dsl.elements.images || []);
+  const currentScene = dsl.scenes[activeSceneIndex];
+  const activeBoxIds = currentScene?.activeElements?.boxes || [];
+  const activeImageIds = currentScene?.activeElements?.images || [];
   const rafRef = React.useRef<number | null>(null);
   const lastCoordsRef = React.useRef<{ x: number; y: number } | null>(null);
 
@@ -157,15 +162,25 @@ function CanvasOverlayComponent({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      {/* 0. 选中框元拖拽/拉伸/变色控制图层 */}
+      {/* 0. 选中插图拖拽平移/拉伸缩放控制图层 (Layer 0.5 底层覆盖插图) */}
+      <ImageTransformOverlay
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
+        active={activeTool === 'select'}
+        images={images}
+        activeImageIds={activeImageIds}
+      />
+
+      {/* 1. 选中框元拖拽/拉伸/变色控制图层 (Layer 1 矢量运动框元) */}
       <BoxTransformOverlay
         contentWidth={contentWidth}
         contentHeight={contentHeight}
         active={activeTool === 'select'}
         boxes={boxes}
+        activeBoxIds={activeBoxIds}
       />
 
-      {/* 0.1 选中圆点拖拽平移控制图层 */}
+      {/* 1.1 选中圆点拖拽平移控制图层 (Layer 1 脉冲圆点) */}
       <DotTransformOverlay
         contentWidth={contentWidth}
         contentHeight={contentHeight}
@@ -173,20 +188,12 @@ function CanvasOverlayComponent({
         dots={dots}
       />
 
-      {/* 0.2 选中解说气泡拖拽平移/调色控制图层 */}
+      {/* 2. 选中解说气泡拖拽平移/调色控制图层 (Layer 2 浮动解说卡片) */}
       <CalloutTransformOverlay
         contentWidth={contentWidth}
         contentHeight={contentHeight}
         active={activeTool === 'select'}
         boxes={boxes}
-      />
-
-      {/* 0.3 选中插图拖拽平移/拉伸缩放控制图层 */}
-      <ImageTransformOverlay
-        contentWidth={contentWidth}
-        contentHeight={contentHeight}
-        active={activeTool === 'select'}
-        images={images}
       />
 
       {/* 1. 智能选框绘制图层 */}

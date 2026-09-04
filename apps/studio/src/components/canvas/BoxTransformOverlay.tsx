@@ -39,6 +39,10 @@ export function BoxTransformOverlay({
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
   const deleteElement = useProjectStore((s) => s.deleteElement);
 
+  const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
+  const dsl = useProjectStore((s) => s.dsl);
+  const resolvedActiveBoxIds = activeBoxIds ?? dsl.scenes[activeSceneIndex]?.activeElements?.boxes ?? [];
+
   const [dragState, setDragState] = useState<DragState | null>(null);
 
   // Find currently selected box
@@ -90,6 +94,7 @@ export function BoxTransformOverlay({
       const coords = getCanvasCoords(e);
       // Check if clicked inside any box
       const hitBox = [...boxes].reverse().find((b) => {
+        if (!resolvedActiveBoxIds.includes(b.id)) return false;
         return (
           coords.x >= b.x &&
           coords.x <= b.x + b.width &&
@@ -242,8 +247,9 @@ export function BoxTransformOverlay({
       {/* 1. Render interactive hit areas for unselected boxes */}
       {boxes.map((b) => {
         const isSelected = b.id === selectedElementId;
-        const isActiveInScene = activeBoxIds?.includes(b.id) ?? true;
+        const isActiveInScene = resolvedActiveBoxIds.includes(b.id);
         if (isSelected) return null;
+        if (!isActiveInScene) return null;
 
         return (
           <div
@@ -253,11 +259,7 @@ export function BoxTransformOverlay({
               e.stopPropagation();
               setSelectedElementId(b.id);
             }}
-            className={`absolute border border-dashed rounded-xl cursor-pointer transition-all pointer-events-auto ${
-              isActiveInScene
-                ? 'border-white/20 hover:border-primary/80 hover:bg-primary/5'
-                : 'border-white/10 opacity-40 hover:opacity-100 hover:border-primary/50'
-            }`}
+            className="absolute border border-dashed rounded-xl cursor-pointer transition-all pointer-events-auto border-white/20 hover:border-primary/80 hover:bg-primary/5"
             title={`点击选中: ${b.id}`}
           />
         );
