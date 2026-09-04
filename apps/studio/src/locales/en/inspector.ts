@@ -24,6 +24,8 @@ export default {
   laserCrosshair: 'Laser Crosshair',
   laserCrosshairDesc: 'Show full-screen X/Y alignment guides',
   copyCoordsJson: 'Copy Coords JSON',
+  copyCoordsTip: 'Copy Cursor Coords JSON',
+  clickToCopyOrShortcut: 'Click or press shortcut to copy coordinates JSON',
   copiedJson: 'Coords Copied',
 
   // Polymorphic Element Cards

@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect } from 'react';
 import { Hand } from 'lucide-react';
 import { useCanvasGesture } from '@/hooks/useCanvasGesture';
 import { ZoomControls } from './ZoomControls';
+import { LaserCrosshairOverlay } from './LaserCrosshairOverlay';
 import type { CameraConfig } from '@/utils/cameraMath';
 
 export interface InfiniteCanvasProps {
@@ -94,6 +95,13 @@ export function InfiniteCanvas({
           width: `${contentWidth * transform.scale}px`,
           height: `${contentHeight * transform.scale}px`,
         }}
+      />
+
+      {/* 2.2 屏幕坐标系绝对激光十字准星 (Screen-Space Laser Crosshair - 恒定 1px 细线与防缩放物理尺寸坐标徽章) */}
+      <LaserCrosshairOverlay
+        transform={transform}
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
       />
 
       {/* 3. 左下角抓手模式提示指示器 */}

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useProjectStore, useEditorStore } from '@/stores';
+import { coordinateBus } from '@/utils/coordinateBus';
 
 export interface StudioKeyboardOptions {
   onSave?: () => void;
@@ -21,8 +22,11 @@ export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
-      const isInput =
-        target.tagName === 'INPUT' ||
+      const isTextInput =
+        (target.tagName === 'INPUT' &&
+          !['checkbox', 'radio', 'button', 'submit', 'reset', 'range'].includes(
+            (target as HTMLInputElement).type?.toLowerCase()
+          )) ||
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable;
 
@@ -34,7 +38,7 @@ export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
 
         // ⌘ + Shift + Z 或 Ctrl + Y -> Redo
         if ((e.shiftKey && key === 'z') || key === 'y') {
-          if (!isInput && future.length > 0) {
+          if (!isTextInput && future.length > 0) {
             e.preventDefault();
             redo();
           }
@@ -43,7 +47,7 @@ export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
 
         // ⌘ + Z 或 Ctrl + Z -> Undo
         if (key === 'z') {
-          if (!isInput && past.length > 0) {
+          if (!isTextInput && past.length > 0) {
             e.preventDefault();
             undo();
           }
@@ -65,8 +69,16 @@ export function useStudioKeyboard(options: StudioKeyboardOptions = {}) {
         }
       }
 
-      // 2. 非输入框下的快捷键
-      if (isInput) return;
+      // 2. 非文本输入框下的快捷键
+      if (isTextInput) return;
+
+      // ⌥ + C 或 Alt + C -> 一键复制当前光标坐标 JSON
+      if (e.altKey && (e.code === 'KeyC' || e.key === 'c' || e.key === 'C' || e.key === 'ç')) {
+        e.preventDefault();
+        const dsl = useProjectStore.getState().dsl;
+        coordinateBus.copyCoordinates(dsl.meta.viewport.width, dsl.meta.viewport.height);
+        return;
+      }
 
       // F5 或 ⌥+P -> 演播模式
       if (e.key === 'F5' || (e.altKey && e.key.toLowerCase() === 'p')) {

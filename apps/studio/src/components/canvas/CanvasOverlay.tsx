@@ -34,63 +34,7 @@ export interface CanvasOverlayProps {
 
 import { coordinateBus } from '@/utils/coordinateBus';
 
-function LaserCrosshairOverlay() {
-  const isCrosshairEnabled = useEditorStore((s) => s.isCrosshairEnabled);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const hLineRef = React.useRef<HTMLDivElement>(null);
-  const vLineRef = React.useRef<HTMLDivElement>(null);
-  const badgeRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    if (!isCrosshairEnabled) return;
-    return coordinateBus.subscribe((coords) => {
-      if (!containerRef.current) return;
-      if (!coords) {
-        containerRef.current.style.display = 'none';
-        return;
-      }
-      containerRef.current.style.display = 'block';
-      if (hLineRef.current) {
-        hLineRef.current.style.top = `${coords.y}px`;
-      }
-      if (vLineRef.current) {
-        vLineRef.current.style.left = `${coords.x}px`;
-      }
-      if (badgeRef.current) {
-        badgeRef.current.style.left = `${coords.x}px`;
-        badgeRef.current.style.top = `${coords.y}px`;
-        badgeRef.current.textContent = `${Math.round(coords.x)}, ${Math.round(coords.y)}`;
-      }
-    });
-  }, [isCrosshairEnabled]);
-
-  if (!isCrosshairEnabled) return null;
-
-  return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 pointer-events-none z-30 overflow-hidden"
-      data-testid="crosshair-guide"
-      style={{ display: 'none' }}
-    >
-      {/* 水平激光辅助线 */}
-      <div
-        ref={hLineRef}
-        className="absolute left-0 right-0 h-px bg-primary/80 shadow-[0_0_8px_rgba(56,189,248,0.9)]"
-      />
-      {/* 垂直激光辅助线 */}
-      <div
-        ref={vLineRef}
-        className="absolute top-0 bottom-0 w-px bg-primary/80 shadow-[0_0_8px_rgba(56,189,248,0.9)]"
-      />
-      {/* 激光十字中心坐标微徽章 */}
-      <div
-        ref={badgeRef}
-        className="absolute bg-panel/90 border border-primary/40 rounded px-1.5 py-0.5 text-[10px] font-mono text-primary shadow-lg backdrop-blur-md pointer-events-none transform -translate-y-full ml-2 -mt-1"
-      />
-    </div>
-  );
-}
 
 function CanvasOverlayComponent({
   contentWidth,
@@ -203,9 +147,6 @@ function CanvasOverlayComponent({
           activeTool={activeTool}
           onCameraChange={onCameraChange}
         />
-
-        {/* 6. 十字激光准星标定辅助线 (Laser Crosshair) */}
-        <LaserCrosshairOverlay />
       </div>
     );
   }
@@ -301,9 +242,6 @@ function CanvasOverlayComponent({
         activeTool={activeTool}
         onCameraChange={onCameraChange}
       />
-
-      {/* 6. 十字激光准星标定辅助线 (Laser Crosshair) */}
-      <LaserCrosshairOverlay />
     </div>
   );
 }

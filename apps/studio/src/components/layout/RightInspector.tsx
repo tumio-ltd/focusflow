@@ -199,23 +199,21 @@ function RightInspectorComponent({
     }
   };
 
+  const isMac = typeof navigator !== 'undefined' && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
+
+  useEffect(() => {
+    return coordinateBus.subscribeCopy(() => {
+      setHasCopiedCoords(true);
+      setTimeout(() => setHasCopiedCoords(false), 1500);
+    });
+  }, []);
+
   const copyCoordinatesJson = () => {
-    const coords = coordinateBus.get();
-    if (!coords) return;
-    const json = JSON.stringify(
-      {
-        pixel: { x: Math.round(coords.x), y: Math.round(coords.y) },
-        percent: {
-          left: Number(((coords.x / viewport.width) * 100).toFixed(2)),
-          top: Number(((coords.y / viewport.height) * 100).toFixed(2)),
-        },
-      },
-      null,
-      2
-    );
-    navigator.clipboard.writeText(json);
-    setHasCopiedCoords(true);
-    setTimeout(() => setHasCopiedCoords(false), 2000);
+    const success = coordinateBus.copyCoordinates(viewport.width, viewport.height);
+    if (success) {
+      setHasCopiedCoords(true);
+      setTimeout(() => setHasCopiedCoords(false), 1500);
+    }
   };
 
   // 渲染图层层级列表组件 (在【场景运镜】与【图元属性】双 Tab 中保持常驻可用)
@@ -540,16 +538,24 @@ function RightInspectorComponent({
                     </label>
                   </div>
 
-                  {/* 一键复制当前坐标 JSON */}
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                  {/* 复制光标坐标 JSON 快捷键提示与一键复制卡片 */}
+                  <div
                     onClick={copyCoordinatesJson}
-                    className="w-full gap-2 text-xs text-muted-foreground hover:text-foreground h-8 border border-border"
+                    className={`flex items-center justify-between p-2 rounded-lg border transition cursor-pointer select-none ${
+                      hasCopiedCoords
+                        ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400'
+                        : 'bg-muted/40 hover:bg-muted/70 border-border/60 text-muted-foreground hover:text-foreground'
+                    }`}
+                    title={t('clickToCopyOrShortcut', '点击或按快捷键复制当前坐标 JSON')}
                   >
-                    {hasCopiedCoords ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{hasCopiedCoords ? t('copiedJson', '坐标已复制') : t('copyCoordsJson', '复制坐标 JSON')}</span>
-                  </Button>
+                    <div className="flex items-center gap-1.5 text-xs font-medium">
+                      {hasCopiedCoords ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-primary" />}
+                      <span>{hasCopiedCoords ? t('copiedJson', '坐标已复制') : t('copyCoordsTip', '复制光标坐标 JSON')}</span>
+                    </div>
+                    <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-background/80 rounded border border-border text-foreground font-semibold shadow-xs">
+                      {isMac ? '⌥ C' : 'Alt+C'}
+                    </kbd>
+                  </div>
                 </div>
               )}
             </div>

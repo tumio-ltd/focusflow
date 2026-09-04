@@ -24,6 +24,8 @@ export default {
   laserCrosshair: '十字激光准星',
   laserCrosshairDesc: '在画布显示 X/Y 轴全屏辅助对齐线',
   copyCoordsJson: '复制坐标 JSON',
+  copyCoordsTip: '复制光标坐标 JSON',
+  clickToCopyOrShortcut: '点击或按快捷键复制当前坐标 JSON',
   copiedJson: '坐标已复制',
 
   // 多态图元专属卡片

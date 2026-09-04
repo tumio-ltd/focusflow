@@ -163,6 +163,12 @@ async function verifyCalibrationAssistantInRightInspector(page: Page): Promise<v
   }
   const crosshairGuide = page.locator('[data-testid="crosshair-guide"]');
   await expect(crosshairGuide).toBeVisible();
+  await expect(crosshairGuide).toContainText(/⌥C|Alt\+C/);
+
+  // 按下 Alt+C 快捷键，验证触发坐标复制与防缩放微徽章高亮反馈
+  await page.keyboard.press('Alt+KeyC');
+  await expect(crosshairGuide).toContainText(/坐标已复制/);
+  await expect(calibPanel).toContainText(/坐标已复制/);
 }
 
 /**
