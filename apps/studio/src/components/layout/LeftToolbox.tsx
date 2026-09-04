@@ -33,7 +33,6 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
       label: t('box'),
       shortcut: '2 / R',
       icon: Square,
-      featured: true,
     },
     {
       id: 'path' as ToolType,
@@ -82,12 +81,6 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
               }`}
             >
               <Icon className="w-4.5 h-4.5" />
-              {tool.featured && !isActive && (
-                <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-              )}
             </button>
           </Tooltip>
         );
