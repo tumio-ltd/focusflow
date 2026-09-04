@@ -43,9 +43,66 @@ FocusFlow 从第一天起便确立了 **“声明式 DSL 驱动（Schema-Driven�
 3. **已打通的单文件离线编译流水线**：现有系统已具备 `standalonePackager.ts` 与 `scripts/build-standalone.js`，可瞬间将 DSL + 播放引擎 + Base64 资产合流为单文件 HTML。
 4. **确定性时间轴（Deterministic Timeline）**：每个场景的 `duration`、动效类型与转场缓动均有严格的数学时间戳，为自动化无头录制高画质视频提供了 100% 帧级同步保障。
 
+## 二、 核心前置基石：AI Agent 认知模型（Mental Model）与 DSL 数据契约
+
+在落地任何模式前，必须先解决一个本质问题：**如何让 AI Agent 建立关于 FocusFlow 工作方式的准确心智，并深刻理解 DSL 的数据结构？**
+
+如果 Agent 没有建立起正确的领域认知（Domain Knowledge），生成的项目就会出现“有框无镜”、“坐标失准”、“气泡悬空”、“图元在场景中未激活”等典型幻觉。
+
+### 1. Agent 必须建立的 2 个核心认知
+
+#### (1) 工作方式认知（Mental Model · 它不是绘图板，而是电影分镜导览）
+Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进式展开（Progressive Disclosure）”**：
+- **全局图元池与单幕激活矩阵的解耦**：
+  - `elements`（演员库）：保存整张架构图的全部演员（所有框元 Box、连线 Path、圆点 Dot、插图 Image）。它只定义实体“是什么、在哪里”。
+  - `scenes[i].activeElements`（分镜登场表）：决定第 `i` 幕中有哪些演员登场。随着演播推进，图元是**逐幕递增点亮或切换**的。
+- **镜头摄像机（Camera）的物理意义**：
+  - 镜头不是无意义滚动，`camera.x, camera.y` 是聚焦的目标中心绝对坐标，`camera.zoom`（如 1.2x ~ 2.0x）是放大特写深度，`camera.duration`（如 1.2s）是运镜飞行时长。
+- **气泡卡片（Callout）的从属绑定**：
+  - 气泡不能无附着漂浮，它通过 `boxId` 强绑定到目标框元，在视觉上充当“讲解员”，并随着相机的运镜呈现在最佳阅读视线范围内。
+
+#### (2) 数据契约认知（Data Structure · 严格的几何与引用自洽）
+- **坐标基准（Coordinate Baseline）**：
+  - 所有图元与视口必须严格基于底图的原生像素尺寸（Native Resolution，如 1920×1080）进行绝对坐标定义，严禁混用视口百分比或浏览器缩放像素。
+- **引用完整性约束（Referential Integrity）**：
+  - 连线 `path.from` 与 `path.to` 必须存在于 `elements.boxes` 中。
+  - `scene.activeElements.boxes` 中的每一个 ID，都必须在全局 `elements.boxes` 中被预先声明。
+
 ---
 
-## 二、 AI Agent 接入的 3 种落地模式
+### 2. 针对 3 种落地模式的“知识投喂与约束”工程策略
+
+```
+                    ┌───────────────────────────────────────────────┐
+                    │      FocusFlow 领域知识库 (Domain Knowledge)  │
+                    │   • DSL Schema 语法契约 (@focusflow/dsl)      │
+                    │   • 电影运镜认知模型 (Mental Model Guide)       │
+                    │   • 官方经典模板 (6 大场景 Few-Shot JSON)      │
+                    └───────────────────────┬───────────────────────┘
+                                            │
+         ┌──────────────────────────────────┼──────────────────────────────────┐
+         ▼                                  ▼                                  ▼
+   【模式 A：无头生成】               【模式 B：MCP 工具化】             【模式 C：GUI 协同】
+         │                                  │                                  │
+ 传递方式：System Prompt             传递方式：Tool Description          传递方式：Agent Skill
+ + JSON Schema 严格校验             自解释参数结构 (Zod/Schema)        + data-testid 物理映射表
+         │                                  │                                  │
+ 效果：Agent 一次性输出标准 DSL       效果：Agent 逐步调 API 组装合法 DSL 效果：Agent 像人类一样点击拖拽
+```
+
+- **模式 A（无头生成）**：
+  - **核心解法**：`System Prompt + Schema 约束 + 1 个极简 Few-Shot 样本`。
+  - **容错防线**：CLI 工具内置 `validateDSL(json)` 静态校验器，若缺少字段直接向 Agent 返回结构化错误日志，实现 1 秒内闭环自愈修正。
+- **模式 B（MCP 工具化）**：
+  - **核心解法**：`API 描述即说明书（Self-describing Tools）`。
+  - **优势**：Agent 甚至无需记忆复杂的 DSL 全貌，每个工具的参数描述（如 `zoom: number // 建议 1.3~1.8`）直接指导 Agent 执行符合美学直觉的原子操作，由 MCP Server 内部组装出合法 DSL。
+- **模式 C（GUI 协同）**：
+  - **核心解法**：`Agent Skill 规则指南`。
+  - **优势**：为多模态/Browser-use 智能体提供界面功能映射表（如工具栏 `tool-box` 对应框选、`layer-toggle-eye-*` 对应图层显隐）。
+
+---
+
+## 三、 AI Agent 接入的 3 种落地模式
 
 根据实际业务架构与交互形态，AI Agent 可以通过以下 3 种递进模式使用 FocusFlow：
 
@@ -145,7 +202,7 @@ Studio 前端已经注入了完整的自动化操作锚点：
 
 ---
 
-## 三、 自动化生成“视频”的具体实现方案
+## 四、 自动化生成“视频”的具体实现方案
 
 导出单文件 HTML 为纯静态文本组装（由 `standalonePackager.ts` 毫秒级完成）；而导出高画质 MP4/WebM 视频则有以下 3 种技术实现路径：
 
@@ -175,7 +232,7 @@ Studio 前端已经注入了完整的自动化操作锚点：
 
 ---
 
-## 四、 Agent 生成的 FocusFlow DSL 规范模板 (Prompt 参考)
+## 五、 Agent 生成的 FocusFlow DSL 规范模板 (Prompt 参考)
 
 为了让任何大语言模型都能 100% 生成正确合法的 FocusFlow DSL，提供如下 System Prompt 与结构化模板：
 
@@ -269,7 +326,7 @@ Studio 前端已经注入了完整的自动化操作锚点：
 
 ---
 
-## 五、 后续演进 Checklist
+## 六、 后续演进 Checklist
 
 - [ ] **1. CLI 自动化脚本包 (`scripts/agent/`)**
   - [ ] `scripts/agent/render-video.mjs`: 提供基于 Playwright Headless 的单文件 HTML 到 MP4 自动录制脚本
