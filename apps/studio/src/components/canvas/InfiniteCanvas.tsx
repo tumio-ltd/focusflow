@@ -76,7 +76,9 @@ export function InfiniteCanvas({
             ? `transform ${camera?.duration !== undefined ? camera.duration : 1.2}s cubic-bezier(0.4, 0.0, 0.2, 1.0)`
             : 'none',
           backfaceVisibility: 'hidden',
-          imageRendering: 'high-quality' as any,
+          WebkitBackfaceVisibility: 'hidden',
+          transformStyle: 'preserve-3d',
+          imageRendering: 'auto',
           WebkitFontSmoothing: 'antialiased',
         }}
       >

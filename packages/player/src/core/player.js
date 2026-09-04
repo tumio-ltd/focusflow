@@ -176,7 +176,7 @@ export class FocusFlowPlayer {
           <!-- Layer 1: SVG Vector Motion Overlay -->
           <svg class="focusflow-svg" id="_ff_svg" viewBox="0 0 ${this.viewportWidth} ${this.viewportHeight}" preserveAspectRatio="xMidYMid meet">
             <defs>
-              <filter id="ff-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <filter id="ff-glow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
                 <feGaussianBlur stdDeviation="8" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />

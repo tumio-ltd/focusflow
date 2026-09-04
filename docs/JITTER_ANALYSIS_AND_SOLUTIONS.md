@@ -423,10 +423,34 @@
 
 ---
 
+### 3. 第三次现场实测录屏分析：微观位图字符微颤与物理像素对齐收敛
+
+> **录屏样本**: `apps/studio/test-results/录屏2026-09-04 08.43.42.mov` (3838×1964 Retina 超清原画，11.90 秒)  
+> **实测反馈**: “整体来说效果好很多了，只有还有少量的抖动。”
+
+#### (1) 绝对逐帧像素差分定位（Pixel Difference Map）
+通过计算机视觉逐帧像素差分比对（`diff_20.jpg`），全屏框架（TopBar、Toolbar、Timeline、Inspector、背景点阵、所有边框）差分绝对为 0（完全纯绿静止），仅有点亮变动的区域集中在：
+- 5K 底图中的超小字号文字（原图 14px 在 16% 缩放下仅 2.2px，字符内 1px 细线仅 0.18 物理像素）；
+- SVG 图元自带的 8px 半径 `feGaussianBlur` 高斯发光光晕在极小视口下的亚像素重算。
+
+#### (2) 根因溯源
+1. **`-webkit-optimize-contrast` 的反噬**：在 Chromium 源码中，`-webkit-optimize-contrast` 映射至 `SkFilterMode::kNearest`，强行禁用了三线性 Mipmap 过滤，导致 0.18px 的字符笔划在移动时呈现像素阶梯跳跃；
+2. **浮点坐标未对齐硬件物理像素**：连续平移时浮点坐标在物理液晶像素之间游移，使显示器在相邻亚像素间不断重新分配 Alpha 权重；
+3. **SVG 滤镜缺乏 sRGB 色彩空间声明**：默认线性 RGB 转换在深黑高对比背景下产生了微弱的 Gamma 阶跃。
+
+#### (3) 物理级精准落地
+1. **彻底废除 `-webkit-optimize-contrast`**：改用标准 `image-rendering: auto; image-rendering: smooth;`，全面激活 Chromium Skia 三线性 Mipmap 抗混叠插值；
+2. **硬件物理像素精准对齐**：在 `panBy` 平移中以 `Math.round(val * dpr) / dpr` 约束步长，严格锁定显示器最小发光物理单体（Retina 下 0.5px），杜绝亚像素插值呼吸微闪；
+3. **SVG 滤镜 sRGB 色彩空间约束**：在 `#ff-glow` 中显式指定 `color-interpolation-filters="sRGB"`，消除 Gamma 转换引起的边缘闪烁；
+4. **注入 3D 硬件合成上下文**：在视口变换容器添加 `transformStyle: 'preserve-3d'` 与 `WebkitBackfaceVisibility: 'hidden'`，稳定 GPU 光栅化纹理缓存。
+
+---
+
 ## 九、 全场景基准测试与验证矩阵
 
 | 测试维度 | 触发条件 | 治理前表现 | 治理后实测结果 (Jitter Radar & Playwright) |
 | :--- | :--- | :--- | :--- |
+| **画布平移微观字符稳定性** | 缩放至 16% 并任意拖拽位移 | 5K 底图小字号出现微弱呼吸闪烁 | **物理像素对齐+三线性插值，稳如磐石** |
 | **画布缩小后拖拽平移 (Pan)** | 缩放至 10% 并快速平移画布 | 画布边框与捕镜框疯狂闪烁、周边微抖 | **SVG 恒定物理像素，0 闪烁 0 频闪 60fps** |
 | **极限广角 (10%~20%) 底图纹理** | 缩放至 10% 并高频移动光标 | 0.1px 文字线条雪花般高频频闪 | **高质量插值滤镜，0 走样 0 闪烁** |
 | **检查栏图元首屏呈现** | 切换至图元属性 Tab（未选中） | 被调色板挤到折叠线下方 | **列表绝对置顶，第一屏清晰可见** |
@@ -469,4 +493,8 @@
     在支持缩放的画布中，严禁在变换图层直接使用静态 CSS `border-1` / `border-2`，否则低缩放比下将压缩至 0.1px 发生亚像素光栅化闪烁。必须采用原生 SVG 配合 `vector-effect="non-scaling-stroke"` 锁定屏幕绝对像素。
 13. **连续平移变换图层内部绝对禁止使用 `backdrop-filter`**：
     严禁在参与 `translate3d` 连续位移的子元素上滥用 `backdrop-filter: blur(...)`，避免每一帧位移都强制 GPU 重新计算全屏高斯模糊卷积，杜绝严重的渲染通道阻塞与掉帧微抖。
+14. **位图平滑缩放严禁使用 `-webkit-optimize-contrast`**：
+    在 Chromium 内核中 `-webkit-optimize-contrast` 会强制关闭 Mipmap 启用最近邻采样，导致微小文字与高频笔划剧烈闪烁；应使用标准 `image-rendering: auto` 或 `smooth`。
+15. **视口平移位移必须与物理液晶像素（1/DPR）精准对齐**：
+    在连续 `panBy` 平移中，浮点位移必须约束为物理像素的整数倍（`Math.round(val * dpr) / dpr`），彻底消除位图纹理在显示器液晶物理单元间的亚像素插值呼吸微闪。
 

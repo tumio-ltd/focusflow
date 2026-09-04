@@ -60,9 +60,9 @@
   display: block;
   pointer-events: none;
   z-index: 1;
-  /* 铁律 10 落地：大图极限缩小高质量抗混叠重采样与防走样频闪 */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: high-quality;
+  /* 铁律 10 落地：大图极限缩小高质量抗混叠重采样（启用 Chromium Skia 三线性平滑插值，杜绝 -webkit-optimize-contrast 造成的文字阶梯闪烁） */
+  image-rendering: auto;
+  image-rendering: smooth;
   transform: translateZ(0);
   backface-visibility: hidden;
 }

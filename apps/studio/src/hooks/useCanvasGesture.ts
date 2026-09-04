@@ -121,12 +121,15 @@ export function useCanvasGesture({
     [minScale, maxScale]
   );
 
-  // 2. 平移画布
+  // 2. 平移画布 (硬件物理像素对齐，杜绝浮点亚像素在物理液晶栅格移动时的插值呼吸微颤)
   const panBy = useCallback((dx: number, dy: number) => {
+    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+    const rawX = currentTransformRef.current.x + dx;
+    const rawY = currentTransformRef.current.y + dy;
     const nextTransform: CanvasTransform = {
       ...currentTransformRef.current,
-      x: currentTransformRef.current.x + dx,
-      y: currentTransformRef.current.y + dy,
+      x: Math.round(rawX * dpr) / dpr,
+      y: Math.round(rawY * dpr) / dpr,
     };
     currentTransformRef.current = nextTransform;
 
