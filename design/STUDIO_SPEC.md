@@ -473,12 +473,19 @@ export interface FocusFlowDSL {
 * 导出标准 FocusFlow DSL JSON 结构与图片素材压缩包，方便工程化版本控制。
 
 #### 导出 3：视频渲染导出 (MP4 / GIF)
-* **模式 A 本地单机导出**：
-  * 浏览器端利用 HTML5 `MediaRecorder` API 捕获 Canvas 实时帧流，直接生成 WebM/MP4 供本地即刻下载；
-  * 开发者亦可在本地运行 `scripts/build-standalone.js` 调用本机 FFmpeg 进行离线批量合成。
-* **模式 B 云端 `render-worker` 导出 (4K 60fps 影院级)**：
-  * **异步渲染管线**：Studio 提交任务 ➔ BullMQ 队列 ➔ 云端 `render-worker` 无头浏览器逐帧步进截帧 ➔ FFmpeg 硬件加速高码率转码；
-  * **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频文件下载，可直接插入 Keynote、PPT 或发布到视频平台，完全不占用用户本机 CPU/GPU。
+
+针对不同运行环境与算力规模，提供三级阶梯式视频生成与自动化录制方案：
+
+1. **模式 A-1：纯浏览器客户端实时录制 (Client-side `MediaRecorder`)**：
+   * **原理**：基于 HTML5 Canvas Capture 与 `MediaRecorder` API，直接在用户浏览器显卡中实时捕获动效帧流，一键导出 60FPS WebM 视频；
+   * **优势**：0 后端与 Node 环境依赖，完全在客户端本地完成，隐私 100% 自治。
+2. **模式 A-2：AI Agent / CLI 自动化无头录制管线 (Headless Playwright & CDP Pipeline)**：
+   * **原理**：面向 AI Agent、CI/CD 自动化流水线及本地终端开发者。通过无头 Chromium（Playwright / Chrome DevTools Protocol）无界面加载单文件 HTML 或 Studio 视口，监听播放器就绪后由脚本注入触发 `player.play()`，开启原生全帧捕获；
+   * **音画与转码**：演播完成时精准捕获 `onEnded` 生命周期事件自动断流，调用本机 `fluent-ffmpeg` 硬件加速转码封装为工业标准 `H.264` MP4，全程无需人工干预；
+   * **核心优势**：单机极速，耗时严格等于演播总时长，完美契合 AI Agent 自动化生成闭环（详见 `design/AI_AGENT_INTEGRATION_SPEC.md`）。
+3. **模式 B：云端集群 4K 60fps 广播级离线渲染 (Render-Worker + BullMQ + Remotion + FFmpeg)**：
+   * **异步转码管线**：Studio 提交任务 ➔ BullMQ 队列 ➔ 云端 `render-worker` 节点基于确定性时间轴逐帧（1/60s）步进截取 4K 离线无掉帧快照 ➔ FFmpeg 硬件加速高码率转码；
+   * **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频下载，完全不消耗用户或 Agent 本机计算资源，适用于企业级广播级大片输出。
 
 #### 导出 4：云端只读演示短链与知识库 `<iframe>` 嵌入
 * 一键生成 `https://focusflow.io/s/[slug]` 短链；
@@ -946,6 +953,19 @@ model ProjectVersion {
 - [ ] **5.6.4 音画合流打包与视频录制导出 (Audio-Video Multiplexing)**
   - [ ] 客户端单文件导出时将音频内联为 Data URI 并通过 Web Audio 播放
   - [ ] `canvasRecorder.ts` 接入 `AudioContext.createMediaStreamDestination()` 实现音画合流 WebM 录制导出
+
+#### 🎬 Stage 5.7: 自动化无头视频录制与 Agent CLI 管线 (Automated Headless Video Pipeline & Agent CLI · 规划中)
+- [ ] **5.7.1 Playwright / CDP 无头录制脚本 (`scripts/render-video.mjs`)**
+  - [ ] 编写无头 Chromium 录制脚本，支持传入 `standalone.html` 或 `config.json` 路径与目标输出 `.mp4` 文件路径
+  - [ ] 支持通过 CLI 动态指定渲染视口（1080P / 2K / 4K）与捕获帧率（30FPS / 60FPS）
+- [ ] **5.7.2 演播生命周期信号桥接与自动落盘机制**
+  - [ ] 完善 `@focusflow/player` 全局 `window.FocusFlowInstance.on('ended', callback)` 播放结束广播事件
+  - [ ] 无头录制脚本精准捕获 `ended` 信号后自动切断帧捕获并安全落盘，杜绝末尾冗余录制或超时悬挂
+- [ ] **5.7.3 FFmpeg 硬件加速转码与音画无损封装**
+  - [ ] 集成 `fluent-ffmpeg` 并探测调用本机 GPU 硬件加速编码器（macOS VideoToolbox / Linux NVENC）进行高速转码
+  - [ ] 将录制的原始视频流与 Stage 5.6 音频轨进行合流，输出标准工业兼容的 `H.264 + AAC` MP4 容器
+- [ ] **5.7.4 Agent 自动化管线测试与质量门禁**
+  - [ ] 编写 CI/E2E 自动化测试，验证“DSL ➔ 单文件 HTML ➔ Headless 录制 ➔ MP4 文件”全链路 100% 自动化闭环
 
 ---
 
