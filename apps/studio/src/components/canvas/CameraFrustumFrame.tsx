@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, Crosshair, Move } from 'lucide-react';
+import { Camera, Move } from 'lucide-react';
 import { cameraToFrustumRect, clampCameraBounds, CameraConfig } from '@/utils/cameraMath';
 import type { ToolType } from '@/components/layout';
 
@@ -174,7 +174,7 @@ export function CameraFrustumFrame({
         tabIndex={isInteractive ? 0 : undefined}
         onKeyDown={handleKeyDown}
         data-testid="camera-frustum-frame"
-        className="absolute rounded-xl select-none outline-none pointer-events-none"
+        className="absolute select-none outline-none pointer-events-none"
         style={{
           left: `${frameX}px`,
           top: `${frameY}px`,
@@ -182,30 +182,56 @@ export function CameraFrustumFrame({
           height: `${frameHeight}px`,
         }}
       >
-        {/* 矢量非缩放恒定捕镜框边框 (Non-Scaling Stroke) - 无论画布缩放到多小，始终恒定 2px 物理屏幕像素，彻底杜绝 0.2px 边框移动时的亚像素频闪 */}
+        {/* 矢量非缩放工业级精准捕镜框 (Non-Scaling Stroke) - 直角无圆角无曲率退化，彻底根除缩放时的贝塞尔重细分颤动 */}
         <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible">
           <rect
             x="0"
             y="0"
             width="100%"
             height="100%"
-            rx="12"
-            ry="12"
             fill={isSelected || isDragging || isResizing ? 'rgba(56, 189, 248, 0.04)' : 'none'}
             stroke={isSelected || isDragging || isResizing ? '#67e8f9' : 'rgba(34, 211, 238, 0.85)'}
             strokeWidth={isSelected || isDragging || isResizing ? 2.5 : 2}
             vectorEffect="non-scaling-stroke"
           />
+
+          {/* 工业级四角 L 型标尺 (Non-Scaling Stroke) */}
+          <path
+            d={`M 0 20 L 0 0 L 20 0 M ${frameWidth - 20} 0 L ${frameWidth} 0 L ${frameWidth} 20 M 0 ${frameHeight - 20} L 0 ${frameHeight} L 20 ${frameHeight} M ${frameWidth - 20} ${frameHeight} L ${frameWidth} ${frameHeight} L ${frameWidth} ${frameHeight - 20}`}
+            fill="none"
+            stroke="#67e8f9"
+            strokeWidth="3"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {/* 视口中心精准标定准星 (SVG 恒定线宽，彻底告别位图图标缩放走样) */}
+          <g transform={`translate(${frameWidth / 2}, ${frameHeight / 2})`}>
+            <circle cx="0" cy="0" r="12" fill="none" stroke="rgba(34, 211, 238, 0.45)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            <line x1="-18" y1="0" x2="-5" y2="0" stroke="rgba(34, 211, 238, 0.6)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            <line x1="5" y1="0" x2="18" y2="0" stroke="rgba(34, 211, 238, 0.6)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            <line x1="0" y1="-18" x2="0" y2="-5" stroke="rgba(34, 211, 238, 0.6)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            <line x1="0" y1="5" x2="0" y2="18" stroke="rgba(34, 211, 238, 0.6)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          </g>
+
+          {/* 交互状态下的四角视觉手柄 (Non-Scaling Stroke，恒定 8px，杜绝 HTML Div 缩放闪烁) */}
+          {isInteractive && (
+            <>
+              <rect x="-4" y="-4" width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+              <rect x={frameWidth - 4} y="-4" width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+              <rect x="-4" y={frameHeight - 4} width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+              <rect x={frameWidth - 4} y={frameHeight - 4} width="8" height="8" fill="#22d3ee" stroke="#042f2e" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            </>
+          )}
         </svg>
 
-        {/* 左上角摄像机镜头标签 (移除 backdrop-blur-md，杜绝平移画布时触发全屏高斯模糊重绘) */}
+        {/* 左上角摄像机镜头标签 */}
         <div
           data-testid="camera-frustum-badge"
           onPointerDown={handlePointerDownMove}
           className={`absolute ${
             frameY < 32 ? 'top-1.5 left-1.5' : '-top-7 left-0'
-          } flex items-center gap-1.5 bg-cyan-950/95 border border-cyan-500/60 px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg ${
-            isInteractive ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/95 hover:border-cyan-400' : 'pointer-events-none'
+          } flex items-center gap-1.5 bg-cyan-950/95 px-2.5 py-0.5 rounded-md text-[11px] font-mono text-cyan-300 shadow-lg ${
+            isInteractive ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/95' : 'pointer-events-none'
           }`}
         >
           <Camera className="w-3 h-3 text-cyan-400" />
@@ -246,50 +272,34 @@ export function CameraFrustumFrame({
           </>
         )}
 
-        {/* 视口中心准星 (静态精准十字准星，零 CSS 动画，彻底杜绝 60fps 持续重绘) */}
-        <div className="absolute inset-0 flex items-center justify-center text-cyan-400/50 pointer-events-none">
-          <Crosshair className="w-6 h-6" />
-        </div>
-
-        {/* 四角缩放手柄 */}
-        {isInteractive ? (
+        {/* 四角交互热区 (透明触发层，确保大触控区域与精美视觉分离) */}
+        {isInteractive && (
           <>
             <div
               data-testid="camera-handle-nw"
               onPointerDown={(e) => handleCornerResizeDown('nw', e)}
-              className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nwse-resize hover:scale-110"
+              className="absolute -top-3 -left-3 w-6 h-6 pointer-events-auto cursor-nwse-resize"
               title="按住等比例缩放镜头"
             />
             <div
               data-testid="camera-handle-ne"
               onPointerDown={(e) => handleCornerResizeDown('ne', e)}
-              className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nesw-resize hover:scale-110"
+              className="absolute -top-3 -right-3 w-6 h-6 pointer-events-auto cursor-nesw-resize"
               title="按住等比例缩放镜头"
             />
             <div
               data-testid="camera-handle-sw"
               onPointerDown={(e) => handleCornerResizeDown('sw', e)}
-              className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nesw-resize hover:scale-110"
+              className="absolute -bottom-3 -left-3 w-6 h-6 pointer-events-auto cursor-nesw-resize"
               title="按住等比例缩放镜头"
             />
             <div
               data-testid="camera-handle-se"
               onPointerDown={(e) => handleCornerResizeDown('se', e)}
-              className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-cyan-400 border-2 border-cyan-950 rounded-sm pointer-events-auto cursor-nwse-resize hover:scale-110"
+              className="absolute -bottom-3 -right-3 w-6 h-6 pointer-events-auto cursor-nwse-resize"
               title="按住等比例缩放镜头"
             />
           </>
-        ) : (
-          <svg className="absolute inset-0 pointer-events-none w-full h-full overflow-visible">
-            {/* 非交互状态下的四角 L 型直角标识 (Non-Scaling Stroke) */}
-            <path
-              d={`M 0 16 L 0 0 L 16 0 M ${frameWidth - 16} 0 L ${frameWidth} 0 L ${frameWidth} 16 M 0 ${frameHeight - 16} L 0 ${frameHeight} L 16 ${frameHeight} M ${frameWidth - 16} ${frameHeight} L ${frameWidth} ${frameHeight} L ${frameWidth} ${frameHeight - 16}`}
-              fill="none"
-              stroke="#67e8f9"
-              strokeWidth="2.5"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
         )}
       </div>
     </div>
