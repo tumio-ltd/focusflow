@@ -23,6 +23,9 @@
    - 当你要讲解某个模块时，摄像机 `camera` 的 `(x, y)` 必须平移至该模块的中心，并将 `zoom` 放大至 `1.3x ~ 1.8x`（特写），转场时长 `duration` 设置为 `1.2s ~ 1.5s`。
 4. **原生像素绝对锚定 (Native Pixel Anchoring)**：
    - 所有坐标（`x, y, width, height`）必须严格基于底图原生分辨率（如 `1920×1080`），杜绝混淆为视口百分比或 CSS 屏幕像素。
+5. **显式锚点打造最佳流向 (Explicit 8-Way Anchors)**：
+   - 贝塞尔连线支持 8 向物理锚点后缀（`.left`, `.right`, `.top`, `.bottom`, `.left-top`, `.right-top` 等）。
+   - **最佳实践**：水平调用写 `"boxA.right" ➔ "boxB.left"`；垂直调用写 `"boxA.bottom" ➔ "boxB.top"`。这能让控制点法向量精准对冲，生成最平滑的三次贝塞尔 S 型流光粒子；若省略后缀，系统亦会按几何相对位置自动智能推导。
 
 ---
 
@@ -63,8 +66,8 @@ interface FocusFlowDSL {
     }>;
     paths?: Array<{
       id: string;                     // 唯一标识，如 "path-gw-order"
-      from: string;                   // 起始 Box ID
-      to: string;                     // 目标 Box ID
+      from: string;                   // 起始端点 (推荐显式锚点，如 "box-gateway.right")
+      to: string;                     // 目标端点 (推荐显式锚点，如 "box-order.left")
       style?: {
         stroke?: string;              // 连线颜色
         flow?: boolean;               // 是否开启三次贝塞尔流光动画
@@ -172,14 +175,14 @@ Agent 生成 DSL 时，请严格对齐如下产出结构：
     "paths": [
       {
         "id": "path-gw-order",
-        "from": "box-gateway",
-        "to": "box-order",
+        "from": "box-gateway.right",
+        "to": "box-order.left",
         "style": { "stroke": "#38bdf8", "flow": true }
       },
       {
         "id": "path-order-mq",
-        "from": "box-order",
-        "to": "box-mq",
+        "from": "box-order.right",
+        "to": "box-mq.left",
         "style": { "stroke": "#34d399", "flow": true }
       }
     ],

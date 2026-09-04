@@ -285,8 +285,8 @@ Studio 前端已经注入了完整的自动化操作锚点：
     "paths": [
       {
         "id": "path-gateway-order",
-        "from": "box-gateway",
-        "to": "box-order",
+        "from": "box-gateway.right",
+        "to": "box-order.left",
         "style": { "flow": true, "stroke": "#38bdf8" }
       }
     ],

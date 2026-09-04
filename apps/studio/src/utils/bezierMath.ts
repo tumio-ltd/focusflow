@@ -40,19 +40,63 @@ export function getBoxAnchors(box: ElementBox): ResolvedAnchor[] {
 }
 
 /**
- * 依据锚点字符串 (如 "box-nginx.right") 解析绝对坐标
+ * 依据锚点字符串 (如 "box-nginx.right") 解析绝对坐标，支持传入缺省时的智能兜底锚点
  */
-export function resolveBoxAnchor(boxes: ElementBox[], anchorSpec: string): ResolvedAnchor | null {
+export function resolveBoxAnchor(
+  boxes: ElementBox[],
+  anchorSpec: string,
+  defaultAnchorName: AnchorPosition = 'right'
+): ResolvedAnchor | null {
   if (!anchorSpec) return null;
   const parts = anchorSpec.split('.');
   const boxId = parts[0];
-  const anchorName = (parts[1] || 'right') as AnchorPosition;
+  const anchorName = (parts[1] || defaultAnchorName) as AnchorPosition;
 
   const box = boxes.find((b) => b.id === boxId);
   if (!box) return null;
 
   const anchors = getBoxAnchors(box);
   return anchors.find((a) => a.anchorName === anchorName) || anchors[0] || null;
+}
+
+/**
+ * 依据两框相对空间位置（水平或垂直主导），智能推导并解析连线起点与终点锚点
+ */
+export function resolvePathAnchors(
+  boxes: ElementBox[],
+  fromSpec: string,
+  toSpec: string
+): { from: ResolvedAnchor | null; to: ResolvedAnchor | null } {
+  const fromParts = fromSpec.split('.');
+  const toParts = toSpec.split('.');
+  const fromBox = boxes.find((b) => b.id === fromParts[0]);
+  const toBox = boxes.find((b) => b.id === toParts[0]);
+
+  let defaultFrom: AnchorPosition = 'right';
+  let defaultTo: AnchorPosition = 'left';
+
+  if (fromBox && toBox) {
+    const centerAx = Number(fromBox.x) + Number(fromBox.width) / 2;
+    const centerAy = Number(fromBox.y) + Number(fromBox.height) / 2;
+    const centerBx = Number(toBox.x) + Number(toBox.width) / 2;
+    const centerBy = Number(toBox.y) + Number(toBox.height) / 2;
+
+    const dx = centerBx - centerAx;
+    const dy = centerBy - centerAy;
+
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      defaultFrom = dx >= 0 ? 'right' : 'left';
+      defaultTo = dx >= 0 ? 'left' : 'right';
+    } else {
+      defaultFrom = dy >= 0 ? 'bottom' : 'top';
+      defaultTo = dy >= 0 ? 'top' : 'bottom';
+    }
+  }
+
+  const from = resolveBoxAnchor(boxes, fromSpec, defaultFrom);
+  const to = resolveBoxAnchor(boxes, toSpec, defaultTo);
+
+  return { from, to };
 }
 
 /**
