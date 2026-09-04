@@ -206,6 +206,48 @@ async function verifyCalloutVisualControlAndInspection(page: Page): Promise<void
   await expect(inspector).toContainText(/关联目标框元|Target Box/i);
 }
 
+/**
+ * 8. 验证动态插图 (Image) 图元放置、画布变换手柄与右侧属性面板参数调节
+ */
+async function verifyImageVisualControlAndInspection(page: Page): Promise<void> {
+  // 1. 切换至插图工具 (tool-image)
+  const imageToolBtn = page.locator('[data-testid="tool-image"]');
+  await expect(imageToolBtn).toBeVisible();
+  await imageToolBtn.click();
+
+  // 2. 点击画布触发插图放置弹窗
+  const canvas = page.locator('[data-testid="infinite-canvas-container"]');
+  const box = await canvas.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + 250, box.y + 180);
+  }
+
+  // 3. 点击确认放置插图
+  const confirmBtn = page.locator('[data-testid="confirm-insert-image-btn"]');
+  await expect(confirmBtn).toBeVisible();
+  await confirmBtn.click();
+
+  // 4. 切换回选择工具 (tool-select)
+  const selectToolBtn = page.locator('[data-testid="tool-select"]');
+  await expect(selectToolBtn).toBeVisible();
+  await selectToolBtn.click();
+
+  // 5. 验证 ImageTransformOverlay 已挂载
+  const imageTransformOverlay = page.locator('[data-testid="image-transform-overlay"]');
+  await expect(imageTransformOverlay).toBeVisible();
+
+  // 6. 验证右侧属性检查器展示插图专属属性卡片
+  const inspector = page.locator('[data-testid="inspector"]');
+  await expect(inspector).toContainText(/动态插图属性|Image Element Settings/i);
+
+  // 7. 验证可调节各项核心参数 (预览、尺寸位置、等比锁定、圆角、投影、进场动效)
+  await expect(inspector).toContainText(/图片预览|Image Preview/i);
+  await expect(inspector).toContainText(/尺寸与几何位置|Dimensions & Position/i);
+  await expect(inspector).toContainText(/等比锁定|自由比例|Lock Aspect Ratio/i);
+  await expect(inspector).toContainText(/插图圆角|Border Radius/i);
+  await expect(inspector).toContainText(/进场展开动效|Entrance Animation/i);
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -239,5 +281,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test('TC307: 验证解说气泡 (Callout) 的画布可视化交互控制与属性面板参数调节', async ({ page }) => {
     await verifyCalloutVisualControlAndInspection(page);
   });
+
+  test('TC308: 验证动态插图 (Image) 图元放置、画布变换手柄与右侧属性面板参数调节', async ({ page }) => {
+    await verifyImageVisualControlAndInspection(page);
+  });
 });
+
 

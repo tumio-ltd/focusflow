@@ -27,7 +27,10 @@ import {
   Zap,
   Gauge,
   Film,
-  Info
+  Info,
+  Upload,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
@@ -147,7 +150,11 @@ function RightInspectorComponent({
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
   const updateDotPosition = useProjectStore((s) => s.updateDotPosition);
   const updateCallout = useProjectStore((s) => s.updateCallout);
+  const updateImage = useProjectStore((s) => s.updateImage);
   const dsl = useProjectStore((s) => s.dsl);
+
+  const [isAspectLocked, setIsAspectLocked] = useState(true);
+  const imageFileInputRef = useRef<HTMLInputElement>(null);
 
   // 当在画布或列表中选中任何图元时，自动平滑切入【图元属性】Tab
   useEffect(() => {
@@ -170,6 +177,7 @@ function RightInspectorComponent({
   const selectedPath = dsl.elements?.paths?.find((p) => p.id === selectedElementId);
   const selectedDot = dsl.elements?.dots?.find((d) => d.id === selectedElementId);
   const selectedCallout = allCallouts.find((c) => c.id === selectedElementId);
+  const selectedImage = dsl.elements?.images?.find((img) => img.id === selectedElementId);
 
   const filteredElements = elements.filter((el) =>
     el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -1052,6 +1060,303 @@ function RightInspectorComponent({
               </div>
             )}
 
+            {/* Case E: 选中 Image */}
+            {selectedImage && (
+              <div className="space-y-3 bg-muted/40 border border-pink-500/30 rounded-xl p-3 shadow-md animate-in fade-in duration-150">
+                <div className="flex items-center justify-between font-semibold text-foreground border-b border-border/50 pb-2">
+                  <div className="flex items-center gap-1.5 text-pink-400 text-xs font-bold">
+                    <ImageIcon className="w-3.5 h-3.5 text-pink-400" />
+                    <span>{t('imageSettings', '动态插图属性')}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                      {selectedImage.id}
+                    </span>
+                    {onDeleteElement && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteElement(selectedImage.id)}
+                        className="p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded transition cursor-pointer"
+                        title={t('deleteElement', '删除图元')}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* 缩略图预览与快速更换 */}
+                <div className="space-y-1.5">
+                  <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                    <span>{t('imagePreview', '图片预览')}</span>
+                    <button
+                      type="button"
+                      onClick={() => imageFileInputRef.current?.click()}
+                      className="text-[10px] text-pink-400 hover:text-pink-300 flex items-center gap-1 cursor-pointer font-medium"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>{t('uploadNewImage', '本地上传')}</span>
+                    </button>
+                  </label>
+
+                  <input
+                    ref={imageFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (loadEvt) => {
+                        const res = loadEvt.target?.result as string;
+                        if (res) {
+                          const img = new Image();
+                          img.onload = () => {
+                            updateImage(selectedImage.id, {
+                              url: res,
+                              width: img.naturalWidth > 0 ? img.naturalWidth : selectedImage.width,
+                              height: img.naturalHeight > 0 ? img.naturalHeight : selectedImage.height,
+                            });
+                          };
+                          img.src = res;
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+
+                  <div className="relative rounded-lg overflow-hidden border border-border bg-background/80 flex items-center justify-center p-2 min-h-[90px] max-h-[140px]">
+                    <img
+                      src={selectedImage.url}
+                      alt={selectedImage.id}
+                      className="max-h-28 object-contain rounded"
+                      style={{
+                        borderRadius: `${selectedImage.style?.borderRadius || 0}px`,
+                      }}
+                    />
+                  </div>
+
+                  {/* URL 输入框 */}
+                  <div className="space-y-1 pt-1">
+                    <label className="text-muted-foreground text-[10px] font-medium">
+                      {t('imageUrl', '图片地址 URL')}
+                    </label>
+                    <Input
+                      value={selectedImage.url}
+                      onChange={(e) => updateImage(selectedImage.id, { url: e.target.value })}
+                      placeholder={t('imageUrlPlaceholder', '输入图片 URL (http:// 或 /asset.png)...')}
+                      className="text-xs bg-background h-7 font-mono truncate"
+                    />
+                  </div>
+                </div>
+
+                {/* 几何坐标与尺寸微调 */}
+                <div className="space-y-2 pt-1 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-[10px] font-medium">
+                      {t('imageDimensions', '尺寸与几何位置')}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setIsAspectLocked(!isAspectLocked)}
+                        className={`text-[9px] px-1.5 py-0.5 rounded border transition cursor-pointer flex items-center gap-1 ${
+                          isAspectLocked
+                            ? 'bg-pink-500/20 text-pink-400 border-pink-500/40 font-medium'
+                            : 'text-muted-foreground border-border hover:bg-muted'
+                        }`}
+                        title={t('lockAspectRatio', '锁定等比缩放')}
+                      >
+                        {isAspectLocked ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
+                        <span>{isAspectLocked ? '等比锁定' : '自由比例'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const testImg = new Image();
+                          testImg.onload = () => {
+                            if (testImg.naturalWidth > 0 && testImg.naturalHeight > 0) {
+                              updateImage(selectedImage.id, {
+                                width: testImg.naturalWidth,
+                                height: testImg.naturalHeight,
+                              });
+                            }
+                          };
+                          testImg.src = selectedImage.url;
+                        }}
+                        className="text-[9px] px-1.5 py-0.5 rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition cursor-pointer flex items-center gap-1"
+                        title={t('resetNaturalSize', '恢复原始物理尺寸')}
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                        <span>原尺寸</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                        <span>X 坐标</span>
+                        <span className="font-mono text-pink-400 font-bold text-[10px]">px</span>
+                      </label>
+                      <Input
+                        type="number"
+                        value={selectedImage.x}
+                        onChange={(e) => updateImage(selectedImage.id, { x: parseInt(e.target.value) || 0 })}
+                        className="text-xs bg-background h-7 font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                        <span>Y 坐标</span>
+                        <span className="font-mono text-pink-400 font-bold text-[10px]">px</span>
+                      </label>
+                      <Input
+                        type="number"
+                        value={selectedImage.y}
+                        onChange={(e) => updateImage(selectedImage.id, { y: parseInt(e.target.value) || 0 })}
+                        className="text-xs bg-background h-7 font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                        <span>宽度 (W)</span>
+                        <span className="font-mono text-pink-400 font-bold text-[10px]">px</span>
+                      </label>
+                      <Input
+                        type="number"
+                        min={20}
+                        value={selectedImage.width}
+                        onChange={(e) => {
+                          const newW = Math.max(20, parseInt(e.target.value) || 20);
+                          if (isAspectLocked && selectedImage.width > 0) {
+                            const ratio = selectedImage.height / selectedImage.width;
+                            updateImage(selectedImage.id, { width: newW, height: Math.round(newW * ratio) });
+                          } else {
+                            updateImage(selectedImage.id, { width: newW });
+                          }
+                        }}
+                        className="text-xs bg-background h-7 font-mono"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                        <span>高度 (H)</span>
+                        <span className="font-mono text-pink-400 font-bold text-[10px]">px</span>
+                      </label>
+                      <Input
+                        type="number"
+                        min={20}
+                        value={selectedImage.height}
+                        onChange={(e) => {
+                          const newH = Math.max(20, parseInt(e.target.value) || 20);
+                          if (isAspectLocked && selectedImage.height > 0) {
+                            const ratio = selectedImage.width / selectedImage.height;
+                            updateImage(selectedImage.id, { height: newH, width: Math.round(newH * ratio) });
+                          } else {
+                            updateImage(selectedImage.id, { height: newH });
+                          }
+                        }}
+                        className="text-xs bg-background h-7 font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 样式属性调节 */}
+                <div className="space-y-2 pt-1 border-t border-border/50">
+                  {/* 圆角大小 Slider */}
+                  <Slider
+                    label={t('imageBorderRadius', '插图圆角')}
+                    valueDisplay={`${selectedImage.style?.borderRadius ?? 16} px`}
+                    min="0"
+                    max="64"
+                    step="1"
+                    value={selectedImage.style?.borderRadius ?? 16}
+                    onChange={(e) =>
+                      updateImage(selectedImage.id, {
+                        style: { ...(selectedImage.style || {}), borderRadius: parseFloat(e.target.value) },
+                      })
+                    }
+                  />
+
+                  {/* 不透明度 Slider */}
+                  <Slider
+                    label={t('imageOpacity', '不透明度')}
+                    valueDisplay={`${Math.round((selectedImage.style?.opacity ?? 1.0) * 100)} %`}
+                    min="0.1"
+                    max="1.0"
+                    step="0.05"
+                    value={selectedImage.style?.opacity ?? 1.0}
+                    onChange={(e) =>
+                      updateImage(selectedImage.id, {
+                        style: { ...(selectedImage.style || {}), opacity: parseFloat(e.target.value) },
+                      })
+                    }
+                  />
+
+                  {/* 悬浮立体弥散投影开关 */}
+                  <div className="pt-1 flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-pink-400" />
+                      <span>{t('imageBoxShadow', '立体悬浮弥散投影')}</span>
+                    </span>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedImage.style?.boxShadow !== false}
+                        onChange={(e) =>
+                          updateImage(selectedImage.id, {
+                            style: { ...(selectedImage.style || {}), boxShadow: e.target.checked },
+                          })
+                        }
+                        className="cursor-pointer accent-pink-500 w-3.5 h-3.5 rounded"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* 进场动效选择 */}
+                <div className="space-y-1.5 pt-1 border-t border-border/50">
+                  <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
+                    <span>{t('imageAnimation', '进场展开动效')}</span>
+                    <span className="font-mono text-pink-400 uppercase text-[10px]">
+                      {selectedImage.style?.animation || 'zoom-fade'}
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
+                    {[
+                      { id: 'zoom-fade', label: t('animZoomFade', '🔍 弹性缩放') },
+                      { id: 'fade', label: t('animFade', '🌫️ 平滑淡入') },
+                      { id: 'slide-up', label: t('animSlideUp', '⬆️ 向上滑入') },
+                    ].map((anim) => {
+                      const isActive = (selectedImage.style?.animation || 'zoom-fade') === anim.id;
+                      return (
+                        <button
+                          key={anim.id}
+                          type="button"
+                          onClick={() =>
+                            updateImage(selectedImage.id, {
+                              style: { ...(selectedImage.style || {}), animation: anim.id as any },
+                            })
+                          }
+                          className={`text-[9px] py-1.5 px-1 rounded font-medium transition cursor-pointer text-center ${
+                            isActive
+                              ? 'bg-pink-500/20 text-pink-400 border border-pink-500/40 font-bold shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          }`}
+                        >
+                          {anim.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* 2.2 调色板渲染函数 (Palette) */}
             {(() => {
               const renderPalette = () => (
@@ -1079,6 +1384,9 @@ function RightInspectorComponent({
                             setActiveDrawingColor(c);
                             if (selectedElementId) {
                               updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                              if (selectedImage) {
+                                updateImage(selectedImage.id, { style: { border: `2px solid ${c}` } });
+                              }
                               if (selectedCallout) {
                                 let theme = 'blue';
                                 if (c.includes('34d399')) theme = 'green';
@@ -1110,6 +1418,9 @@ function RightInspectorComponent({
                           setActiveDrawingColor(newColor);
                           if (selectedElementId) {
                             updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
+                            if (selectedImage) {
+                              updateImage(selectedImage.id, { style: { border: `2px solid ${newColor}` } });
+                            }
                             if (selectedCallout) {
                               updateCallout(selectedCallout.id, { theme: newColor });
                             }
@@ -1122,7 +1433,7 @@ function RightInspectorComponent({
                 </div>
               );
 
-              return !selectedBox && !selectedPath && !selectedDot && !selectedCallout ? (
+              return !selectedBox && !selectedPath && !selectedDot && !selectedCallout && !selectedImage ? (
                 <>
                   <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
                     <Info className="w-4 h-4 text-muted-foreground mx-auto" />

@@ -132,7 +132,8 @@ export interface ProjectState {
   updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
   updateDotPosition: (dotId: string, position: { cx: number; cy: number }) => void;
   updateCallout: (calloutId: string, updates: Partial<CalloutItem>) => void;
-  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean }) => void;
+  updateImage: (imageId: string, updates: Partial<ElementImage>) => void;
+  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean; borderRadius?: number; boxShadow?: boolean | string; border?: string; animation?: 'fade' | 'zoom-fade' | 'slide-up'; opacity?: number }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
   undo: () => void;
@@ -667,6 +668,35 @@ export const useProjectStore = create<ProjectState>((set) => ({
       return pushHistory(state, nextDSL);
     }),
 
+  updateImage: (imageId, updates) =>
+    set((state) => {
+      const images =
+        state.dsl.elements.images?.map((img: ElementImage) =>
+          img.id === imageId
+            ? {
+                ...img,
+                ...updates,
+                x: updates.x !== undefined ? Math.round(updates.x) : img.x,
+                y: updates.y !== undefined ? Math.round(updates.y) : img.y,
+                width: updates.width !== undefined ? Math.round(updates.width) : img.width,
+                height: updates.height !== undefined ? Math.round(updates.height) : img.height,
+                style: updates.style
+                  ? { ...(img.style || {}), ...updates.style }
+                  : img.style,
+              }
+            : img
+        ) || [];
+
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...state.dsl.elements,
+          images,
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
   updateElementStyle: (elementId, style) =>
     set((state) => {
       const elements = { ...state.dsl.elements };
@@ -696,8 +726,14 @@ export const useProjectStore = create<ProjectState>((set) => ({
           } : d
         );
       }
+      // 4. Check images
+      if (elements.images?.some((img: ElementImage) => img.id === elementId)) {
+        elements.images = elements.images.map((img: ElementImage) =>
+          img.id === elementId ? { ...img, style: { ...(img.style || {}), ...style } } : img
+        );
+      }
 
-      // 4. Check callouts
+      // 5. Check callouts
       let isCallout = false;
       const scenes = state.dsl.scenes.map((s) => {
         if (!s.activeElements?.callouts) return s;

@@ -8,6 +8,7 @@ import { BoxDrawingOverlay } from './BoxDrawingOverlay';
 import { BoxTransformOverlay } from './BoxTransformOverlay';
 import { DotTransformOverlay } from './DotTransformOverlay';
 import { CalloutTransformOverlay } from './CalloutTransformOverlay';
+import { ImageTransformOverlay } from './ImageTransformOverlay';
 import { PathDrawingOverlay } from './PathDrawingOverlay';
 import { DotDrawingOverlay } from './DotDrawingOverlay';
 import { CalloutOverlay } from './CalloutOverlay';
@@ -109,6 +110,7 @@ function CanvasOverlayComponent({
   showCrosshairAndFrustum = false,
 }: CanvasOverlayProps) {
   const dots = useProjectStore((s) => s.dsl.elements.dots || []);
+  const images = useProjectStore((s) => s.dsl.elements.images || []);
   const rafRef = React.useRef<number | null>(null);
   const lastCoordsRef = React.useRef<{ x: number; y: number } | null>(null);
 
@@ -236,6 +238,14 @@ function CanvasOverlayComponent({
         contentHeight={contentHeight}
         active={activeTool === 'select'}
         boxes={boxes}
+      />
+
+      {/* 0.3 选中插图拖拽平移/拉伸缩放控制图层 */}
+      <ImageTransformOverlay
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
+        active={activeTool === 'select'}
+        images={images}
       />
 
       {/* 1. 智能选框绘制图层 */}

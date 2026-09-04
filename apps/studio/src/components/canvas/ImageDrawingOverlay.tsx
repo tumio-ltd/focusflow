@@ -182,7 +182,7 @@ export function ImageDrawingOverlay({
               <Button type="button" size="sm" variant="ghost" onClick={() => setIsModalOpen(false)}>
                 取消
               </Button>
-              <Button type="button" size="sm" variant="cyan" onClick={handleConfirm} className="gap-1.5">
+              <Button type="button" size="sm" variant="cyan" data-testid="confirm-insert-image-btn" onClick={handleConfirm} className="gap-1.5">
                 <Check className="w-3.5 h-3.5" />
                 <span>确认插入</span>
               </Button>

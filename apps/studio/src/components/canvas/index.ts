@@ -8,4 +8,6 @@ export * from './CanvasOverlay';
 export * from './BoxTransformOverlay';
 export * from './DotTransformOverlay';
 export * from './CalloutTransformOverlay';
+export * from './ImageTransformOverlay';
+export * from './ImageDrawingOverlay';
 export * from './ZoomControls';

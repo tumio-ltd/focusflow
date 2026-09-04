@@ -368,7 +368,86 @@ FocusFlow Studio 的中央无限画布（`InfiniteCanvas`）与视口缩放控�
   * 支持一键“复制场景”、“删除场景”与“插入过渡帧”；
 * **图元可见性开关矩阵（Active Elements Matrix）**：
   * 选中某个场景时，画布与右侧面板列出所有已有 Boxes、Paths、Dots、Images；
-  * 创作者只需通过开关勾选，即可决定该元素在当前场景中是“激活展示”还是“平滑隐藏”。
+---
+
+### 3.3.2 音频时间轴对齐系统设计与技术方案 (Audio Timeline Synchronization System)
+
+#### 1. 核心业务价值与痛点场景
+在架构演进宣讲、高管述职汇报与技术慕课录制中，创作者通常需要录制旁白语音（Voiceover）或插入背景音效（BGM）。
+* **传统痛点**：创作者必须预估每张幻灯片/运镜需要几秒几毫秒，手工逐个调整各场景的 `duration: 3500ms`，一旦录音稍有语速变化，运镜与语音立即产生严重错位，反复试听微调成本极高。
+* **目标体验**：“声音讲到哪里，镜头就自动运镜到哪里”。创作者直接导入音频文件，在音频波形图上可视化拖拽标记点，场景切换点自动向语音节点磁吸对齐；单文件/视频导出时自带音画合流。
+
+#### 2. 系统拓扑与数据流架构
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│             🎵 Audio Timeline Synchronization Dataflow                 │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│   [🎙️ 音频文件导入: MP3 / WAV / M4A / AAC]                               │
+│                     │                                                  │
+│                     ▼                                                  │
+│   [Web Audio API (AudioContext) 离线解码 ➔ Float32Array PCM 采样数据]   │
+│                     │                                                  │
+│         ┌───────────┴───────────────────────────┐                      │
+│         ▼                                       ▼                      │
+│  [峰值降采样与波形渲染引擎]              [语音活动检测 VAD / 静音分析]      │
+│  (Canvas 2D 双通道波形渲染)             (检测自然停顿点，智能生成建议标记)  │
+│         │                                       │                      │
+│         └───────────┬───────────────────────────┘                      │
+│                     ▼                                                  │
+│   [音频波形轨道 (AudioWaveformTrack) 交互层]                            │
+│   • 实时播放指针 (Playhead) & 视口横向缩放 (Zoom: 1s ~ 60s/屏)          │
+│   • 场景锚点标记 (Scene Transition Markers: S1 ➔ S2 ➔ S3)              │
+│   • 磁吸引擎 (Snap Engine: ±50ms 阈值自动吸附到音频停顿间隙)           │
+│                     │                                                  │
+│                     ▼                                                  │
+│   [自动双向重算 DSL 场景时序 (Auto-Recalculate Scene Durations)]         │
+│   • Scene[i].duration = Marker[i+1].time - Marker[i].time              │
+│   • Scene[i].transition = 镜头位移动画平滑插入                          │
+│                     │                                                  │
+│                     ▼                                                  │
+│   [多形态合流导出 (Audio-Video Multiplexing)]                          │
+│   • 模式 A (客户端): MediaStreamDestination + MediaRecorder 合流 WebM  │
+│   • 模式 B (云端): Worker Remotion / FFmpeg 多音轨无损压制 4K MP4       │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 3. DSL 契约定义扩展 (`packages/dsl/src/schema.ts`)
+```typescript
+export interface AudioTrackConfig {
+  id: string;
+  url: string; // 本地 ObjectURL、Base64 或云端托管 URL
+  type: 'voiceover' | 'bgm'; // 旁白解说语音 vs 背景音乐
+  volume: number; // 0.0 ~ 1.0
+  offsetMs: number; // 音频起始播放时间偏移量 (ms)
+  markers?: Array<{
+    id: string;
+    timeMs: number;
+    sceneIndex: number;
+    label?: string;
+  }>;
+}
+
+export interface FocusFlowDSL {
+  // ... 原有字段
+  audio?: {
+    tracks: AudioTrackConfig[];
+    autoSnapToVoice?: boolean; // 是否启用语音停顿自动磁吸
+  };
+}
+```
+
+#### 4. 关键技术实现模块规划
+1. **音频解码与分块波形缓存 (`audioDecoder.ts`)**：
+   * 基于浏览器原生 `AudioContext.decodeAudioData` 解码 PCM，提取音频振幅波峰包络数组（Peak Envelope）；
+   * 使用 Web Worker 进行并行降采样，避免大音频解码阻塞主线程。
+2. **底部时间轴波形组件 (`AudioWaveformTrack.tsx`)**：
+   * 挂载于 `BottomTimeline.tsx` 的场景卡片下方，支持横向拖动、滚轮缩放时间标尺；
+   * 场景分割线垂直穿透到波形轨道，创作者拖动场景卡片边缘时，自动在波形上以激光竖线高亮并吸附至最近的音频静音点（RMS 能量低于临界值）。
+3. **播放控制与音画绝对帧同步 (`useAudioSync.ts`)**：
+   * 解决音频时钟与 `requestAnimationFrame` 画面渲染时钟的物理偏差（AudioContext Clock vs rAF Drift）；
+   * 统一以 `audioContext.currentTime` 为全局主时钟（Master Clock），画面渲染帧严格订阅音频时钟。
 
 ---
 
@@ -853,6 +932,20 @@ model ProjectVersion {
   - [x] 5.4.1 在工作台内提供一键全屏真实受众视角试播与翻页演示测试，支持键盘快捷键
 - [x] **5.5 质量门禁与 Playwright E2E 自动化测试**
   - [x] 5.5.1 编写 `stage5-export-compiler.spec.ts` 端到端全流程测试套件并 100% 验证通过
+
+#### 🎵 Stage 5.6: 音频时间轴对齐与多媒体音画同步 (Audio Timeline Sync & Voiceover Alignment · 规划中)
+- [ ] **5.6.1 浏览器端音频解码与波形采样计算 (`audioDecoder.ts`)**
+  - [ ] 基于 Web Audio API `AudioContext.decodeAudioData` 实现多格式音频解码（MP3 / WAV / M4A / AAC）
+  - [ ] 提取双通道波峰包络数组（Peak Envelope），Web Worker 离屏降采样防卡顿
+- [ ] **5.6.2 可视化音频波形轨道 (`AudioWaveformTrack.tsx`)**
+  - [ ] 底部时间轴集成波形画布，支持时间标尺、全局播放头（Playhead）与平移缩放
+  - [ ] 场景切换分界竖线穿透联动，显示各场景对应音频时间戳
+- [ ] **5.6.3 场景标记点磁吸与自动时长对齐 (Snap-to-Marker & Voice VAD)**
+  - [ ] 拖拽场景卡片边缘时 ±50ms 自动磁吸至音频波形标记点或静音低能量间隙
+  - [ ] 双向重算 DSL 各场景 `duration`，实现“语速变化运镜自适应”
+- [ ] **5.6.4 音画合流打包与视频录制导出 (Audio-Video Multiplexing)**
+  - [ ] 客户端单文件导出时将音频内联为 Data URI 并通过 Web Audio 播放
+  - [ ] `canvasRecorder.ts` 接入 `AudioContext.createMediaStreamDestination()` 实现音画合流 WebM 录制导出
 
 ---
 
