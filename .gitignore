@@ -51,3 +51,8 @@ build/
 playwright-report/
 playwright-reports/
 test-results/
+
+# Local Machine Private Agent Configurations & Paths
+*LOCAL_AGENT_ENV*.md
+design/LOCAL_AGENT_ENV.md
+.local/

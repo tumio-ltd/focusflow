@@ -272,28 +272,28 @@ Agent 在最终返回 JSON 前，必须在内部自检以下 5 项：
 当 Agent 完成 DSL 生成并保存为 `config.json` 后，可执行以下命令快速交付最终产物。
 
 > **执行上下文与路径规范 (Execution Context)**：
-> - **本机项目绝对根目录**：`/Users/xt/WebstormProjects/focusflow`
-> - **调用建议**：推荐优先使用**绝对路径调用脚本**，无论 Agent 当前位于哪个工作目录下均可直接稳定运行；输入与输出路径均支持本地绝对路径或相对根目录路径。
+> - **标准仓库根目录占位符**：`<focusflow_repo_root>`（亦支持通过环境变量 `FOCUSFLOW_ROOT` 指定）。
+> - **本地开发环境专享**：若在本机专属开发环境中执行，可参考专属本地私有配置 `LOCAL_AGENT_ENV.md` 获取本机免配置绝对路径。
 > - **远程 Agent 提示**：若为无本地 Shell 终端执行权限的纯云端对话 Agent，请直接输出 DSL JSON 内容或通过 MCP 工具协议调用。
 
-### 方式 1：基于绝对路径直接调用（推荐：跨目录调用零报错）
+### 方式 1：在项目根目录下通过相对路径执行（通用推荐）
 
 ```bash
-# 1. 一键生成 0 依赖单文件离线 HTML (自动内联 Base64 底图与 IIFE 播放引擎，双击秒开)
-node /Users/xt/WebstormProjects/focusflow/scripts/build-standalone.js <path_to_config.json> <path_to_output.html>
+cd <focusflow_repo_root>
 
-# 2. 一键无头录制 60FPS MP4 视频 (Playwright Headless 自动演播截帧，落盘即看)
-node /Users/xt/WebstormProjects/focusflow/scripts/render-video.js <path_to_output.html> <path_to_output.mp4> --fps 60 --resolution 1080p
+# 1. 编译 0 依赖单文件离线 HTML (自动内联 Base64 底图与 IIFE 播放引擎，双击秒开)
+node scripts/build-standalone.js <path_to_config.json> <path_to_output.html>
+
+# 2. 无头录制 60FPS MP4 视频 (Playwright Headless 自动演播截帧，落盘即看)
+node scripts/render-video.js <path_to_output.html> <path_to_output.mp4> --fps 60 --resolution 1080p
 ```
 
-### 方式 2：在项目根目录下通过相对路径执行
+### 方式 2：跨目录绝对路径 / 环境变量动态调用
 
 ```bash
-cd /Users/xt/WebstormProjects/focusflow
+# 环境变量调用 (适合脚本与 CI/CD 流水线)
+node "${FOCUSFLOW_ROOT:-<path_to_focusflow>}/scripts/build-standalone.js" <path_to_config.json> <path_to_output.html>
 
-# 编译独立 HTML
-node scripts/build-standalone.js ./examples/overlay-demo ./dist/showcase.html
-
-# 录制高清视频
-node scripts/render-video.js ./dist/showcase.html ./dist/showcase.mp4 --fps 60 --resolution 1080p
+# Git 动态定位 (适合在仓库子目录运行的 Agent，自动定位根目录)
+node "$(git rev-parse --show-toplevel)/scripts/build-standalone.js" <path_to_config.json> <path_to_output.html>
 ```

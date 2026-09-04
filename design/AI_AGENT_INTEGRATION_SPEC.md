@@ -139,23 +139,24 @@ Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进
 2. **生成 FocusFlow DSL JSON**：
    - Agent 依照 `@focusflow/dsl` 规范，直接在内存或磁盘中输出标准的 `config.json`。
 3. **自动化编译独立单文件 HTML**：
-   - Agent 调用 FocusFlow 内置编译脚本（本机绝对路径 `/Users/xt/WebstormProjects/focusflow`）：
+   - Agent 调用 FocusFlow 内置编译脚本：
      ```bash
-     # 方式 A (绝对路径调用，零路径困扰):
-     node /Users/xt/WebstormProjects/focusflow/scripts/build-standalone.js path/to/project/config.json dist/showcase.html
-
-     # 方式 B (仓库根目录下相对路径执行):
+     # 方式 A (在仓库根目录下相对路径执行，推荐):
+     cd <focusflow_repo_root>
      node scripts/build-standalone.js path/to/project/config.json dist/showcase.html
+
+     # 方式 B (跨目录绝对路径 / 环境变量调用):
+     node "${FOCUSFLOW_ROOT:-<path/to/focusflow>}/scripts/build-standalone.js" path/to/project/config.json dist/showcase.html
      ```
    - 输出一个内嵌 Base64 高清底图与 IIFE 播放引擎的独立 `.html`，可在任何设备无网双击秒开。
 4. **无头录制为高清视频 (Headless Video Render)**：
    - Agent 调用无头录制脚本（基于 Playwright / CDP）：
      ```bash
-     # 方式 A (绝对路径调用):
-     node /Users/xt/WebstormProjects/focusflow/scripts/render-video.js dist/showcase.html dist/showcase.mp4 --fps 60 --resolution 1080p
-
-     # 方式 B (仓库根目录下相对路径执行):
+     # 方式 A (在仓库根目录下相对路径执行):
      node scripts/render-video.js dist/showcase.html dist/showcase.mp4 --fps 60 --resolution 1080p
+
+     # 方式 B (跨目录绝对路径 / 环境变量调用):
+     node "${FOCUSFLOW_ROOT:-<path/to/focusflow>}/scripts/render-video.js" dist/showcase.html dist/showcase.mp4 --fps 60 --resolution 1080p
      ```
    - 脚本后台启动无头浏览器，自动触发 `player.play()`，并在演播结束时自动封装为 `.mp4` 或 `.webm` 视频文件。
 
