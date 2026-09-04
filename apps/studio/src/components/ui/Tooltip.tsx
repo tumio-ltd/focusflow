@@ -15,10 +15,16 @@ export function Tooltip({
   content,
   shortcut,
   position = 'top',
+  align = 'center',
   children,
   className,
 }: TooltipProps) {
-  const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
+  const [coords, setCoords] = useState<{
+    x: number;
+    y: number;
+    position: 'top' | 'bottom' | 'left' | 'right';
+    align: 'center' | 'start' | 'end';
+  } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -26,24 +32,39 @@ export function Tooltip({
     timerRef.current = window.setTimeout(() => {
       if (!triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
-      let x = rect.left + rect.width / 2;
-      let y = rect.top;
+      const viewportWidth = window.innerWidth;
+      let effectiveAlign = align;
 
-      if (position === 'top') {
-        y = rect.top - 6;
-      } else if (position === 'bottom') {
-        y = rect.bottom + 6;
+      if (position === 'top' || position === 'bottom') {
+        // 自动视口碰撞规避：当居中显示会导致左右超出边界时，自适应切换至 end 或 start 对齐
+        if (effectiveAlign === 'center') {
+          if (viewportWidth - rect.right < 160) {
+            effectiveAlign = 'end';
+          } else if (rect.left < 160) {
+            effectiveAlign = 'start';
+          }
+        }
+
+        let x = rect.left + rect.width / 2;
+        if (effectiveAlign === 'end') {
+          x = Math.min(viewportWidth - 10, rect.right);
+        } else if (effectiveAlign === 'start') {
+          x = Math.max(10, rect.left);
+        }
+
+        const y = position === 'top' ? rect.top - 6 : rect.bottom + 6;
+        setCoords({ x, y, position, align: effectiveAlign });
       } else if (position === 'right') {
-        x = rect.right + 6;
-        y = rect.top + rect.height / 2;
+        const x = rect.right + 6;
+        const y = rect.top + rect.height / 2;
+        setCoords({ x, y, position, align: effectiveAlign });
       } else if (position === 'left') {
-        x = rect.left - 6;
-        y = rect.top + rect.height / 2;
+        const x = rect.left - 6;
+        const y = rect.top + rect.height / 2;
+        setCoords({ x, y, position, align: effectiveAlign });
       }
-
-      setCoords({ x, y });
     }, 400);
-  }, [position]);
+  }, [position, align]);
 
   const handleMouseLeave = useCallback(() => {
     if (timerRef.current !== null) {
@@ -60,6 +81,21 @@ export function Tooltip({
       }
     };
   }, []);
+
+  const getTransform = (pos: 'top' | 'bottom' | 'left' | 'right', al: 'center' | 'start' | 'end') => {
+    if (pos === 'top') {
+      const tx = al === 'end' ? '-100%' : al === 'start' ? '0%' : '-50%';
+      return `translate(${tx}, -100%)`;
+    }
+    if (pos === 'bottom') {
+      const tx = al === 'end' ? '-100%' : al === 'start' ? '0%' : '-50%';
+      return `translate(${tx}, 0%)`;
+    }
+    if (pos === 'right') {
+      return 'translate(0%, -50%)';
+    }
+    return 'translate(-100%, -50%)';
+  };
 
   return (
     <>
@@ -83,13 +119,7 @@ export function Tooltip({
           style={{
             left: `${Math.round(coords.x)}px`,
             top: `${Math.round(coords.y)}px`,
-            transform: position === 'top' 
-              ? 'translate(-50%, -100%)' 
-              : position === 'bottom' 
-              ? 'translate(-50%, 0)' 
-              : position === 'right' 
-              ? 'translate(0, -50%)' 
-              : 'translate(-100%, -50%)',
+            transform: getTransform(coords.position, coords.align),
           }}
         >
           <span>{content}</span>
