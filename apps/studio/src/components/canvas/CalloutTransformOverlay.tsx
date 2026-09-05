@@ -447,7 +447,7 @@ export function CalloutTransformOverlay({
                 style={{
                   fontSize: selectedCallout.style?.titleFontSize ? `${selectedCallout.style.titleFontSize}px` : undefined,
                 }}
-                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${currentTheme.bg} ${currentTheme.text} border border-current`}
+                className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${currentTheme.bg} ${currentTheme.text} border border-current`}
               >
                 {selectedCallout.title || '解说气泡'}
               </span>
@@ -458,7 +458,7 @@ export function CalloutTransformOverlay({
               style={{
                 fontSize: selectedCallout.style?.fontSize ? `${selectedCallout.style.fontSize}px` : undefined,
               }}
-              className="text-[11px] text-slate-300 line-clamp-3 leading-relaxed"
+              className="text-[12px] text-slate-300 line-clamp-3 leading-relaxed"
             >
               {selectedCallout.desc || '（暂无描述，可在右侧属性面板编辑）'}
             </div>
