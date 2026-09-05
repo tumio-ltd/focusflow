@@ -270,21 +270,21 @@ Agent 生成 DSL 时，请严格对齐如下产出结构：
 
 ## 五、 生成前自检清单 (Agent Self-Check Checklist)
 
-Agent 在最终返回 JSON 前，必须在内部自检以下 5 项：
+Agent 在最终返回 JSON 前，必须在内部自检以下 6 项：
 
 - [ ] **1. 引用完整性检查**：
   - `paths` 中的每一个 `from` 和 `to`，是否都在 `elements.boxes` 中声明？
-  - `activeElements.callouts` 中的 `boxId`，是否都在当前激活的 `boxes` 中？
+  - `activeElements.callouts` 中的 `targetBoxId`，是否都在全局 `elements.boxes` 中声明？
   - `activeElements.boxes` 中的每个 ID，是否都在 `elements.boxes` 中？
 - [ ] **2. 坐标数值合理性**：
-  - 所有的 `x, y, width, height` 是否为正整数，且不超过 `meta.viewport`（如 1920×1080）？
+  - 图元所有的 `x, y, width, height` 是否为基于底图的原生像素绝对正整数？
 - [ ] **3. 运镜逻辑递进性**：
-  - 场景 `scenes` 是否按逻辑先后排序？
+  - 场景 `scenes` 是否按业务演进顺序分幕？
   - 后一幕是否合理保留了上一幕的重点框元（渐进点亮而非闪烁重置）？
-- [ ] **4. 镜头焦点居中性**：
-  - 每幕相机的 `camera.x, camera.y`，是否大致对应本幕重点讲解框元的几何中心点（`x + width/2, y + height/2`）？
+- [ ] **4. 镜头焦点百分比居中性 (Camera Math)**：
+  - 每幕相机的 `camera.x, camera.y` 是否已按公式 $\frac{X_{mid}-W/2}{W}\times 100$ 计算为百分比偏移（$-50 \sim +50$），而非写成了绝对像素？
 - [ ] **5. 技术文案专业度**：
-  - `callouts` 中的解说词是否精炼、突出架构技术关键词（避免无意义的空泛描述）？
+  - `callouts` 的 `title` 与 `desc` 是否精炼、突出架构技术关键词？
 - [ ] **6. 底图资产路径三级优先级自检 (Asset URL Priority Check)**：
   - 是否严格遵循优先级：优先使用本地工程相对路径（如 `./assets/arch.png`）或公网 HTTPS 链接？
   - 是否杜绝在 4K/5K 大图（> 1MB）上直接打印数百万字符的巨大 Base64 Data URI？
