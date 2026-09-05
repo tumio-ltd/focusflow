@@ -133,6 +133,7 @@ export interface ProjectState {
   updateDotPosition: (dotId: string, position: { cx: number; cy: number }) => void;
   updateCallout: (calloutId: string, updates: Partial<CalloutItem>) => void;
   updateImage: (imageId: string, updates: Partial<ElementImage>) => void;
+  updatePathEndpoints: (pathId: string, endpoints: { from?: string; to?: string }) => void;
   updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean; borderRadius?: number; boxShadow?: boolean | string; border?: string; animation?: 'fade' | 'zoom-fade' | 'slide-up'; opacity?: number }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
@@ -692,6 +693,29 @@ export const useProjectStore = create<ProjectState>((set) => ({
         elements: {
           ...state.dsl.elements,
           images,
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  updatePathEndpoints: (pathId, { from, to }) =>
+    set((state) => {
+      const elements = { ...state.dsl.elements };
+      if (!elements.paths) return state;
+      const paths = elements.paths.map((p: ElementPath) =>
+        p.id === pathId
+          ? {
+              ...p,
+              from: from !== undefined ? from : p.from,
+              to: to !== undefined ? to : p.to,
+            }
+          : p
+      );
+      const nextDSL = {
+        ...state.dsl,
+        elements: {
+          ...elements,
+          paths,
         },
       };
       return pushHistory(state, nextDSL);

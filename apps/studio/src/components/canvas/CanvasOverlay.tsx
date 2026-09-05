@@ -9,6 +9,7 @@ import { BoxTransformOverlay } from './BoxTransformOverlay';
 import { DotTransformOverlay } from './DotTransformOverlay';
 import { CalloutTransformOverlay } from './CalloutTransformOverlay';
 import { ImageTransformOverlay } from './ImageTransformOverlay';
+import { PathTransformOverlay } from './PathTransformOverlay';
 import { PathDrawingOverlay } from './PathDrawingOverlay';
 import { DotDrawingOverlay } from './DotDrawingOverlay';
 import { CalloutOverlay } from './CalloutOverlay';
@@ -58,7 +59,9 @@ function CanvasOverlayComponent({
   const currentScene = dsl.scenes[activeSceneIndex];
   const dots = dsl.elements.dots || [];
   const images = dsl.elements.images || [];
+  const paths = dsl.elements.paths || [];
   const activeBoxIds = currentScene?.activeElements?.boxes || [];
+  const activePathIds = currentScene?.activeElements?.paths || [];
   const activeImageIds = currentScene?.activeElements?.images || [];
   const rafRef = React.useRef<number | null>(null);
   const lastCoordsRef = React.useRef<{ x: number; y: number } | null>(null);
@@ -186,6 +189,16 @@ function CanvasOverlayComponent({
         contentHeight={contentHeight}
         active={activeTool === 'select'}
         dots={dots}
+      />
+
+      {/* 1.2 选中连线拖拽/端点重连控制图层 (Layer 1.2 贝塞尔流光连线) */}
+      <PathTransformOverlay
+        contentWidth={contentWidth}
+        contentHeight={contentHeight}
+        active={activeTool === 'select'}
+        boxes={boxes}
+        paths={paths}
+        activePathIds={activePathIds}
       />
 
       {/* 2. 选中解说气泡拖拽平移/调色控制图层 (Layer 2 浮动解说卡片) */}

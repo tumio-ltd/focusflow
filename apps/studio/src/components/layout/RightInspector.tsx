@@ -735,9 +735,13 @@ function RightInspectorComponent({
 
                 {/* 端点拓扑信息 */}
                 {(selectedPath.from || selectedPath.to) && (
-                  <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-1.5 rounded border border-border flex flex-col gap-0.5">
-                    <div className="truncate">{t('startPoint', '起点')}: <span className="text-foreground">{selectedPath.from || t('freeBezier', '自由贝塞尔')}</span></div>
-                    <div className="truncate">{t('endPoint', '终点')}: <span className="text-foreground">{selectedPath.to || t('freeBezier', '自由贝塞尔')}</span></div>
+                  <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-2 rounded-lg border border-border flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-[10px] text-primary/80 font-sans pb-0.5 border-b border-border/40">
+                      <span>端点拓扑</span>
+                      <span className="text-[9px] text-muted-foreground">可直接在画布中拖拽端点吸附重连</span>
+                    </div>
+                    <div className="truncate pt-0.5">{t('startPoint', '起点')}: <span className="text-foreground font-semibold">{selectedPath.from || t('freeBezier', '自由贝塞尔')}</span></div>
+                    <div className="truncate">{t('endPoint', '终点')}: <span className="text-foreground font-semibold">{selectedPath.to || t('freeBezier', '自由贝塞尔')}</span></div>
                   </div>
                 )}
               </div>

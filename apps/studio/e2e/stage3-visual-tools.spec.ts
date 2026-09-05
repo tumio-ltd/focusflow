@@ -291,6 +291,69 @@ async function verifyImageVisualControlAndInspection(page: Page): Promise<void> 
   await expect(hitAreas).toHaveCount(0);
 }
 
+/**
+ * 9. 验证连线图元 (Path) 的画布选中高亮、悬浮工具栏与端点手柄拖拽吸附重连
+ */
+async function verifyPathTransformOverlayInteraction(page: Page): Promise<void> {
+  // 1. 验证选择工具处于激活状态
+  const selectToolBtn = page.locator('[data-testid="tool-select"]');
+  await expect(selectToolBtn).toBeVisible();
+  await selectToolBtn.click();
+
+  // 2. 验证画布上的 PathTransformOverlay 图层正常挂载
+  const pathTransformOverlay = page.locator('[data-testid="path-transform-overlay"]');
+  await expect(pathTransformOverlay).toBeVisible();
+
+  // 3. 在右侧属性检查器的图层列表中选中 path 连线图元 (如 path-gateway-order)
+  const inspector = page.locator('[data-testid="inspector"]');
+  const pathLayerItem = inspector.locator('[data-testid="layer-item-path-gateway-order"]');
+  await expect(pathLayerItem).toBeVisible();
+  await pathLayerItem.click();
+
+  // 4. 验证右侧属性检查器展示连线专属属性面板与端点拓扑提示
+  await expect(inspector).toContainText(/连线高级参数/);
+  await expect(inspector).toContainText(/端点拓扑/);
+  await expect(inspector).toContainText(/可直接在画布中拖拽端点吸附重连/);
+
+  // 5. 验证画布上连线呈现发光选中状态、流光光晕与起点/终点控制手柄
+  const selectedHalo = pathTransformOverlay.locator('[data-testid="path-selected-halo"]');
+  await expect(selectedHalo).toBeAttached();
+
+  const fromHandle = pathTransformOverlay.locator('[data-testid="path-from-handle"]');
+  const toHandle = pathTransformOverlay.locator('[data-testid="path-to-handle"]');
+  await expect(fromHandle).toBeAttached();
+  await expect(toHandle).toBeAttached();
+
+  // 6. 验证画布微型快捷工具栏 (展示 Path ID、模式切换与调色)
+  await expect(pathTransformOverlay).toContainText('path-gateway-order');
+  await expect(pathTransformOverlay).toContainText('流光');
+  await expect(pathTransformOverlay).toContainText('脉冲');
+  await expect(pathTransformOverlay).toContainText('描边');
+
+  // 7. 测试在微型工具栏中切换模式为“脉冲”
+  const pulseBtn = pathTransformOverlay.locator('button:has-text("脉冲")');
+  await pulseBtn.click();
+  await expect(pulseBtn).toHaveClass(/bg-cyan-500/);
+
+  // 8. 验证拖拽起点手柄时唤起周围 Box 的 8 向吸附候选锚点
+  const fromBox = await fromHandle.boundingBox();
+  if (fromBox) {
+    await page.mouse.move(fromBox.x + fromBox.width / 2, fromBox.y + fromBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(fromBox.x + 20, fromBox.y + 20);
+    // 验证候选吸附锚点群已动态激活渲染
+    const candidateAnchors = pathTransformOverlay.locator('.candidate-anchors');
+    await expect(candidateAnchors).toBeVisible();
+    await page.mouse.up();
+  }
+
+  // 9. 验证工具栏关闭图标按钮存在，点击可取消选中
+  const closeBtn = pathTransformOverlay.locator('button[title*="取消选中"]').first();
+  await expect(closeBtn).toBeVisible();
+  await closeBtn.click();
+  await expect(inspector).toContainText(/未选中图元/);
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -327,6 +390,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
 
   test('TC308: 验证动态插图 (Image) 图元放置、画布变换手柄与右侧属性面板参数调节', async ({ page }) => {
     await verifyImageVisualControlAndInspection(page);
+  });
+
+  test('TC309: 验证连线图元 (Path) 的画布选中高亮、悬浮工具栏与端点手柄拖拽吸附重连', async ({ page }) => {
+    await verifyPathTransformOverlayInteraction(page);
   });
 });
 
