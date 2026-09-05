@@ -26,10 +26,16 @@
 5. **显式锚点打造最佳流向 (Explicit 8-Way Anchors)**：
    - 贝塞尔连线支持 8 向物理锚点后缀（`.left`, `.right`, `.top`, `.bottom`, `.left-top`, `.right-top` 等）。
    - **最佳实践**：水平调用写 `"boxA.right" ➔ "boxB.left"`；垂直调用写 `"boxA.bottom" ➔ "boxB.top"`。这能让控制点法向量精准对冲，生成最平滑的三次贝塞尔 S 型流光粒子；若省略后缀，系统亦会按几何相对位置自动智能推导。
-6. **底图资产轻量引用原则 (Asset URL Best Practice · 防 Token 溢出)**：
-   - `asset.url` 必须填写真实图片文件路径（如 `./assets/architecture.png`）或 HTTP 链接。
-   - **严禁直接在 JSON 中输出庞大的 Base64 Data URI**（几兆图片的 Base64 文本长达数百万字符，会导致大模型输出 Token 瞬间溢出截断、生成耗时剧增且文件臃肿无法阅读）。
-   - 独立单文件 HTML 导出所需的 Base64 转换，由 FocusFlow 内置的 `scripts/build-standalone.js` 脚本在构建时全自动处理，绝不消耗 Agent 的 Token。
+6. **底图资产引用三级优先级准则 (Asset URL Priority Guidelines)**：
+   为兼顾 Agent 生成效率、文件体积与多运行模式兼容性，`asset.url` 严格遵循以下优先级阶梯：
+   - **🏆 优先级 1（本地 CLI / 自动化流水线 · 生产首选）**：**工程目录相对路径**（如 `./assets/architecture.png`）。
+     - **基准目录**：严格以 `config.json` 所在的工程目录为根基准。
+     - **构建机制**：图片与 `config.json` 同包存放，由随后的 `node scripts/build-standalone.js` 脚本在 Node.js 本地文件系统中毫秒级读取并自动内嵌为 Base64 单文件 HTML。Agent 仅需输出一条简短路径，0 Token 损耗。
+   - **🥈 优先级 2（跨网分发 / Web Studio 导入）**：**公网 HTTPS 链接**（如云端 OSS/S3、图床或 CDN 地址）。
+     - 浏览器环境（本地 dev、公网 SaaS、独立 HTML）受同源与安全沙箱限制无法直接跨域读取操作系统私有磁盘文件，HTTPS URL 可确保在任何纯浏览器环境下即开即显。
+   - **🥉 优先级 3（极限轻量自包含 · 严格尺寸门禁）**：**Base64 Data URI**。
+     - **严格限制**：仅允许在极小体积资产（< 300KB，如小图标、SVG）中使用。
+     - **红色禁区**：**坚决严禁在 4K/5K 大图（> 1MB）上让 Agent 直接在 JSON 中输出 Base64**（4MB 图片的 Base64 达 530 万字符，会瞬间撑爆大模型的上下文与输出上限，导致生成假死中断）。
 
 ---
 
@@ -49,7 +55,7 @@ interface FocusFlowDSL {
 
   // 2. 底图资产信息
   asset: {
-    url: string;                      // 底图相对路径 (如 "./arch.png") 或 HTTP URL (严禁直接输出巨大 Base64)
+    url: string;                      // 优先级 1: 相对路径 (./assets/arch.png)；优先级 2: HTTPS 链接；大图严格禁止输出 Base64
     width: number;                    // 底图真实宽度 (如 1920 或 5120)
     height: number;                   // 底图真实高度 (如 1080 或 2880)
   };
@@ -271,9 +277,9 @@ Agent 在最终返回 JSON 前，必须在内部自检以下 5 项：
   - 每幕相机的 `camera.x, camera.y`，是否大致对应本幕重点讲解框元的几何中心点（`x + width/2, y + height/2`）？
 - [ ] **5. 技术文案专业度**：
   - `callouts` 中的解说词是否精炼、突出架构技术关键词（避免无意义的空泛描述）？
-- [ ] **6. 底图路径轻量化检查 (Anti-Token Exhaustion)**：
-  - `asset.url` 是否使用的是简洁的文件相对路径（如 `./architecture.png`）或网络 URL？
-  - 是否杜绝了在 JSON 中直接打印数百万字符的巨大 Base64 Data URI？
+- [ ] **6. 底图资产路径三级优先级自检 (Asset URL Priority Check)**：
+  - 是否严格遵循优先级：优先使用本地工程相对路径（如 `./assets/arch.png`）或公网 HTTPS 链接？
+  - 是否杜绝在 4K/5K 大图（> 1MB）上直接打印数百万字符的巨大 Base64 Data URI？
 
 ---
 

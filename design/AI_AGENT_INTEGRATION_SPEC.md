@@ -67,9 +67,14 @@ Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进
 - **引用完整性约束（Referential Integrity）**：
   - 连线 `path.from` 与 `path.to` 必须存在于 `elements.boxes` 中。
   - `scene.activeElements.boxes` 中的每一个 ID，都必须在全局 `elements.boxes` 中被预先声明。
-- **底图资产轻量引用与构建时内联原则（Asset URL vs Build-time Inlining）**：
-  - Agent 在生成 DSL 时，`asset.url` 必须声明为本地相对路径（如 `./architecture.png`）或 HTTP 链接，严禁在 JSON 中直接输出巨大的 Base64 Data URI（防止输出 Token 暴增截断与 IDE 假死）。
-  - 脱机单文件打包所需的 Base64 转换，完全由本地 CLI 编译脚本（`scripts/build-standalone.js`）在构建时毫秒级自动完成。
+- **底图资产引用三级优先级准则（Asset URL Priority Guidelines）**：
+  为兼顾 Node.js 文件系统与浏览器沙箱安全机制的差异，Agent 生成 `asset.url` 必须严格遵循以下三级优先级：
+  1. **🏆 优先级 1（本地 CLI / 自动化流水线 · 生产首选）**：**工程目录相对路径**（如 `"url": "./assets/arch.png"`）。
+     - **物理基准**：严格以 `config.json` 所在的工程根目录为基准。图片与配置文件同包归档，由随后的 `scripts/build-standalone.js` 脚本在 Node.js 中毫秒级读取并自动内嵌为 Base64 单文件 HTML。Agent 0 Token 损耗。
+  2. **🥈 优先级 2（跨网分发 / Web Studio 导入）**：**公网 HTTPS 链接**（如云端 OSS/S3、图床或 CDN 地址）。
+     - 浏览器环境受安全沙箱限制无法直接读取用户私有磁盘的未托管文件，HTTPS URL 确保在任何纯浏览器环境（本地 dev、公网 SaaS、独立 HTML）下即开即显。
+  3. **🥉 优先级 3（极限轻量自包含 · 严格尺寸门禁）**：**Base64 Data URI**。
+     - **严格限制**：仅限 < 300KB 的微型图元/图标。**坚决严禁在 4K/5K 大图（> 1MB）上让 Agent 直接在 JSON 中输出 Base64**，防止大模型输出 Token 暴增截断与 IDE 假死。
 
 ---
 
