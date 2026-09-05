@@ -26,6 +26,10 @@
 5. **显式锚点打造最佳流向 (Explicit 8-Way Anchors)**：
    - 贝塞尔连线支持 8 向物理锚点后缀（`.left`, `.right`, `.top`, `.bottom`, `.left-top`, `.right-top` 等）。
    - **最佳实践**：水平调用写 `"boxA.right" ➔ "boxB.left"`；垂直调用写 `"boxA.bottom" ➔ "boxB.top"`。这能让控制点法向量精准对冲，生成最平滑的三次贝塞尔 S 型流光粒子；若省略后缀，系统亦会按几何相对位置自动智能推导。
+6. **底图资产轻量引用原则 (Asset URL Best Practice · 防 Token 溢出)**：
+   - `asset.url` 必须填写真实图片文件路径（如 `./assets/architecture.png`）或 HTTP 链接。
+   - **严禁直接在 JSON 中输出庞大的 Base64 Data URI**（几兆图片的 Base64 文本长达数百万字符，会导致大模型输出 Token 瞬间溢出截断、生成耗时剧增且文件臃肿无法阅读）。
+   - 独立单文件 HTML 导出所需的 Base64 转换，由 FocusFlow 内置的 `scripts/build-standalone.js` 脚本在构建时全自动处理，绝不消耗 Agent 的 Token。
 
 ---
 
@@ -45,9 +49,9 @@ interface FocusFlowDSL {
 
   // 2. 底图资产信息
   asset: {
-    url: string;                      // 底图 URL 或 Base64 Data URI
-    width: number;                    // 底图真实宽度 (如 1920)
-    height: number;                   // 底图真实高度 (如 1080)
+    url: string;                      // 底图相对路径 (如 "./arch.png") 或 HTTP URL (严禁直接输出巨大 Base64)
+    width: number;                    // 底图真实宽度 (如 1920 或 5120)
+    height: number;                   // 底图真实高度 (如 1080 或 2880)
   };
 
   // 3. 全局图元库 (所有可能登场的实体)
@@ -267,6 +271,9 @@ Agent 在最终返回 JSON 前，必须在内部自检以下 5 项：
   - 每幕相机的 `camera.x, camera.y`，是否大致对应本幕重点讲解框元的几何中心点（`x + width/2, y + height/2`）？
 - [ ] **5. 技术文案专业度**：
   - `callouts` 中的解说词是否精炼、突出架构技术关键词（避免无意义的空泛描述）？
+- [ ] **6. 底图路径轻量化检查 (Anti-Token Exhaustion)**：
+  - `asset.url` 是否使用的是简洁的文件相对路径（如 `./architecture.png`）或网络 URL？
+  - 是否杜绝了在 JSON 中直接打印数百万字符的巨大 Base64 Data URI？
 
 ---
 

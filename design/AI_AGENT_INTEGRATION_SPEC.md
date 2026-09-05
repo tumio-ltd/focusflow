@@ -67,6 +67,9 @@ Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进
 - **引用完整性约束（Referential Integrity）**：
   - 连线 `path.from` 与 `path.to` 必须存在于 `elements.boxes` 中。
   - `scene.activeElements.boxes` 中的每一个 ID，都必须在全局 `elements.boxes` 中被预先声明。
+- **底图资产轻量引用与构建时内联原则（Asset URL vs Build-time Inlining）**：
+  - Agent 在生成 DSL 时，`asset.url` 必须声明为本地相对路径（如 `./architecture.png`）或 HTTP 链接，严禁在 JSON 中直接输出巨大的 Base64 Data URI（防止输出 Token 暴增截断与 IDE 假死）。
+  - 脱机单文件打包所需的 Base64 转换，完全由本地 CLI 编译脚本（`scripts/build-standalone.js`）在构建时毫秒级自动完成。
 
 ---
 
