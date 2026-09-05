@@ -20,6 +20,33 @@
     --ff-glass-bg: rgba(255, 255, 255, 0.88);
     --ff-glass-border: rgba(226, 232, 240, 0.8);
     --ff-shadow-card: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+
+    /* --- n8n-Style Precision Button & CTA Tokens (Light Mode) --- */
+    /* Primary (Electric Blue Gradient + Bevel + Glow) */
+    --ff-btn-primary-from: #0284c7;
+    --ff-btn-primary-to: #0369a1;
+    --ff-btn-primary-text: #ffffff;
+    --ff-btn-primary-border: rgba(2, 132, 199, 0.45);
+    --ff-btn-primary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    --ff-btn-primary-glow: 0 3px 12px -2px rgba(2, 132, 199, 0.25);
+    --ff-btn-primary-glow-hover: 0 5px 18px -2px rgba(2, 132, 199, 0.4);
+
+    /* CTA (Warm Coral Orange - Top Export / Milestone Actions) */
+    --ff-btn-cta-from: #ff9b26;
+    --ff-btn-cta-to: #ee4f27;
+    --ff-btn-cta-text: #ffffff;
+    --ff-btn-cta-border: rgba(238, 79, 39, 0.5);
+    --ff-btn-cta-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    --ff-btn-cta-glow: 0 3px 12px -2px rgba(238, 79, 39, 0.28);
+    --ff-btn-cta-glow-hover: 0 6px 20px -2px rgba(238, 79, 39, 0.45);
+
+    /* Secondary / Default (Bevel Glass Surface) */
+    --ff-btn-secondary-bg: #ffffff;
+    --ff-btn-secondary-hover: #f8fafc;
+    --ff-btn-secondary-text: #0f172a;
+    --ff-btn-secondary-border: rgba(203, 213, 225, 0.85);
+    --ff-btn-secondary-bevel: inset 0 1px 0 rgba(255, 255, 255, 1);
+    --ff-btn-secondary-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   }
 
   .dark {
@@ -43,5 +70,32 @@
     --ff-glass-bg: rgba(11, 15, 25, 0.85);
     --ff-glass-border: rgba(30, 41, 59, 0.8);
     --ff-shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+
+    /* --- n8n-Style Precision Button & CTA Tokens (Dark Mode) --- */
+    /* Primary (Electric Blue/Cyan Gradient + Bevel + Glow) */
+    --ff-btn-primary-from: #0284c7;
+    --ff-btn-primary-to: #38bdf8;
+    --ff-btn-primary-text: #06090e;
+    --ff-btn-primary-border: rgba(56, 189, 248, 0.4);
+    --ff-btn-primary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    --ff-btn-primary-glow: 0 4px 16px -2px rgba(56, 189, 248, 0.32);
+    --ff-btn-primary-glow-hover: 0 6px 24px -2px rgba(56, 189, 248, 0.55);
+
+    /* CTA (Warm Coral Orange - Top Export / Milestone Actions) */
+    --ff-btn-cta-from: #ff9b26;
+    --ff-btn-cta-to: #ee4f27;
+    --ff-btn-cta-text: #ffffff;
+    --ff-btn-cta-border: rgba(255, 155, 38, 0.4);
+    --ff-btn-cta-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    --ff-btn-cta-glow: 0 4px 18px -2px rgba(238, 79, 39, 0.35);
+    --ff-btn-cta-glow-hover: 0 8px 28px -2px rgba(238, 79, 39, 0.55);
+
+    /* Secondary / Default (Dark Translucent Glass + Bevel) */
+    --ff-btn-secondary-bg: rgba(255, 255, 255, 0.05);
+    --ff-btn-secondary-hover: rgba(255, 255, 255, 0.09);
+    --ff-btn-secondary-text: #f8fafc;
+    --ff-btn-secondary-border: rgba(255, 255, 255, 0.1);
+    --ff-btn-secondary-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --ff-btn-secondary-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   }
 }

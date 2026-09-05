@@ -313,7 +313,7 @@ function TopBarComponent({
         <Tooltip content={t('exportHtmlTip')} shortcut="⌘E" position="bottom" align="end">
           <Button 
             size="sm" 
-            variant="cyan" 
+            variant="cta" 
             data-testid="export-btn"
             onClick={onExport} 
             className="gap-1.5 h-8 px-3"

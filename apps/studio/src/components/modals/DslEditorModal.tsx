@@ -292,9 +292,10 @@ export function DslEditorModal({
 
             <Button
               size="sm"
+              variant="primary"
               onClick={handleApply}
               disabled={!!error}
-              className="h-8 gap-1.5 text-xs px-5 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-md cursor-pointer transition-all"
+              className="h-8 gap-1.5 text-xs px-5"
             >
               {isSuccess ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Save className="w-3.5 h-3.5" />}
               <span>{isSuccess ? '已成功应用！' : '应用修改 (Hot Sync)'}</span>

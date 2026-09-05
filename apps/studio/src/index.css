@@ -95,3 +95,59 @@ header, aside, footer, main {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+@layer components {
+  /* n8n-Style Precision Primary Button (Route A: Electric Blue) */
+  .ff-btn-primary {
+    background-image: linear-gradient(155deg, var(--ff-btn-primary-from), var(--ff-btn-primary-to));
+    color: var(--ff-btn-primary-text);
+    border: 1px solid var(--ff-btn-primary-border);
+    box-shadow: var(--ff-btn-primary-bevel), var(--ff-btn-primary-glow);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ff-btn-primary:hover:not(:disabled) {
+    box-shadow: var(--ff-btn-primary-bevel), var(--ff-btn-primary-glow-hover);
+    filter: brightness(1.06);
+    transform: translateY(-0.5px);
+  }
+  .ff-btn-primary:active:not(:disabled) {
+    transform: translateY(0.5px) scale(0.985);
+    filter: brightness(0.96);
+  }
+
+  /* n8n-Style Precision CTA Button (Route B: Warm Coral Orange) */
+  .ff-btn-cta {
+    background-image: linear-gradient(155deg, var(--ff-btn-cta-from), var(--ff-btn-cta-to));
+    color: var(--ff-btn-cta-text);
+    border: 1px solid var(--ff-btn-cta-border);
+    box-shadow: var(--ff-btn-cta-bevel), var(--ff-btn-cta-glow);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ff-btn-cta:hover:not(:disabled) {
+    box-shadow: var(--ff-btn-cta-bevel), var(--ff-btn-cta-glow-hover);
+    filter: brightness(1.08);
+    transform: translateY(-0.5px);
+  }
+  .ff-btn-cta:active:not(:disabled) {
+    transform: translateY(0.5px) scale(0.985);
+    filter: brightness(0.95);
+  }
+
+  /* n8n-Style Precision Secondary Button (Glass Surface + Bevel) */
+  .ff-btn-secondary {
+    background-color: var(--ff-btn-secondary-bg);
+    color: var(--ff-btn-secondary-text);
+    border: 1px solid var(--ff-btn-secondary-border);
+    box-shadow: var(--ff-btn-secondary-bevel), var(--ff-btn-secondary-shadow);
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ff-btn-secondary:hover:not(:disabled) {
+    background-color: var(--ff-btn-secondary-hover);
+    border-color: var(--ff-border);
+    transform: translateY(-0.5px);
+  }
+  .ff-btn-secondary:active:not(:disabled) {
+    transform: translateY(0.5px) scale(0.985);
+  }
+}
+
