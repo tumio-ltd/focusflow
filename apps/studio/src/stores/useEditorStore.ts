@@ -1,6 +1,18 @@
 import { create } from 'zustand';
 import type { ToolType } from '@/components/layout';
 
+const SMART_SNAP_STORAGE_KEY = 'focusflow_smart_snap';
+
+const getInitialSmartSnap = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const saved = localStorage.getItem(SMART_SNAP_STORAGE_KEY);
+    return saved !== null ? saved === 'true' : false;
+  } catch {
+    return false;
+  }
+};
+
 export interface EditorState {
   activeTool: ToolType;
   selectedElementId: string | null;
@@ -21,6 +33,7 @@ export interface EditorState {
   togglePlay: () => void;
   toggleHUD: () => void;
   toggleSmartSnap: () => void;
+  setSmartSnapEnabled: (enabled: boolean) => void;
   toggleCrosshair: () => void;
   setCursorCoords: (coords: { x: number; y: number } | null) => void;
 }
@@ -32,7 +45,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   activeSceneIndex: 0,
   isPlaying: false,
   isHUDVisible: true,
-  isSmartSnapEnabled: true,
+  isSmartSnapEnabled: getInitialSmartSnap(),
   isCrosshairEnabled: false,
   cursorCoords: null,
 
@@ -43,7 +56,24 @@ export const useEditorStore = create<EditorState>((set) => ({
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   toggleHUD: () => set((state) => ({ isHUDVisible: !state.isHUDVisible })),
-  toggleSmartSnap: () => set((state) => ({ isSmartSnapEnabled: !state.isSmartSnapEnabled })),
+  toggleSmartSnap: () =>
+    set((state) => {
+      const nextVal = !state.isSmartSnapEnabled;
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(SMART_SNAP_STORAGE_KEY, String(nextVal));
+        }
+      } catch {}
+      return { isSmartSnapEnabled: nextVal };
+    }),
+  setSmartSnapEnabled: (enabled: boolean) => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(SMART_SNAP_STORAGE_KEY, String(enabled));
+      }
+    } catch {}
+    set({ isSmartSnapEnabled: enabled });
+  },
   toggleCrosshair: () => set((state) => ({ isCrosshairEnabled: !state.isCrosshairEnabled })),
   setCursorCoords: (cursorCoords) => set({ cursorCoords }),
 }));

@@ -509,9 +509,10 @@ function RightInspectorComponent({
                       </div>
                       <p className="text-[10px] text-muted-foreground">{t('smartSnapDesc', '框选时自动贴合图元边缘')}</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className="relative inline-flex items-center cursor-pointer" data-testid="smart-snap-switch">
                       <input
                         type="checkbox"
+                        data-testid="smart-snap-input"
                         checked={isSmartSnapEnabled}
                         onChange={onToggleSmartSnap}
                         className="sr-only peer"

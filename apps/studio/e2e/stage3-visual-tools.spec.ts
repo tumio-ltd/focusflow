@@ -354,6 +354,53 @@ async function verifyPathTransformOverlayInteraction(page: Page): Promise<void> 
   await expect(inspector).toContainText(/未选中图元/);
 }
 
+/**
+ * 10. 验证智能边缘吸附 (Smart Edge Snap) 默认关闭 (false) 及 LocalStorage 状态记忆与跨会话持久化
+ */
+async function verifySmartSnapDefaultAndMemoryPersistence(page: Page): Promise<void> {
+  const inspector = page.locator('[data-testid="inspector"]');
+  await expect(inspector).toBeVisible();
+
+  const calibPanel = page.locator('[data-testid="calibration-assistant-panel"]');
+  await expect(calibPanel).toBeVisible();
+
+  // 1. 验证智能边缘吸附开关默认处于关闭状态 (false)
+  const snapInput = page.locator('[data-testid="smart-snap-input"]');
+  await expect(snapInput).toBeVisible();
+  await expect(snapInput).not.toBeChecked();
+
+  // 2. 验证初始状态下未写入或默认为 false
+  const initialStorage = await page.evaluate(() => window.localStorage.getItem('focusflow_smart_snap'));
+  expect(initialStorage === null || initialStorage === 'false').toBe(true);
+
+  // 3. 点击开启智能边缘吸附
+  await snapInput.check({ force: true });
+  await expect(snapInput).toBeChecked();
+
+  // 4. 验证已成功写入 localStorage ('focusflow_smart_snap' === 'true')
+  const storageValAfterOn = await page.evaluate(() => window.localStorage.getItem('focusflow_smart_snap'));
+  expect(storageValAfterOn).toBe('true');
+
+  // 5. 刷新页面验证持久化记忆特性（刷新后保持开启）
+  await page.reload();
+  const reloadedSnapInput = page.locator('[data-testid="smart-snap-input"]');
+  await expect(reloadedSnapInput).toBeVisible();
+  await expect(reloadedSnapInput).toBeChecked();
+
+  // 6. 再次点击关闭智能边缘吸附并验证 localStorage 更新为 'false'
+  await reloadedSnapInput.uncheck({ force: true });
+  await expect(reloadedSnapInput).not.toBeChecked();
+
+  const storageValAfterOff = await page.evaluate(() => window.localStorage.getItem('focusflow_smart_snap'));
+  expect(storageValAfterOff).toBe('false');
+
+  // 7. 再次刷新确认关闭状态依然被正确持久化记忆
+  await page.reload();
+  const finalSnapInput = page.locator('[data-testid="smart-snap-input"]');
+  await expect(finalSnapInput).toBeVisible();
+  await expect(finalSnapInput).not.toBeChecked();
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -394,6 +441,10 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
 
   test('TC309: 验证连线图元 (Path) 的画布选中高亮、悬浮工具栏与端点手柄拖拽吸附重连', async ({ page }) => {
     await verifyPathTransformOverlayInteraction(page);
+  });
+
+  test('TC310: 验证智能边缘吸附默认禁用 (false) 与 LocalStorage 状态记忆恢复特性', async ({ page }) => {
+    await verifySmartSnapDefaultAndMemoryPersistence(page);
   });
 });
 
