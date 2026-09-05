@@ -251,7 +251,17 @@ export function PathTransformOverlay({
             }
           }
 
-          const bezierD = computeCubicBezierPath(dynamicFrom, dynamicTo);
+          const isDraggingThis = dragState && dragState.pathId === path.id;
+          let bezierD: string;
+
+          if (!isDraggingThis) {
+            const domEl = document.getElementById(path.id);
+            const domD = domEl?.getAttribute('d');
+            bezierD = path.d || domD || computeCubicBezierPath(dynamicFrom, dynamicTo);
+          } else {
+            bezierD = computeCubicBezierPath(dynamicFrom, dynamicTo);
+          }
+
           const strokeColor = path.style?.stroke || '#38bdf8';
           const strokeWidth = path.style?.strokeWidth || 4;
 

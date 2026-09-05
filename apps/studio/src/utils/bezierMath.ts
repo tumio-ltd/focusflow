@@ -135,12 +135,22 @@ export function computeCubicBezierPath(
   const normFrom = from.normal || { dx: 1, dy: 0 };
   const normTo = to.normal || { dx: -1, dy: 0 };
 
-  const dist = Math.max(Math.hypot(to.x - from.x, to.y - from.y) * tension, 40);
+  const dx = Math.abs(to.x - from.x) * tension;
+  const dy = Math.abs(to.y - from.y) * tension;
 
-  const cp1x = from.x + normFrom.dx * dist;
-  const cp1y = from.y + normFrom.dy * dist;
-  const cp2x = to.x + normTo.dx * dist;
-  const cp2y = to.y + normTo.dy * dist;
+  let cp1x = from.x + normFrom.dx * dx;
+  let cp1y = from.y + normFrom.dy * dy;
+  let cp2x = to.x + normTo.dx * dx;
+  let cp2y = to.y + normTo.dy * dy;
+
+  // Handle horizontal or vertical alignment (identical to FocusFlow BezierRouter)
+  if (normFrom.dx !== 0 && normTo.dx !== 0) {
+    cp1y = from.y;
+    cp2y = to.y;
+  } else if (normFrom.dy !== 0 && normTo.dy !== 0) {
+    cp1x = from.x;
+    cp2x = to.x;
+  }
 
   return `M ${Math.round(from.x)} ${Math.round(from.y)} C ${Math.round(cp1x)} ${Math.round(cp1y)}, ${Math.round(cp2x)} ${Math.round(cp2y)}, ${Math.round(to.x)} ${Math.round(to.y)}`;
 }
