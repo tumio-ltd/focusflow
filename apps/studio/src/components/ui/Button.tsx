@@ -15,7 +15,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       default: 'ff-btn-secondary',
       secondary: 'ff-btn-secondary',
       primary: 'ff-btn-primary font-semibold',
-      cyan: 'ff-btn-primary font-semibold',
+      cyan: 'bg-primary text-primary-foreground font-semibold hover:opacity-90 active:opacity-100 shadow-md shadow-primary/20',
       cta: 'ff-btn-cta font-semibold',
       outline: 'bg-transparent text-foreground hover:bg-muted border border-border active:scale-[0.985]',
       ghost: 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground active:scale-[0.985]',
