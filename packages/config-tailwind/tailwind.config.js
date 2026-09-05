@@ -1,3 +1,15 @@
+function withOpacity(variableName) {
+  return ({ opacityValue, opacityVariable }) => {
+    if (opacityValue !== undefined) {
+      return `color-mix(in srgb, var(${variableName}) calc(${opacityValue} * 100%), transparent)`;
+    }
+    if (opacityVariable !== undefined) {
+      return `color-mix(in srgb, var(${variableName}) calc(var(${opacityVariable}, 1) * 100%), transparent)`;
+    }
+    return `var(${variableName})`;
+  };
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class'],
@@ -5,51 +17,51 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
+        background: withOpacity('--background'),
+        foreground: withOpacity('--foreground'),
         card: {
-          DEFAULT: 'var(--card)',
-          foreground: 'var(--card-foreground)',
+          DEFAULT: withOpacity('--card'),
+          foreground: withOpacity('--card-foreground'),
         },
         panel: {
-          DEFAULT: 'var(--panel)',
-          foreground: 'var(--foreground)',
-          border: 'var(--border)',
+          DEFAULT: withOpacity('--panel'),
+          foreground: withOpacity('--foreground'),
+          border: withOpacity('--border'),
         },
         canvas: {
-          DEFAULT: 'var(--canvas)',
+          DEFAULT: withOpacity('--canvas'),
         },
         popover: {
-          DEFAULT: 'var(--popover)',
-          foreground: 'var(--popover-foreground)',
+          DEFAULT: withOpacity('--popover'),
+          foreground: withOpacity('--popover-foreground'),
         },
         primary: {
-          DEFAULT: 'var(--primary)',
-          foreground: 'var(--primary-foreground)',
+          DEFAULT: withOpacity('--primary'),
+          foreground: withOpacity('--primary-foreground'),
         },
         secondary: {
-          DEFAULT: 'var(--secondary)',
-          foreground: 'var(--secondary-foreground)',
+          DEFAULT: withOpacity('--secondary'),
+          foreground: withOpacity('--secondary-foreground'),
         },
         muted: {
-          DEFAULT: 'var(--muted)',
-          foreground: 'var(--muted-foreground)',
+          DEFAULT: withOpacity('--muted'),
+          foreground: withOpacity('--muted-foreground'),
         },
         accent: {
-          DEFAULT: 'var(--accent)',
-          hover: 'var(--accent-hover)',
-          foreground: 'var(--accent-foreground)',
+          DEFAULT: withOpacity('--accent'),
+          hover: withOpacity('--accent-hover'),
+          foreground: withOpacity('--accent-foreground'),
         },
         destructive: {
-          DEFAULT: 'var(--destructive)',
-          foreground: 'var(--destructive-foreground)',
+          DEFAULT: withOpacity('--destructive'),
+          foreground: withOpacity('--destructive-foreground'),
         },
         border: {
-          DEFAULT: 'var(--border)',
-          subtle: 'var(--border-subtle)',
+          DEFAULT: withOpacity('--border'),
+          subtle: withOpacity('--border-subtle'),
         },
-        input: 'var(--input)',
-        ring: 'var(--ring)',
+        input: withOpacity('--input'),
+        ring: withOpacity('--ring'),
       },
       borderRadius: {
         lg: 'var(--radius)',
