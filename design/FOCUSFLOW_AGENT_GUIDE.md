@@ -331,3 +331,65 @@ node scripts/render-video.js <path_to_output.html> <path_to_output.mp4> --fps 60
 # 跨目录 / 环境变量调用:
 node "${FOCUSFLOW_ROOT:-<path_to_focusflow>}/scripts/render-video.js" <path_to_output.html> <path_to_output.mp4> --fps 60 --resolution 1080p
 ```
+
+---
+
+## 七、 任务派发与投喂提示词模板 (Prompt Templates)
+
+当用户或上游 Agent 需要向新的 Agent 会话发起 FocusFlow 制作任务时，可直接复制以下模板，填入素材与主线信息后投喂：
+
+### 模板 1：面向具备终端执行权限的编码智能体 (IDE / CLI Agent)
+> **适用环境**：Antigravity、Claude Code、Cursor Composer、GitHub Copilot CLI 等具备本地命令执行能力的智能体。
+
+````markdown
+请阅读规范文档《FOCUSFLOW_AGENT_GUIDE.md》，担任 FocusFlow 演播架构导演，为我制作架构演播项目：
+
+【输入信息】
+1. 底图文件：`./assets/<your_image.png>`（原生尺寸：<WIDTH>x<HEIGHT>，如 1920x1080）
+2. 演示主题：<演示项目标题，如：电商高并发订单系统架构演进>
+3. 运镜主线：
+   - 第 1 幕：<场景名称与聚焦区域，如：系统全貌与全局入口网关>
+   - 第 2 幕：<场景名称与聚焦区域，如：核心微服务业务调用与链路追踪>
+   - 第 3 幕：<场景名称与聚焦区域，如：消息队列异步削峰与最终一致性>
+   - 第 4 幕：<场景名称与聚焦区域，如：持久化数据库与高可用部署>
+
+【执行要求】
+1. 严格对齐《FOCUSFLOW_AGENT_GUIDE.md》的规范契约：
+   - 运镜百分比计算：使用公式 camera.x = ((box.x + width/2) - W/2) / W * 100 与 camera.y 计算，严禁直接填写绝对像素；
+   - 气泡强绑定：使用 `targetBoxId` 绑定目标框元，正文文本使用 `desc`；
+   - 资产引用：`asset.url` 优先填写工程相对路径（如 `./assets/<your_image.png>`），严禁输出大图 Base64。
+2. 保存生成的项目为 `<path_to_config.json>`。
+3. 在终端立即运行静态校验：
+   ```bash
+   node scripts/validate-dsl.mjs <path_to_config.json>
+   ```
+   若校验报错，立即根据终端提示自愈修正，禁止盲目导出 HTML 反复试错。
+4. 校验通过后，一键构建独立 HTML 交付：
+   ```bash
+   node scripts/build-standalone.js <path_to_config.json> dist/<project_name>.html
+   ```
+````
+
+---
+
+### 模板 2：面向纯对话 / 无终端权限的聊天智能体 (Chat Agent)
+> **适用环境**：Web 端 ChatGPT、Claude、DeepSeek 网页版对话窗口。
+
+````markdown
+请阅读规范文档《FOCUSFLOW_AGENT_GUIDE.md》，担任 FocusFlow 演播架构导演，直接为我输出标准的 FocusFlow DSL JSON：
+
+【输入信息】
+1. 底图文件：`./assets/<your_image.png>`（原生尺寸：<WIDTH>x<HEIGHT>，如 1920x1080）
+2. 演示主题：<演示项目标题>
+3. 运镜主线：
+   - 第 1 幕：<场景 1 聚焦目标与解说词>
+   - 第 2 幕：<场景 2 聚焦目标与解说词>
+   - 第 3 幕：<场景 3 聚焦目标与解说词>
+
+【生成约束】
+1. 镜头坐标必须使用百分比计算公式：((Xmid - W/2) / W) * 100，严禁输出绝对像素坐标；
+2. 气泡绑定字段为 `targetBoxId`，内容字段为 `desc`；
+3. 资产 URL 保持为 `./assets/<your_image.png>`，严禁内嵌大图 Base64；
+4. 严格对照第 5 节的《生成前自检清单》完成自查；
+5. 请直接输出可直接保存为 `config.json` 的标准 JSON 代码块，无需多余寒暄。
+````
