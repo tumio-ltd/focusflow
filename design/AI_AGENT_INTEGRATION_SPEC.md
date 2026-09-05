@@ -57,9 +57,12 @@ Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进
   - `elements`（演员库）：保存整张架构图的全部演员（所有框元 Box、连线 Path、圆点 Dot、插图 Image）。它只定义实体“是什么、在哪里”。
   - `scenes[i].activeElements`（分镜登场表）：决定第 `i` 幕中有哪些演员登场。随着演播推进，图元是**逐幕递增点亮或切换**的。
 - **镜头摄像机（Camera）的物理意义**：
-  - 镜头不是无意义滚动，`camera.x, camera.y` 是聚焦的目标中心绝对坐标，`camera.zoom`（如 1.2x ~ 2.0x）是放大特写深度，`camera.duration`（如 1.2s）是运镜飞行时长。
+  - 镜头不是无意义滚动，`camera.x, camera.y` 是相对底图中心的**百分比偏移量（-50 ~ +50）**，而非绝对像素坐标。当聚焦某个目标框元时，换算公式为：
+    $$\text{camera.x} = \frac{(box.x + box.width / 2) - \text{asset.width} / 2}{\text{asset.width}} \times 100$$
+    $$\text{camera.y} = \frac{(box.y + box.height / 2) - \text{asset.height} / 2}{\text{asset.height}} \times 100$$
+    `camera.zoom`（如 1.3x ~ 1.8x）是放大特写深度，`camera.duration`（如 1.2s）是运镜飞行时长。
 - **气泡卡片（Callout）的从属绑定**：
-  - 气泡不能无附着漂浮，它通过 `boxId` 强绑定到目标框元，在视觉上充当“讲解员”，并随着相机的运镜呈现在最佳阅读视线范围内。
+  - 气泡不能无附着漂浮，它通过 `targetBoxId` 强绑定到目标框元（触发流光虚线引导），正文文本字段为 `desc`，在视觉上充当“讲解员”，并随着相机的运镜呈现在最佳阅读视线范围内。
 
 #### (2) 数据契约认知（Data Structure · 严格的几何与引用自洽）
 - **坐标基准（Coordinate Baseline）**：
@@ -146,8 +149,19 @@ Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进
    - Agent 接收用户的输入底图（如系统架构图、流程时序图、数据看板截图）与文本描述（如“按网关 ➔ 鉴权 ➔ 订单 ➔ 数据库的顺序制作演示”）。
 2. **生成 FocusFlow DSL JSON**：
    - Agent 依照 `@focusflow/dsl` 规范，直接在内存或磁盘中输出标准的 `config.json`。
-3. **自动化编译独立单文件 HTML**：
-   - Agent 调用 FocusFlow 内置编译脚本：
+3. **极速静态校验（Validate DSL · 必跑，零成本毫秒级拦截错误）**：
+   - **核心痛点**：过去 Agent 遇到语法或图元引用问题时，盲目通过反复生成并分析数兆字节的独立 HTML 进行排查，耗费大量时间与 Token。
+   - **规范要求**：在生成 JSON 后，Agent **必须优先运行静态校验器**（耗时 ~1ms，无需启动无头浏览器，无 I/O 资源膨胀）：
+     ```bash
+     # 方式 A (在仓库根目录下相对路径执行):
+     node scripts/validate-dsl.mjs path/to/project/config.json
+
+     # 方式 B (跨目录绝对路径 / 环境变量调用):
+     node "${FOCUSFLOW_ROOT:-<path/to/focusflow>}/scripts/validate-dsl.mjs" path/to/project/config.json
+     ```
+   - 校验器会自动检查：Schema 字段、ID 引用自洽（连线 from/to、气泡 targetBoxId）、连线 8 锚点合规性、镜头百分比安全边界及尺寸过大的 Base64 资产警示。
+4. **自动化编译独立单文件 HTML**：
+   - 静态校验通过后，Agent 调用 FocusFlow 内置编译脚本：
      ```bash
      # 方式 A (在仓库根目录下相对路径执行，推荐):
      cd <focusflow_repo_root>
@@ -157,7 +171,7 @@ Agent 必须理解 FocusFlow 的底层哲学是 **“电影镜头运镜 + 渐进
      node "${FOCUSFLOW_ROOT:-<path/to/focusflow>}/scripts/build-standalone.js" path/to/project/config.json dist/showcase.html
      ```
    - 输出一个内嵌 Base64 高清底图与 IIFE 播放引擎的独立 `.html`，可在任何设备无网双击秒开。
-4. **无头录制为高清视频 (Headless Video Render)**：
+5. **无头录制为高清视频 (Headless Video Render)**：
    - Agent 调用无头录制脚本（基于 Playwright / CDP）：
      ```bash
      # 方式 A (在仓库根目录下相对路径执行):
@@ -305,15 +319,15 @@ Studio 前端已经注入了完整的自动化操作锚点：
     {
       "id": "scene-1",
       "title": "01 网关接入层",
-      "camera": { "x": 0, "y": 0, "zoom": 1.0, "duration": 1.2 },
+      "camera": { "x": -33.3, "y": -29.6, "zoom": 1.4, "duration": 1.2 },
       "activeElements": {
         "boxes": ["box-gateway"],
         "callouts": [
           {
             "id": "callout-gateway",
-            "boxId": "box-gateway",
+            "targetBoxId": "box-gateway",
             "title": "API Gateway",
-            "description": "负责鉴权、限流与灰度分流",
+            "desc": "负责鉴权、限流与灰度分流",
             "theme": "cyan"
           }
         ]
@@ -322,16 +336,16 @@ Studio 前端已经注入了完整的自动化操作锚点：
     {
       "id": "scene-2",
       "title": "02 订单服务调用",
-      "camera": { "x": 200, "y": 0, "zoom": 1.4, "duration": 1.5 },
+      "camera": { "x": -12.5, "y": -29.6, "zoom": 1.4, "duration": 1.5 },
       "activeElements": {
         "boxes": ["box-gateway", "box-order"],
         "paths": ["path-gateway-order"],
         "callouts": [
           {
             "id": "callout-order",
-            "boxId": "box-order",
+            "targetBoxId": "box-order",
             "title": "Order Service",
-            "description": "分布式下单事务引擎",
+            "desc": "分布式下单事务引擎",
             "theme": "emerald"
           }
         ]
@@ -345,9 +359,9 @@ Studio 前端已经注入了完整的自动化操作锚点：
 
 ## 六、 后续演进 Checklist
 
-- [ ] **1. CLI 自动化脚本包 (`scripts/agent/`)**
-  - [ ] `scripts/agent/render-video.mjs`: 提供基于 Playwright Headless 的单文件 HTML 到 MP4 自动录制脚本
-  - [ ] `scripts/agent/validate-dsl.mjs`: 基于 `@focusflow/dsl` 的 JSON Schema 静态校验工具
+- [ ] **1. CLI 自动化脚本包 (`scripts/`)**
+  - [x] `scripts/validate-dsl.mjs`: 基于 `@focusflow/dsl` 的毫秒级 JSON Schema 与拓扑引用静态校验工具
+  - [ ] `scripts/render-video.js`: 强化基于 Playwright Headless 的单文件 HTML 到 MP4 自动录制脚本
 - [ ] **2. 官方 MCP Server (`packages/mcp-server`)**
   - [ ] 实现 `@modelcontextprotocol/sdk` 标准服务端
   - [ ] 导出 `focusflow_create_project`, `focusflow_add_scene`, `focusflow_export_html`, `focusflow_export_video` 等 8 项标准工具

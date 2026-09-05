@@ -19,10 +19,17 @@
 2. **演员库与登场表解耦 (Decoupled Elements & Scenes)**：
    - `dsl.elements` 是**全局演员库**：定义整张图里的所有框元（Box）、连线（Path）、圆点（Dot）和插图（Image）。
    - `dsl.scenes[i].activeElements` 是**单幕登场表**：决定当前幕中哪些演员现身。前一幕的图元可以通过继承在后一幕中保持可见，同时点亮新的图元。
-3. **镜头跟随思考聚焦 (Camera Follows Thought)**：
-   - 当你要讲解某个模块时，摄像机 `camera` 的 `(x, y)` 必须平移至该模块的中心，并将 `zoom` 放大至 `1.3x ~ 1.8x`（特写），转场时长 `duration` 设置为 `1.2s ~ 1.5s`。
+3. **镜头跟随思考聚焦与相对百分比坐标 (Camera Percentage Coordinates & Math Formula)**：
+   - 摄像机 `camera.x` 和 `camera.y` 是**相对底图中心点的百分比偏移量（-50 ~ +50）**，而非绝对像素！
+     - `(0, 0)` 表示镜头正对底图绝对中心；
+     - `x < 0` 镜头向左偏，`x > 0` 镜头向右偏；`y < 0` 镜头向上偏，`y > 0` 镜头向下偏。
+   - **镜头中心精准换算公式（一键推算，彻底杜绝导出 HTML 盲调试错）**：
+     设目标框元几何中心为 $(X_{mid}, Y_{mid})$，底图绝对宽高为 $(W, H)$：
+     $$\text{camera.x} = \frac{X_{mid} - W / 2}{W} \times 100$$
+     $$\text{camera.y} = \frac{Y_{mid} - H / 2}{H} \times 100$$
+   - `zoom` 推荐设置为 `1.3 ~ 1.8`（特写聚焦），运镜时长 `duration` 设置为 `1.2 ~ 1.5` 秒。
 4. **原生像素绝对锚定 (Native Pixel Anchoring)**：
-   - 所有坐标（`x, y, width, height`）必须严格基于底图原生分辨率（如 `1920×1080`），杜绝混淆为视口百分比或 CSS 屏幕像素。
+   - 图元（`boxes`, `dots`, `images`）的坐标与宽高（`x, y, width, height`）必须严格基于底图原生像素绝对数值，杜绝使用百分比。
 5. **显式锚点打造最佳流向 (Explicit 8-Way Anchors)**：
    - 贝塞尔连线支持 8 向物理锚点后缀（`.left`, `.right`, `.top`, `.bottom`, `.left-top`, `.right-top` 等）。
    - **最佳实践**：水平调用写 `"boxA.right" ➔ "boxB.left"`；垂直调用写 `"boxA.bottom" ➔ "boxB.top"`。这能让控制点法向量精准对冲，生成最平滑的三次贝塞尔 S 型流光粒子；若省略后缀，系统亦会按几何相对位置自动智能推导。
@@ -49,7 +56,7 @@ interface FocusFlowDSL {
   meta: {
     title: string;                    // 项目标题
     description?: string;              // 简短演播描述
-    viewport: { width: number; height: number }; // 视口基准宽高 (通常 1920x1080)
+    viewport: { width: number; height: number }; // 视口基准宽高 (通常 1920x1080 或 5120x2880)
     theme?: { primaryColor: string; bg: string }; // 主题基调
   };
 
@@ -66,8 +73,8 @@ interface FocusFlowDSL {
       id: string;                     // 唯一标识，如 "box-gateway"
       x: number;                      // 左上角 X (原生像素)
       y: number;                      // 左上角 Y (原生像素)
-      width: number;                  // 宽度
-      height: number;                 // 高度
+      width: number;                  // 宽度 (原生像素)
+      height: number;                 // 高度 (原生像素)
       style?: {
         borderRadius?: number;        // 圆角 (推荐 12~16)
         border?: string;              // 边框 (推荐 "2px solid #38bdf8")
@@ -86,7 +93,7 @@ interface FocusFlowDSL {
     }>;
     dots?: Array<{
       id: string;
-      cx: number; cy: number; r?: number; // 脉冲圆点坐标与半径
+      cx: number; cy: number; r?: number; // 脉冲圆点坐标与半径 (原生像素)
       color?: string;
     }>;
     images?: Array<{                  // 局部下钻插图
@@ -99,9 +106,9 @@ interface FocusFlowDSL {
     id: string;                       // 场景 ID，如 "scene-01"
     title: string;                    // 场景标题，如 "01 全局入口网关"
     camera: {
-      x: number;                      // 镜头焦点中心 X (原生像素)
-      y: number;                      // 镜头焦点中心 Y (原生像素)
-      zoom: number;                   // 镜头缩放倍率 (1.0 = 原大, 1.5 = 特写)
+      x: number;                      // 镜头水平偏移百分比 (-50 ~ +50，0为居中，-25为左偏1/4)
+      y: number;                      // 镜头垂直偏移百分比 (-50 ~ +50，0为居中，25为下偏1/4)
+      zoom: number;                   // 镜头缩放倍率 (1.0 = 原大, 1.4 ~ 1.8 = 特写)
       duration: number;               // 平滑运镜过渡秒数 (推荐 1.2 ~ 1.5)
     };
     activeElements: {
@@ -111,10 +118,11 @@ interface FocusFlowDSL {
       images?: string[];              // 当前幕激活的 Image ID 列表
       callouts?: Array<{              // 当前幕挂载的解说气泡
         id: string;
-        boxId: string;                // 依附的目标 Box ID
+        targetBoxId: string;          // 依附的目标 Box ID (用于绘制连接引导流光虚线)
         title: string;                // 气泡卡片标题
-        description: string;          // 核心技术解说正文
+        desc: string;                 // 核心技术解说正文
         theme?: 'cyan' | 'emerald' | 'amber' | 'rose' | 'purple' | 'pink';
+        position?: { left: string; top: string }; // 可选绝对坐标 (如 "1850px", "220px")
       }>;
     };
   }>;
@@ -203,16 +211,16 @@ Agent 生成 DSL 时，请严格对齐如下产出结构：
     {
       "id": "scene-01",
       "title": "01 微服务流量入口",
-      "camera": { "x": 350, "y": 500, "zoom": 1.4, "duration": 1.2 },
+      "camera": { "x": -31.8, "y": -3.7, "zoom": 1.4, "duration": 1.2 },
       "activeElements": {
         "boxes": ["box-gateway"],
         "paths": [],
         "callouts": [
           {
             "id": "callout-gw",
-            "boxId": "box-gateway",
+            "targetBoxId": "box-gateway",
             "title": "Spring Cloud Gateway",
-            "description": "全站流量入口，承载动态路由、JWT 鉴权与令牌桶限流",
+            "desc": "全站流量入口，承载动态路由、JWT 鉴权与令牌桶限流",
             "theme": "cyan"
           }
         ]
@@ -221,16 +229,16 @@ Agent 生成 DSL 时，请严格对齐如下产出结构：
     {
       "id": "scene-02",
       "title": "02 订单中心与事务一致性",
-      "camera": { "x": 820, "y": 500, "zoom": 1.5, "duration": 1.3 },
+      "camera": { "x": -7.3, "y": -3.7, "zoom": 1.5, "duration": 1.3 },
       "activeElements": {
         "boxes": ["box-gateway", "box-order"],
         "paths": ["path-gw-order"],
         "callouts": [
           {
             "id": "callout-order",
-            "boxId": "box-order",
+            "targetBoxId": "box-order",
             "title": "Order Processing Core",
-            "description": "集成 Seata AT 模式，保障跨库库存与积分扣减的最终一致性",
+            "desc": "集成 Seata AT 模式，保障跨库库存与积分扣减的最终一致性",
             "theme": "emerald"
           }
         ]
@@ -239,16 +247,16 @@ Agent 生成 DSL 时，请严格对齐如下产出结构：
     {
       "id": "scene-03",
       "title": "03 异步削峰与消息解耦",
-      "camera": { "x": 1050, "y": 500, "zoom": 1.3, "duration": 1.5 },
+      "camera": { "x": 17.2, "y": -3.7, "zoom": 1.3, "duration": 1.5 },
       "activeElements": {
         "boxes": ["box-gateway", "box-order", "box-mq"],
         "paths": ["path-gw-order", "path-order-mq"],
         "callouts": [
           {
             "id": "callout-mq",
-            "boxId": "box-mq",
+            "targetBoxId": "box-mq",
             "title": "Kafka Event Hub",
-            "description": "毫秒级吞吐削峰，异步通知物流、发票及大数据风控流批计算",
+            "desc": "毫秒级吞吐削峰，异步通知物流、发票及大数据风控流批计算",
             "theme": "amber"
           }
         ]
@@ -292,24 +300,34 @@ Agent 在最终返回 JSON 前，必须在内部自检以下 5 项：
 > - **本地开发环境专享**：若在本机专属开发环境中执行，可参考专属本地私有配置 `LOCAL_AGENT_ENV.md` 获取本机免配置绝对路径。
 > - **远程 Agent 提示**：若为无本地 Shell 终端执行权限的纯云端对话 Agent，请直接输出 DSL JSON 内容或通过 MCP 工具协议调用。
 
-### 方式 1：在项目根目录下通过相对路径执行（通用推荐）
+### 步骤 1：极速静态语法与引用校验（生成后必跑，零成本秒级自检）
+
+在执行耗时且依赖 I/O 的单文件打包或视频录制前，**必须先运行静态校验脚本**。它将在 1~5 毫秒内完成 Schema 格式、ID 引用完整性、连线锚点与摄像机安全边界检查，**彻底杜绝盲目多次导出 HTML 进行试错分析**：
 
 ```bash
-cd <focusflow_repo_root>
+# 在仓库根目录下校验：
+node scripts/validate-dsl.mjs <path_to_config.json>
 
-# 1. 编译 0 依赖单文件离线 HTML (自动内联 Base64 底图与 IIFE 播放引擎，双击秒开)
-node scripts/build-standalone.js <path_to_config.json> <path_to_output.html>
-
-# 2. 无头录制 60FPS MP4 视频 (Playwright Headless 自动演播截帧，落盘即看)
-node scripts/render-video.js <path_to_output.html> <path_to_output.mp4> --fps 60 --resolution 1080p
+# 或跨目录绝对路径调用：
+node "${FOCUSFLOW_ROOT:-<path_to_focusflow>}/scripts/validate-dsl.mjs" <path_to_config.json>
 ```
 
-### 方式 2：跨目录绝对路径 / 环境变量动态调用
+### 步骤 2：一键编译 0 依赖单文件离线 HTML (双击即播)
 
 ```bash
-# 环境变量调用 (适合脚本与 CI/CD 流水线)
-node "${FOCUSFLOW_ROOT:-<path_to_focusflow>}/scripts/build-standalone.js" <path_to_config.json> <path_to_output.html>
+# 通用相对路径 (在仓库根目录执行):
+node scripts/build-standalone.js <path_to_config.json> <path_to_output.html>
 
-# Git 动态定位 (适合在仓库子目录运行的 Agent，自动定位根目录)
-node "$(git rev-parse --show-toplevel)/scripts/build-standalone.js" <path_to_config.json> <path_to_output.html>
+# 跨目录 / 环境变量调用:
+node "${FOCUSFLOW_ROOT:-<path_to_focusflow>}/scripts/build-standalone.js" <path_to_config.json> <path_to_output.html>
+```
+
+### 步骤 3：一键无头录制 60FPS MP4 视频 (无需人工干预)
+
+```bash
+# 通用相对路径:
+node scripts/render-video.js <path_to_output.html> <path_to_output.mp4> --fps 60 --resolution 1080p
+
+# 跨目录 / 环境变量调用:
+node "${FOCUSFLOW_ROOT:-<path_to_focusflow>}/scripts/render-video.js" <path_to_output.html> <path_to_output.mp4> --fps 60 --resolution 1080p
 ```
