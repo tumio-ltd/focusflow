@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "tailwind.config.js",
-  "files": ["tailwind.config.js"]
+  "main": "theme.css",
+  "files": ["theme.css", "tailwind.config.js"],
+  "exports": {
+    ".": "./theme.css",
+    "./legacy": "./tailwind.config.js"
+  }
 }

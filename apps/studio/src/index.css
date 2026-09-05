@@ -1,11 +1,12 @@
 @import './styles/tokens.css';
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
+@custom-variant dark (&:where(.dark, .dark *));
+
+@import "@focusflow/config-tailwind";
+
+:root {
     --background: var(--ff-bg-app);
     --foreground: var(--ff-text-primary);
     --panel: var(--ff-bg-panel);
@@ -57,7 +58,6 @@
     --input: var(--ff-border);
     --ring: var(--ff-accent);
   }
-}
 
 *, *::before, *::after {
   -webkit-font-smoothing: antialiased !important;
