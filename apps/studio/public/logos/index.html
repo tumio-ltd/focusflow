@@ -68,6 +68,104 @@
       width: 100%;
     }
 
+    /* 品牌口号与设计内涵卡片 */
+    .brand-philosophy-card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.98) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.5), 0 0 24px -6px rgba(56, 189, 248, 0.12);
+      border-radius: 20px;
+      padding: 30px 36px;
+      margin-bottom: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .brand-philosophy-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
+    }
+    .philosophy-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      border-bottom: 1px dashed rgba(56, 189, 248, 0.2);
+      padding-bottom: 12px;
+    }
+    .philosophy-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .philosophy-slogan {
+      font-size: 22px;
+      font-weight: 800;
+      text-align: center;
+      margin: 12px 0 24px 0;
+      background: linear-gradient(135deg, #f8fafc 0%, #38bdf8 50%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .quote-mark {
+      font-family: Georgia, serif;
+      opacity: 0.7;
+      margin: 0 4px;
+      -webkit-text-fill-color: #38bdf8;
+    }
+    .philosophy-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1.15fr;
+      align-items: center;
+      gap: 20px;
+      background: rgba(5, 8, 14, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 20px 24px;
+    }
+    @media (max-width: 960px) {
+      .philosophy-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .philosophy-divider {
+        display: none;
+      }
+    }
+    .philosophy-divider {
+      width: 1px;
+      height: 38px;
+      background: #1e293b;
+    }
+    .philosophy-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .philosophy-tag {
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: 800;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 10px;
+      border-radius: 8px;
+      letter-spacing: 0.05em;
+    }
+    .philosophy-desc {
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.55;
+    }
+
     /* 模块大卡片 */
     .section-card {
       background: var(--card-bg);
@@ -284,6 +382,35 @@
   </header>
 
   <div class="container">
+
+    <!-- 品牌口号与设计内涵展示卡片 -->
+    <div class="brand-philosophy-card">
+      <div class="philosophy-header">
+        <div class="philosophy-title">
+          <span>🎬 官方品牌定位与设计内核</span>
+        </div>
+        <span class="tag tag-cyan">Brand Identity</span>
+      </div>
+      <div class="philosophy-slogan">
+        <span class="quote-mark">“</span>让静态架构图拥有电影级运镜与流光叙事<span class="quote-mark">”</span>
+      </div>
+      <div class="philosophy-grid">
+        <div class="philosophy-item">
+          <div class="philosophy-tag">流</div>
+          <div class="philosophy-desc">取自连线流光、连续运镜与数据动线</div>
+        </div>
+        <div class="philosophy-divider"></div>
+        <div class="philosophy-item">
+          <div class="philosophy-tag">镜</div>
+          <div class="philosophy-desc">取自摄像机视锥对焦、微服务局部特写与深空透视</div>
+        </div>
+        <div class="philosophy-divider"></div>
+        <div class="philosophy-item">
+          <div class="philosophy-tag">气质</div>
+          <div class="philosophy-desc">极简二字，兼具工业影视感与开发者工具的干练气质（对标“剪映 / 墨刀”）</div>
+        </div>
+      </div>
+    </div>
 
     <!-- 第一核心板块：最终定稿的官方识别资产 (Official Design Assets) -->
     <div class="section-card featured-card">
