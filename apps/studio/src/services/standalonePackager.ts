@@ -25,6 +25,21 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
     }
   }
 
+  // 若音频轨为临时 blob: URL，自动转为内嵌 Base64 Data URL
+  if (exportDSL.audio?.tracks?.length) {
+    for (const track of exportDSL.audio.tracks) {
+      if (track.url?.startsWith('blob:')) {
+        try {
+          const resp = await fetch(track.url);
+          const blob = await resp.blob();
+          track.url = await blobToDataUrl(blob);
+        } catch (e) {
+          console.warn('Failed to embed blob audio track as base64 in standalone HTML:', e);
+        }
+      }
+    }
+  }
+
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>

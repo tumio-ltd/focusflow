@@ -6,7 +6,9 @@ import type {
   ElementPath, 
   ElementDot, 
   ElementImage,
-  CalloutItem
+  CalloutItem,
+  AudioTrackConfig,
+  AudioMarker
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
 
@@ -137,6 +139,13 @@ export interface ProjectState {
   updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean; borderRadius?: number; boxShadow?: boolean | string; border?: string; animation?: 'fade' | 'zoom-fade' | 'slide-up'; opacity?: number }) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
   toggleShowPlayerControls: () => void;
+  updateSceneDuration: (sceneIndex: number, duration: number) => void;
+  updateSceneVoiceoverScript: (sceneIndex: number, script: string) => void;
+  setAudioTrack: (track: AudioTrackConfig) => void;
+  removeAudioTrack: (trackId: string) => void;
+  updateAudioTrackVolume: (volume: number) => void;
+  addAudioMarker: (marker: AudioMarker) => void;
+  batchUpdateScenesDuration: (durations: number[]) => void;
   undo: () => void;
   redo: () => void;
   markSaved: () => void;
@@ -789,6 +798,92 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
       const nextDSL = { ...state.dsl, elements, ...(isCallout ? { scenes } : {}) };
       return pushHistory(state, nextDSL);
+    }),
+
+  updateSceneDuration: (sceneIndex: number, duration: number) =>
+    set((state) => {
+      if (sceneIndex < 0 || sceneIndex >= state.dsl.scenes.length) return state;
+      const scenes = [...state.dsl.scenes];
+      scenes[sceneIndex] = {
+        ...scenes[sceneIndex],
+        duration: Math.max(500, Math.round(duration)),
+      };
+      return pushHistory(state, { ...state.dsl, scenes });
+    }),
+
+  updateSceneVoiceoverScript: (sceneIndex: number, script: string) =>
+    set((state) => {
+      if (sceneIndex < 0 || sceneIndex >= state.dsl.scenes.length) return state;
+      const scenes = [...state.dsl.scenes];
+      scenes[sceneIndex] = {
+        ...scenes[sceneIndex],
+        voiceoverScript: script,
+      };
+      return pushHistory(state, { ...state.dsl, scenes });
+    }),
+
+  setAudioTrack: (track: AudioTrackConfig) =>
+    set((state) => {
+      const nextDSL: FocusFlowDSL = {
+        ...state.dsl,
+        audio: {
+          ...state.dsl.audio,
+          tracks: [track],
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  removeAudioTrack: (trackId: string) =>
+    set((state) => {
+      const currentTracks = state.dsl.audio?.tracks || [];
+      const filtered = currentTracks.filter((t) => t.id !== trackId);
+      const nextDSL: FocusFlowDSL = {
+        ...state.dsl,
+        audio: {
+          ...state.dsl.audio,
+          tracks: filtered,
+        },
+      };
+      return pushHistory(state, nextDSL);
+    }),
+
+  updateAudioTrackVolume: (volume: number) =>
+    set((state) => {
+      const tracks = (state.dsl.audio?.tracks || []).map((t) => ({
+        ...t,
+        volume: Math.max(0, Math.min(1, volume)),
+      }));
+      return pushHistory(state, {
+        ...state.dsl,
+        audio: { ...state.dsl.audio, tracks },
+      });
+    }),
+
+  addAudioMarker: (marker: AudioMarker) =>
+    set((state) => {
+      const tracks = (state.dsl.audio?.tracks || []).map((t, idx) => {
+        if (idx === 0) {
+          return {
+            ...t,
+            markers: [...(t.markers || []), marker],
+          };
+        }
+        return t;
+      });
+      return pushHistory(state, {
+        ...state.dsl,
+        audio: { ...state.dsl.audio, tracks },
+      });
+    }),
+
+  batchUpdateScenesDuration: (durations: number[]) =>
+    set((state) => {
+      const scenes = state.dsl.scenes.map((s, idx) => ({
+        ...s,
+        duration: durations[idx] !== undefined ? Math.max(500, Math.round(durations[idx])) : s.duration,
+      }));
+      return pushHistory(state, { ...state.dsl, scenes });
     }),
 
   undo: () =>

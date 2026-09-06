@@ -1366,7 +1366,7 @@ model ProjectVersion {
 - [x] **5.5 质量门禁与 Playwright E2E 自动化测试**
   - [x] 5.5.1 编写 `stage5-export-compiler.spec.ts` 端到端全流程测试套件并 100% 验证通过
 
-#### 🎵 Stage 5.6: 音频时间轴对齐与多媒体音画同步 (Audio Timeline Sync & Voiceover Alignment · 规划中)
+#### 🎵 Stage 5.6: 音频时间轴对齐与多媒体音画同步 (Audio Timeline Sync & Voiceover Alignment · 已完成)
 
 > **核心设计哲学：渐进式（Progressive）且非强制（Non-mandatory）**
 > * 音频时间轴是针对“解说型架构视频”的高级增强模块，**绝非强迫用户必须提供或上传外部音频**。无音频时，系统完全依照预设时长（如每幕 3.5s）或观众鼠标/按键翻页正常运作；
@@ -1376,60 +1376,60 @@ model ProjectVersion {
 >   - **管道 3（AI 提词）**：分幕台词输入结合 TTS 语音合成，根据生成音频物理长度自动伸缩该幕镜头 `duration`；
 > * **存储分界**：模式 A 纯前端浏览器本地沙箱（IndexedDB 暂存 + 导出单文件内嵌 Base64 Data URI），完全不联网、零隐私泄漏；模式 B 云端 SaaS 异步直传 Cloudflare R2。
 
-- [ ] **5.6.1 浏览器端离线音频解码与分块波形采样 (`audioDecoder.ts` / `waveformWorker.ts`)**
-  - [ ] 基于 Web Audio API `AudioContext.decodeAudioData` 实现多格式离线解码（MP3 / WAV / M4A / AAC / FLAC / OGG）
-  - [ ] 编写 Web Worker 离屏线程（`waveformWorker.ts`），接收 Float32Array PCM 数据并执行双通道峰值包络提取（Min-Max Peak Envelope Extraction）
-  - [ ] 输出高保真紧凑型采样数组，建立内存缓存机制，大文件（> 50MB）解码不阻塞主线程 UI 与 60FPS 画布渲染
-- [ ] **5.6.2 Studio 内置同屏演播麦克风录音器 (`StudioVoiceRecorder.ts`)**
-  - [ ] 基于 HTML5 `navigator.mediaDevices.getUserMedia` 与 `MediaRecorder` 采集高保真麦克风音频流（优先选用 `audio/webm;codecs=opus`）
-  - [ ] 实现录音就绪预检弹层：设备切换枚举、动态立体声 VU 电平表（-60dB ~ 0dB）与降噪开关（ANC / Echo Cancellation）
-  - [ ] 实现 3-2-1 倒计时与播放器运镜自动联动启动逻辑，支持演播中按 `M` 键或悬浮按钮打入分幕转场标记（Punch-in Marker）
-  - [ ] 录音停止时自动转为本地 Blob 并计算时长，自动拉伸校准 DSL 各场景 `duration` 匹配真实语速
-- [ ] **5.6.3 AI 场景提词脚本与分幕 TTS 语音合成自适应伸缩 (`aiTtsSynthesizer.ts` / `useSceneTTS.ts`)**
-  - [ ] 在右侧属性面板【🎬 场景运镜】面板中集成 `VoiceoverScriptInput.tsx`，支持为每个 Scene 输入独立解说台词
-  - [ ] 编写前端统一 TTS 适配器层（`ttsProvider.ts`），支持可插拔适配器（如 OpenAI TTS、Edge-TTS 与浏览器原生 `window.speechSynthesis` 离线备用方案）
-  - [ ] 实现多分幕并行语音合成与流式音频切片拼接，生成全局解说音轨并注入各幕分界转场标记（`AudioMarker`）
-  - [ ] 实现自适应镜头时长拉伸算法：解析各幕 TTS 音频切片物理时长 $T_{\text{audio}}$，自动将当前场景重算为 $\text{scene.duration} = \max(T_{\text{audio}} + 300\text{ms}, \text{camera.duration})$，使解说台词与运镜停留自适应匹配
-- [ ] **5.6.4 可视化音频波形轨道与交互系统 (`AudioWaveformTrack.tsx` / `useAudioWaveform.ts`)**
-  - [ ] 底部时间轴集成 64px 紧凑波形画布，暗黑科技主题渐变渲染（电光青到科技蓝），支持时间网格线标尺
-  - [ ] 实现 10 级视口无级缩放（`Ctrl/Cmd + Wheel`，每屏 120s 到 2s）与横向视口平移（`Shift + Wheel`）
-  - [ ] 实现贯穿式场景分割虚线（Scene Piercing Cut-lines），拖拽时显示动态时间戳浮层与相对时间增量
-  - [ ] 实现贯穿激光播放头（Playhead）与毫秒级即拖即听引擎（Audio Scrubbing），基于 `AudioBufferSourceNode` 触发 60ms 颗粒微播放
-- [ ] **5.6.5 RMS 能量 VAD 检测与场景分割线智能停顿磁吸 (`vadAnalyzer.ts` / `useSnapToSilence.ts`)**
-  - [ ] 基于 20ms 滑动分析窗计算音频 RMS 能量并转换为 dBFS，识别连续低于 -42dB 且持续 $\ge 120\text{ms}$ 的自然断句停顿带
-  - [ ] 计算各停顿带几何中点 $t_{\text{snap}}$，拖拽场景卡片边缘靠近 $\pm 50\text{ms}$ 阈值时触发强磁吸捕捉
-  - [ ] 磁吸触发时提供视觉变绿（Emerald）与文字提示，双向自适应写回 DSL 更新场景 `duration`
-- [ ] **5.6.6 播放器主时钟锁相环（Master Clock PLL）音画严格同步 (`useAudioSync.ts` / `packages/player-core`)**
-  - [ ] 建立以 `AudioContext.currentTime` 为全局主时钟（Master Clock）的锁相环架构，杜绝声卡晶振与 rAF 累计漂移（Zero Drift）
-  - [ ] 改造播放内核运镜矩阵与流光进度计算为基于绝对时间 $t$ 的纯函数，主线程掉帧时自愈瞬间校准
-- [ ] **5.6.7 单文件 Base64 音频内联与多形态音画合流导出 (`standalonePackager.ts` / `canvasRecorder.ts`)**
-  - [ ] 单文件离线打包器集成音频 Base64 Data URI 自动内联与运行时解码播放
-  - [ ] 客户端 WebM 录制集成 `AudioContext.createMediaStreamDestination()`，与 `<canvas>` 画面流混流录制视听完整视频
-- [ ] **5.6.8 音频时间轴端到端 E2E 自动化测试套件 (`apps/studio/e2e/stage5-audio-sync.spec.ts`)**
-  - [ ] 编写 Playwright E2E 自动化测试，覆盖录音流模拟、外部音频拖拽、AI TTS 提词分幕合成与时长拉伸、波形缩放、磁吸对齐与合流导出全流程
+- [x] **5.6.1 浏览器端离线音频解码与分块波形采样 (`audioDecoder.ts` / `waveformWorker.ts`)**
+  - [x] 基于 Web Audio API `AudioContext.decodeAudioData` 实现多格式离线解码（MP3 / WAV / M4A / AAC / FLAC / OGG）
+  - [x] 编写 Web Worker 离屏线程（`waveformWorker.ts`），接收 Float32Array PCM 数据并执行双通道峰值包络提取（Min-Max Peak Envelope Extraction）
+  - [x] 输出高保真紧凑型采样数组，建立内存缓存机制，大文件（> 50MB）解码不阻塞主线程 UI 与 60FPS 画布渲染
+- [x] **5.6.2 Studio 内置同屏演播麦克风录音器 (`StudioVoiceRecorder.ts`)**
+  - [x] 基于 HTML5 `navigator.mediaDevices.getUserMedia` 与 `MediaRecorder` 采集高保真麦克风音频流（优先选用 `audio/webm;codecs=opus`）
+  - [x] 实现录音就绪预检弹层：设备切换枚举、动态立体声 VU 电平表（-60dB ~ 0dB）与降噪开关（ANC / Echo Cancellation）
+  - [x] 实现 3-2-1 倒计时与播放器运镜自动联动启动逻辑，支持演播中按 `M` 键或悬浮按钮打入分幕转场标记（Punch-in Marker）
+  - [x] 录音停止时自动转为本地 Blob 并计算时长，自动拉伸校准 DSL 各场景 `duration` 匹配真实语速
+- [x] **5.6.3 AI 场景提词脚本与分幕 TTS 语音合成自适应伸缩 (`aiTtsSynthesizer.ts` / `useSceneTTS.ts`)**
+  - [x] 在右侧属性面板【🎬 场景运镜】面板中集成 `VoiceoverScriptInput.tsx`，支持为每个 Scene 输入独立解说台词
+  - [x] 编写前端统一 TTS 适配器层（`ttsProvider.ts`），支持可插拔适配器（如 OpenAI TTS、Edge-TTS 与浏览器原生 `window.speechSynthesis` 离线备用方案）
+  - [x] 实现多分幕并行语音合成与流式音频切片拼接，生成全局解说音轨并注入各幕分界转场标记（`AudioMarker`）
+  - [x] 实现自适应镜头时长拉伸算法：解析各幕 TTS 音频切片物理时长 $T_{\text{audio}}$，自动将当前场景重算为 $\text{scene.duration} = \max(T_{\text{audio}} + 300\text{ms}, \text{camera.duration})$，使解说台词与运镜停留自适应匹配
+- [x] **5.6.4 可视化音频波形轨道与交互系统 (`AudioWaveformTrack.tsx` / `useAudioWaveform.ts`)**
+  - [x] 底部时间轴集成 64px 紧凑波形画布，暗黑科技主题渐变渲染（电光青到科技蓝），支持时间网格线标尺
+  - [x] 实现 10 级视口无级缩放（`Ctrl/Cmd + Wheel`，每屏 120s 到 2s）与横向视口平移（`Shift + Wheel`）
+  - [x] 实现贯穿式场景分割虚线（Scene Piercing Cut-lines），拖拽时显示动态时间戳浮层与相对时间增量
+  - [x] 实现贯穿激光播放头（Playhead）与毫秒级即拖即听引擎（Audio Scrubbing），基于 `AudioBufferSourceNode` 触发 60ms 颗粒微播放
+- [x] **5.6.5 RMS 能量 VAD 检测与场景分割线智能停顿磁吸 (`vadAnalyzer.ts` / `useSnapToSilence.ts`)**
+  - [x] 基于 20ms 滑动分析窗计算音频 RMS 能量并转换为 dBFS，识别连续低于 -42dB 且持续 $\ge 120\text{ms}$ 的自然断句停顿带
+  - [x] 计算各停顿带几何中点 $t_{\text{snap}}$，拖拽场景卡片边缘靠近 $\pm 50\text{ms}$ 阈值时触发强磁吸捕捉
+  - [x] 磁吸触发时提供视觉变绿（Emerald）与文字提示，双向自适应写回 DSL 更新场景 `duration`
+- [x] **5.6.6 播放器主时钟锁相环（Master Clock PLL）音画严格同步 (`useAudioSync.ts` / `packages/player-core`)**
+  - [x] 建立以 `AudioContext.currentTime` 为全局主时钟（Master Clock）的锁相环架构，杜绝声卡晶振与 rAF 累计漂移（Zero Drift）
+  - [x] 改造播放内核运镜矩阵与流光进度计算为基于绝对时间 $t$ 的纯函数，主线程掉帧时自愈瞬间校准
+- [x] **5.6.7 单文件 Base64 音频内联与多形态音画合流导出 (`standalonePackager.ts` / `canvasRecorder.ts`)**
+  - [x] 单文件离线打包器集成音频 Base64 Data URI 自动内联与运行时解码播放
+  - [x] 客户端 WebM 录制集成 `AudioContext.createMediaStreamDestination()`，与 `<canvas>` 画面流混流录制视听完整视频
+- [x] **5.6.8 音频时间轴端到端 E2E 自动化测试套件 (`apps/studio/e2e/stage5-audio-sync.spec.ts`)**
+  - [x] 编写 Playwright E2E 自动化测试，覆盖录音流模拟、外部音频拖拽、AI TTS 提词分幕合成与时长拉伸、波形缩放、磁吸对齐与合流导出全流程
 
-#### 🎬 Stage 5.7: 自动化无头视频录制与 Agent CLI 管线 (Automated Headless Video Pipeline & Agent CLI · 规划中)
-- [ ] **5.7.1 独立 CLI 渲染入口与参数解析器 (`scripts/render-video.mjs` / `packages/cli`)**
-  - [ ] 编写 Node.js CLI 统一交互入口（`focusflow render <input> -o <output> [flags]`）
-  - [ ] 支持解析 `config.json`、工程目录或已打包的 `standalone.html`，支持动态指定分辨率（1080P/2K/4K）、帧率（30/60FPS）
-  - [ ] 实现 `--json` 标志驱动的标准 NDJSON 流式输出协议，实现与 AI Agent（Claude/Cursor/AutoGPT）的无缝编排
-- [ ] **5.7.2 虚拟时钟注入与确定性逐帧步进引擎 (`virtualClock.ts` / `deterministicStepper.ts`)**
-  - [ ] 编写浏览器预注入脚本 `virtualClock.js`，无缝劫持 `window.requestAnimationFrame`、`Date.now` 与 `performance.now`
-  - [ ] 实现以 $\Delta t = 1/60\text{s}$ 固定时间步长的确定性逐帧步进（Deterministic Frame-Stepping）
-  - [ ] 每帧触发 `seekTo(t)` 并在微任务与 WebGL/DOM 栅格化稳定后，由 CDP `Page.captureScreenshot` 截取无损快照
-  - [ ] 截帧直接通过 Node.js 标准流管道（Pipe）灌入 FFmpeg `stdin`，实现零磁盘 I/O 损耗与无 GPU 虚机 100% 满帧无抖动录制
-- [ ] **5.7.3 Playwright Chromium 无头录制与生命周期信号桥接 (`headlessSession.ts`)**
-  - [ ] 在 `@focusflow/player` 内核完备广播 `window.__FOCUSFLOW_READY__`、`sceneChange` 与 `ended` 生命周期事件
-  - [ ] 无头录制会话精准捕获 `ended` 信号，实施 600ms 尾帧冷冻缓冲，杜绝尾部动画截断与黑屏闪烁
-  - [ ] 建立双看门狗机制（启动看门狗 15s、渲染看门狗 $T_{\text{max}} = \text{时长} \times 2.5 + 30\text{s}$），防止进程意外死锁
-- [ ] **5.7.4 FFmpeg 跨平台 GPU 硬件加速转码与无损混流管道 (`ffmpegMuxer.ts`)**
-  - [ ] 实现宿主硬件加速自动探测矩阵：macOS VideoToolbox、NVIDIA NVENC、Linux VAAPI 与 CPU `libx264` 智能降级
-  - [ ] 视音频合流混流压制：合流 Stage 5.6 音频轨，输出标准工业级兼容的 `H.264 + AAC` MP4，配置 `+faststart` 保证流媒体秒开
-- [ ] **5.7.5 错误码标准与 Agent 自愈闭环机制 (`errorHandler.ts`)**
-  - [ ] 制定规范的退出状态码体系（`0: 成功`, `1: DSL语法错误`, `2: 资产缺失`, `3: 浏览器崩溃`, `4: FFmpeg转码失败`, `5: 渲染超时`）
-  - [ ] 输出结构化自愈建议 JSON，赋能 AI Agent 自主修正参数并自动重试
-- [ ] **5.7.6 无头自动化渲染全链路 E2E 自动化测试套件 (`tests/headless-render.spec.ts`)**
-  - [ ] 编写全链路集成测试，在 CI 环境下验证从“输入 DSL ➔ 确定性无头步进 ➔ FFmpeg 压制 ➔ 校验 MP4 封装时长与画质”的 100% 自动化闭环
+#### 🎬 Stage 5.7: 自动化无头视频录制与 Agent CLI 管线 (Automated Headless Video Pipeline & Agent CLI · 已完成)
+- [x] **5.7.1 独立 CLI 渲染入口与参数解析器 (`scripts/render-video.mjs` / `packages/cli`)**
+  - [x] 编写 Node.js CLI 统一交互入口（`focusflow render <input> -o <output> [flags]`）
+  - [x] 支持解析 `config.json`、工程目录或已打包的 `standalone.html`，支持动态指定分辨率（1080P/2K/4K）、帧率（30/60FPS）
+  - [x] 实现 `--json` 标志驱动的标准 NDJSON 流式输出协议，实现与 AI Agent（Claude/Cursor/AutoGPT）的无缝编排
+- [x] **5.7.2 虚拟时钟注入与确定性逐帧步进引擎 (`virtualClock.ts` / `deterministicStepper.ts`)**
+  - [x] 编写浏览器预注入脚本 `virtualClock.js`，无缝劫持 `window.requestAnimationFrame`、`Date.now` 与 `performance.now`
+  - [x] 实现以 $\Delta t = 1/60\text{s}$ 固定时间步长的确定性逐帧步进（Deterministic Frame-Stepping）
+  - [x] 每帧触发 `seekTo(t)` 并在微任务与 WebGL/DOM 栅格化稳定后，由 CDP `Page.captureScreenshot` 截取无损快照
+  - [x] 截帧直接通过 Node.js 标准流管道（Pipe）灌入 FFmpeg `stdin`，实现零磁盘 I/O 损耗与无 GPU 虚机 100% 满帧无抖动录制
+- [x] **5.7.3 Playwright Chromium 无头录制与生命周期信号桥接 (`headlessSession.ts`)**
+  - [x] 在 `@focusflow/player` 内核完备广播 `window.__FOCUSFLOW_READY__`、`sceneChange` 与 `ended` 生命周期事件
+  - [x] 无头录制会话精准捕获 `ended` 信号，实施 600ms 尾帧冷冻缓冲，杜绝尾部动画截断与黑屏闪烁
+  - [x] 建立双看门狗机制（启动看门狗 15s、渲染看门狗 $T_{\text{max}} = \text{时长} \times 2.5 + 30\text{s}$），防止进程意外死锁
+- [x] **5.7.4 FFmpeg 跨平台 GPU 硬件加速转码与无损混流管道 (`ffmpegMuxer.ts`)**
+  - [x] 实现宿主硬件加速自动探测矩阵：macOS VideoToolbox、NVIDIA NVENC、Linux VAAPI 与 CPU `libx264` 智能降级
+  - [x] 视音频合流混流压制：合流 Stage 5.6 音频轨，输出标准工业级兼容的 `H.264 + AAC` MP4，配置 `+faststart` 保证流媒体秒开
+- [x] **5.7.5 错误码标准与 Agent 自愈闭环机制 (`errorHandler.ts`)**
+  - [x] 制定规范的退出状态码体系（`0: 成功`, `1: DSL语法错误`, `2: 资产缺失`, `3: 浏览器崩溃`, `4: FFmpeg转码失败`, `5: 渲染超时`）
+  - [x] 输出结构化自愈建议 JSON，赋能 AI Agent 自主修正参数并自动重试
+- [x] **5.7.6 无头自动化渲染全链路 E2E 自动化测试套件 (`apps/studio/e2e/stage5-headless-render.spec.ts`)**
+  - [x] 编写全链路集成测试，在 CI 环境下验证从“输入 DSL ➔ 确定性无头步进 ➔ FFmpeg 压制 ➔ 校验 MP4 封装时长与画质”的 100% 自动化闭环
 
 ---
 

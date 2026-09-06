@@ -10,8 +10,10 @@ export class StateMachine {
     this.isPlaying = false;
     this.playTimer = null;
     this.autoPlayInterval = options.autoPlayInterval || 3800;
+    this.loop = options.loop !== undefined ? !!options.loop : false;
     this.onStepChange = options.onStepChange || (() => {});
     this.onPlayStateChange = options.onPlayStateChange || (() => {});
+    this.onEnded = options.onEnded || (() => {});
   }
 
   get currentScene() {
@@ -26,15 +28,71 @@ export class StateMachine {
     return this.scenes.length;
   }
 
+  getSceneDuration(index) {
+    const scene = this.scenes[index];
+    if (scene && typeof scene.duration === 'number' && scene.duration > 0) {
+      return scene.duration;
+    }
+    return this.autoPlayInterval;
+  }
+
+  getTotalDuration() {
+    return this.scenes.reduce((total, _, i) => total + this.getSceneDuration(i), 0);
+  }
+
   goTo(index, animate = true) {
     if (index < 0 || index >= this.scenes.length) return;
     this.curIndex = index;
     this.onStepChange(this.curIndex, this.scenes[this.curIndex], animate);
+    if (this.isPlaying) {
+      this.startPlayTimer();
+    }
+  }
+
+  seekTo(timeMs) {
+    if (this.scenes.length === 0) return { index: 0, localOffset: 0, ended: false };
+    const clampedTime = Math.max(0, timeMs);
+    let accum = 0;
+    let targetIdx = 0;
+    let localOffset = 0;
+
+    for (let i = 0; i < this.scenes.length; i++) {
+      const dur = this.getSceneDuration(i);
+      if (accum + dur > clampedTime) {
+        targetIdx = i;
+        localOffset = clampedTime - accum;
+        break;
+      }
+      accum += dur;
+      targetIdx = i;
+      localOffset = dur;
+    }
+
+    const totalDur = accum;
+    const isEnded = clampedTime >= totalDur && totalDur > 0;
+
+    this.curIndex = targetIdx;
+    this.onStepChange(this.curIndex, this.scenes[this.curIndex], false);
+
+    if (isEnded) {
+      this.onEnded();
+    }
+
+    return { index: targetIdx, localOffset, ended: isEnded };
   }
 
   next() {
-    const nextIdx = (this.curIndex + 1) % this.scenes.length;
-    this.goTo(nextIdx, true);
+    if (this.curIndex < this.scenes.length - 1) {
+      this.goTo(this.curIndex + 1, true);
+    } else {
+      // Reached the end
+      this.onEnded();
+      if (this.loop) {
+        this.goTo(0, true);
+      } else {
+        this.pause();
+      }
+    }
   }
 
   prev() {
@@ -78,14 +136,16 @@ export class StateMachine {
 
   startPlayTimer() {
     this.stopPlayTimer();
-    this.playTimer = setInterval(() => {
+    if (this.scenes.length === 0) return;
+    const duration = this.getSceneDuration(this.curIndex);
+    this.playTimer = setTimeout(() => {
       this.next();
-    }, this.autoPlayInterval);
+    }, duration);
   }
 
   stopPlayTimer() {
     if (this.playTimer) {
-      clearInterval(this.playTimer);
+      clearTimeout(this.playTimer);
       this.playTimer = null;
     }
   }

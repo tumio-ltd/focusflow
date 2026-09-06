@@ -84,6 +84,12 @@ function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: 
 export interface RightInspectorProps {
   sceneTitle?: string;
   onSceneTitleChange?: (title: string) => void;
+  sceneDuration?: number;
+  onSceneDurationChange?: (duration: number) => void;
+  sceneVoiceoverScript?: string;
+  onSceneVoiceoverScriptChange?: (script: string) => void;
+  onSynthesizeSceneTTS?: () => void;
+  isSingleTtsLoading?: boolean;
   cameraZoom?: number;
   onCameraZoomChange?: (zoom: number) => void;
   cameraX?: number;
@@ -114,6 +120,12 @@ export interface RightInspectorProps {
 function RightInspectorComponent({
   sceneTitle = '01 全局总览架构',
   onSceneTitleChange,
+  sceneDuration = 3800,
+  onSceneDurationChange,
+  sceneVoiceoverScript = '',
+  onSceneVoiceoverScriptChange,
+  onSynthesizeSceneTTS,
+  isSingleTtsLoading = false,
   cameraZoom = 1.0,
   onCameraZoomChange,
   cameraX = 0,
@@ -409,6 +421,58 @@ function RightInspectorComponent({
                       placeholder={t('sceneTitlePlaceholder', '请输入分幕标题')}
                       className="text-xs bg-background h-8"
                     />
+                  </div>
+
+                  {/* 分幕驻留时长 (毫秒) */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-muted-foreground text-[10px] font-medium">分幕驻留时长 (毫秒)</label>
+                      <span className="text-[10px] font-mono text-primary font-semibold">
+                        {(sceneDuration / 1000).toFixed(1)}s
+                      </span>
+                    </div>
+                    <Input
+                      type="number"
+                      data-testid="scene-duration-input"
+                      value={sceneDuration}
+                      step="100"
+                      min="500"
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val)) {
+                          onSceneDurationChange?.(val);
+                        }
+                      }}
+                      className="text-xs bg-background h-8 font-mono"
+                    />
+                  </div>
+
+                  {/* 分幕台词脚本 (AI 提词) */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-muted-foreground text-[10px] font-medium">分幕旁白台词 (AI 提词)</label>
+                    </div>
+                    <textarea
+                      data-testid="scene-voiceover-script-input"
+                      rows={2}
+                      value={sceneVoiceoverScript}
+                      onChange={(e) => onSceneVoiceoverScriptChange?.(e.target.value)}
+                      placeholder="请输入当前分镜的配音解说词，用于 AI 语音合成与自适应拉伸时长..."
+                      className="w-full text-xs bg-background border border-border rounded-md p-2 text-foreground focus:outline-none focus:border-primary resize-none placeholder:text-muted-foreground/60"
+                    />
+                    {onSynthesizeSceneTTS && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-testid="synthesize-scene-tts-btn"
+                        onClick={onSynthesizeSceneTTS}
+                        disabled={isSingleTtsLoading}
+                        className="w-full gap-1.5 text-xs text-amber-500 border-amber-500/40 hover:bg-amber-500/10 h-7 font-medium"
+                      >
+                        <Sparkles className={`w-3.5 h-3.5 ${isSingleTtsLoading ? 'animate-spin' : ''}`} />
+                        <span>{isSingleTtsLoading ? '语音合成中...' : '🎙️ 生成 TTS 试听并拉伸时长'}</span>
+                      </Button>
+                    )}
                   </div>
 
                   {/* 一键捕获当前视野为关键帧 */}

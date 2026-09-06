@@ -55,6 +55,11 @@ export class FocusFlowPlayer {
     this.viewportWidth = this.dsl.meta?.viewport?.width || 5120;
     this.viewportHeight = this.dsl.meta?.viewport?.height || 2880;
 
+    this.listeners = new Map();
+    this.audioTracks = this.dsl.audio?.tracks || [];
+    this.audioSync = options.audioSync !== undefined ? !!options.audioSync : true;
+    this.audioEl = null;
+
     this.elementsMap = new Map(); // id -> Element metadata & DOM reference
     this.calloutsMap = new Map(); // id -> DOM Element
 
@@ -74,8 +79,29 @@ export class FocusFlowPlayer {
     return rawUrl;
   }
 
+  initAudio() {
+    if (this.audioEl) {
+      this.audioEl.pause();
+      this.audioEl = null;
+    }
+    if (this.audioTracks && this.audioTracks.length > 0 && typeof Audio !== 'undefined') {
+      const mainTrack = this.audioTracks[0];
+      if (mainTrack && mainTrack.url) {
+        try {
+          this.audioEl = new Audio();
+          this.audioEl.src = this.getAssetUrl(mainTrack.url);
+          this.audioEl.volume = mainTrack.volume !== undefined ? mainTrack.volume : 1.0;
+          this.audioEl.muted = !!mainTrack.muted;
+        } catch (e) {
+          console.warn('[FocusFlow] Failed to initialize audio track:', e);
+        }
+      }
+    }
+  }
+
   init() {
     this.buildDOM();
+    this.initAudio();
     
     // Initialize sub-engines
     this.camera = new CameraKinematics(this.wrapEl, this.viewportWidth, this.viewportHeight, { disabled: this.disableCamera });
@@ -90,8 +116,37 @@ export class FocusFlowPlayer {
     // State machine initialization
     this.stateMachine = new StateMachine(this.dsl.scenes, {
       autoPlayInterval: this.autoplayInterval,
-      onStepChange: (index, scene, animate) => this.applyScene(index, scene, animate),
-      onPlayStateChange: (isPlaying) => this.updatePlayButton(isPlaying)
+      onStepChange: (index, scene, animate) => {
+        this.applyScene(index, scene, animate);
+        const duration = this.stateMachine ? this.stateMachine.getSceneDuration(index) : this.autoplayInterval;
+        this.emit('sceneChange', { sceneIndex: index, scene, duration });
+      },
+      onPlayStateChange: (isPlaying) => {
+        this.updatePlayButton(isPlaying);
+        if (this.audioEl) {
+          if (isPlaying) {
+            this.audioEl.play().catch(() => {});
+          } else {
+            this.audioEl.pause();
+          }
+        }
+        if (this.options.onPlayStateChange) {
+          this.options.onPlayStateChange(isPlaying);
+        }
+        this.emit('playStateChange', isPlaying);
+      },
+      onEnded: () => {
+        if (this.audioEl) {
+          this.audioEl.pause();
+          try {
+            this.audioEl.currentTime = 0;
+          } catch (e) {}
+        }
+        if (this.options.onEnded) {
+          this.options.onEnded();
+        }
+        this.emit('ended');
+      }
     });
 
     this.events.bind();
@@ -144,6 +199,13 @@ export class FocusFlowPlayer {
         this.imgEl.addEventListener('load', calibrateSelf, { once: true });
       }
     }
+
+    // Broadcast readiness for headless and agent pipelines
+    if (typeof window !== 'undefined') {
+      window.__FOCUSFLOW_READY__ = true;
+      window.FocusFlowInstance = this;
+    }
+    this.emit('ready', this);
 
     // Trigger autoplay if enabled
     if (this.autoplay) {
@@ -482,6 +544,33 @@ export class FocusFlowPlayer {
     this.playBtnEl.title = isPlaying ? '暂停 (P)' : '播放 (P)';
   }
 
+  // Event Bus APIs
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, new Set());
+    }
+    this.listeners.get(event).add(callback);
+    return () => this.off(event, callback);
+  }
+
+  off(event, callback) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).delete(callback);
+    }
+  }
+
+  emit(event, data) {
+    if (this.listeners.has(event)) {
+      for (const cb of this.listeners.get(event)) {
+        try {
+          cb(data);
+        } catch (err) {
+          console.error(`[FocusFlow] Error in event listener for "${event}":`, err);
+        }
+      }
+    }
+  }
+
   // Public APIs
   goToStep(index, animate = true) {
     this.stateMachine.goTo(index, animate);
@@ -489,6 +578,16 @@ export class FocusFlowPlayer {
 
   goToScene(index, animate = true) {
     this.goToStep(index, animate);
+  }
+
+  seekTo(timeMs) {
+    const res = this.stateMachine.seekTo(timeMs);
+    if (this.audioEl && !isNaN(timeMs)) {
+      try {
+        this.audioEl.currentTime = timeMs / 1000;
+      } catch (e) {}
+    }
+    return res;
   }
 
   getCurrentScene() {
@@ -501,6 +600,14 @@ export class FocusFlowPlayer {
 
   getSceneCount() {
     return this.stateMachine.totalScenes;
+  }
+
+  getSceneDuration(index) {
+    return this.stateMachine ? this.stateMachine.getSceneDuration(index) : this.autoplayInterval;
+  }
+
+  getTotalDuration() {
+    return this.stateMachine ? this.stateMachine.getTotalDuration() : 0;
   }
 
   next() {
@@ -590,6 +697,8 @@ export class FocusFlowPlayer {
   updateDSL(newDSL) {
     if (!newDSL) return;
     this.dsl = newDSL;
+    this.audioTracks = newDSL.audio?.tracks || [];
+    this.initAudio();
     if (this.stateMachine) {
       this.stateMachine.scenes = newDSL.scenes || [];
     }
@@ -610,6 +719,11 @@ export class FocusFlowPlayer {
     this.events.unbind();
     this.stateMachine.destroy();
     if (this.hud) this.hud.destroy();
+    if (this.audioEl) {
+      this.audioEl.pause();
+      this.audioEl = null;
+    }
+    this.listeners.clear();
     this.container.innerHTML = '';
   }
 }

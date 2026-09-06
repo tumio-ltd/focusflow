@@ -37,6 +37,10 @@ export interface FocusFlowDSL {
     images?: ElementImage[];
   };
   scenes: SceneStep[];
+  audio?: {
+    tracks: AudioTrackConfig[];
+    mixer?: AudioMixerSettings;
+  };
 }
 
 export interface ElementBox {
@@ -116,10 +120,36 @@ export interface CalloutItem {
   };
 }
 
+export interface AudioMarker {
+  id: string;
+  timeMs: number;
+  label: string;
+  sceneIndex?: number;
+}
+
+export interface AudioTrackConfig {
+  id: string;
+  url: string; // 本地 blob URL、相对路径、HTTP(S) 或 Base64 Data URI
+  name?: string;
+  durationMs: number;
+  volume?: number; // 0.0 ~ 1.0 (默认 1.0)
+  muted?: boolean;
+  markers?: AudioMarker[];
+  vadSilences?: Array<{ startMs: number; endMs: number; centerMs?: number }>; // VAD 智能停顿带
+}
+
+export interface AudioMixerSettings {
+  masterVolume?: number; // 0.0 ~ 1.0 (默认 1.0)
+  enableDucking?: boolean; // 语音避让/闪避
+  duckingDb?: number; // 衰减分贝，默认 -12dB
+}
+
 export interface SceneStep {
   id: string;
   title: string;
   titleI18n?: Record<string, string>;
+  duration?: number;  // 场景驻留停留时长 (毫秒，若无则使用 meta.controls.interval)
+  voiceoverScript?: string; // AI 提词台词 / 分幕旁白脚本
   camera: {
     zoom: number;       // 缩放倍率 (1.0 ~ 3.0)
     x: number;          // 水平偏移百分比 (-50 ~ 50)
@@ -149,5 +179,9 @@ export interface PlayerOptions {
   showCounter?: boolean;
   showProgress?: boolean;
   showHUDButton?: boolean;
+  audioSync?: boolean; // 是否启用音频主时钟锁相环同步
   onSceneChange?: (sceneIndex: number, scene: SceneStep) => void;
+  onPlayStateChange?: (isPlaying: boolean) => void;
+  onEnded?: () => void;
 }
+

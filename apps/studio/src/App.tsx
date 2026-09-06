@@ -26,6 +26,7 @@ import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
+import { synthesizeSceneVoiceover } from '@/services/audio';
 import '@focusflow/player/styles.css';
 
 export default function App() {
@@ -37,6 +38,7 @@ export default function App() {
   const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
+  const [isSingleTtsLoading, setIsSingleTtsLoading] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 视口变换与容器尺寸跟踪 (使用 useRef 隔离高频手势平移，避免触发根组件与侧边栏 Re-render)
@@ -68,6 +70,8 @@ export default function App() {
     updateMetaTitle,
     updateSceneCamera,
     updateSceneTitle,
+    updateSceneDuration,
+    updateSceneVoiceoverScript,
     addScene,
     duplicateScene,
     deleteScene,
@@ -390,11 +394,13 @@ export default function App() {
       dsl.scenes.map((s) => ({
         id: s.id,
         title: s.title,
-        duration: s.camera.duration || 1.2,
+        duration: typeof s.duration === 'number' && s.duration > 0
+          ? s.duration / 1000
+          : (dsl.meta.controls?.interval ? dsl.meta.controls.interval / 1000 : (s.camera.duration || 1.2)),
         zoom: s.camera.zoom,
         boxCount: s.activeElements.boxes?.length || 0,
       })),
-    [dsl.scenes]
+    [dsl.scenes, dsl.meta.controls?.interval]
   );
 
   return (
@@ -489,6 +495,23 @@ export default function App() {
           <RightInspector
             sceneTitle={activeScene?.title}
             onSceneTitleChange={(title) => updateSceneTitle(activeSceneIndex, title)}
+            sceneDuration={activeScene?.duration || dsl.meta.controls?.interval || 3800}
+            onSceneDurationChange={(duration) => updateSceneDuration(activeSceneIndex, duration)}
+            sceneVoiceoverScript={activeScene?.voiceoverScript || ''}
+            onSceneVoiceoverScriptChange={(script) => updateSceneVoiceoverScript(activeSceneIndex, script)}
+            onSynthesizeSceneTTS={async () => {
+              if (!activeScene) return;
+              try {
+                setIsSingleTtsLoading(true);
+                const res = await synthesizeSceneVoiceover(activeScene);
+                updateSceneDuration(activeSceneIndex, res.adaptedDuration);
+              } catch (e) {
+                console.error('Failed to synthesize single scene voiceover:', e);
+              } finally {
+                setIsSingleTtsLoading(false);
+              }
+            }}
+            isSingleTtsLoading={isSingleTtsLoading}
             cameraZoom={activeScene?.camera.zoom}
             onCameraZoomChange={(zoom) => updateSceneCamera(activeSceneIndex, { zoom })}
             cameraX={activeScene?.camera.x ?? 0}

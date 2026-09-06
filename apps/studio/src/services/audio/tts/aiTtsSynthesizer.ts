@@ -1,0 +1,176 @@
+/**
+ * AI Voiceover Orchestrator & Adaptive Scene Duration Stretcher
+ * Connects TTS synthesis with timeline scene camera duration stretching
+ */
+
+import type { SceneStep, AudioMarker, AudioTrackConfig } from '@focusflow/dsl';
+import { WebSpeechTTSProvider } from './WebSpeechTTSProvider';
+import type { ITTSProvider } from './ttsProvider';
+import { decodeAudioFile } from '../audioDecoder';
+
+/**
+ * Calculate adaptive scene duration to fit audio voiceover with comfortable pause buffer
+ */
+export function adaptSceneDurationToAudio(scene: SceneStep, audioDurationMs: number): number {
+  const cameraTransitionMs = Math.round((scene.camera?.duration ?? 1.2) * 1000);
+  // Add 300ms natural breathing buffer, ensuring it never cuts off faster than camera transition
+  return Math.max(audioDurationMs + 300, cameraTransitionMs + 500);
+}
+
+export interface BatchVoiceoverResult {
+  track: AudioTrackConfig;
+  updatedScenes: SceneStep[];
+}
+
+/**
+ * Synthesize voiceover for a single scene and return adapted duration
+ */
+export async function synthesizeSceneVoiceover(
+  scene: SceneStep,
+  provider: ITTSProvider = new WebSpeechTTSProvider(),
+  voiceId?: string,
+  speed = 1.0
+): Promise<{ audioBlob: Blob; durationMs: number; adaptedDuration: number }> {
+  const text = scene.voiceoverScript?.trim() || scene.title;
+  const res = await provider.synthesize(text, voiceId, speed);
+  const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs);
+
+  return {
+    audioBlob: res.audioBlob,
+    durationMs: res.durationMs,
+    adaptedDuration,
+  };
+}
+
+/**
+ * Synthesize voiceover for all scenes with text, stitch together into an AudioTrackConfig,
+ * and adapt each scene's duration
+ */
+export async function synthesizeAllScenesVoiceover(
+  scenes: SceneStep[],
+  provider: ITTSProvider = new WebSpeechTTSProvider(),
+  voiceId?: string,
+  speed = 1.0
+): Promise<BatchVoiceoverResult> {
+  const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+  const ctx = new AudioCtx();
+
+  const renderedBlobs: Blob[] = [];
+  const sceneDurations: number[] = [];
+  const markers: AudioMarker[] = [];
+  let currentOffsetMs = 0;
+
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i];
+    const text = scene.voiceoverScript?.trim() || scene.title;
+    const res = await provider.synthesize(text, voiceId, speed);
+
+    renderedBlobs.push(res.audioBlob);
+    const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs);
+    sceneDurations.push(adaptedDuration);
+
+    markers.push({
+      id: `marker-scene-${i}`,
+      timeMs: currentOffsetMs,
+      label: scene.title,
+      sceneIndex: i,
+    });
+
+    currentOffsetMs += adaptedDuration;
+  }
+
+  // Concatenate rendered audio blobs into one master AudioBuffer
+  const decodedBuffers: AudioBuffer[] = [];
+  for (const blob of renderedBlobs) {
+    const decoded = await decodeAudioFile(blob);
+    decodedBuffers.push(decoded.audioBuffer);
+  }
+
+  const sampleRate = decodedBuffers[0]?.sampleRate || 44100;
+  const totalLength = Math.ceil((currentOffsetMs / 1000) * sampleRate);
+  const combinedBuffer = ctx.createBuffer(1, Math.max(1, totalLength), sampleRate);
+  const combinedChannel = combinedBuffer.getChannelData(0);
+
+  let writeOffset = 0;
+  for (let i = 0; i < decodedBuffers.length; i++) {
+    const buf = decodedBuffers[i];
+    const channel = buf.getChannelData(0);
+    combinedChannel.set(channel, writeOffset);
+    // Move to next scene's start time
+    writeOffset = Math.floor((markers[i + 1]?.timeMs ?? currentOffsetMs) / 1000 * sampleRate);
+  }
+
+  // Encode combinedBuffer to WAV Blob
+  const wavBlob = audioBufferToWavBlob(combinedBuffer);
+  const trackUrl = URL.createObjectURL(wavBlob);
+
+  const updatedScenes = scenes.map((scene, idx) => ({
+    ...scene,
+    duration: sceneDurations[idx],
+  }));
+
+  const track: AudioTrackConfig = {
+    id: `track-ai-${Date.now()}`,
+    name: `AI 智能配音合流 (${provider.name})`,
+    url: trackUrl,
+    durationMs: currentOffsetMs,
+    volume: 1.0,
+    muted: false,
+    markers,
+  };
+
+  ctx.close().catch(() => {});
+
+  return {
+    track,
+    updatedScenes,
+  };
+}
+
+/**
+ * Convert AudioBuffer to WAV format Blob
+ */
+function audioBufferToWavBlob(buffer: AudioBuffer): Blob {
+  const numChannels = 1;
+  const sampleRate = buffer.sampleRate;
+  const samples = buffer.getChannelData(0);
+  const bytesPerSample = 2;
+  const dataSize = samples.length * bytesPerSample;
+
+  const arrayBuffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(arrayBuffer);
+
+  // RIFF
+  writeAscii(view, 0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  writeAscii(view, 8, 'WAVE');
+
+  // fmt
+  writeAscii(view, 12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, numChannels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numChannels * bytesPerSample, true);
+  view.setUint16(32, numChannels * bytesPerSample, true);
+  view.setUint16(34, 16, true);
+
+  // data
+  writeAscii(view, 36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    offset += 2;
+  }
+
+  return new Blob([arrayBuffer], { type: 'audio/wav' });
+}
+
+function writeAscii(view: DataView, offset: number, text: string) {
+  for (let i = 0; i < text.length; i++) {
+    view.setUint8(offset + i, text.charCodeAt(i));
+  }
+}

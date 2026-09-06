@@ -11,7 +11,8 @@ export interface RecordingSession {
 export function startDomRecording(
   container: HTMLElement,
   fps = 60,
-  onTick?: (elapsedSeconds: number) => void
+  onTick?: (elapsedSeconds: number) => void,
+  audioStream?: MediaStream
 ): RecordingSession {
   const canvas = document.createElement('canvas');
   const rect = container.getBoundingClientRect();
@@ -20,6 +21,13 @@ export function startDomRecording(
   canvas.height = Math.max(720, Math.round(rect.height * 1.5));
 
   const stream = (canvas as any).captureStream ? (canvas as any).captureStream(fps) : null;
+  if (stream && audioStream) {
+    audioStream.getAudioTracks().forEach((track) => {
+      try {
+        stream.addTrack(track);
+      } catch {}
+    });
+  }
   const chunks: Blob[] = [];
 
   let mediaRecorder: MediaRecorder | null = null;
