@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FocusFlow Logo 纯矢量 SVG 原型预览 (Concept Showcase)</title>
+  <title>FocusFlow Logo 概念方案与 AI 效果图全景展厅 (Brand Identity Showcase)</title>
   <style>
     :root {
       --bg: #090d16;
@@ -13,9 +13,10 @@
       --muted: #94a3b8;
       --accent: #38bdf8;
     }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      padding: 40px 20px;
+      padding: 40px 20px 80px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
@@ -25,11 +26,11 @@
     }
     header {
       text-align: center;
-      max-width: 800px;
-      margin-bottom: 40px;
+      max-width: 900px;
+      margin-bottom: 48px;
     }
     h1 {
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 800;
       letter-spacing: -0.02em;
       margin: 0 0 12px 0;
@@ -37,122 +38,135 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    p {
+    p.subtitle {
       color: var(--muted);
       font-size: 15px;
       line-height: 1.6;
       margin: 0;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 28px;
-      max-width: 1100px;
+    .concept-section {
+      max-width: 1200px;
       width: 100%;
-    }
-    .card {
+      margin-bottom: 56px;
       background: var(--card-bg);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      border-radius: 20px;
+      padding: 32px;
       position: relative;
-      overflow: hidden;
-      transition: transform 0.2s ease, border-color 0.2s ease;
     }
-    .card:hover {
-      transform: translateY(-4px);
-      border-color: #38bdf866;
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
     .badge {
-      position: absolute;
-      top: 16px;
-      left: 16px;
       background: #38bdf81a;
       color: #38bdf8;
       border: 1px solid #38bdf840;
       font-size: 11px;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 4px 10px;
       border-radius: 9999px;
+      text-transform: uppercase;
+    }
+    .section-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 280px 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .row { grid-template-columns: 1fr; }
+    }
+    .col-card {
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 14px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-    .preview-box {
-      width: 140px;
-      height: 140px;
-      margin: 24px 0 16px 0;
+    .svg-container {
+      width: 120px;
+      height: 120px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #060911;
-      border-radius: 20px;
-      border: 1px solid #1e293b;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
-    }
-    .preview-box svg {
-      width: 90px;
-      height: 90px;
-    }
-    .variants {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 20px;
-      padding: 8px 16px;
-      background: #090d16;
-      border-radius: 10px;
-      border: 1px solid #1e293b;
-    }
-    .variant-label {
-      font-size: 11px;
-      color: var(--muted);
-      font-family: monospace;
-    }
-    .variants svg.small {
-      width: 32px;
-      height: 32px;
-    }
-    .variants svg.favicon {
-      width: 18px;
-      height: 18px;
-    }
-    .title {
-      font-size: 18px;
-      font-weight: 700;
-      margin: 0 0 6px 0;
-      text-align: center;
-    }
-    .desc {
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-      line-height: 1.5;
-      margin-bottom: 20px;
-      min-height: 40px;
-    }
-    .meta-tag {
-      font-size: 11px;
-      color: #64748b;
       margin-bottom: 16px;
+    }
+    .svg-container svg, .svg-container object {
+      width: 100px;
+      height: 100px;
+    }
+    .img-box {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      background: #000;
+    }
+    .img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .img-box img:hover {
+      transform: scale(1.03);
+    }
+    .img-caption {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+    .img-desc {
+      font-size: 12px;
+      color: #64748b;
+      text-align: center;
+      line-height: 1.4;
     }
     button.copy-btn {
       width: 100%;
       background: #1e293b;
       border: 1px solid #334155;
       color: #e2e8f0;
-      padding: 10px 16px;
-      border-radius: 8px;
-      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
       transition: all 0.2s;
+      margin-top: 8px;
     }
     button.copy-btn:hover {
       background: #0284c7;
@@ -164,60 +178,136 @@
 <body>
 
   <header>
-    <h1>FocusFlow Brand Logo Prototypes</h1>
-    <p>3 组专为开源代码库与开发者独立站打造的纯矢量 SVG 原型方案。<br>兼顾 16px 浏览器 Favicon、导航栏 Brand Icon 与社交媒体大图展示。</p>
+    <h1>FocusFlow Brand Logo Showcase</h1>
+    <p class="subtitle">3 组设计概念的“纯矢量 SVG 原型”与“多套 AI 高清视觉效果提案”全景对比。<br>涵盖极简平面图标、暗黑高精度渲染、3D 磨砂玻璃 App 图标等多种应用场景。</p>
   </header>
 
-  <div class="grid">
-    <!-- 方案 A -->
-    <div class="card">
-      <span class="badge">Concept A · 推荐</span>
-      <div class="preview-box">
-        <object data="concept-a.svg" type="image/svg+xml"></object>
+  <!-- 概念 A -->
+  <div class="concept-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span>概念 A：极简取景器 × 贝塞尔流光</span>
+        <span class="badge">🏆 核心推荐</span>
       </div>
-      <div class="variants">
-        <span class="variant-label">尺寸自适应:</span>
-        <object data="concept-a.svg" class="small" type="image/svg+xml"></object>
-        <object data="concept-a.svg" class="favicon" type="image/svg+xml"></object>
-      </div>
-      <div class="title">极简取景器 × 贝塞尔流光</div>
-      <div class="desc">四角对焦标代表摄像机视锥与精确定位；贯穿中心的霓虹贝塞尔曲线代表流光轨迹与 60fps 连续演播。</div>
-      <div class="meta-tag">视觉隐喻：Focus (取景) + Flow (动线)</div>
-      <button class="copy-btn" onclick="copyFile('concept-a.svg', this)">📋 复制 SVG 代码</button>
     </div>
-
-    <!-- 方案 B -->
-    <div class="card">
-      <span class="badge">Concept B · 品牌字标</span>
-      <div class="preview-box">
-        <object data="concept-b.svg" type="image/svg+xml"></object>
-      </div>
-      <div class="variants">
-        <span class="variant-label">尺寸自适应:</span>
-        <object data="concept-b.svg" class="small" type="image/svg+xml"></object>
-        <object data="concept-b.svg" class="favicon" type="image/svg+xml"></object>
-      </div>
-      <div class="title">双重 "F" 拓扑平行运镜轨</div>
-      <div class="desc">几何字母 "F" Monogram 变形，横折笔画化身为向前延伸的推拉导轨与光斑，极客感与辨识度极强。</div>
-      <div class="meta-tag">视觉隐喻：FocusFlow 双 F + Linear/Vercel 科技感</div>
-      <button class="copy-btn" onclick="copyFile('concept-b.svg', this)">📋 复制 SVG 代码</button>
+    <div class="section-desc">
+      <strong>设计内核</strong>：外廓由 4 个转角取景标构成断开的方框（代表 Focus / 镜头取景）；一条平滑发光的三次贝塞尔曲线从左下角穿过中心延伸至右上角（代表 Flow / 运镜动线）。
     </div>
+    <div class="row">
+      <!-- 纯矢量 SVG -->
+      <div class="col-card">
+        <div class="col-title">纯矢量 SVG 源码原型</div>
+        <div class="svg-container">
+          <object data="concept-a.svg" type="image/svg+xml"></object>
+        </div>
+        <div class="img-caption">1KB 原生矢量</div>
+        <div class="img-desc">可直接内嵌至 HTML / Favicon</div>
+        <button class="copy-btn" onclick="copyFile('concept-a.svg', this)">📋 复制 SVG 代码</button>
+      </div>
+      <!-- AI 效果 1 -->
+      <div class="col-card">
+        <div class="col-title">AI 提案 A1 · 极简极客平面</div>
+        <div class="img-box">
+          <img src="concept_a_flat.jpg" alt="Concept A Flat" />
+        </div>
+        <div class="img-caption">Linear 极客平面风</div>
+        <div class="img-desc">电光蓝四角对焦框 + 优雅平滑发光流线</div>
+      </div>
+      <!-- AI 效果 2 -->
+      <div class="col-card">
+        <div class="col-title">AI 提案 A2 · 3D 磨砂玻璃徽标</div>
+        <div class="img-box">
+          <img src="concept_a_glow.jpg" alt="Concept A 3D Glass" />
+        </div>
+        <div class="img-caption">Apple Design 质感图标</div>
+        <div class="img-desc">拉丝金属取景卡角 + 玻璃折射微光带</div>
+      </div>
+    </div>
+  </div>
 
-    <!-- 方案 C -->
-    <div class="card">
-      <span class="badge">Concept C · 深度空间</span>
-      <div class="preview-box">
-        <object data="concept-c.svg" type="image/svg+xml"></object>
+  <!-- 概念 B -->
+  <div class="concept-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span>概念 B：字母 "F" 拓扑变形</span>
+        <span class="badge">品牌 Monogram</span>
       </div>
-      <div class="variants">
-        <span class="variant-label">尺寸自适应:</span>
-        <object data="concept-c.svg" class="small" type="image/svg+xml"></object>
-        <object data="concept-c.svg" class="favicon" type="image/svg+xml"></object>
+    </div>
+    <div class="section-desc">
+      <strong>设计内核</strong>：将两个 "F" 字母的横折笔画，抽象化为镜头推拉的平行视锥轨道与高亮流光，兼具首字母辨识度与机械运镜的工业秩序感。
+    </div>
+    <div class="row">
+      <!-- 纯矢量 SVG -->
+      <div class="col-card">
+        <div class="col-title">纯矢量 SVG 源码原型</div>
+        <div class="svg-container">
+          <object data="concept-b.svg" type="image/svg+xml"></object>
+        </div>
+        <div class="img-caption">1KB 原生矢量</div>
+        <div class="img-desc">几何推拉导轨与十字微标</div>
+        <button class="copy-btn" onclick="copyFile('concept-b.svg', this)">📋 复制 SVG 代码</button>
       </div>
-      <div class="title">透视安全框 × 无限莫比乌斯流光</div>
-      <div class="desc">透视斜视安全视锥与象征持续演进的无限莫比乌斯环相交，寓意系统架构在时空推进中的永恒流动与探索。</div>
-      <div class="meta-tag">视觉隐喻：Frustum (视锥) + Infinity (无限流)</div>
-      <button class="copy-btn" onclick="copyFile('concept-c.svg', this)">📋 复制 SVG 代码</button>
+      <!-- AI 效果 1 -->
+      <div class="col-card">
+        <div class="col-title">AI 提案 B1 · 双 F 平行光轨</div>
+        <div class="img-box">
+          <img src="concept_b_vector.jpg" alt="Concept B Vector" />
+        </div>
+        <div class="img-caption">双 F 拓扑视锥字标</div>
+        <div class="img-desc">平行向前推进的镜头轨道与激光流光</div>
+      </div>
+      <!-- AI 效果 2 -->
+      <div class="col-card">
+        <div class="col-title">AI 提案 B2 · 3D 机械光轨徽标</div>
+        <div class="img-box">
+          <img src="concept_b_rail.jpg" alt="Concept B 3D Rail" />
+        </div>
+        <div class="img-caption">钛金与激光滑轨</div>
+        <div class="img-desc">重工业科技风，展现严密的空间推拉控制</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 概念 C -->
+  <div class="concept-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span>概念 C：光圈透视与无限循环</span>
+        <span class="badge">深度时空隐喻</span>
+      </div>
+    </div>
+    <div class="section-desc">
+      <strong>设计内核</strong>：莫比乌斯环或无限符号 ∞ 与矩形透视框/镜头光圈结合，寓意复杂的系统架构在时空演播中无限流动、生生不息。
+    </div>
+    <div class="row">
+      <!-- 纯矢量 SVG -->
+      <div class="col-card">
+        <div class="col-title">纯矢量 SVG 源码原型</div>
+        <div class="svg-container">
+          <object data="concept-c.svg" type="image/svg+xml"></object>
+        </div>
+        <div class="img-caption">1KB 原生矢量</div>
+        <div class="img-desc">透视视锥与莫比乌斯流线</div>
+        <button class="copy-btn" onclick="copyFile('concept-c.svg', this)">📋 复制 SVG 代码</button>
+      </div>
+      <!-- AI 效果 1 -->
+      <div class="col-card">
+        <div class="col-title">AI 提案 C1 · 视锥框架与无限环</div>
+        <div class="img-box">
+          <img src="concept_c_vector.jpg" alt="Concept C Vector" />
+        </div>
+        <div class="img-caption">3D 视口框穿透无限带</div>
+        <div class="img-desc">等距斜视角度透视框架与青蓝莫比乌斯带</div>
+      </div>
+      <!-- AI 效果 2 -->
+      <div class="col-card">
+        <div class="col-title">AI 提案 C2 · 光圈透镜与无限流</div>
+        <div class="img-box">
+          <img src="concept_c_iris.jpg" alt="Concept C Iris" />
+        </div>
+        <div class="img-caption">镜头光圈叶片 × 渐变流环</div>
+        <div class="img-desc">电光青与霓虹紫，体现电影级光学焦点与动态</div>
+      </div>
     </div>
   </div>
 
