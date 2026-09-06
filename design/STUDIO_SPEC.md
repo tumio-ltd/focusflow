@@ -32,7 +32,13 @@
     - [3.2.4 标定助手与独立播放控制栏职责解耦规范 (Calibration Assistant & Player Controls Decoupling)](#标定助手与独立播放控制栏职责解耦规范-calibration-assistant--player-controls-decoupling)
     - [3.2.5 运镜摄像机与安全取景框数学原理与交互规范 (Camera Kinematics & Frustum Specification)](#325-运镜摄像机-camera-与安全取景框-frustum-数学原理与交互规范)
   - [3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)](#33-环节二-续场景关键帧时间轴编排系统-scene--sequence-timeline)
+    - [3.3.1 场景卡片流与图元激活矩阵交互规范 (Scene Sequence & Visibility Matrix)](#331-场景卡片流与图元激活矩阵交互规范-scene-sequence--visibility-matrix)
+    - [3.3.2 音频时间轴对齐与多媒体音画同步系统设计 (Audio Timeline Synchronization System)](#332-音频时间轴对齐与多媒体音画同步系统设计-audio-timeline-synchronization-system)
   - [3.4 环节三：实时生成、预览与多形态导出下载 (Compilation, Preview & Exporter)](#34-环节三实时生成预览与多形态导出下载-compilation-preview--exporter)
+    - [3.4.1 导出 1：独立离线单文件 HTML 打包 (Standalone Packager)](#341-导出-1独立离线单文件-html-下载-html)
+    - [3.4.2 导出 2：标准 DSL 源码与工程包 (Project Exporter)](#342-导出-2标准-dsl-源码与工程包-configjson--projectzip)
+    - [3.4.3 导出 3：视频渲染导出与 AI Agent / CLI 自动化无头管线 (Headless Video Pipeline & Agent CLI)](#343-导出-3视频渲染导出与-ai-agent--cli-自动化无头管线-headless-video-pipeline--agent-cli)
+    - [3.4.4 导出 4：云端只读演示短链与知识库嵌入 (Cloud Share & Embed)](#344-导出-4云端只读演示短链与知识库-iframe-嵌入)
 - [4. 前端架构与技术栈选型规范 (Frontend Architecture)](#4-前端架构与技术栈选型规范-frontend-architecture)
   - [4.1 技术栈选型](#41-技术栈选型)
   - [4.2 前端目录规划与多包协作架构](#42-前端目录规划与当前项目目录的架构关系-repository--monorepo-architecture)
@@ -362,92 +368,346 @@ FocusFlow Studio 的中央无限画布（`InfiniteCanvas`）与视口缩放控�
 
 ### 3.3 环节二 (续)：场景关键帧时间轴编排系统 (Scene & Sequence Timeline)
 
-* **场景卡片流（Scene Sequence Track）**：
-  * 底部直观展示当前项目的全部场景步骤缩略卡片（`Scene 1 ➔ Scene 2 ➔ Scene 3`）；
-  * 支持鼠标拖拽卡片自由调整讲解先后顺序；
-  * 支持一键“复制场景”、“删除场景”与“插入过渡帧”；
+#### 3.3.1 场景卡片流与图元激活矩阵交互规范 (Scene Sequence & Visibility Matrix)
+
+* **场景卡片序列流（Scene Sequence Track）**：
+  * 底部直观展示当前项目的全部场景步骤缩略卡片（`Scene 1 ➔ Scene 2 ➔ Scene 3`），单卡片展示序号、场景名称、镜头缩略图以及当前幕持续时长 `duration`；
+  * **自由拖拽排序**：支持基于 HTML5 Drag & Drop 的场景卡片无缝重排，实时更新 DSL 中的 `scenes` 数组索引；
+  * **场景快捷操作**：悬停卡片右上角呼出菜单，支持一键“复制当前场景”（包含镜头与激活图元状态）、“删除场景”与“向后插入空白过渡帧”；
 * **图元可见性开关矩阵（Active Elements Matrix）**：
-  * 选中某个场景时，画布与右侧面板列出所有已有 Boxes、Paths、Dots、Images；
+  * 选中某个场景时，右侧属性面板与图层列表精确反映当前场景激活的图元集合（`activeElements: { boxes, paths, dots, callouts, images }`）；
+  * **一键继承上一幕（Inherit from Previous）**：提供“继承上一幕全部激活状态”快捷动作，符合电影镜头渐进展开（Progressive Disclosure）心智；
+  * **多幕图元联动**：在图层面板中，创作者可勾选图元在“全部场景点亮”、“仅当前场景点亮”或“从当前场景开始永久点亮”。
+
 ---
 
-### 3.3.2 音频时间轴对齐系统设计与技术方案 (Audio Timeline Synchronization System)
+### 3.3.2 音频时间轴对齐与多媒体音画同步系统设计 (Audio Timeline Synchronization System)
 
-#### 1. 核心业务价值与痛点场景
-在架构演进宣讲、高管述职汇报与技术慕课录制中，创作者通常需要录制旁白语音（Voiceover）或插入背景音效（BGM）。
-* **传统痛点**：创作者必须预估每张幻灯片/运镜需要几秒几毫秒，手工逐个调整各场景的 `duration: 3500ms`，一旦录音稍有语速变化，运镜与语音立即产生严重错位，反复试听微调成本极高。
-* **目标体验**：“声音讲到哪里，镜头就自动运镜到哪里”。创作者直接导入音频文件，在音频波形图上可视化拖拽标记点，场景切换点自动向语音节点磁吸对齐；单文件/视频导出时自带音画合流。
+#### 1. 核心业务价值、心智模型与设计哲学 (Mental Model & Progressive Principle)
 
-#### 2. 系统拓扑与数据流架构
+在高质量架构演进宣讲、高管述职汇报与技术慕课录制中，单纯的无声动画往往缺乏感染力。创作者通常需要录制旁白解说语音（Voiceover）或插入背景音效（BGM）。
+
+* **传统制作工具的核心痛点**：
+  1. **手工硬编码时长极其痛苦**：创作者必须预估每张幻灯片/运镜需要几秒几毫秒，手工逐个调整各场景的 `duration: 3500ms`。一旦录音语速稍有变化，运镜与语音立即产生严重错位，反复试听微调成本极高；
+  2. **时钟漂移累积脱节（Clock Drift）**：长时间演播时，浏览器 `requestAnimationFrame`（受到显示器刷新率波动与 CPU/GPU 负载影响）与声卡音频物理硬件晶振存在离散时间差，播放 3 分钟后画面与解说往往产生高达 300~800ms 的严重视听不同步；
+  3. **强制上传音频破坏轻量心智**：许多设计工具强迫用户必须先有音频才能排期时间轴，极大地拉高了普通用户的上手门槛。
+
+* **FocusFlow 核心设计哲学：渐进式（Progressive）且非强制（Non-mandatory）**：
+  > **“无音频时，它是自适应的电影分镜导览；有音频时，声音指引运镜，音画合一。”**
+  * **非强制原则**：音频时间轴是针对“解说型架构演示”的高级增强模块，**绝非强迫用户必须提供或上传外部音频**。在工程未关联音频时，系统完全依照各场景设定的默认时长（如每幕 3.5s）或由受众鼠标点击/键盘按键翻页正常推进；
+  * **双向自适应映射哲学（Bidirectional Adaptive Mapping）**：
+    - **方向 A（音频驱动画面）**：导入或录制音频后，创作者拖动音频波形上的场景标记点（Marker），系统自动反向重新计算并写入当前场景的 `duration = Marker[i+1].time - Marker[i].time`；
+    - **方向 B（画面驱动标记）**：创作者拖拽底部时间轴的场景卡片边缘拉伸时长，穿透式分割线带动对应音频标记点同步移动，并智能寻找音频停顿低谷进行磁吸；
+  * **隐私与存储分水岭**：
+    - **开源单机版（模式 A）**：**100% 浏览器本地沙箱运行**。音频仅暂存于浏览器内存或 `IndexedDB` 中，导出单文件 HTML 时转为 Base64 Data URI 内联在文件内部，或在 ZIP 导出时保存为本地 assets 文件，**完全不联网、零隐私泄漏风险**；
+    - **商业云端 SaaS（模式 B）**：音频作为项目多媒体资产自动异步上传至团队绑定的 **Cloudflare R2** 对象存储中，支持多人多端协同试听与云端转码。
+
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │             🎵 Audio Timeline Synchronization Dataflow                 │
 ├────────────────────────────────────────────────────────────────────────┤
 │                                                                        │
-│   [🎙️ 音频文件导入: MP3 / WAV / M4A / AAC]                               │
+│   [🎙️ 3 种渐进式音频输入管道]                                           │
+│   • 管道 1: Studio 内置同屏麦克风演播录音 (随讲随录，实时生成波形)       │
+│   • 管道 2: 拖拽导入外部成套干声 (MP3/WAV/M4A/AAC, Web Audio 离屏解码) │
+│   • 管道 3: AI 提词脚本自动生成 TTS 语音 (分幕语音合成与语速自适应)     │
 │                     │                                                  │
 │                     ▼                                                  │
-│   [Web Audio API (AudioContext) 离线解码 ➔ Float32Array PCM 采样数据]   │
+│   [Web Audio API (AudioContext) 解码 ➔ Float32Array PCM 采样数据]       │
 │                     │                                                  │
 │         ┌───────────┴───────────────────────────┐                      │
 │         ▼                                       ▼                      │
 │  [峰值降采样与波形渲染引擎]              [语音活动检测 VAD / 静音分析]      │
-│  (Canvas 2D 双通道波形渲染)             (检测自然停顿点，智能生成建议标记)  │
+│  (Web Worker 离屏 Peak Envelope)         (RMS 能量分析检测自然断句停顿区)   │
 │         │                                       │                      │
 │         └───────────┬───────────────────────────┘                      │
 │                     ▼                                                  │
 │   [音频波形轨道 (AudioWaveformTrack) 交互层]                            │
-│   • 实时播放指针 (Playhead) & 视口横向缩放 (Zoom: 1s ~ 60s/屏)          │
-│   • 场景锚点标记 (Scene Transition Markers: S1 ➔ S2 ➔ S3)              │
-│   • 磁吸引擎 (Snap Engine: ±50ms 阈值自动吸附到音频停顿间隙)           │
+│   • 实时激光播放头 (Playhead) & 视口无级缩放 (Zoom: 1s ~ 60s/屏)         │
+│   • 穿透式场景分割虚线 (Scene Piercing Cut-lines: S1 ➔ S2 ➔ S3)        │
+│   • 智能磁吸引擎 (Snap-to-Silence: ±50ms 阈值自动吸附到音频停顿间隙)   │
+│   • 毫秒级音频 Scrubbing 拖拽试听 (Grain Buffer 高速微播放)             │
 │                     │                                                  │
 │                     ▼                                                  │
-│   [自动双向重算 DSL 场景时序 (Auto-Recalculate Scene Durations)]         │
-│   • Scene[i].duration = Marker[i+1].time - Marker[i].time              │
-│   • Scene[i].transition = 镜头位移动画平滑插入                          │
+│   [底层音画主时钟锁相环 (Master Clock PLL Architecture)]                │
+│   • AudioContext.currentTime 作为绝对主时钟 (Master Clock)              │
+│   • 画面渲染帧严格订阅物理音频时钟，彻底消除累积漂移 (Zero Clock Drift)  │
 │                     │                                                  │
 │                     ▼                                                  │
-│   [多形态合流导出 (Audio-Video Multiplexing)]                          │
-│   • 模式 A (客户端): MediaStreamDestination + MediaRecorder 合流 WebM  │
-│   • 模式 B (云端): Worker Remotion / FFmpeg 多音轨无损压制 4K MP4       │
+│   [多形态音画合流与落盘导出 (Audio-Video Multiplexing)]                │
+│   • 独立离线单文件 HTML: Base64 Data URI 内嵌 + Web Audio 运行播放      │
+│   • 客户端 WebM 录制: AudioContext 混流节点 + Canvas MediaRecorder     │
+│   • CLI / 无头转码: FFmpeg 硬件加速高保真 MP4 视音频无损合流            │
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 3. DSL 契约定义扩展 (`packages/dsl/src/schema.ts`)
+#### 2. 三级音频输入管道产品交互深度设计 (3-Tier Input Pipelines & UI Flow)
+
+针对不同技能背景、硬件条件与制作场景的创作者，FocusFlow 提供 3 种递进式音频输入管道：
+
+##### 管道 1：Studio 内置同屏麦克风演播录音 (`StudioVoiceRecorder.ts`)
+* **核心定位**：极客与架构师首选，随看随讲，0 外部工具依赖。
+* **UI 入口**：底部时间轴左侧操作栏常驻 `[🎙️ 演播录音]` 按钮（与播放/暂停、比例滑块并列）。
+* **交互流程与状态机**：
+  1. **准备态（Recording Preflight Overlay）**：
+     - 点击 `[🎙️ 演播录音]`，工作台中心浮现磨砂玻璃质感的演播录音就绪弹层；
+     - **麦克风输入源探测与选择**：下拉菜单枚举系统音频输入设备（如内置麦克风、USB 独立麦克风、无线领夹麦等），调用 `navigator.mediaDevices.enumerateDevices()`；
+     - **实时 VU 电平表指示**：通过 `AudioContext.createMediaStreamSource()` 接入 `AnalyserNode`，以 60Hz 刷新动态双通道电平柱（`-60dB ~ 0dB`）：低于 `-40dB` 呈现幽绿，`-12dB ~ -3dB` 呈现电光蓝与亮绿，`> -3dB` 呈现过载警示红，创作者说话即可直观验证收音质量；
+     - **环境音降噪选项**：提供 `降噪与回声抑制 (ANC)` 复选框，对应配置 `noiseSuppression: true, echoCancellation: true`；
+  2. **倒计时与运镜联动触发**：
+     - 创作者点击“开始演播录音”，画布中央展示极具仪式感的全屏 `3 ➔ 2 ➔ 1` 倒计时动画；
+     - 倒计时归零瞬间，系统执行原子动作：
+       - 画布播放器自动从第 0 幕（Scene 0）启动播放；
+       - `MediaRecorder` 启动麦克风高品质音频捕获（MIME 类型优先选用 `audio/webm;codecs=opus`，备用 `audio/mp4`）；
+       - 底部波形轨道自动展开，一条动态红光录制线随着演播推进实时流式绘制已录入的声波幅度；
+  3. **分幕演播打点（Scene Marker Punch-in）**：
+     - 创作者在对着麦克风讲解架构图时，可随时敲击快捷键 `M` 或 `Space` / 点击悬浮的 `[下一幕 ➔]` 按钮；
+     - 播放器立即平滑运镜至下一个场景，同时在音频时间轴的当前物理时间戳插入一个场景转场标记（`SceneMarker`）；
+  4. **录制完成与自动时间轴重算**：
+     - 演播完成或创作者点击 `[完成录制 (Esc)]`；
+     - 录音器安全断流并将音频数据合流为内存 `Blob`，自动生成唯一的本地 `ObjectUrl`；
+     - 系统自动根据演播期间打下的标记点时间戳，**一键重新校准并拉伸所有场景的 `duration`**，使得每一幕的时长分秒不差地精确匹配创作者刚才的真实讲解速度！
+
+##### 管道 2：拖拽导入外部成套干声/音频 (`audioDecoder.ts`)
+* **核心定位**：专业视频创作者、B站/YouTube 技术 UP 主，已在剪映、Audacity、Logic Pro 中录制好精修干声或选定了伴奏 BGM。
+* **支持格式**：全格式支持（`MP3`, `WAV`, `M4A`, `AAC`, `FLAC`, `OGG`）。
+* **UI 交互与拖拽体验**：
+  - 创作者直接从操作系统 Finder / 资源管理器中拖拽音频文件落入底部时间轴区域；
+  - 时间轴瞬间浮现蓝色发光虚线框与全局毛玻璃拖拽遮罩：`📥 释放以导入解说音轨`；
+  - 亦可点击时间轴上的 `[📁 导入外部音频]` 打开系统原生文件拾取器。
+* **离线多线程解码流水线（Web Worker Decoupling）**：
+  - **防界面卡顿**：音频文件通常体量较大（例如 5 分钟无损 WAV 文件可能高达 50MB），若在浏览器主线程执行解码与全量波形采样计算，会导致 UI 严重掉帧和画布卡死；
+  - **Worker 分工**：主线程将文件读取为 `ArrayBuffer` 并使用 `Transferable Objects` 零拷贝投递给 `waveformWorker.ts`；
+  - **包络降采样算法（Peak Envelope Extraction）**：Worker 内部将 PCM 离散采样点按照当前画布时间轴物理像素宽度（例如 1920px）进行分桶采样，计算每一分桶的最大正峰值（Max Peak）与最小负峰值（Min Valley），提炼出轻量级的单精度浮点数组 `Float32Array`（仅 ~10KB 体积）回传主线程，主线程毫秒级完成波形 Canvas 绘制。
+
+##### 管道 3：AI 文本提词与 TTS 自动语音合成 (AI Script & Voice Synthesis)
+* **核心定位**：不便开口录音的工程师、技术出海（需地道美音/英音解说）及 Agent 全自动化无头批量制片。
+* **UI 交互流程**：
+  1. 在右侧检查器的【🎬 场景运镜】面板中，为每一个 Scene 提供专门的 `解说台词 (Voiceover Script)` 文本输入框；
+  2. 顶部工具栏提供 `[🤖 AI 生成解说音轨]` 按钮，支持配置全局音色（如 OpenAI TTS `alloy`, `echo`, `nova`，或 Azure 神经语音）、语速（`0.8x ~ 1.5x`）与语言（中/英/日等）；
+  3. 点击一键生成，后端服务（或客户端集成 API）按分幕并行调用 TTS 接口生成各场景的音频切片；
+  4. **自适应镜头时长延伸（Auto-Stretch Duration）**：
+     - 系统解析每一幕 TTS 音频切片的物理时长 $T_{\text{audio}}$；
+     - 依据安全视觉停顿原则，自动将该场景的 `scene.duration` 重置为：
+       $$\text{scene.duration} = \max(T_{\text{audio}} + 300\text{ms}, \text{camera.duration})$$
+     - 自动拼接合流为完整音轨并载入时间轴，真正达成“台词字数多则镜头多停留，台词简短则镜头利落切换”的自适应匹配。
+
+---
+
+#### 3. 底部可视化音频波形轨道交互与微交互系统 (`AudioWaveformTrack.tsx`)
+
+音频时间轴作为连接“时间”与“空间运镜”的视觉桥梁，具备极高专业度与极致流畅的交互体验：
+
+```
+                    【底部场景卡片流与音频波形轨道的穿透联动】
+
+   ┌──────────────┬────────────────────────┬──────────────────────┬─────────────┐
+   │ 🎬 场景 01   │ 🎬 场景 02             │ 🎬 场景 03           │ 🎬 场景 04  │
+   │ 架构概览 3.5s │ 网关流量接入 5.2s       │ 订单结算引擎 4.8s    │ 数据库集群  │
+   └──────┬───────┴───────────┬────────────┴──────────┬───────────┴──────┬──────┘
+          ┆                   ┆                       ┆                  ┆
+ ──[时间标尺] 00:00.000      00:03.500               00:08.700          00:13.500
+          ┆                   ┆                       ┆                  ┆
+ ──[波形轨道]                │ 激光播放头 (00:05.120) ┆                  ┆
+   ▂▃▅▇█▇▅▃ ┆ ▂▃▅▆▇█▇▆▅▃▂    │    ▂▃▅▆▇█▇▆▅▃▂        ┆ ▂▃▅▇█▇▅▃         ┆
+            ┆                 │                       ┆                  ┆
+          [场景贯穿分割线]    ▼                   [智能静音停顿磁吸]
+```
+
+##### 1. 空间布局与设计语言
+* **轨道高度**：固定 64px 紧凑高度，紧贴于底部 `BottomTimeline` 场景卡片下方，支持通过左侧开关一键展开/收起；
+* **暗黑科技质感配色**：
+  - 轨道底色：深度科技暗灰（`hsl(222, 47%, 7%)`）；
+  - 时间网格细线：柔和微亮细线（`rgba(255, 255, 255, 0.06)`）；
+  - 波形渲染色彩：Canvas 2D 镜像双向柱状波形，垂直方向自上而下呈现渐变发光（从电光青 `hsl(199, 89%, 48%)` 到深邃科技蓝 `hsl(217, 91%, 60%)`）；音量极低的静音区间绘制细如发丝的水平基准线。
+
+##### 2. 视口平移与无级缩放 (Viewport Pan & Zoom)
+* **缩放范围**：支持 10 级无级缩放，覆盖“全景宏观视角”（一屏展示 120 秒整体脉络）至“微观切片视角”（一屏展示 2 秒超高精度波形）；
+* **手势与按键映射**：
+  - `Ctrl / Cmd + 鼠标滚轮`：以当前鼠标悬停的时间戳位置为物理缩放锚点，执行波形横向放大与收缩；
+  - `Shift + 鼠标滚轮` 或鼠标中键拖拽：横向无级平移时间轴视口；
+  - 缩放滑块：时间轴右下角常驻 `[-] ----○---- [+]` 精度滑块与 `[1:1 适屏显示]` 快捷按钮。
+
+##### 3. 场景贯穿式分割线与拖拽反馈 (Scene Piercing Cut-lines)
+* **视觉穿透**：每个场景卡片右侧的分割调节手柄（Splitter Handle），向下延伸出一条贯穿整个音频波形轨道的半透明垂直虚线；
+* **拖拽动态**：
+  - 当创作者鼠标悬停在场景分界处时，分割线由幽暗转为高亮电光青，光标变为水平调节双箭头 `col-resize`；
+  - 拖拽分界线时，虚线跟随鼠标实时位移，波形轨上方浮现动态毫秒时间戳卡片（如 `00:04.280 · Δ +0.78s`）；
+  - 释放鼠标后，系统原子更新相邻两幕的 DSL `duration` 并触发 Undo/Redo 历史栈压入。
+
+##### 4. 全局激光播放头与毫秒级音频微切片拖拽试听 (Playhead & Audio Scrubbing)
+* **全局播放头**：时间轴上贯穿有一条 1.5px 宽的醒目朱红/高光橙激光垂直标线，顶部附带倒三角播放头手柄（Playhead Handle）；
+* **音频即拖即听（Audio Scrubbing Engine）**：
+  - 创作者在波形轨上按住鼠标左键横向快速扫动（Scrubbing）时，播放器视口镜头实时跟随插值移动；
+  - 底层音频引擎基于 Web Audio API 动态调度微切片播放：每次位移触发一个微型 `AudioBufferSourceNode` 播放光标位置前后 60ms 的音频颗粒（Grain Buffer），并应用 10ms 的线性淡出包络（Linear Fade-out），杜绝爆音（Audio Clicks）；
+  - 创作者用耳朵即可精准分辨音节起始（如爆破音“B”、“P”或语句重音开端），达到专业非线性编辑软件（NLE）级别的操作手感。
+
+---
+
+#### 4. 基于 RMS 能量的 VAD 静音检测与智能磁吸算法 (VAD & Snap-to-Silence Algorithm)
+
+为了彻底解决创作者手工反复微调时间分界点的繁琐操作，FocusFlow 引入轻量级客户端语音活动检测（Voice Activity Detection, VAD）与智能几何磁吸引擎：
+
+##### 1. 数学模型与能量计算
+设音频 PCM 采样序列为 $x[n]$，采样率为 $f_s$（通常为 44100Hz 或 48000Hz）。
+定义滑动分析窗（Window Size）为 $N = 20\text{ms}$（对应 $N = 0.02 \times f_s$ 个采样点），滑动步长（Hop Size）为 $M = 10\text{ms}$。
+
+对第 $m$ 个分析窗，计算其均方根能量（Root Mean Square, RMS）：
+$$\text{RMS}_m = \sqrt{\frac{1}{N} \sum_{k=0}^{N-1} x[m \cdot M + k]^2}$$
+
+将其转换为分贝表示（dBFS）：
+$$\text{Energy}_{m,\text{dB}} = 20 \log_{10}(\text{RMS}_m + \epsilon) \quad (\epsilon = 10^{-7})$$
+
+##### 2. 停顿区间判定准则 (Silence Gap Detection)
+* **静音阈值（Threshold）**：定义背景噪音能量分水岭 $E_{\text{silence}} = -42\text{dB}$；
+* **有效停顿窗口（Min Duration）**：语句之间的自然呼吸或换气停顿通常持续 $150\text{ms} \sim 400\text{ms}$。当连续 $K$ 个分析窗满足 $\text{Energy}_{m,\text{dB}} < E_{\text{silence}}$ 且对应时长 $K \times M \ge 120\text{ms}$ 时，系统判定该区间 $[t_{\text{start}}, t_{\text{end}}]$ 为**有效语音停顿带（Voice Pause Gap）**；
+* **几何停顿中心**：计算该停顿带的能量最低谷或几何中点 $t_{\text{snap}} = \frac{t_{\text{start}} + t_{\text{end}}}{2}$。
+
+```
+       语音高能波峰 (说话中)               静音停顿区间 (呼吸间隙)         下一句语音波峰
+     ▲                                ├──────────────────────┤      ▲
+ 0dB ┼   ▄█▄  █▄                      │   自然停顿中点 t_snap │     ▄█▄  █▄
+-20dB┼  █████████▄                    │          ▼           │    █████████▄
+-42dB┼────────────────────────────────┴──────────┬───────────┴───────────────── 阈值线
+     │                                           │
+     └───────────────────────────────────────────┴─────────────────────────────► 时间轴
+                                          [磁吸有效范围 ±50ms]
+```
+
+##### 3. 磁吸引擎与触觉交互 (Snap Interaction)
+* **磁吸敏感半径**：设定吸附门槛为 $\Delta t_{\text{threshold}} = \pm 50\text{ms}$；
+* **吸附动作**：当创作者拖动场景分割线进入任意停顿中点 $t_{\text{snap}}$ 的 $\pm 50\text{ms}$ 范围时，磁吸引擎立即强制将分割线坐标锁定在 $t_{\text{snap}}$；
+* **视觉与触觉反馈**：
+  - 穿透虚线瞬间由电光青变为代表对齐成功的**翠绿发光色（Emerald, `#10b981`）**；
+  - 鼠标光标旁浮现磁铁图标微徽标与文字胶囊：`🧲 已吸附至语音停顿 (00:04.250)`；
+  - 若系统支持震动 API（如具备 Force Touch Trackpad 的 macOS），触发毫秒级微震反馈，赋予创作者如同物理齿轮啮合般的确定感。
+
+---
+
+#### 5. 底层音画主时钟锁相环架构与防漂移同步机制 (Master Clock PLL Architecture)
+
+##### 1. 时钟漂移物理本质剖析 (Clock Drift Analysis)
+在 Web 浏览器环境中，音画不同步的本质是**双物理时钟域竞争（Dual Independent Clock Domains）**：
+1. **显示渲染时钟（Display / rAF Clock）**：
+   - 依赖于显示器的垂直同步信号（VSync），标准屏幕为 60Hz（约 16.66ms/帧），高端电竞屏或 MacBook Pro ProMotion 为 120Hz（约 8.33ms/帧）；
+   - `requestAnimationFrame` 受浏览器主线程微任务执行耗时、DOM 重排重绘、垃圾回收（GC）以及多任务操作系统调度的影响，帧间隔具有显著的离散抖动（Jitter $\pm 10\text{ms}$）；
+2. **声卡物理时钟（Audio Hardware Crystal Clock）**：
+   - 运行在专用声卡硬件 DSP 上，通过高精度石英晶振直接计数硬件音频 DMA 缓冲区，其时间累积精准度高达微秒级（误差 $< 1\text{ppm}$）。
+3. **漂移后果**：若播放内核使用自身基于 rAF 累加的 `elapsedTime += delta` 计算运镜进度，而背景音频依照声卡播放，播放 3 分钟后两者的绝对时间偏差即可达到数百毫秒，导致画面严重滞后或超前于旁白。
+
+##### 2. 主从锁相环（Master Clock PLL）设计
+为了保证 100% 毫秒级音画同步，FocusFlow 确立了**“声卡时钟为绝对主时钟（Master Clock），画面渲染为从属从钟（Slave Clock）”**的同步拓扑：
+
+```
+                    【Master Clock 音画时钟锁相环拓扑】
+
+          ┌────────────────────────────────────────────────────────┐
+          │  声卡硬件晶振 (AudioContext.currentTime) [MASTER CLOCK] │
+          └──────────────────────────┬─────────────────────────────┘
+                                     │ 广播高精度物理时间戳 t
+                                     ▼
+          ┌────────────────────────────────────────────────────────┐
+          │             音画同步控制器 (useAudioSync)               │
+          │   • t_current = audioContext.currentTime - t_start     │
+          │   • 阶段判定: 第 i 幕, 场景局部偏移 tau = t - SceneStart │
+          └──────────────────────────┬─────────────────────────────┘
+                                     │ 帧渲染时间驱动
+                                     ▼
+ ┌───────────────────────────────────┴────────────────────────────────────┐
+ │                  FocusFlow 运镜与动效纯函数渲染矩阵                    │
+ │  • 相机运镜插值: CameraMatrix(tau) = CubicBezier(tau / duration)       │
+ │  • 框线流光进度: DashOffset(tau) = (tau * speed) % PathLength          │
+ │  • 气泡显示权重: CalloutOpacity(tau) = Spring(tau)                     │
+ └────────────────────────────────────────────────────────────────────────┘
+```
+
+* **绝对时间插值原则**：
+  - 运镜与图元渲染引擎全面改造为**纯函数（Pure Mathematical Function）**，不再依赖内部状态累加器；
+  - 每一个 rAF 渲染循环周期内，画面引擎不计算 $\Delta t$，而是直接采样当前 `useAudioSync` 输出的绝对时间 $t_{\text{current}}$；
+  - 将 $t_{\text{current}}$ 输入相机矩阵方程 $M = f(t_{\text{current}})$，得出当前的镜头缩放、平移与流光偏移。
+* **掉帧自愈（Frame Drop Self-Healing）**：
+  - 当主线程由于高负载突发掉帧（如卡顿 100ms）时，下一个 rAF 到达时读取到的 $t_{\text{current}}$ 已前进 100ms；
+  - 画面引擎瞬间通过解析式计算出当前准确的空间几何位置，运镜将平滑飞跃到正确的位置继续播放，**画面绝不抢跑、画面绝不累积延迟，音画永远严丝合缝！**
+
+---
+
+#### 6. FocusFlow DSL 音频契约规范全量扩展 (`packages/dsl/src/schema.ts`)
+
+为了向下兼容无音频工程，同时全量承载多音轨、标记点与音频混音参数，扩展 DSL 契约如下：
+
 ```typescript
-export interface AudioTrackConfig {
+/**
+ * 音频轨道类型：旁白解说语音 vs 背景伴奏音乐 vs 动作音效
+ */
+export type AudioTrackType = 'voiceover' | 'bgm' | 'sfx';
+
+/**
+ * 音频时间轴上的关键帧场景转场对齐标记
+ */
+export interface AudioMarker {
   id: string;
-  url: string; // 本地 ObjectURL、Base64 或云端托管 URL
-  type: 'voiceover' | 'bgm'; // 旁白解说语音 vs 背景音乐
-  volume: number; // 0.0 ~ 1.0
-  offsetMs: number; // 音频起始播放时间偏移量 (ms)
-  markers?: Array<{
-    id: string;
-    timeMs: number;
-    sceneIndex: number;
-    label?: string;
-  }>;
+  timeMs: number;          // 在全局音频中的物理时间戳 (毫秒)
+  sceneIndex: number;      // 对应的场景索引 (Scene Index: 0, 1, 2...)
+  label?: string;          // 标记注释 (如 "01 网关服务开始解说")
+  autoSnapped?: boolean;   // 是否由 VAD 停顿检测自动吸附生成
 }
 
+/**
+ * 音频轨道完整配置契约
+ */
+export interface AudioTrackConfig {
+  id: string;
+  name: string;            // 轨道友好名称 (如 "主讲解声", "科技背景音乐")
+  type: AudioTrackType;
+  url: string;             // 资源路径: 相对路径 ./assets/voice.mp3、公网 HTTPS 或 Base64 Data URI
+  durationMs: number;      // 音频总物理时长 (毫秒)
+  volume: number;          // 音量增益 (0.0 静音 ~ 1.0 满格，默认 1.0)
+  muted?: boolean;         // 是否静音
+  offsetMs: number;        // 音频起始播放时间偏移量 (毫秒，支持音频延后播放)
+  fadeInMs?: number;       // 淡入时长 (毫秒)
+  fadeOutMs?: number;      // 淡出时长 (毫秒)
+  markers: AudioMarker[];  // 该轨道绑定的场景转场标记集合
+}
+
+/**
+ * 全局多媒体音频混音总线配置
+ */
+export interface AudioMixerSettings {
+  masterVolume: number;    // 全局主音量 (0.0 ~ 1.0)
+  ducking: boolean;        // 是否启用智能闪避 (Ducking): 旁白响起时背景音乐自动压低音量 -12dB
+  duckingLevel?: number;   // 闪避时 BGM 的音量衰减倍率 (0.1 ~ 0.5, 默认 0.25)
+  autoSnapToVoice: boolean;// 是否全局开启语音断句停顿智能磁吸
+}
+
+/**
+ * FocusFlow DSL 主入口契约音频扩展
+ */
 export interface FocusFlowDSL {
-  // ... 原有字段
+  // ... 保留原有 meta, asset, elements, scenes 核心字段
   audio?: {
     tracks: AudioTrackConfig[];
-    autoSnapToVoice?: boolean; // 是否启用语音停顿自动磁吸
+    mixer: AudioMixerSettings;
   };
 }
 ```
 
-#### 4. 关键技术实现模块规划
-1. **音频解码与分块波形缓存 (`audioDecoder.ts`)**：
-   * 基于浏览器原生 `AudioContext.decodeAudioData` 解码 PCM，提取音频振幅波峰包络数组（Peak Envelope）；
-   * 使用 Web Worker 进行并行降采样，避免大音频解码阻塞主线程。
-2. **底部时间轴波形组件 (`AudioWaveformTrack.tsx`)**：
-   * 挂载于 `BottomTimeline.tsx` 的场景卡片下方，支持横向拖动、滚轮缩放时间标尺；
-   * 场景分割线垂直穿透到波形轨道，创作者拖动场景卡片边缘时，自动在波形上以激光竖线高亮并吸附至最近的音频静音点（RMS 能量低于临界值）。
-3. **播放控制与音画绝对帧同步 (`useAudioSync.ts`)**：
-   * 解决音频时钟与 `requestAnimationFrame` 画面渲染时钟的物理偏差（AudioContext Clock vs rAF Drift）；
-   * 统一以 `audioContext.currentTime` 为全局主时钟（Master Clock），画面渲染帧严格订阅音频时钟。
+---
+
+#### 7. 多形态音画合流打包与多端导出落地机制 (Audio-Video Multiplexing)
+
+##### 1. 模式 A-1：独立离线单文件 HTML 打包 (`standalonePackager.ts`)
+* **原理**：打包引擎检测到 `dsl.audio.tracks` 存在时，通过 Node.js 或浏览器 Fetch 将音频文件编码为标准 Base64 Data URI（如 `data:audio/mp3;base64,...`），内联于 HTML 的 `<script id="focusflow-audio-data">` 标签内；
+* **极速播放**：运行时播放器直接将 Data URI 传递给原生 `new Audio()` 或 `audioContext.decodeAudioData()`，实现离线单文件零外部依赖双击秒开，自带完整背景解说。
+
+##### 2. 模式 A-2：纯前端客户端实时视频录制合流 (`canvasRecorder.ts`)
+* **痛点**：传统前端 HTML5 Canvas 录屏仅能抓取画面，导出的 WebM 视频缺少声音；
+* **合流方案**：
+  1. 使用 Web Audio API 构造全局混合节点：`AudioContext.createMediaStreamDestination()`；
+  2. 将所有音频轨道的 `GainNode` 混音输出重定向至该媒体流目标节点；
+  3. 通过 `canvas.captureStream(60)` 捕获 60FPS 画面流；
+  4. 利用 `new MediaStream([...canvasStream.getVideoTracks(), ...audioDest.stream.getAudioTracks()])` 构建合流轨道；
+  5. 传入浏览器 `MediaRecorder`，一键生成视听俱全、高画质 60FPS 的 WebM 视频并由浏览器直接弹出下载！
 
 ---
 
@@ -465,29 +725,187 @@ export interface FocusFlowDSL {
  • 双击秒开，本地/内网完美演示   • 供开发者二次定制与 Git 托管    • 视频平台 / PPT 嵌入首选
 ```
 
-#### 导出 1：独立离线单文件 HTML 下载 (`.html`)
-* **原理**：前端调用内置的 Standalone Packager 引擎，将 DSL、CSS 样式、IIFE JS 运行库及底图（转为 Data URI）打包成单一 `.html` 文件；
-* **体验**：浏览器点击一键弹出下载，文件大小通常仅 2~5MB，双击离线即开，无需任何环境。
+#### 3.4.1 导出 1：独立离线单文件 HTML 打包 (`.html`)
+* **原理**：前端调用内置的 Standalone Packager 引擎（`standalonePackager.ts` 与 Node.js 端 `scripts/build-standalone.js`），将 DSL、CSS 样式、IIFE JS 运行库、音频 Data URI 及底图（转为 Base64 Data URI）打包成单一自包含 `.html` 文件；
+* **体验**：浏览器点击一键弹出下载，文件大小通常仅 2~5MB，双击离线即开，无需任何外部网络或依赖环境。
 
-#### 导出 2：标准 DSL 源码与工程包 (`config.json` / `project.zip`)
-* 导出标准 FocusFlow DSL JSON 结构与图片素材压缩包，方便工程化版本控制。
+#### 3.4.2 导出 2：标准 DSL 源码与工程包 (`config.json` / `project.zip`)
+* **原理**：基于 `jszip` 纯前端在内存中打包，包含标准 FocusFlow DSL JSON 结构、原始高分辨率图片素材以及音频素材；
+* **体验**：供开发者与架构师进行二次定制、Git 版本控制或无缝迁移到其他工作区。
 
-#### 导出 3：视频渲染导出 (MP4 / GIF)
+#### 3.4.3 导出 3：视频渲染导出与 AI Agent / CLI 自动化无头管线 (Headless Video Pipeline & Agent CLI)
 
-针对不同运行环境与算力规模，提供三级阶梯式视频生成与自动化录制方案：
+针对不同运行环境、硬件算力规模与交互形态，FocusFlow 提供工业级三级阶梯式视频生成与自动化录制矩阵：
 
-1. **模式 A-1：纯浏览器客户端实时录制 (Client-side `MediaRecorder`)**：
-   * **原理**：基于 HTML5 Canvas Capture 与 `MediaRecorder` API，直接在用户浏览器显卡中实时捕获动效帧流，一键导出 60FPS WebM 视频；
-   * **优势**：0 后端与 Node 环境依赖，完全在客户端本地完成，隐私 100% 自治。
-2. **模式 A-2：AI Agent / CLI 自动化无头录制管线 (Headless Playwright & CDP Pipeline)**：
-   * **原理**：面向 AI Agent、CI/CD 自动化流水线及本地终端开发者。通过无头 Chromium（Playwright / Chrome DevTools Protocol）无界面加载单文件 HTML 或 Studio 视口，监听播放器就绪后由脚本注入触发 `player.play()`，开启原生全帧捕获；
-   * **音画与转码**：演播完成时精准捕获 `onEnded` 生命周期事件自动断流，调用本机 `fluent-ffmpeg` 硬件加速转码封装为工业标准 `H.264` MP4，全程无需人工干预；
-   * **核心优势**：单机极速，耗时严格等于演播总时长，完美契合 AI Agent 自动化生成闭环（详见 `design/AI_AGENT_INTEGRATION_SPEC.md`）。
-3. **模式 B：云端集群 4K 60fps 广播级离线渲染 (Render-Worker + BullMQ + Remotion + FFmpeg)**：
-   * **异步转码管线**：Studio 提交任务 ➔ BullMQ 队列 ➔ 云端 `render-worker` 节点基于确定性时间轴逐帧（1/60s）步进截取 4K 离线无掉帧快照 ➔ FFmpeg 硬件加速高码率转码；
-   * **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频下载，完全不消耗用户或 Agent 本机计算资源，适用于企业级广播级大片输出。
+```
+                              【视频渲染与导出三级阶梯架构】
 
-#### 导出 4：云端只读演示短链与知识库 `<iframe>` 嵌入
+                                     [🎥 视频生成请求]
+                                             │
+         ┌───────────────────────────────────┼───────────────────────────────────┐
+         ▼                                   ▼                                   ▼
+  【模式 A-1: 客户端实时录制】         【模式 A-2: 无头 CLI / Agent 管线】     【模式 B: 云端分布式渲染集群】
+   • 纯浏览器 HTML5 MediaRecorder      • Playwright / CDP 原生抓流         • BullMQ 队列 + Render-Worker
+   • 0 后端、0 Node 依赖，隐私自治      • 确定性虚拟时钟逐帧步进 (零掉帧)   • 1/60s 离线快照 + Remotion
+   • 适合个人创作者即时导出 WebM       • 适合 CI/CD、脚本批量与 AI Agent   • 适合团队企业级 4K 60FPS MP4
+```
+
+##### 1. 模式 A-1：纯浏览器客户端实时录制 (Client-side `MediaRecorder`)
+* **原理**：基于 HTML5 Canvas Capture 与 `MediaRecorder` API，直接在用户浏览器显卡中实时捕获动效帧流，结合 `AudioContext.createMediaStreamDestination()` 实现音画合流，一键导出 60FPS WebM 视频；
+* **优势**：0 后端与 Node 环境依赖，完全在客户端本地完成，隐私 100% 自治。
+
+##### 2. 模式 A-2：AI Agent / CLI 自动化无头录制管线深度规范 (Headless Pipeline & Agent CLI)
+
+###### (1) 核心业务场景与 Agent 闭环使命
+在生成式 AI 与 Agentic Workflow 爆发的背景下，AI Agent（如 Claude Desktop、Cursor、Antigravity）通常能从用户需求中秒级推理出高价值的 FocusFlow DSL，但在视频交付环节往往受制于人工操作。
+* **业务使命**：赋能 AI Agent 与 CI/CD 自动化流水线，通过**单条 CLI 指令**或**结构化脚本调用**，在无头环境（Headless Server / Docker / GitHub Actions）中自动化将架构图与 DSL 转换为 4K/1080P 广播级 MP4 视频，实现“从需求输入到成品视频交付”的 100% 全自动闭环！
+* **解决的传统痛点**：
+  - **录屏悬挂与黑帧**：传统录屏工具无法感知动画何时结束，往往超时录制大量冗余黑帧或提前截断；
+  - **无 GPU 虚机掉帧卡顿**：云端 CI/CD Runner 通常没有独立 GPU，传统实时录屏会导致极其严重的丢帧、卡顿与音画撕裂；
+  - **转码兼容性差**：浏览器导出的 WebM 视频在 QuickTime、Keynote、PPT 及部分主流社交平台上无法直接播放。
+
+###### (2) CLI 命令行交互语法与参数标准 (`focusflow render`)
+FocusFlow 提供标准的 Node.js CLI 工具入口与独立脚本（`scripts/render-video.mjs`）：
+
+```bash
+# 基础用法：输入 config.json，输出 1080P 60FPS MP4
+focusflow render ./project/config.json -o ./dist/architecture-demo.mp4
+
+# 高级用法：确定性步进模式、4K 超清、合流外部音频、启用 Apple Silicon 硬件加速
+focusflow render ./dist/standalone.html -o ./dist/demo-4k.mp4 \
+  --resolution 4k \
+  --fps 60 \
+  --mode deterministic \
+  --audio ./assets/voiceover.mp3 \
+  --hwaccel videotoolbox \
+  --json
+```
+
+**CLI 参数契约全景表**：
+| 参数名称 | 简写 | 类型 / 可选值 | 默认值 | 详细说明 |
+| :--- | :--- | :--- | :--- | :--- |
+| `--output` | `-o` | `string` (文件路径) | **必填** | 目标视频输出绝对或相对路径（支持 `.mp4`, `.webm`, `.gif`） |
+| `--resolution` | `-r` | `1080p \| 2k \| 4k \| native` | `1080p` | 渲染视口分辨率：`1080p` (1920×1080), `2k` (2560×1440), `4k` (3840×2160), `native` (底图原生分辨率) |
+| `--fps` | `-f` | `30 \| 60` | `60` | 视频输出帧率，推荐 60FPS 确保贝塞尔运镜与流光丝滑 |
+| `--mode` | `-m` | `screencast \| deterministic` | `deterministic` | 录制引擎核心模式（详见下文双轨架构） |
+| `--audio` | `-a` | `string` (文件路径) | `null` | 外部独立旁白解说或 BGM 音频路径（自动参与合流压制） |
+| `--hwaccel` | `-h` | `auto \| videotoolbox \| nvenc \| vaapi \| cpu` | `auto` | FFmpeg 硬件加速方案探测策略 |
+| `--crf` | | `number (0~51)` | `18` | CPU 软解编码时的 Constant Rate Factor 质量因子（18 为视觉无损） |
+| `--bitrate` | `-b` | `string` (如 `14M`, `28M`) | 自适应 | 硬件加速编码时的恒定码率（1080P 建议 12M~16M，4K 建议 28M~35M） |
+| `--json` | | `boolean` (布尔开关) | `false` | 启用 Agent 友好型流式标准输出协议（NDJSON） |
+| `--timeout` | | `number` (秒) | `180` | 渲染看门狗最大超时安全时限（防止无限悬挂） |
+
+###### (3) Agent 友好型流式 JSON 标准输出契约 (Streaming JSON stdout Protocol)
+当携带 `--json` 标志执行时，CLI 进程将标准输出（`stdout`）严格约束为单行独立 JSON 对象流（Newline Delimited JSON, NDJSON），人类可读的详细调试日志全部定向至 `stderr`，确保外部 Agent（如 Claude / GPT）能够以极低 Token 开销与毫秒级时延流式感知渲染进度与状态自愈：
+
+```json
+{"type":"stage","stage":"validate_input","message":"Validating input DSL schema and referential integrity..."}
+{"type":"stage","stage":"launch_headless","message":"Launching Playwright Chromium (Viewport: 1920x1080)..."}
+{"type":"stage","stage":"ready","durationMs":16500,"totalFrames":990,"fps":60,"viewport":{"width":1920,"height":1080}}
+{"type":"progress","stage":"recording","frame":198,"totalFrames":990,"percent":20.00,"fps":59.4,"etaSeconds":13.3}
+{"type":"progress","stage":"recording","frame":495,"totalFrames":990,"percent":50.00,"fps":59.8,"etaSeconds":8.2}
+{"type":"progress","stage":"recording","frame":990,"totalFrames":990,"percent":100.00,"fps":60.0,"etaSeconds":0.0}
+{"type":"stage","stage":"muxing","encoder":"h264_videotoolbox","message":"Multiplexing video and audio streams via FFmpeg..."}
+{"type":"completed","outputPath":"/workspace/dist/demo-4k.mp4","durationSeconds":16.5,"fileSizeBytes":24581200,"avgFps":59.8}
+```
+
+若发生任何异常，以结构化 JSON 抛出明确的错误上下文与自愈修复指引：
+```json
+{"type":"error","code":"ERR_ASSET_NOT_FOUND","message":"Underlying architecture image failed to load: ./assets/missing.png","suggestion":"Verify file path relative to config.json or provide a public HTTPS asset URL."}
+```
+
+###### (4) 双轨无头录制引擎技术架构 (Dual-Track Headless Architecture)
+为了兼顾本地极速验证与云端低配容器的高保真输出，FocusFlow 打造了独创的“双轨录制引擎”：
+
+```
+               【FocusFlow 模式 A-2 双轨无头录制引擎架构全景】
+
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │ 轨道 A: 实时流录制 (Real-time Screencast) · 适合配备 GPU 的本地机器    │
+ ├────────────────────────────────────────────────────────────────────────┤
+ │ Playwright 无头启动 ➔ 加载 HTML ➔ 触发 player.play() ➔ CDP 实时抓流流式直存 │
+ │ • 耗时 = 演播总时长 (15s 演播录 15s)                                   │
+ │ • 优势: 极速，不额外消耗多余时间                                       │
+ ├────────────────────────────────────────────────────────────────────────┤
+ │ 轨道 B: 确定性虚拟时间步进 (Deterministic Frame-Stepping) · 适合 CI/云端 │
+ ├────────────────────────────────────────────────────────────────────────┤
+ │ 1. 注入 virtualClock.js 劫持 Date.now, performance.now, rAF            │
+ │ 2. Δt = 1/60s (16.66ms) 离散循环步进                                   │
+ │ 3. player.seekTo(t) ➔ 等待微任务清空与 DOM 稳定 ➔ CDP 截取全保真快照   │
+ │ 4. Node.js Stream 标准输入直灌 FFmpeg stdin (零磁盘 I/O 损耗)           │
+ │ • 优势: 100% 满帧无抖动、无视单核/弱 CPU 负载，4K 60FPS 绝对广播级质量 │
+ └────────────────────────────────────────────────────────────────────────┘
+```
+
+* **轨道 A 机制细节（Real-Time Screencast Track）**：
+  - 借助 Playwright `page.video()` 或 Chrome DevTools Protocol `Page.startScreencast`；
+  - 启动后监听播放器就绪信号，调用 `window.FocusFlowInstance.play()`，浏览器以物理时间匀速演播；
+  - 演播到达尾声接收 `ended` 事件后停止抓取，交由 FFmpeg 转码。
+* **轨道 B 机制细节（Deterministic Frame-Stepping Track · 核心创新）**：
+  1. **虚拟时钟劫持（Virtual Time Injection）**：在页面初始化脚本中注入 `virtualClock.js`，将 `window.requestAnimationFrame`、`Date.now()`、`performance.now()` 全量替换为确定性递增计数器；
+  2. **精准步进循环（Frame Loop）**：对于 60FPS 视频，步长固定为 $\Delta t = \frac{1000}{60} = 16.666667\text{ms}$。脚本在 Node 端以循环方式调度：
+     ```javascript
+     for (let frame = 0; frame < totalFrames; frame++) {
+       const targetTimeMs = frame * (1000 / fps);
+       await page.evaluate((t) => window.FocusFlowInstance.seekTo(t), targetTimeMs);
+       // 确保 WebGL / SVG 矩阵与 CSS 渲染树稳定
+       await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(resolve)));
+       // CDP 原生截取无损 PNG 帧流
+       const buffer = await cdpSession.send('Page.captureScreenshot', { format: 'png', fromSurface: true });
+       // 管道直推 FFmpeg stdin
+       ffmpegProcess.stdin.write(buffer.data, 'base64');
+     }
+     ```
+  3. **绝对无损质量**：即便在单核 CI 服务器上，单帧渲染快照耗时 200ms（整体录制耗时为实时的 10 倍），最终拼接出的视频仍然是严格满血、分秒不差、没有任何一帧卡顿的 60FPS 广播级杰作！
+
+###### (5) 演播生命周期信号桥接与异常看门狗 (Lifecycle Signals & Watchdog State Machine)
+为了彻底根治无头录制中的启动竞态（Race Condition）与结尾黑屏截断问题，`@focusflow/player` 内核提供确定性生命周期事件协议：
+
+* **核心生命周期事件**：
+  - `window.__FOCUSFLOW_READY__ = true`：通知录制端底图高清渲染就绪、字体加载完毕、首幕图元已就绪；
+  - `window.FocusFlowInstance.on('sceneChange', ({ sceneIndex, duration }) => void)`：场景切换广播；
+  - `window.FocusFlowInstance.on('ended', () => void)`：全部分镜演播完毕广播；
+* **看门狗与尾帧缓冲机制（Watchdog & Tail Buffer）**：
+  - **启动看门狗（Start Watchdog）**：等待 `__FOCUSFLOW_READY__` 最大容忍 15 秒，超时抛出 `ERR_PLAYER_INIT_TIMEOUT` 并抓取错误快照；
+  - **播放看门狗（Render Watchdog）**：设定硬性超时阈值 $T_{\text{max}} = \text{演播总时长} \times 2.5 + 30\text{s}$，防止页面脚本异常导致死锁；
+  - **尾帧冷冻缓冲（Tail Freezing Buffer）**：捕获到 `ended` 信号后，录制脚本强制继续捕获 600ms（维持最终幕稳定定格），给观众留下自然的视觉呼吸感，随后向 FFmpeg 发送 `EOF` 安全断流。
+
+###### (6) FFmpeg 跨平台 GPU 硬件加速转码矩阵 (Hardware Acceleration Matrix)
+无头录像生成的原始流或图片帧流必须转码为工业标准兼容的 MP4（`H.264 + AAC`）。系统内置跨平台探测器，自动选用最佳硬件加速编解码器：
+
+| 操作系统 / 硬件平台 | 探测标识 | FFmpeg 加速编码器与核心参数 | 性能倍率 |
+| :--- | :--- | :--- | :--- |
+| **macOS (Apple Silicon M1~M4 / Intel)** | `process.platform === 'darwin'` | `-c:v h264_videotoolbox -b:v 14M -pix_fmt yuv420p` | **8x ~ 15x 极速** |
+| **Linux / Windows (NVIDIA GPU)** | `nvidia-smi` 存在 | `-c:v h264_nvenc -preset p7 -cq 19 -b:v 14M -pix_fmt yuv420p` | **10x ~ 20x 极速** |
+| **Linux (Intel / AMD GPU)** | `/dev/dri/renderD128` 存在 | `-vaapi_device /dev/dri/renderD128 -vf 'format=nv12,hwupload' -c:v h264_vaapi` | **5x ~ 10x 硬件加速** |
+| **通用云端 CI / 纯 CPU 虚机** | Fallback 降级回退 | `-c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p` | 1x 标速 (高画质基准) |
+
+* **音画合流混流指令封装**：
+  若工程配置了 Stage 5.6 音频轨，FFmpeg 自动注入音频流合流：
+  ```bash
+  ffmpeg -f image2pipe -framerate 60 -i - \
+         -i ./assets/voiceover.mp3 \
+         -c:v h264_videotoolbox -b:v 14M -pix_fmt yuv420p \
+         -c:a aac -b:a 192k -ar 48000 \
+         -movflags +faststart \
+         -shortest ./dist/output.mp4
+  ```
+  `+faststart` 标记将视频元数据（`moov atom`）前置到文件头部，确保生成的 MP4 支持网页秒开缓冲播放。
+
+###### (7) 错误码标准与 Agent 自愈闭环机制 (Exit Codes & Agent Self-Healing)
+为便于 AI Agent 捕获异常并自主修正重试，定义规范化的进程退出码（Process Exit Codes）：
+* `0 (SUCCESS)`：渲染成功，MP4 文件校验合法并落盘；
+* `1 (ERR_INVALID_DSL)`：DSL Schema 校验失败或存在孤岛引用；**Agent 自愈策略**：调用 `validate-dsl.mjs` 自动修复 ID 关联；
+* `2 (ERR_ASSET_LOAD_FAILED)`：底图或图元素材加载 404 或跨域失败；**Agent 自愈策略**：检查相对路径或转为 Base64 资产；
+* `3 (ERR_BROWSER_CRASH)`：无头 Chromium 崩溃或缺少系统依赖；**Agent 自愈策略**：自动执行 `npx playwright install-deps`；
+* `4 (ERR_FFMPEG_ENCODE)`：FFmpeg 未安装或硬件编码器不支持；**Agent 自愈策略**：自动降级为 `--hwaccel cpu` 重新渲染；
+* `5 (ERR_RENDER_TIMEOUT)`：渲染看门狗超时；**Agent 自愈策略**：扩大 `--timeout` 阈值或减少过长分镜场景。
+
+##### 3. 模式 B：云端集群 4K 60fps 广播级离线渲染 (Render-Worker + BullMQ + Remotion + FFmpeg)
+* **异步转码管线**：Studio 提交任务 ➔ BullMQ 队列 ➔ 云端 `render-worker` 节点基于确定性时间轴逐帧（1/60s）步进截取 4K 离线无掉帧快照 ➔ FFmpeg 硬件加速高码率转码；
+* **体验**：提供标准 1080P、2K 及 4K Ultra HD MP4 视频下载，完全不消耗用户或 Agent 本机计算资源，适用于企业级广播级大片输出（详见 Stage 9）。
+
+#### 3.4.4 导出 4：云端只读演示短链与知识库 `<iframe>` 嵌入
 * 一键生成 `https://focusflow.io/s/[slug]` 短链；
 * 提供自适应 `<iframe>` 代码，支持嵌入 Notion、飞书文档、语雀、Docusaurus。
 
@@ -943,59 +1361,62 @@ model ProjectVersion {
 #### 🎵 Stage 5.6: 音频时间轴对齐与多媒体音画同步 (Audio Timeline Sync & Voiceover Alignment · 规划中)
 
 > **核心设计哲学：渐进式（Progressive）且非强制（Non-mandatory）**
-> * 音频时间轴是针对“解说型架构视频”的高级增强模块，**绝非强迫用户必须提供或上传外部音频**。无音频时，系统完全依照预设时长（如每幕 3s/5s）或观众鼠标/按键翻页正常运作；
+> * 音频时间轴是针对“解说型架构视频”的高级增强模块，**绝非强迫用户必须提供或上传外部音频**。无音频时，系统完全依照预设时长（如每幕 3.5s）或观众鼠标/按键翻页正常运作；
 > * 系统为音频获取设计了 **3 种渐进式输入管道** 与 **清晰的本地/云端存储分界**：
+>   - **管道 1（演播随录）**：Studio 内置同屏演播录音器，3-2-1 倒计时后边看画布边讲，实时生成波形并分幕自动打点；
+>   - **管道 2（干声导入）**：拖拽外部成套干声音频文件（MP3/WAV/M4A/AAC），Web Worker 离屏极速采样 Peak Envelope；
+>   - **管道 3（AI 提词）**：分幕台词输入结合 TTS 语音合成，根据生成音频物理长度自动伸缩该幕镜头 `duration`；
+> * **存储分界**：模式 A 纯前端浏览器本地沙箱（IndexedDB 暂存 + 导出单文件内嵌 Base64 Data URI），完全不联网、零隐私泄漏；模式 B 云端 SaaS 异步直传 Cloudflare R2。
 
-```
-                  【FocusFlow 音频时间轴的 3 种输入管道】
-
-  ┌────────────────────────────────────────────────────────────────────────┐
-  │ 🎙️ 管道 1: Studio 内置“一键同屏演播录音” (轻量极客推荐 · 随讲随录)     │
-  │    • 场景: 架构师做内部分享或录制 2 分钟架构讲解，无需任何准备         │
-  │    • 交互: 点 🎙️ 录音 ➔ 画布开始播放 ➔ 对着麦克风边看边讲 ➔ 结束即出波形 │
-  ├────────────────────────────────────────────────────────────────────────┤
-  │ 📁 管道 2: 拖拽导入外部音频文件 (专业创作者 · 精准对齐)                 │
-  │    • 场景: B站/YouTube 博主已在专业软件 (剪映/Audacity) 录制好成套干声   │
-  │    • 交互: 直接把 MP3/WAV 拖入底部时间轴 ➔ 自动提取波形与静音间隙      │
-  ├────────────────────────────────────────────────────────────────────────┤
-  │ 🤖 管道 3: AI 文本自动生成语音 TTS (出海与不愿开口用户 · 商业版/AI插件)   │
-  │    • 场景: 开发者普通话不标准，或需要纯正美式英语出海解说               │
-  │    • 交互: 在场景脚本中写文字 ➔ 一键生成语音 ➔ 自动根据语速拉伸运镜时长 │
-  └────────────────────────────────────────────────────────────────────────┘
-```
-
-> **音频在工程中的存储与隐私机制**：
-> * **模式 A (开源单机版)**：**100% 浏览器沙箱运行**。音频仅暂存于浏览器内存或 `IndexedDB` 中，导出单文件 HTML 时转为 Base64 Data URI 内联在文件内部，或在 ZIP 导出时保存为本地 assets 文件，**完全不联网、零隐私泄漏风险**；
-> * **模式 B (商业云端 SaaS)**：音频作为项目多媒体资产自动异步上传至团队绑定的 **Cloudflare R2** 对象存储中，支持多人多端协同试听与云端转码。
-
-- [ ] **5.6.1 浏览器端音频解码与波形采样计算 (`audioDecoder.ts`)**
-  - [ ] 基于 Web Audio API `AudioContext.decodeAudioData` 实现多格式音频解码（MP3 / WAV / M4A / AAC）
-  - [ ] 提取双通道波峰包络数组（Peak Envelope），Web Worker 离屏降采样防卡顿
-- [ ] **5.6.2 Studio 内置同屏麦克风演播录音器 (`StudioVoiceRecorder.ts`)**
-  - [ ] 基于 HTML5 `navigator.mediaDevices.getUserMedia` 与 `MediaRecorder` 实现麦克风实时音频流采集
-  - [ ] 演播录音模式联动：倒计时 `3-2-1` 启动时间轴运镜，用户边看边讲，停止时自动在波形轨创建对齐音轨
-- [ ] **5.6.3 可视化音频波形轨道 (`AudioWaveformTrack.tsx`)**
-  - [ ] 底部时间轴集成波形画布，支持时间标尺、全局播放头（Playhead）与平移缩放
-  - [ ] 场景切换分界竖线穿透联动，显示各场景对应音频时间戳与时长标注
-- [ ] **5.6.4 场景标记点磁吸与自动时长对齐 (Snap-to-Marker & Voice VAD)**
-  - [ ] 基于简易能量检测（VAD）识别语音停顿处的静音间隙
-  - [ ] 拖拽场景卡片边缘时 ±50ms 自动磁吸至音频波形标记点或静音低能量间隙，双向自适应更新 DSL 各场景 `duration`
-- [ ] **5.6.5 音画合流打包与视频录制导出 (Audio-Video Multiplexing)**
-  - [ ] 客户端单文件导出时将音频内联为 Data URI 并通过 Web Audio 播放
-  - [ ] `canvasRecorder.ts` 接入 `AudioContext.createMediaStreamDestination()` 实现音画合流 WebM 录制导出
+- [ ] **5.6.1 浏览器端离线音频解码与分块波形采样 (`audioDecoder.ts` / `waveformWorker.ts`)**
+  - [ ] 基于 Web Audio API `AudioContext.decodeAudioData` 实现多格式离线解码（MP3 / WAV / M4A / AAC / FLAC / OGG）
+  - [ ] 编写 Web Worker 离屏线程（`waveformWorker.ts`），接收 Float32Array PCM 数据并执行双通道峰值包络提取（Min-Max Peak Envelope Extraction）
+  - [ ] 输出高保真紧凑型采样数组，建立内存缓存机制，大文件（> 50MB）解码不阻塞主线程 UI 与 60FPS 画布渲染
+- [ ] **5.6.2 Studio 内置同屏演播麦克风录音器 (`StudioVoiceRecorder.ts`)**
+  - [ ] 基于 HTML5 `navigator.mediaDevices.getUserMedia` 与 `MediaRecorder` 采集高保真麦克风音频流（优先选用 `audio/webm;codecs=opus`）
+  - [ ] 实现录音就绪预检弹层：设备切换枚举、动态立体声 VU 电平表（-60dB ~ 0dB）与降噪开关（ANC / Echo Cancellation）
+  - [ ] 实现 3-2-1 倒计时与播放器运镜自动联动启动逻辑，支持演播中按 `M` 键或悬浮按钮打入分幕转场标记（Punch-in Marker）
+  - [ ] 录音停止时自动转为本地 Blob 并计算时长，自动拉伸校准 DSL 各场景 `duration` 匹配真实语速
+- [ ] **5.6.3 可视化音频波形轨道与交互系统 (`AudioWaveformTrack.tsx` / `useAudioWaveform.ts`)**
+  - [ ] 底部时间轴集成 64px 紧凑波形画布，暗黑科技主题渐变渲染（电光青到科技蓝），支持时间网格线标尺
+  - [ ] 实现 10 级视口无级缩放（`Ctrl/Cmd + Wheel`，每屏 120s 到 2s）与横向视口平移（`Shift + Wheel`）
+  - [ ] 实现贯穿式场景分割虚线（Scene Piercing Cut-lines），拖拽时显示动态时间戳浮层与相对时间增量
+  - [ ] 实现贯穿激光播放头（Playhead）与毫秒级即拖即听引擎（Audio Scrubbing），基于 `AudioBufferSourceNode` 触发 60ms 颗粒微播放
+- [ ] **5.6.4 RMS 能量 VAD 检测与场景分割线智能停顿磁吸 (`vadAnalyzer.ts` / `useSnapToSilence.ts`)**
+  - [ ] 基于 20ms 滑动分析窗计算音频 RMS 能量并转换为 dBFS，识别连续低于 -42dB 且持续 $\ge 120\text{ms}$ 的自然断句停顿带
+  - [ ] 计算各停顿带几何中点 $t_{\text{snap}}$，拖拽场景卡片边缘靠近 $\pm 50\text{ms}$ 阈值时触发强磁吸捕捉
+  - [ ] 磁吸触发时提供视觉变绿（Emerald）与文字提示，双向自适应写回 DSL 更新场景 `duration`
+- [ ] **5.6.5 播放器主时钟锁相环（Master Clock PLL）音画严格同步 (`useAudioSync.ts` / `packages/player-core`)**
+  - [ ] 建立以 `AudioContext.currentTime` 为全局主时钟（Master Clock）的锁相环架构，杜绝声卡晶振与 rAF 累计漂移（Zero Drift）
+  - [ ] 改造播放内核运镜矩阵与流光进度计算为基于绝对时间 $t$ 的纯函数，主线程掉帧时自愈瞬间校准
+- [ ] **5.6.6 单文件 Base64 音频内联与多形态音画合流导出 (`standalonePackager.ts` / `canvasRecorder.ts`)**
+  - [ ] 单文件离线打包器集成音频 Base64 Data URI 自动内联与运行时解码播放
+  - [ ] 客户端 WebM 录制集成 `AudioContext.createMediaStreamDestination()`，与 `<canvas>` 画面流混流录制视听完整视频
+- [ ] **5.6.7 音频时间轴端到端 E2E 自动化测试套件 (`apps/studio/e2e/stage5-audio-sync.spec.ts`)**
+  - [ ] 编写 Playwright E2E 自动化测试，覆盖录音流模拟、外部音频拖拽、波形缩放、磁吸对齐与合流导出全流程
 
 #### 🎬 Stage 5.7: 自动化无头视频录制与 Agent CLI 管线 (Automated Headless Video Pipeline & Agent CLI · 规划中)
-- [ ] **5.7.1 Playwright / CDP 无头录制脚本 (`scripts/render-video.mjs`)**
-  - [ ] 编写无头 Chromium 录制脚本，支持传入 `standalone.html` 或 `config.json` 路径与目标输出 `.mp4` 文件路径
-  - [ ] 支持通过 CLI 动态指定渲染视口（1080P / 2K / 4K）与捕获帧率（30FPS / 60FPS）
-- [ ] **5.7.2 演播生命周期信号桥接与自动落盘机制**
-  - [ ] 完善 `@focusflow/player` 全局 `window.FocusFlowInstance.on('ended', callback)` 播放结束广播事件
-  - [ ] 无头录制脚本精准捕获 `ended` 信号后自动切断帧捕获并安全落盘，杜绝末尾冗余录制或超时悬挂
-- [ ] **5.7.3 FFmpeg 硬件加速转码与音画无损封装**
-  - [ ] 集成 `fluent-ffmpeg` 并探测调用本机 GPU 硬件加速编码器（macOS VideoToolbox / Linux NVENC）进行高速转码
-  - [ ] 将录制的原始视频流与 Stage 5.6 音频轨进行合流，输出标准工业兼容的 `H.264 + AAC` MP4 容器
-- [ ] **5.7.4 Agent 自动化管线测试与质量门禁**
-  - [ ] 编写 CI/E2E 自动化测试，验证“DSL ➔ 单文件 HTML ➔ Headless 录制 ➔ MP4 文件”全链路 100% 自动化闭环
+- [ ] **5.7.1 独立 CLI 渲染入口与参数解析器 (`scripts/render-video.mjs` / `packages/cli`)**
+  - [ ] 编写 Node.js CLI 统一交互入口（`focusflow render <input> -o <output> [flags]`）
+  - [ ] 支持解析 `config.json`、工程目录或已打包的 `standalone.html`，支持动态指定分辨率（1080P/2K/4K）、帧率（30/60FPS）
+  - [ ] 实现 `--json` 标志驱动的标准 NDJSON 流式输出协议，实现与 AI Agent（Claude/Cursor/AutoGPT）的无缝编排
+- [ ] **5.7.2 虚拟时钟注入与确定性逐帧步进引擎 (`virtualClock.ts` / `deterministicStepper.ts`)**
+  - [ ] 编写浏览器预注入脚本 `virtualClock.js`，无缝劫持 `window.requestAnimationFrame`、`Date.now` 与 `performance.now`
+  - [ ] 实现以 $\Delta t = 1/60\text{s}$ 固定时间步长的确定性逐帧步进（Deterministic Frame-Stepping）
+  - [ ] 每帧触发 `seekTo(t)` 并在微任务与 WebGL/DOM 栅格化稳定后，由 CDP `Page.captureScreenshot` 截取无损快照
+  - [ ] 截帧直接通过 Node.js 标准流管道（Pipe）灌入 FFmpeg `stdin`，实现零磁盘 I/O 损耗与无 GPU 虚机 100% 满帧无抖动录制
+- [ ] **5.7.3 Playwright Chromium 无头录制与生命周期信号桥接 (`headlessSession.ts`)**
+  - [ ] 在 `@focusflow/player` 内核完备广播 `window.__FOCUSFLOW_READY__`、`sceneChange` 与 `ended` 生命周期事件
+  - [ ] 无头录制会话精准捕获 `ended` 信号，实施 600ms 尾帧冷冻缓冲，杜绝尾部动画截断与黑屏闪烁
+  - [ ] 建立双看门狗机制（启动看门狗 15s、渲染看门狗 $T_{\text{max}} = \text{时长} \times 2.5 + 30\text{s}$），防止进程意外死锁
+- [ ] **5.7.4 FFmpeg 跨平台 GPU 硬件加速转码与无损混流管道 (`ffmpegMuxer.ts`)**
+  - [ ] 实现宿主硬件加速自动探测矩阵：macOS VideoToolbox、NVIDIA NVENC、Linux VAAPI 与 CPU `libx264` 智能降级
+  - [ ] 视音频合流混流压制：合流 Stage 5.6 音频轨，输出标准工业级兼容的 `H.264 + AAC` MP4，配置 `+faststart` 保证流媒体秒开
+- [ ] **5.7.5 错误码标准与 Agent 自愈闭环机制 (`errorHandler.ts`)**
+  - [ ] 制定规范的退出状态码体系（`0: 成功`, `1: DSL语法错误`, `2: 资产缺失`, `3: 浏览器崩溃`, `4: FFmpeg转码失败`, `5: 渲染超时`）
+  - [ ] 输出结构化自愈建议 JSON，赋能 AI Agent 自主修正参数并自动重试
+- [ ] **5.7.6 无头自动化渲染全链路 E2E 自动化测试套件 (`tests/headless-render.spec.ts`)**
+  - [ ] 编写全链路集成测试，在 CI 环境下验证从“输入 DSL ➔ 确定性无头步进 ➔ FFmpeg 压制 ➔ 校验 MP4 封装时长与画质”的 100% 自动化闭环
 
 ---
 
