@@ -1377,23 +1377,28 @@ model ProjectVersion {
   - [ ] 实现录音就绪预检弹层：设备切换枚举、动态立体声 VU 电平表（-60dB ~ 0dB）与降噪开关（ANC / Echo Cancellation）
   - [ ] 实现 3-2-1 倒计时与播放器运镜自动联动启动逻辑，支持演播中按 `M` 键或悬浮按钮打入分幕转场标记（Punch-in Marker）
   - [ ] 录音停止时自动转为本地 Blob 并计算时长，自动拉伸校准 DSL 各场景 `duration` 匹配真实语速
-- [ ] **5.6.3 可视化音频波形轨道与交互系统 (`AudioWaveformTrack.tsx` / `useAudioWaveform.ts`)**
+- [ ] **5.6.3 AI 场景提词脚本与分幕 TTS 语音合成自适应伸缩 (`aiTtsSynthesizer.ts` / `useSceneTTS.ts`)**
+  - [ ] 在右侧属性面板【🎬 场景运镜】面板中集成 `VoiceoverScriptInput.tsx`，支持为每个 Scene 输入独立解说台词
+  - [ ] 编写前端统一 TTS 适配器层（`ttsProvider.ts`），支持可插拔适配器（如 OpenAI TTS、Edge-TTS 与浏览器原生 `window.speechSynthesis` 离线备用方案）
+  - [ ] 实现多分幕并行语音合成与流式音频切片拼接，生成全局解说音轨并注入各幕分界转场标记（`AudioMarker`）
+  - [ ] 实现自适应镜头时长拉伸算法：解析各幕 TTS 音频切片物理时长 $T_{\text{audio}}$，自动将当前场景重算为 $\text{scene.duration} = \max(T_{\text{audio}} + 300\text{ms}, \text{camera.duration})$，使解说台词与运镜停留自适应匹配
+- [ ] **5.6.4 可视化音频波形轨道与交互系统 (`AudioWaveformTrack.tsx` / `useAudioWaveform.ts`)**
   - [ ] 底部时间轴集成 64px 紧凑波形画布，暗黑科技主题渐变渲染（电光青到科技蓝），支持时间网格线标尺
   - [ ] 实现 10 级视口无级缩放（`Ctrl/Cmd + Wheel`，每屏 120s 到 2s）与横向视口平移（`Shift + Wheel`）
   - [ ] 实现贯穿式场景分割虚线（Scene Piercing Cut-lines），拖拽时显示动态时间戳浮层与相对时间增量
   - [ ] 实现贯穿激光播放头（Playhead）与毫秒级即拖即听引擎（Audio Scrubbing），基于 `AudioBufferSourceNode` 触发 60ms 颗粒微播放
-- [ ] **5.6.4 RMS 能量 VAD 检测与场景分割线智能停顿磁吸 (`vadAnalyzer.ts` / `useSnapToSilence.ts`)**
+- [ ] **5.6.5 RMS 能量 VAD 检测与场景分割线智能停顿磁吸 (`vadAnalyzer.ts` / `useSnapToSilence.ts`)**
   - [ ] 基于 20ms 滑动分析窗计算音频 RMS 能量并转换为 dBFS，识别连续低于 -42dB 且持续 $\ge 120\text{ms}$ 的自然断句停顿带
   - [ ] 计算各停顿带几何中点 $t_{\text{snap}}$，拖拽场景卡片边缘靠近 $\pm 50\text{ms}$ 阈值时触发强磁吸捕捉
   - [ ] 磁吸触发时提供视觉变绿（Emerald）与文字提示，双向自适应写回 DSL 更新场景 `duration`
-- [ ] **5.6.5 播放器主时钟锁相环（Master Clock PLL）音画严格同步 (`useAudioSync.ts` / `packages/player-core`)**
+- [ ] **5.6.6 播放器主时钟锁相环（Master Clock PLL）音画严格同步 (`useAudioSync.ts` / `packages/player-core`)**
   - [ ] 建立以 `AudioContext.currentTime` 为全局主时钟（Master Clock）的锁相环架构，杜绝声卡晶振与 rAF 累计漂移（Zero Drift）
   - [ ] 改造播放内核运镜矩阵与流光进度计算为基于绝对时间 $t$ 的纯函数，主线程掉帧时自愈瞬间校准
-- [ ] **5.6.6 单文件 Base64 音频内联与多形态音画合流导出 (`standalonePackager.ts` / `canvasRecorder.ts`)**
+- [ ] **5.6.7 单文件 Base64 音频内联与多形态音画合流导出 (`standalonePackager.ts` / `canvasRecorder.ts`)**
   - [ ] 单文件离线打包器集成音频 Base64 Data URI 自动内联与运行时解码播放
   - [ ] 客户端 WebM 录制集成 `AudioContext.createMediaStreamDestination()`，与 `<canvas>` 画面流混流录制视听完整视频
-- [ ] **5.6.7 音频时间轴端到端 E2E 自动化测试套件 (`apps/studio/e2e/stage5-audio-sync.spec.ts`)**
-  - [ ] 编写 Playwright E2E 自动化测试，覆盖录音流模拟、外部音频拖拽、波形缩放、磁吸对齐与合流导出全流程
+- [ ] **5.6.8 音频时间轴端到端 E2E 自动化测试套件 (`apps/studio/e2e/stage5-audio-sync.spec.ts`)**
+  - [ ] 编写 Playwright E2E 自动化测试，覆盖录音流模拟、外部音频拖拽、AI TTS 提词分幕合成与时长拉伸、波形缩放、磁吸对齐与合流导出全流程
 
 #### 🎬 Stage 5.7: 自动化无头视频录制与 Agent CLI 管线 (Automated Headless Video Pipeline & Agent CLI · 规划中)
 - [ ] **5.7.1 独立 CLI 渲染入口与参数解析器 (`scripts/render-video.mjs` / `packages/cli`)**
