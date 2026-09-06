@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 1024px;
+      height: 1024px;
+      background: radial-gradient(circle at 50% 40%, #111726 0%, #080c14 70%, #04060a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Geist", "Inter", sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 背景微妙环境光晕 */
+    .ambient-glow {
+      position: absolute;
+      width: 650px;
+      height: 650px;
+      top: 130px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 70%);
+      pointer-events: none;
+      filter: blur(40px);
+    }
+
+    /* 3D 磨砂玻璃 Squircle 主体 (对标 D3 质感) */
+    .squircle-wrapper {
+      position: relative;
+      width: 540px;
+      height: 540px;
+      margin-top: -30px;
+      border-radius: 135px;
+      /* 多重外边缘与深邃阴影 */
+      box-shadow:
+        0 40px 80px -10px rgba(0, 0, 0, 0.9),
+        0 20px 40px -5px rgba(0, 0, 0, 0.7),
+        0 0 50px rgba(56, 189, 248, 0.25),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.18),
+        inset 0 0 30px rgba(56, 189, 248, 0.2);
+      /* 暗黑半透黑曜石玻璃 */
+      background: linear-gradient(145deg, rgba(26, 36, 56, 0.82) 0%, rgba(10, 14, 24, 0.94) 100%);
+      backdrop-filter: blur(24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 外圈细致的深色金属边框 */
+    .squircle-wrapper::before {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 138px;
+      border: 3px solid rgba(30, 41, 59, 0.7);
+      pointer-events: none;
+    }
+
+    /* 顶部高光镜面漫反射 (The D3 Curved Specular Sheen) */
+    .specular-sheen {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle at 100% 0%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 35%, rgba(255, 255, 255, 0) 70%);
+      border-top-right-radius: 135px;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    /* 内部对角微弱次级高光反光 */
+    .specular-sheen-sub {
+      position: absolute;
+      top: 15px;
+      left: 30px;
+      width: 480px;
+      height: 200px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 60%);
+      border-top-left-radius: 120px;
+      border-top-right-radius: 120px;
+      pointer-events: none;
+    }
+
+    /* 内部发光 SVG 图元 (概念 A: 4 角标 + 贝塞尔流线) */
+    .svg-content {
+      width: 360px;
+      height: 360px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 底部品牌文字 */
+    .brand-text {
+      margin-top: 50px;
+      font-size: 68px;
+      font-weight: 500;
+      letter-spacing: -1.5px;
+      color: #f8fafc;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow"></div>
+
+  <!-- 3D 磨砂玻璃 Squircle App 图标 -->
+  <div class="squircle-wrapper">
+    <div class="specular-sheen"></div>
+    <div class="specular-sheen-sub"></div>
+
+    <!-- 概念 A 矢量图元 -->
+    <svg class="svg-content" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- 霓虹流线渐变 -->
+        <linearGradient id="neonGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#0284c7" />
+          <stop offset="40%" stop-color="#38bdf8" />
+          <stop offset="75%" stop-color="#818cf8" />
+          <stop offset="100%" stop-color="#c084fc" />
+        </linearGradient>
+
+        <!-- 强光晕滤镜 -->
+        <filter id="hyperGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="blur1" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur2" />
+          <feMerge>
+            <feMergeNode in="blur2" />
+            <feMergeNode in="blur1" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        <!-- 柔和角标光晕 -->
+        <filter id="bracketGlow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b1" />
+          <feMerge>
+            <feMergeNode in="b1" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!-- 1. 四个对焦取景角标 (Focus Viewfinder Brackets) -->
+      <g stroke="#38bdf8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95" filter="url(#bracketGlow)">
+        <!-- Top-Left -->
+        <path d="M 42 22 L 26 22 A 4 4 0 0 0 22 26 L 22 42" />
+        <!-- Top-Right -->
+        <path d="M 86 22 L 102 22 A 4 4 0 0 1 106 26 L 106 42" />
+        <!-- Bottom-Left -->
+        <path d="M 22 86 L 22 102 A 4 4 0 0 0 26 106 L 42 106" />
+        <!-- Bottom-Right -->
+        <path d="M 106 86 L 106 102 A 4 4 0 0 1 102 106 L 86 106" />
+      </g>
+
+      <!-- 2. 三次贝塞尔流光曲线 (发光管道底衬) -->
+      <path d="M 26 100 C 52 100, 56 28, 102 28"
+            fill="none"
+            stroke="#0284c7"
+            stroke-width="12"
+            stroke-linecap="round"
+            opacity="0.4"
+            filter="url(#hyperGlow)" />
+
+      <!-- 3. 三次贝塞尔主霓虹发光曲线 -->
+      <path d="M 26 100 C 52 100, 56 28, 102 28"
+            fill="none"
+            stroke="url(#neonGradient)"
+            stroke-width="7.5"
+            stroke-linecap="round"
+            filter="url(#hyperGlow)" />
+
+      <!-- 4. 曲线高亮白色内芯 (White Specular Core) -->
+      <path d="M 26 100 C 52 100, 56 28, 102 28"
+            fill="none"
+            stroke="#ffffff"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            opacity="0.9" />
+
+      <!-- 5. 目标焦点光球与起始点 -->
+      <circle cx="102" cy="28" r="5.5" fill="#ffffff" filter="url(#hyperGlow)" />
+      <circle cx="26" cy="100" r="3.5" fill="#38bdf8" />
+    </svg>
+  </div>
+
+  <!-- 底部品牌文字 -->
+  <div class="brand-text">FocusFlow</div>
+
+</body>
+</html>
