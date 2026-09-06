@@ -1,88 +1,114 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
   <defs>
-    <!-- 玻璃基座阴影与多重渐变 -->
-    <radialGradient id="glassInnerGlow" cx="50%" cy="30%" r="70%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25" />
-      <stop offset="50%" stop-color="#0f172a" stop-opacity="0.8" />
-      <stop offset="100%" stop-color="#020617" stop-opacity="0.95" />
+    <!-- 深邃黑曜石玻璃基座与环境光晕 -->
+    <radialGradient id="glassInnerGlow" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#111726" />
+      <stop offset="60%" stop-color="#090d16" />
+      <stop offset="100%" stop-color="#04060a" />
     </radialGradient>
 
-    <!-- 顶角高光镜面边缘 -->
+    <!-- 顶部与侧边双重倒角镜面高光边缘 -->
     <linearGradient id="specularBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.6" />
+      <stop offset="35%" stop-color="#38bdf8" stop-opacity="0.35" />
+      <stop offset="70%" stop-color="#1e293b" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.15" />
+    </linearGradient>
+
+    <!-- 内部贝塞尔流线霓虹全色谱渐变 (Cyan -> Azure -> Indigo -> Violet -> Magenta) -->
+    <linearGradient id="neonSplineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="30%" stop-color="#0ea5e9" />
+      <stop offset="60%" stop-color="#6366f1" />
+      <stop offset="85%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+
+    <!-- 顶部右上角标志性镜面切片高光 (D3 Curved Specular Sheen) -->
+    <linearGradient id="d3SheenGrad" x1="100%" y1="0%" x2="40%" y2="60%">
       <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
-      <stop offset="30%" stop-color="#38bdf8" stop-opacity="0.3" />
-      <stop offset="70%" stop-color="#1e293b" stop-opacity="0.1" />
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.1" />
+      <stop offset="40%" stop-color="#ffffff" stop-opacity="0.15" />
+      <stop offset="80%" stop-color="#ffffff" stop-opacity="0.03" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
     </linearGradient>
 
-    <!-- 内部贝塞尔流线霓虹渐变 -->
-    <linearGradient id="neonTubeGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0284c7" />
-      <stop offset="45%" stop-color="#38bdf8" />
-      <stop offset="80%" stop-color="#818cf8" />
-      <stop offset="100%" stop-color="#c084fc" />
-    </linearGradient>
-
-    <!-- 外部投影 -->
-    <filter id="squircleShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.6" />
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#38bdf8" flood-opacity="0.2" />
+    <!-- 外部深邃立体投影 -->
+    <filter id="squircleShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.75" />
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#38bdf8" flood-opacity="0.25" />
     </filter>
 
-    <!-- 霓虹光晕滤镜 -->
-    <filter id="tubeGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="3.5" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    <!-- 3D 霓虹多重光晕滤镜 -->
+    <filter id="neonVolumetricGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur2" />
+      <feGaussianBlur stdDeviation="2" result="blur1" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
 
-  <!-- 1. macOS 风格圆角矩形 (Squircle Base) -->
-  <rect x="12" y="12" width="104" height="104" rx="26"
+  <!-- 1. macOS 风格圆角矩形暗黑玻璃基底 (Squircle Base) -->
+  <rect x="14" y="14" width="100" height="100" rx="26"
         fill="url(#glassInnerGlow)"
         stroke="url(#specularBorder)"
-        stroke-width="1.5"
+        stroke-width="1.8"
         filter="url(#squircleShadow)" />
 
-  <!-- 2. 玻璃顶部斜向镜面漫反射 (Top-Left Specular Sheen) -->
-  <path d="M 14 38 C 14 24, 24 14, 38 14 L 90 14 C 40 18, 18 50, 14 90 Z"
-        fill="#ffffff"
-        opacity="0.06" />
+  <!-- 2. 精致取景角标 (3D Viewfinder Brackets with Chromatic Harmony) -->
+  <!-- 左下、左上、右下：电光青蓝；右上：紫罗兰色 -->
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <!-- 左上 -->
+    <path d="M 43 33 L 35 33 A 3 3 0 0 0 32 36 L 32 44" stroke="#00e5ff" stroke-width="4.5" opacity="0.9" filter="url(#neonVolumetricGlow)" />
+    <path d="M 43 33 L 35 33 A 3 3 0 0 0 32 36 L 32 44" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
 
-  <!-- 3. 精致取景角标 (Embossed Viewfinder Brackets) -->
-  <g stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.85">
-    <path d="M 42 32 L 34 32 A 3 3 0 0 0 31 35 L 31 43" />
-    <path d="M 86 32 L 94 32 A 3 3 0 0 1 97 35 L 97 43" />
-    <path d="M 31 85 L 31 93 A 3 3 0 0 0 34 96 L 42 96" />
-    <path d="M 97 85 L 97 93 A 3 3 0 0 1 94 96 L 86 96" />
+    <!-- 左下 -->
+    <path d="M 32 84 L 32 92 A 3 3 0 0 0 35 95 L 43 95" stroke="#00e5ff" stroke-width="4.5" opacity="0.9" filter="url(#neonVolumetricGlow)" />
+    <path d="M 32 84 L 32 92 A 3 3 0 0 0 35 95 L 43 95" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
+
+    <!-- 右下 -->
+    <path d="M 96 84 L 96 92 A 3 3 0 0 1 93 95 L 85 95" stroke="#38bdf8" stroke-width="4.5" opacity="0.85" filter="url(#neonVolumetricGlow)" />
+    <path d="M 96 84 L 96 92 A 3 3 0 0 1 93 95 L 85 95" stroke="#ffffff" stroke-width="1.5" opacity="0.8" />
+
+    <!-- 右上 (呼应运镜焦点的紫罗兰色彩) -->
+    <path d="M 85 33 L 93 33 A 3 3 0 0 1 96 36 L 96 44" stroke="#c084fc" stroke-width="4.5" opacity="0.95" filter="url(#neonVolumetricGlow)" />
+    <path d="M 85 33 L 93 33 A 3 3 0 0 1 96 36 L 96 44" stroke="#ffffff" stroke-width="1.5" opacity="0.9" />
   </g>
 
-  <!-- 4. 核心：三维发光贝塞尔霓虹光导管 (3D Neon Bezier Tube) -->
-  <!-- 底部柔光投影 -->
-  <path d="M 36 91 C 56 91, 60 37, 92 37"
+  <!-- 3. 核心：三维立体发光贝塞尔运镜光轨 (3D Neon Bezier Spline Tube) -->
+  <!-- 底部微光漫射 -->
+  <path d="M 37 90 C 58 90, 62 38, 91 38"
         fill="none"
-        stroke="#0284c7"
-        stroke-width="10"
+        stroke="#00f0ff"
+        stroke-width="12"
         stroke-linecap="round"
-        opacity="0.4"
-        filter="url(#tubeGlow)" />
+        opacity="0.3"
+        filter="url(#neonVolumetricGlow)" />
 
-  <!-- 主发光管道 -->
-  <path d="M 36 91 C 56 91, 60 37, 92 37"
+  <!-- 主霓虹导光管 -->
+  <path d="M 37 90 C 58 90, 62 38, 91 38"
         fill="none"
-        stroke="url(#neonTubeGrad)"
+        stroke="url(#neonSplineGrad)"
         stroke-width="6.5"
         stroke-linecap="round"
-        filter="url(#tubeGlow)" />
+        filter="url(#neonVolumetricGlow)" />
 
-  <!-- 高光核心内芯 -->
-  <path d="M 36 91 C 56 91, 60 37, 92 37"
+  <!-- 高光白热核心内芯 -->
+  <path d="M 37 90 C 58 90, 62 38, 91 38"
         fill="none"
         stroke="#ffffff"
-        stroke-width="1.8"
+        stroke-width="2.2"
         stroke-linecap="round"
-        opacity="0.75" />
+        opacity="0.9" />
 
-  <!-- 5. 目标焦点光球 (Focal Photon) -->
-  <circle cx="92" cy="37" r="4.5" fill="#ffffff" filter="url(#tubeGlow)" />
-  <circle cx="36" cy="91" r="3" fill="#38bdf8" />
+  <!-- 4. 目标焦点光球脉冲 (Focal Photon Pulse) -->
+  <circle cx="91" cy="38" r="5" fill="#f472b6" opacity="0.6" filter="url(#neonVolumetricGlow)" />
+  <circle cx="91" cy="38" r="3.2" fill="#ffffff" />
+  <circle cx="37" cy="90" r="2.2" fill="#00f0ff" />
+
+  <!-- 5. 顶层：覆盖在元素之上的 D3 弧面镜面漫反射高光切片 (Glass Surface Specular Sheen) -->
+  <path d="M 70 14 C 95 14, 114 33, 114 58 L 114 14 Z"
+        fill="url(#d3SheenGrad)" />
 </svg>
