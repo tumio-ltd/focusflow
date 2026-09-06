@@ -210,6 +210,11 @@
       color: #38bdf8;
       border-color: rgba(56, 189, 248, 0.3);
     }
+    .tag-warn {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.35);
+    }
     .lead-desc {
       font-size: 14px;
       color: var(--muted);
@@ -521,13 +526,16 @@
         </div>
 
         <!-- 最新 D3 磨砂玻璃重构版 -->
-        <div class="asset-card" style="border-color: rgba(56, 189, 248, 0.4);">
-          <div class="asset-type" style="color: #38bdf8;">提案 A2 (重构版) · 3D 磨砂玻璃</div>
+        <div class="asset-card" style="border-color: rgba(239, 68, 68, 0.35); opacity: 0.85;">
+          <div class="asset-type" style="color: #94a3b8; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span>提案 A2 (重构版) · 3D 磨砂玻璃</span>
+            <span class="tag tag-warn">⚠️ 不建议使用</span>
+          </div>
           <div class="preview-box">
             <img src="concept_a_glass_d3.jpg" alt="Concept A2 Remastered with D3 Aesthetic" />
           </div>
-          <div class="asset-name">D3 质感重做版 🌟</div>
-          <div class="asset-desc">摒弃粗笨金属角标，完全继承 D3 的通透玻璃、顶角漫反射高光与深邃黑曜石内嵌质感。</div>
+          <div class="asset-name" style="color: #cbd5e1;">D3 质感重做版 <span style="font-size: 13px; color: #f87171; font-weight: 700;">(不建议使用)</span></div>
+          <div class="asset-desc">虽然还原了 D3 磨砂玻璃与导光管细节，但多图层与复杂质感在小尺寸下识别成本偏高，官方不建议作为主力使用。</div>
         </div>
 
         <!-- 原版 D3 质感参照 -->
