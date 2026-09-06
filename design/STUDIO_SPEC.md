@@ -492,6 +492,13 @@ FocusFlow Studio 的中央无限画布（`InfiniteCanvas`）与视口缩放控�
      - 依据安全视觉停顿原则，自动将该场景的 `scene.duration` 重置为：
        $$\text{scene.duration} = \max(T_{\text{audio}} + 300\text{ms}, \text{camera.duration})$$
      - 自动拼接合流为完整音轨并载入时间轴，真正达成“台词字数多则镜头多停留，台词简短则镜头利落切换”的自适应匹配。
+* **开源与商业闭源边界及代码层级隔离架构 (Open-Core & Code-Level Architecture)**：
+  - **核心边界定调**：
+    - **开源社区版（模式 A）**：分幕台词输入交互、自适应镜头时长延伸算法、本地浏览器原生免费的 `window.speechSynthesis`（Web Speech API 离线发音）以及 BYOK 模式（用户自行输入私有 OpenAI API Key 并暂存于本地浏览器 `localStorage`）**100% 开源**；
+    - **商业云端版（模式 B）**：官方托管的 **ElevenLabs 广播级情感声音克隆** 与 **Azure Ultra-HD 神经拟真语音** 企业音色池、大模型架构提词润色 Agent、云端 R2 音频资产托管与多端试听**100% 商业闭源**。
+  - **代码层级实现方案**：
+    1. **前端适配器抽象（Adapter Pattern）**：在前端抽象 `ITTSProvider` 契约，开源版默认注入 `WebSpeechTTSProvider` 与 `UserKeyOpenAITTSProvider`，商业 SaaS 模式注入 `FocusFlowCloudTTSProvider`；
+    2. **服务端 BFF 鉴权与 CASL 配额门禁（Server-side Gating）**：商业闭源的高级音色 Master Key 永远留在 NestJS 后端（`apps/api`），通过 `POST /api/v1/ai/tts/synthesize` 进行 JWT 认证、CASL 权限拦截与 Redis 令牌桶配额扣减，彻底杜绝前端逆向破解与 Key 泄露风险（详见 `docs/COMMERCIALIZATION_AND_OPEN_SOURCE_STRATEGY.md` 第 5.2/5.3 节）。
 
 ---
 
@@ -1233,6 +1240,7 @@ model ProjectVersion {
 | `GET` | `/api/projects/:id/export/html` | 服务端一键下载单文件 HTML | ➔ `Content-Disposition: attachment; filename="*.html"` |
 | `POST` | `/api/projects/:id/render/video` | 提交 4K 视频渲染任务 | `{ resolution: "4K"|"1080P", fps: 60 }` ➔ `{ taskId }` |
 | `GET` | `/api/tasks/:taskId` | 查询视频渲染进度与下载链接 | ➔ `{ status: "processing"|"done", downloadUrl }` |
+| `POST` | `/api/v1/ai/tts/synthesize` | 商业闭源 AI 云端语音合成与转码网关 | `{ sceneIndex, text, voice, speed }` ➔ `{ audioUrl, durationMs, markers }` |
 | `GET` | `/s/:slug` | 云端只读演示页面入口 | 返回渲染后的只读 FocusFlow Player 播放器 |
 
 ---
@@ -1451,6 +1459,10 @@ model ProjectVersion {
   - [ ] 7.3.3 前端 Studio 引入 `@casl/react`，使用 `<Can>` 声明式控制按钮显隐与禁用态
 - [ ] **7.4 静态资产直传与 CDN 托管**
   - [ ] 7.4.1 集成 S3 / 阿里云 OSS / 腾讯云 COS 对象存储直传凭证签发与元数据探测
+- [ ] **7.5 AI 智能语音云端服务与 CASL 商业配额门禁 (Cloud AI TTS & Quota Gating · 商业闭源)**
+  - [ ] 7.5.1 搭建 `AITTSModule`，实现 `POST /api/v1/ai/tts/synthesize` 控制器与 DTO 参数校验，集成 ElevenLabs 与 Azure 官方 Node SDK
+  - [ ] 7.5.2 在 `CaslAbilityFactory` 注入 `can('Synthesize', 'CloudTTS')` 规则，免费用户禁止调用官方企业音色池
+  - [ ] 7.5.3 集成 Redis 令牌桶配额限流器，按字符数/合成时长原子扣减用户商业额度，合成音频流直传 Cloudflare R2 私有桶
 
 ---
 
