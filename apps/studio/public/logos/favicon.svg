@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="100%" height="100%">
+  <!-- 背景微圆角高对比深色底 (保障在浅色/深色标签页下均极限清晰) -->
+  <rect width="32" height="32" rx="7" fill="#090d16" />
+
+  <!-- 4 个加粗微对焦角标 (针对 16x16 极小物理像素优化，去掉模糊滤镜以防发虚) -->
+  <g stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M 10 6 L 6 6 L 6 10" />
+    <path d="M 22 6 L 26 6 L 26 10" />
+    <path d="M 6 22 L 6 26 L 10 26" />
+    <path d="M 26 22 L 26 26 L 22 26" />
+  </g>
+
+  <!-- 高对比单线贝塞尔运镜流线 -->
+  <path d="M 8 24 C 14 24, 16 8, 24 8"
+        fill="none"
+        stroke="#38bdf8"
+        stroke-width="3"
+        stroke-linecap="round" />
+
+  <!-- 目标焦点光斑 -->
+  <circle cx="24" cy="8" r="2.2" fill="#ffffff" />
+</svg>
