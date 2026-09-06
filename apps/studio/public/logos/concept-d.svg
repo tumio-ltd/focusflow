@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <!-- 运镜流光渐变：从景深青色过渡到推进高光蓝与紫罗兰 -->
+    <linearGradient id="splineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="45%" stop-color="#38bdf8" />
+      <stop offset="80%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+
+    <!-- 视口框半透明填充渐变 -->
+    <linearGradient id="frameBg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.12" />
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.03" />
+    </linearGradient>
+
+    <linearGradient id="frameBg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.1" />
+    </linearGradient>
+
+    <!-- 运镜发光滤镜 -->
+    <filter id="cameraGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- 1. 透视运镜导轨辅助虚线 (Perspective Motion Guide Rays) -->
+  <g stroke="#334155" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6">
+    <line x1="22" y1="56" x2="72" y2="28" />
+    <line x1="78" y1="100" x2="108" y2="58" />
+  </g>
+
+  <!-- 2. 全景起始视口 (Scene 1: Wide Overview Frame) -->
+  <g>
+    <rect x="20" y="56" width="58" height="44" rx="8"
+          fill="url(#frameBg1)"
+          stroke="#38bdf8"
+          stroke-width="2.5"
+          opacity="0.6" />
+    <!-- 场景 1 局部对焦角标 -->
+    <path d="M 28 66 L 24 66 A 2 2 0 0 1 22 64 L 22 60" stroke="#38bdf8" stroke-width="2" fill="none" />
+    <path d="M 70 60 L 70 64 A 2 2 0 0 1 68 66 L 64 66" stroke="#38bdf8" stroke-width="2" fill="none" />
+  </g>
+
+  <!-- 3. 特写目标视口 (Scene 2: Zoom In Target Frame - 推进终点) -->
+  <g filter="url(#softGlow)">
+    <rect x="70" y="26" width="38" height="30" rx="6"
+          fill="url(#frameBg2)"
+          stroke="#818cf8"
+          stroke-width="3" />
+    <!-- 内部焦点准星 (Focal Crosshair) -->
+    <circle cx="89" cy="41" r="2.5" fill="#ffffff" />
+  </g>
+
+  <!-- 4. 核心：平滑推进的电影级运镜轨迹 (Smooth Cinematic Camera Spline) -->
+  <!-- 轨迹底层光晕 -->
+  <path d="M 36 86 C 36 50, 72 75, 89 41"
+        fill="none"
+        stroke="#38bdf8"
+        stroke-width="8"
+        stroke-linecap="round"
+        opacity="0.35"
+        filter="url(#cameraGlow)" />
+
+  <!-- 轨迹主发光线 -->
+  <path d="M 36 86 C 36 50, 72 75, 89 41"
+        fill="none"
+        stroke="url(#splineGrad)"
+        stroke-width="5"
+        stroke-linecap="round"
+        filter="url(#cameraGlow)" />
+
+  <!-- 5. 运镜轨迹上的动态关键帧节点 (Keyframe Anchors & Motion Photons) -->
+  <!-- 起始帧光斑 -->
+  <circle cx="36" cy="86" r="3.5" fill="#38bdf8" />
+  <!-- 中途插值推拉光斑 (Interpolation Point) -->
+  <circle cx="60" cy="62" r="2" fill="#e2e8f0" opacity="0.85" />
+  <!-- 目标聚焦高能光子 (Target Focus Anchor) -->
+  <circle cx="89" cy="41" r="4.5" fill="#ffffff" filter="url(#cameraGlow)" />
+</svg>
