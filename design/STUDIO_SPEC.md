@@ -500,6 +500,20 @@ FocusFlow Studio 的中央无限画布（`InfiniteCanvas`）与视口缩放控�
     1. **前端适配器抽象（Adapter Pattern）**：在前端抽象 `ITTSProvider` 契约，开源版默认注入 `WebSpeechTTSProvider` 与 `UserKeyOpenAITTSProvider`，商业 SaaS 模式注入 `FocusFlowCloudTTSProvider`；
     2. **服务端 BFF 鉴权与 CASL 配额门禁（Server-side Gating）**：商业闭源的高级音色 Master Key 永远留在 NestJS 后端（`apps/api`），通过 `POST /api/v1/ai/tts/synthesize` 进行 JWT 认证、CASL 权限拦截与 Redis 令牌桶配额扣减，彻底杜绝前端逆向破解与 Key 泄露风险（详见 `docs/COMMERCIALIZATION_AND_OPEN_SOURCE_STRATEGY.md` 第 5.2/5.3 节）。
 
+##### 管道归一化：主解说音频轨互斥替换策略与撤销恢复保障 (Track Mutual Exclusivity & Undo Safety)
+* **互斥覆盖原则 (Mutual Exclusivity)**：
+  - 无论是**麦克风原声录制（管道 1）**、**外部干声音频导入（管道 2）**、还是 **AI 提词批量合成（管道 3）**，在演播工程中均充当唯一的**“主解说声道（Primary Voiceover Track）”**；
+  - 为防止不同来源的解说音频在同一时间轴上造成“人声撞车（Audio Collisions）”或多重混音混乱，当前阶段系统执行**互斥替换策略**：新录入的音频轨将直接替换现有的 `dsl.audio.tracks[0]` 主解说声道；
+* **历史快照与撤销恢复保障 (50-Step Undo / Redo Protection)**：
+  - 每次执行音频入轨操作（`setAudioTrack`），状态机均严格通过不可变数据快照推入历史快照栈（`pushHistory`）；
+  - 若创作者发生误操作或希望找回上一版音频/波形，可随时使用快捷键 <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd> 或 TopBar 撤销按钮，毫秒级无损回滚至上一版音频与时间轴标记状态；
+* **向多轨道（Multi-Track Audio System）架构演进的兼容性预留**：
+  - 底层 DSL 标准 `dsl.audio.tracks: AudioTrackConfig[]` 原生采用数组结构，并独立设计了 `bgm?: BGMConfig`；
+  - **后续多轨演进路线**：
+    1. **多版本解说轨并行切换**：支持导入中/英双语版本解说轨，提供独奏（Solo）与静音（Mute）切换控制；
+    2. **独立背景伴奏轨 (BGM Track)**：与主解说轨分轨独立调节音量，支持旁白发声时的智能闪避（Audio Ducking）；
+    3. **空间动作音效轨 (SFX Track)**：绑定关键帧运镜与流光连接动效，支持科技感转场音效毫秒级触发。
+
 ---
 
 #### 3. 底部可视化音频波形轨道交互与微交互系统 (`AudioWaveformTrack.tsx`)
