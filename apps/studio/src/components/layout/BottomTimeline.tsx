@@ -171,7 +171,7 @@ function BottomTimelineComponent({
     >
       {/* 0. 可展开/折叠音频波形轨道 */}
       {isWaveformExpanded && (
-        <AudioWaveformTrack height={68} />
+        <AudioWaveformTrack height={68} onSelectScene={onSelectScene} />
       )}
 
       {/* 1. 主场景时间轴卡片栏 */}

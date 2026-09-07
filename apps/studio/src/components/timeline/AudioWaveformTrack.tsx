@@ -7,12 +7,14 @@ import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause } from 'lucide-r
 interface AudioWaveformTrackProps {
   currentPlayheadMs?: number;
   onSeek?: (timeMs: number) => void;
+  onSelectScene?: (index: number) => void;
   height?: number;
 }
 
 export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   currentPlayheadMs = 0,
   onSeek,
+  onSelectScene,
   height = 72,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -33,6 +35,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+  const activeScrubSourceRef = useRef<AudioBufferSourceNode | null>(null);
 
   useEffect(() => {
     return () => {
@@ -134,22 +137,40 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     };
   }, [track?.url]);
 
-  // Scrub audio preview: play a 60ms click / tone grain
-  const playScrubGrain = useCallback((timeMs: number) => {
+  // Scrub audio preview: play a clear recognizable speech snippet (e.g. 600ms on click, 250ms on drag)
+  const playScrubGrain = useCallback((timeMs: number, durationSec: number = 0.6) => {
     if (!audioBuffer) return;
     try {
       const ctx = getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      // Stop previous grain to prevent overlap cacophony
+      if (activeScrubSourceRef.current) {
+        try {
+          activeScrubSourceRef.current.stop();
+        } catch {}
+        activeScrubSourceRef.current = null;
+      }
+
       const source = ctx.createBufferSource();
       source.buffer = audioBuffer;
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.06);
+
+      const now = ctx.currentTime;
+      // Smooth fade-in & fade-out envelope to eliminate click/pop artifacts
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.6, now + 0.02);
+      gain.gain.setValueAtTime(0.6, now + Math.max(0.05, durationSec - 0.05));
+      gain.gain.linearRampToValueAtTime(0.001, now + durationSec);
 
       source.connect(gain);
       gain.connect(ctx.destination);
 
-      const startOffset = Math.max(0, Math.min(audioBuffer.duration, timeMs / 1000));
-      source.start(0, startOffset, 0.06);
+      const startOffset = Math.max(0, Math.min(audioBuffer.duration - 0.05, timeMs / 1000));
+      source.start(now, startOffset, durationSec);
+      activeScrubSourceRef.current = source;
     } catch {
       // AudioContext policy fallback
     }
@@ -329,8 +350,20 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     } else {
       setIsScrubbing(true);
       onSeek?.(clickTimeMs);
-      playScrubGrain(clickTimeMs);
+      playScrubGrain(clickTimeMs, 0.6); // 600ms clear speech snippet
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+      // Auto-switch to the scene under this timestamp
+      if (onSelectScene && sceneBoundaries.length > 0) {
+        let prevEnd = 0;
+        for (let i = 0; i < sceneBoundaries.length; i++) {
+          if (clickTimeMs >= prevEnd && (clickTimeMs < sceneBoundaries[i].endMs || i === sceneBoundaries.length - 1)) {
+            onSelectScene(i);
+            break;
+          }
+          prevEnd = sceneBoundaries[i].endMs;
+        }
+      }
     }
   };
 
@@ -365,7 +398,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     } else if (isScrubbing) {
       const clampedMs = Math.max(0, Math.min(totalDurationMs, currentTimeMs));
       onSeek?.(clampedMs);
-      playScrubGrain(clampedMs);
+      playScrubGrain(clampedMs, 0.25); // 250ms dynamic grain while scrubbing
     }
   };
 
