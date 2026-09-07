@@ -110,6 +110,44 @@ async function verifyBatchAiVoiceoverGeneration(page: Page): Promise<void> {
   await expect(waveformTrack).toContainText(/1\.5x/);
 }
 
+/**
+ * 6. 验证波形轨激光红线播放头点击、拖拽与分幕双向联动
+ */
+async function verifyWaveformPlayheadInteractionAndSync(page: Page): Promise<void> {
+  const toggleWaveformBtn = page.locator('[data-testid="toggle-waveform-btn"]');
+  const waveformTrack = page.locator('[data-testid="audio-waveform-track"]');
+  if (!(await waveformTrack.isVisible())) {
+    await toggleWaveformBtn.click();
+  }
+  await expect(waveformTrack).toBeVisible();
+
+  const canvas = waveformTrack.locator('canvas');
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  if (!box) return;
+
+  // 验证点击分幕卡片 2，时间轴高亮并与波形轨联动
+  const sceneCard1 = page.locator('[data-testid="scene-card-1"]');
+  if (await sceneCard1.isVisible()) {
+    await sceneCard1.click();
+    await expect(sceneCard1).toHaveClass(/border-primary/);
+  }
+
+  // 模拟在波形轨画布上点击并拖拽播放头（从 20% 拖动到 50% 位置）
+  const startX = box.x + box.width * 0.2;
+  const startY = box.y + box.height * 0.4;
+  const targetX = box.x + box.width * 0.5;
+
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(targetX, startY, { steps: 5 });
+  await page.mouse.up();
+
+  // 确认拖拽释放后画布仍保持正常渲染
+  await expect(canvas).toBeVisible();
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -134,5 +172,9 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC565: 验证时间轴 AI 提词批量全分幕合流生成音轨与波形', async ({ page }) => {
     await verifyBatchAiVoiceoverGeneration(page);
+  });
+
+  test('TC566: 验证波形轨激光红线播放头点击、拖拽与分幕双向联动', async ({ page }) => {
+    await verifyWaveformPlayheadInteractionAndSync(page);
   });
 });

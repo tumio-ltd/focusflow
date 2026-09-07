@@ -34,22 +34,66 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   const [snapFeedback, setSnapFeedback] = useState<{ snapped: boolean; deltaMs: number } | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [decodeError, setDecodeError] = useState<string | null>(null);
+  const [playheadMs, setPlayheadMs] = useState<number>(currentPlayheadMs || 0);
+
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const activeScrubSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const scrubStartTimeRef = useRef<number | null>(null);
   const scrubHasMovedRef = useRef<boolean>(false);
+  const prevExternalPlayheadRef = useRef<number>(currentPlayheadMs || 0);
+  const userInteractedTimestampRef = useRef<number>(0);
+  const grainAnimRef = useRef<number | null>(null);
+
+  const stopGrainAnim = useCallback(() => {
+    if (grainAnimRef.current) {
+      cancelAnimationFrame(grainAnimRef.current);
+      grainAnimRef.current = null;
+    }
+  }, []);
+
+  // Sync external currentPlayheadMs changes (e.g. user clicked another scene card in timeline)
+  useEffect(() => {
+    if (currentPlayheadMs !== prevExternalPlayheadRef.current) {
+      prevExternalPlayheadRef.current = currentPlayheadMs;
+      // Only apply if user isn't scrubbing and didn't just interact within 600ms
+      if (!isScrubbing && Date.now() - userInteractedTimestampRef.current >= 600) {
+        stopGrainAnim();
+        setPlayheadMs(currentPlayheadMs);
+      }
+    }
+  }, [currentPlayheadMs, isScrubbing, stopGrainAnim]);
 
   useEffect(() => {
     return () => {
+      stopGrainAnim();
       if (audioPreviewRef.current) {
         audioPreviewRef.current.pause();
         audioPreviewRef.current = null;
       }
     };
-  }, []);
+  }, [stopGrainAnim]);
+
+  // Sync playhead smoothly while full audio preview is playing
+  useEffect(() => {
+    let animId: number;
+    if (isPlayingAudio) {
+      stopGrainAnim();
+      const updateFrame = () => {
+        if (audioPreviewRef.current && !audioPreviewRef.current.paused) {
+          setPlayheadMs(audioPreviewRef.current.currentTime * 1000);
+          animId = requestAnimationFrame(updateFrame);
+        }
+      };
+      animId = requestAnimationFrame(updateFrame);
+    }
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isPlayingAudio, stopGrainAnim]);
 
   const toggleAudioPreview = () => {
     if (!track?.url) return;
+    stopGrainAnim();
     if (isPlayingAudio) {
       if (audioPreviewRef.current) {
         audioPreviewRef.current.pause();
@@ -62,6 +106,9 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       } else {
         audioPreviewRef.current.src = track.url;
       }
+      // Start playing right from current playhead position
+      const startSec = Math.max(0, Math.min((track.durationMs || 99999) / 1000, playheadMs / 1000));
+      audioPreviewRef.current.currentTime = startSec;
       audioPreviewRef.current.play().then(() => {
         setIsPlayingAudio(true);
       }).catch((e) => {
@@ -139,8 +186,9 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     };
   }, [track?.url]);
 
-  // Scrub audio preview: play a 2.5-second phrase snippet with smooth envelope
+  // Scrub audio preview: play a 2.5-second phrase snippet with smooth envelope and animate playhead
   const playScrubGrain = useCallback((timeMs: number, durationSec: number = 2.5) => {
+    stopGrainAnim();
     if (!audioBuffer) return;
     try {
       const ctx = getAudioContext();
@@ -173,10 +221,32 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       const startOffset = Math.max(0, Math.min(audioBuffer.duration - 0.05, timeMs / 1000));
       source.start(now, startOffset, durationSec);
       activeScrubSourceRef.current = source;
+
+      // Animate playhead forward for durationSec smoothly
+      const startPerfTime = performance.now();
+      const maxMs = track?.durationMs || totalDurationMs;
+      const targetEndMs = Math.min(maxMs, timeMs + durationSec * 1000);
+      const totalAnimMs = targetEndMs - timeMs;
+
+      if (totalAnimMs > 50) {
+        const tick = () => {
+          const elapsed = performance.now() - startPerfTime;
+          if (elapsed < durationSec * 1000) {
+            const progress = elapsed / (durationSec * 1000);
+            const nextMs = Math.min(targetEndMs, timeMs + progress * (targetEndMs - timeMs));
+            setPlayheadMs(nextMs);
+            grainAnimRef.current = requestAnimationFrame(tick);
+          } else {
+            setPlayheadMs(targetEndMs);
+            grainAnimRef.current = null;
+          }
+        };
+        grainAnimRef.current = requestAnimationFrame(tick);
+      }
     } catch {
       // AudioContext policy fallback
     }
-  }, [audioBuffer]);
+  }, [audioBuffer, stopGrainAnim, totalDurationMs, track?.durationMs]);
 
   // Render Canvas 2D Waveform
   useEffect(() => {
@@ -295,23 +365,63 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     });
 
     // Draw Playhead
-    const playheadX = currentPlayheadMs * pixelsPerMs - scrollLeft;
+    const rawPlayheadX = playheadMs * pixelsPerMs - scrollLeft;
+    const playheadX = Math.max(6, Math.min(width - 6, rawPlayheadX));
+
     if (playheadX >= 0 && playheadX <= width) {
+      ctx.save();
+      // Laser red glow line
+      ctx.shadowColor = 'rgba(244, 63, 94, 0.65)';
+      ctx.shadowBlur = 6;
       ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(playheadX, 0);
       ctx.lineTo(playheadX, height);
       ctx.stroke();
 
-      // Top Playhead Diamond
+      // Top Playhead Pentagon / Flag handle
       ctx.fillStyle = '#f43f5e';
       ctx.beginPath();
-      ctx.moveTo(playheadX, 8);
-      ctx.lineTo(playheadX - 5, 0);
-      ctx.lineTo(playheadX + 5, 0);
+      ctx.moveTo(playheadX - 6, 0);
+      ctx.lineTo(playheadX + 6, 0);
+      ctx.lineTo(playheadX + 6, 7);
+      ctx.lineTo(playheadX, 13);
+      ctx.lineTo(playheadX - 6, 7);
       ctx.closePath();
       ctx.fill();
+
+      // Center dot in top handle
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(playheadX, 5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Bottom anchor dot
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.arc(playheadX, height - 3, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Floating time label during scrubbing
+      if (isScrubbing) {
+        const timeText = `${(playheadMs / 1000).toFixed(2)}s`;
+        ctx.font = 'bold 10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace';
+        const textW = ctx.measureText(timeText).width;
+        const badgeW = textW + 10;
+        const badgeH = 18;
+        const badgeX = Math.max(4, Math.min(width - badgeW - 4, playheadX - badgeW / 2));
+        const badgeY = 16;
+
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.95)';
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(timeText, badgeX + 5, badgeY + 13);
+      }
+      ctx.restore();
     }
   }, [
     peaks,
@@ -322,7 +432,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     vadSilences,
     zoomLevel,
     scrollLeft,
-    currentPlayheadMs,
+    playheadMs,
+    isScrubbing,
     draggingSceneIndex,
     snapFeedback,
     decodeError,
@@ -335,16 +446,29 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const pixelsPerMs = (rect.width * zoomLevel) / totalDurationMs;
-    const clickTimeMs = (clickX + scrollLeft) / pixelsPerMs;
+    const clickTimeMs = Math.max(0, Math.min(totalDurationMs, (clickX + scrollLeft) / pixelsPerMs));
 
-    // Check if clicking near any scene boundary (within 8px)
+    stopGrainAnim();
+    if (isPlayingAudio && audioPreviewRef.current) {
+      audioPreviewRef.current.pause();
+      setIsPlayingAudio(false);
+    }
+    userInteractedTimestampRef.current = Date.now();
+
+    // Check proximity to current playhead
+    const currentPlayX = playheadMs * pixelsPerMs - scrollLeft;
+    const isNearPlayhead = Math.abs(clickX - currentPlayX) <= 12;
+
+    // Check if clicking near scene boundary (within 8px)
     let foundBoundaryIdx: number | null = null;
-    sceneBoundaries.forEach((b) => {
-      const bx = b.endMs * pixelsPerMs - scrollLeft;
-      if (Math.abs(clickX - bx) <= 8) {
-        foundBoundaryIdx = b.index;
-      }
-    });
+    if (!isNearPlayhead) {
+      sceneBoundaries.forEach((b) => {
+        const bx = b.endMs * pixelsPerMs - scrollLeft;
+        if (Math.abs(clickX - bx) <= 8) {
+          foundBoundaryIdx = b.index;
+        }
+      });
+    }
 
     if (foundBoundaryIdx !== null) {
       setDraggingSceneIndex(foundBoundaryIdx);
@@ -353,6 +477,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       setIsScrubbing(true);
       scrubStartTimeRef.current = clickTimeMs;
       scrubHasMovedRef.current = false;
+      setPlayheadMs(clickTimeMs);
       onSeek?.(clickTimeMs);
       playScrubGrain(clickTimeMs, 2.5); // 2.5s clear sentence preview
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -377,7 +502,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     const rect = canvas.getBoundingClientRect();
     const currentX = e.clientX - rect.left;
     const pixelsPerMs = (rect.width * zoomLevel) / totalDurationMs;
-    const currentTimeMs = (currentX + scrollLeft) / pixelsPerMs;
+    const currentTimeMs = Math.max(0, Math.min(totalDurationMs, (currentX + scrollLeft) / pixelsPerMs));
 
     if (draggingSceneIndex !== null) {
       // Dragging scene boundary to adjust duration
@@ -400,8 +525,12 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       const newSceneDuration = targetBoundaryMs - prevBoundaryMs;
       updateSceneDuration(draggingSceneIndex, newSceneDuration);
     } else if (isScrubbing) {
-      const clampedMs = Math.max(0, Math.min(totalDurationMs, currentTimeMs));
-      if (scrubStartTimeRef.current !== null && Math.abs(clampedMs - scrubStartTimeRef.current) > 80) {
+      userInteractedTimestampRef.current = Date.now();
+      stopGrainAnim();
+      const clampedMs = currentTimeMs;
+      setPlayheadMs(clampedMs);
+
+      if (scrubStartTimeRef.current !== null && Math.abs(clampedMs - scrubStartTimeRef.current) > 50) {
         scrubHasMovedRef.current = true;
         // While dragging, stop the initial click playback so the drag operation is silent and responsive
         if (activeScrubSourceRef.current) {
@@ -412,10 +541,26 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         }
       }
       onSeek?.(clampedMs);
+    } else {
+      // Dynamic hover cursor
+      const currentPlayX = playheadMs * pixelsPerMs - scrollLeft;
+      if (Math.abs(currentX - currentPlayX) <= 10) {
+        canvas.style.cursor = 'ew-resize';
+      } else {
+        let nearBoundary = false;
+        sceneBoundaries.forEach((b) => {
+          const bx = b.endMs * pixelsPerMs - scrollLeft;
+          if (Math.abs(currentX - bx) <= 8) {
+            nearBoundary = true;
+          }
+        });
+        canvas.style.cursor = nearBoundary ? 'col-resize' : 'pointer';
+      }
     }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    userInteractedTimestampRef.current = Date.now();
     if (isScrubbing && scrubHasMovedRef.current) {
       // User dragged to a new position: on release, preview 2.5s from the final dropped location!
       const canvas = canvasRef.current;
@@ -424,6 +569,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         const currentX = e.clientX - rect.left;
         const pixelsPerMs = (rect.width * zoomLevel) / totalDurationMs;
         const finalMs = Math.max(0, Math.min(totalDurationMs, (currentX + scrollLeft) / pixelsPerMs));
+        setPlayheadMs(finalMs);
         playScrubGrain(finalMs, 2.5);
 
         if (onSelectScene && sceneBoundaries.length > 0) {
@@ -538,12 +684,17 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       </div>
 
       {/* Canvas Waveform Viewport */}
-      <div className="relative w-full overflow-hidden cursor-crosshair">
+      <div className="relative w-full overflow-hidden">
         <canvas
           ref={canvasRef}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerLeave={() => {
+            if (!isScrubbing && draggingSceneIndex === null && canvasRef.current) {
+              canvasRef.current.style.cursor = 'default';
+            }
+          }}
           className="w-full block"
         />
       </div>

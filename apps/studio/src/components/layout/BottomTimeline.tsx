@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Play, 
@@ -82,6 +82,16 @@ function BottomTimelineComponent({
       setIsWaveformExpanded(true);
     }
   }, [dsl.audio?.tracks?.length]);
+
+  // Active scene start time in ms
+  const activeSceneStartMs = useMemo(() => {
+    let sum = 0;
+    for (let i = 0; i < activeSceneIndex && i < dsl.scenes.length; i++) {
+      const s = dsl.scenes[i];
+      sum += (s.duration || dsl.meta.controls?.interval || 3800);
+    }
+    return sum;
+  }, [activeSceneIndex, dsl.scenes, dsl.meta.controls?.interval]);
 
   const handleImportAudioClick = () => {
     fileInputRef.current?.click();
@@ -171,7 +181,11 @@ function BottomTimelineComponent({
     >
       {/* 0. 可展开/折叠音频波形轨道 */}
       {isWaveformExpanded && (
-        <AudioWaveformTrack height={68} onSelectScene={onSelectScene} />
+        <AudioWaveformTrack
+          height={68}
+          currentPlayheadMs={activeSceneStartMs}
+          onSelectScene={onSelectScene}
+        />
       )}
 
       {/* 1. 主场景时间轴卡片栏 */}
