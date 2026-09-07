@@ -5,8 +5,28 @@
 
 import type { SceneStep, AudioMarker, AudioTrackConfig } from '@focusflow/dsl';
 import { WebSpeechTTSProvider } from './WebSpeechTTSProvider';
+import { UserKeyOpenAITTSProvider } from './UserKeyOpenAITTSProvider';
 import type { ITTSProvider } from './ttsProvider';
 import { decodeAudioFile } from '../audioDecoder';
+import { getStoredTTSConfig, TTS_PRESETS, type TTSStoredConfig } from './ttsConfigStore';
+
+/**
+ * Instantiate appropriate TTS Provider according to active configuration
+ */
+export function createTTSProviderFromConfig(config?: TTSStoredConfig): ITTSProvider {
+  const cfg = config || getStoredTTSConfig();
+  if (cfg.mode === 'cloud' && cfg.apiKey) {
+    const presetDef = TTS_PRESETS[cfg.preset];
+    return new UserKeyOpenAITTSProvider({
+      apiKey: cfg.apiKey,
+      baseUrl: cfg.baseUrl,
+      model: cfg.model,
+      name: presetDef?.name || 'Cloud TTS (BYOK)',
+      customVoices: presetDef?.voices,
+    });
+  }
+  return new WebSpeechTTSProvider();
+}
 
 /**
  * Calculate adaptive scene duration to fit audio voiceover with comfortable pause buffer
@@ -27,12 +47,17 @@ export interface BatchVoiceoverResult {
  */
 export async function synthesizeSceneVoiceover(
   scene: SceneStep,
-  provider: ITTSProvider = new WebSpeechTTSProvider(),
+  provider?: ITTSProvider,
   voiceId?: string,
-  speed = 1.0
+  speed?: number
 ): Promise<{ audioBlob: Blob; durationMs: number; adaptedDuration: number }> {
+  const cfg = getStoredTTSConfig();
+  const activeProvider = provider || createTTSProviderFromConfig(cfg);
+  const activeVoiceId = voiceId || cfg.voice;
+  const activeSpeed = speed ?? cfg.speed ?? 1.0;
+
   const text = scene.voiceoverScript?.trim() || scene.title;
-  const res = await provider.synthesize(text, voiceId, speed);
+  const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
   const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs);
 
   return {
@@ -48,10 +73,14 @@ export async function synthesizeSceneVoiceover(
  */
 export async function synthesizeAllScenesVoiceover(
   scenes: SceneStep[],
-  provider: ITTSProvider = new WebSpeechTTSProvider(),
+  provider?: ITTSProvider,
   voiceId?: string,
-  speed = 1.0
+  speed?: number
 ): Promise<BatchVoiceoverResult> {
+  const cfg = getStoredTTSConfig();
+  const activeProvider = provider || createTTSProviderFromConfig(cfg);
+  const activeVoiceId = voiceId || cfg.voice;
+  const activeSpeed = speed ?? cfg.speed ?? 1.0;
   const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
   const ctx = new AudioCtx();
 
@@ -63,7 +92,7 @@ export async function synthesizeAllScenesVoiceover(
   for (let i = 0; i < scenes.length; i++) {
     const scene = scenes[i];
     const text = scene.voiceoverScript?.trim() || scene.title;
-    const res = await provider.synthesize(text, voiceId, speed);
+    const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
 
     renderedBlobs.push(res.audioBlob);
     const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs);
@@ -111,7 +140,7 @@ export async function synthesizeAllScenesVoiceover(
 
   const track: AudioTrackConfig = {
     id: `track-ai-${Date.now()}`,
-    name: `AI 智能配音合流 (${provider.name})`,
+    name: `AI 智能配音合流 (${activeProvider.name})`,
     url: trackUrl,
     durationMs: currentOffsetMs,
     volume: 1.0,

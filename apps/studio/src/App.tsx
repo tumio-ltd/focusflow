@@ -26,7 +26,7 @@ import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
-import { synthesizeSceneVoiceover } from '@/services/audio';
+import { synthesizeSceneVoiceover, speakWebSpeech, getStoredTTSConfig } from '@/services/audio';
 import '@focusflow/player/styles.css';
 
 export default function App() {
@@ -503,8 +503,19 @@ export default function App() {
               if (!activeScene) return;
               try {
                 setIsSingleTtsLoading(true);
+                const cfg = getStoredTTSConfig();
+                const text = activeScene.voiceoverScript?.trim() || activeScene.title;
                 const res = await synthesizeSceneVoiceover(activeScene);
                 updateSceneDuration(activeSceneIndex, res.adaptedDuration);
+
+                if (cfg.mode === 'cloud' && cfg.apiKey) {
+                  const url = URL.createObjectURL(res.audioBlob);
+                  const audio = new Audio(url);
+                  audio.onended = () => URL.revokeObjectURL(url);
+                  await audio.play().catch(() => {});
+                } else {
+                  speakWebSpeech(text, cfg.speed);
+                }
               } catch (e) {
                 console.error('Failed to synthesize single scene voiceover:', e);
               } finally {

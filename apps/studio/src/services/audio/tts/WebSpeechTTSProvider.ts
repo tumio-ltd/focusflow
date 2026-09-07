@@ -76,12 +76,44 @@ export class WebSpeechTTSProvider implements ITTSProvider {
     // Add natural pause buffer (250ms)
     const durationMs = Math.round((estimatedSeconds + 0.25) * 1000);
 
-    // Generate real playable WAV audio for waveform visualization and packager
-    const audioBlob = createMockAudioBlob(estimatedSeconds + 0.25, 320);
+    // Generate clean silent WAV audio for accurate duration & waveform timeline alignment
+    // (Eliminates harsh 320Hz drone; real voice is played via browser speechSynthesis)
+    const audioBlob = createMockAudioBlob(estimatedSeconds + 0.25, 0, 44100, 0);
 
     return {
       audioBlob,
       durationMs,
     };
   }
+}
+
+/**
+ * Trigger real browser speech synthesis (Web Speech API)
+ * Plays audible spoken words using system voices (e.g. Ting-Ting on Mac, Xiaoxiao on Edge)
+ */
+export function speakWebSpeech(text: string, speed = 1.0, lang?: string): void {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+  const trimmed = text.trim();
+  if (!trimmed) return;
+
+  // Cancel ongoing speech to avoid overlapping
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(trimmed);
+  utterance.rate = Math.max(0.5, Math.min(2.0, speed));
+
+  const isChinese = /[\u4e00-\u9fa5]/.test(trimmed);
+  utterance.lang = lang || (isChinese ? 'zh-CN' : 'en-US');
+
+  // Try to find matching voice
+  const voices = window.speechSynthesis.getVoices();
+  if (voices && voices.length > 0) {
+    const targetVoice = voices.find((v) => v.lang.startsWith(utterance.lang) || v.lang === utterance.lang);
+    if (targetVoice) {
+      utterance.voice = targetVoice;
+    }
+  }
+
+  window.speechSynthesis.speak(utterance);
 }

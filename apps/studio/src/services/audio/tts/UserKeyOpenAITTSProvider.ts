@@ -5,15 +5,40 @@
 
 import type { ITTSProvider, TTSVoiceOption, TTSResult } from './ttsProvider';
 
-export class UserKeyOpenAITTSProvider implements ITTSProvider {
-  readonly name = 'OpenAI TTS (BYOK)';
+export interface UserKeyOpenAITTSOptions {
+  apiKey: string;
+  baseUrl?: string;
+  model?: string;
+  name?: string;
+  customVoices?: TTSVoiceOption[];
+}
 
-  constructor(
-    private apiKey: string,
-    private model: 'tts-1' | 'tts-1-hd' = 'tts-1'
-  ) {}
+export class UserKeyOpenAITTSProvider implements ITTSProvider {
+  readonly name: string;
+  private apiKey: string;
+  private baseUrl: string;
+  private model: string;
+  private customVoices?: TTSVoiceOption[];
+
+  constructor(options: string | UserKeyOpenAITTSOptions, model?: string) {
+    if (typeof options === 'string') {
+      this.apiKey = options;
+      this.baseUrl = 'https://api.openai.com/v1';
+      this.model = model || 'tts-1';
+      this.name = 'OpenAI TTS (BYOK)';
+    } else {
+      this.apiKey = options.apiKey;
+      this.baseUrl = (options.baseUrl || 'https://api.openai.com/v1').replace(/\/+$/, '');
+      this.model = options.model || 'tts-1';
+      this.name = options.name || 'Cloud TTS (BYOK)';
+      this.customVoices = options.customVoices;
+    }
+  }
 
   async getVoices(): Promise<TTSVoiceOption[]> {
+    if (this.customVoices && this.customVoices.length > 0) {
+      return this.customVoices;
+    }
     return [
       { id: 'alloy', name: 'Alloy (自然通用)', lang: 'multilingual' },
       { id: 'echo', name: 'Echo (沉稳男声)', lang: 'multilingual' },
@@ -26,10 +51,14 @@ export class UserKeyOpenAITTSProvider implements ITTSProvider {
 
   async synthesize(text: string, voiceId = 'alloy', speed = 1.0): Promise<TTSResult> {
     if (!this.apiKey) {
-      throw new Error('OpenAI API Key is required for BYOK mode');
+      throw new Error('TTS API Key is required for BYOK mode');
     }
 
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
+    const endpoint = this.baseUrl.endsWith('/audio/speech')
+      ? this.baseUrl
+      : `${this.baseUrl}/audio/speech`;
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

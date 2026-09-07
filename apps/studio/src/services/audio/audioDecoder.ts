@@ -130,7 +130,12 @@ export function blobToBase64(blob: Blob): Promise<string> {
  * Create a synthetic WAV audio blob with sine wave
  * Used for testing and fallback synthesis
  */
-export function createMockAudioBlob(durationSeconds = 3, frequency = 440, sampleRate = 44100): Blob {
+export function createMockAudioBlob(
+  durationSeconds = 3,
+  frequency = 440,
+  sampleRate = 44100,
+  amplitude = 0.5
+): Blob {
   const numSamples = Math.floor(durationSeconds * sampleRate);
   const numChannels = 1;
   const bytesPerSample = 2; // 16-bit PCM
@@ -161,14 +166,16 @@ export function createMockAudioBlob(durationSeconds = 3, frequency = 440, sample
   writeString(view, 36, 'data');
   view.setUint32(40, dataSize, true);
 
-  // Generate PCM Sine wave
+  // Generate PCM Sine wave or Silence
   let offset = 44;
   for (let i = 0; i < numSamples; i++) {
-    const t = i / sampleRate;
-    // Envelope: quick fade in and fade out
-    const env = Math.sin(Math.min(1, Math.max(0, (i / numSamples) * Math.PI)));
-    const sample = Math.sin(2 * Math.PI * frequency * t) * 0.5 * env;
-    const intSample = Math.max(-32768, Math.min(32767, Math.floor(sample * 32767)));
+    let intSample = 0;
+    if (amplitude > 0 && frequency > 0) {
+      const t = i / sampleRate;
+      const env = Math.sin(Math.min(1, Math.max(0, (i / numSamples) * Math.PI)));
+      const sample = Math.sin(2 * Math.PI * frequency * t) * amplitude * env;
+      intSample = Math.max(-32768, Math.min(32767, Math.floor(sample * 32767)));
+    }
     view.setInt16(offset, intSample, true);
     offset += 2;
   }

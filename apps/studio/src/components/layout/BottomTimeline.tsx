@@ -15,14 +15,17 @@ import {
   Mic,
   Upload,
   Sparkles,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import { Button, Tooltip } from '@/components/ui';
 import { useProjectStore } from '@/stores/useProjectStore';
 import { AudioWaveformTrack } from '../timeline/AudioWaveformTrack';
 import { VoiceoverPreflightModal } from '../timeline/VoiceoverPreflightModal';
+import { AIVoiceoverSettingsModal } from '../timeline/AIVoiceoverSettingsModal';
 import { decodeAudioFile } from '@/services/audio/audioDecoder';
 import { synthesizeAllScenesVoiceover } from '@/services/audio/tts/aiTtsSynthesizer';
+import { getStoredTTSConfig } from '@/services/audio/tts/ttsConfigStore';
 import type { AudioTrackConfig } from '@focusflow/dsl';
 
 export interface SceneCardItem {
@@ -75,6 +78,7 @@ function BottomTimelineComponent({
   const [isVoiceoverModalOpen, setIsVoiceoverModalOpen] = useState(false);
   const [isWaveformExpanded, setIsWaveformExpanded] = useState(Boolean(dsl.audio?.tracks?.length));
   const [isSynthesizingTTS, setIsSynthesizingTTS] = useState(false);
+  const [isAIVoiceoverSettingsOpen, setIsAIVoiceoverSettingsOpen] = useState(false);
 
   // Sync isWaveformExpanded when audio track is updated
   useEffect(() => {
@@ -121,6 +125,12 @@ function BottomTimelineComponent({
   };
 
   const handleBatchAIVoiceover = async () => {
+    const cfg = getStoredTTSConfig();
+    if (cfg.mode === 'cloud' && !cfg.apiKey.trim()) {
+      setIsAIVoiceoverSettingsOpen(true);
+      return;
+    }
+
     try {
       setIsSynthesizingTTS(true);
       const res = await synthesizeAllScenesVoiceover(dsl.scenes);
@@ -408,20 +418,33 @@ function BottomTimelineComponent({
             onChange={handleAudioFileChange}
           />
 
-          {/* AI 提词合流 */}
-          <Tooltip content="AI 分幕提词语音合成与自适应拉伸时长">
-            <Button
-              size="sm"
-              variant="outline"
-              data-testid="ai-tts-batch-btn"
-              onClick={handleBatchAIVoiceover}
-              disabled={isSynthesizingTTS}
-              className="gap-1 text-xs h-7 text-amber-500 border-amber-500/30 hover:bg-amber-500/10"
-            >
-              <Sparkles className={`w-3 h-3 ${isSynthesizingTTS ? 'animate-spin' : ''}`} />
-              <span>{isSynthesizingTTS ? '合成中...' : 'AI 提词'}</span>
-            </Button>
-          </Tooltip>
+          {/* AI 提词合流与配置 */}
+          <div className="flex items-center">
+            <Tooltip content="AI 分幕提词语音合成与自适应拉伸时长">
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="ai-tts-batch-btn"
+                onClick={handleBatchAIVoiceover}
+                disabled={isSynthesizingTTS}
+                className="gap-1 text-xs h-7 text-amber-500 border-amber-500/30 hover:bg-amber-500/10 rounded-r-none border-r-0"
+              >
+                <Sparkles className={`w-3 h-3 ${isSynthesizingTTS ? 'animate-spin' : ''}`} />
+                <span>{isSynthesizingTTS ? '合成中...' : 'AI 提词'}</span>
+              </Button>
+            </Tooltip>
+            <Tooltip content="AI 语音合成设置 (离线/OpenAI/硅基流动/API Key)">
+              <Button
+                size="icon"
+                variant="outline"
+                data-testid="ai-tts-settings-btn"
+                onClick={() => setIsAIVoiceoverSettingsOpen(true)}
+                className="h-7 w-6 px-0 text-amber-500/80 border-amber-500/30 hover:bg-amber-500/10 rounded-l-none"
+              >
+                <Settings className="w-3 h-3" />
+              </Button>
+            </Tooltip>
+          </div>
 
           {/* 展开/收起波形轨切换按钮 */}
           <Tooltip content={isWaveformExpanded ? '收起波形轨' : '展开波形轨'}>
@@ -450,6 +473,13 @@ function BottomTimelineComponent({
       <VoiceoverPreflightModal
         isOpen={isVoiceoverModalOpen}
         onClose={() => setIsVoiceoverModalOpen(false)}
+      />
+
+      {/* AI 语音合成与提词配置弹层 */}
+      <AIVoiceoverSettingsModal
+        isOpen={isAIVoiceoverSettingsOpen}
+        onClose={() => setIsAIVoiceoverSettingsOpen(false)}
+        onSynthesizeBatch={handleBatchAIVoiceover}
       />
     </footer>
   );

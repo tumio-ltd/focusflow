@@ -148,6 +148,41 @@ async function verifyWaveformPlayheadInteractionAndSync(page: Page): Promise<voi
   await expect(canvas).toBeVisible();
 }
 
+/**
+ * 7. 验证 AI 语音合成配置模态框、模式切换与预设持久化
+ */
+async function verifyAiVoiceoverSettingsModal(page: Page): Promise<void> {
+  const settingsBtn = page.locator('[data-testid="ai-tts-settings-btn"]');
+  await expect(settingsBtn).toBeVisible();
+  await settingsBtn.click();
+
+  const modal = page.locator('[data-testid="ai-voiceover-settings-modal"]');
+  await expect(modal).toBeVisible();
+  await expect(modal).toContainText(/AI 提词与语音合成配置/);
+
+  // 验证双模式切换按钮
+  const offlineBtn = page.locator('[data-testid="tts-mode-offline-btn"]');
+  const cloudBtn = page.locator('[data-testid="tts-mode-cloud-btn"]');
+  await expect(offlineBtn).toBeVisible();
+  await expect(cloudBtn).toBeVisible();
+
+  // 切换到云端模式
+  await cloudBtn.click();
+  const presetSelect = page.locator('[data-testid="tts-preset-select"]');
+  await expect(presetSelect).toBeVisible();
+
+  // 切换到硅基流动预设并验证 Base URL 自动联动更新
+  await presetSelect.selectOption('siliconflow');
+  const baseUrlInput = page.locator('[data-testid="tts-base-url-input"]');
+  await expect(baseUrlInput).toHaveValue('https://api.siliconflow.cn/v1');
+
+  // 切回离线模式并保存
+  await offlineBtn.click();
+  const saveBtn = modal.locator('button', { hasText: '保存配置' });
+  await saveBtn.click();
+  await expect(modal).not.toBeVisible();
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -177,4 +212,9 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test('TC566: 验证波形轨激光红线播放头点击、拖拽与分幕双向联动', async ({ page }) => {
     await verifyWaveformPlayheadInteractionAndSync(page);
   });
+
+  test('TC567: 验证 AI 语音合成设置模态框、主流预设切换与持久化', async ({ page }) => {
+    await verifyAiVoiceoverSettingsModal(page);
+  });
 });
+
