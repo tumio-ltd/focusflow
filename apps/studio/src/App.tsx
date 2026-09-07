@@ -206,7 +206,7 @@ export default function App() {
     if (playerRef.current) {
       playerRef.current.updateDSL(dsl);
     }
-  }, [dsl.elements, dsl.scenes]);
+  }, [dsl.elements, dsl.scenes, dsl.audio]);
 
   const handleSelectScene = (index: number) => {
     setActiveSceneIndex(index);

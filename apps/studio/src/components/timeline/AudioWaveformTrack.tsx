@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { useProjectStore } from '@/stores/useProjectStore';
 import { extractPeaks, decodeAudioFile, getAudioContext } from '@/services/audio/audioDecoder';
 import { analyzeVadSilences, snapTimeToSilence, type SilenceBand } from '@/services/audio/vadAnalyzer';
-import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2 } from 'lucide-react';
+import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause } from 'lucide-react';
 
 interface AudioWaveformTrackProps {
   currentPlayheadMs?: number;
@@ -30,6 +30,39 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [draggingSceneIndex, setDraggingSceneIndex] = useState<number | null>(null);
   const [snapFeedback, setSnapFeedback] = useState<{ snapped: boolean; deltaMs: number } | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+        audioPreviewRef.current = null;
+      }
+    };
+  }, []);
+
+  const toggleAudioPreview = () => {
+    if (!track?.url) return;
+    if (isPlayingAudio) {
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+      }
+      setIsPlayingAudio(false);
+    } else {
+      if (!audioPreviewRef.current) {
+        audioPreviewRef.current = new Audio(track.url);
+        audioPreviewRef.current.onended = () => setIsPlayingAudio(false);
+      } else {
+        audioPreviewRef.current.src = track.url;
+      }
+      audioPreviewRef.current.play().then(() => {
+        setIsPlayingAudio(true);
+      }).catch((e) => {
+        console.warn('Audio preview play failed:', e);
+      });
+    }
+  };
 
   // Total timeline duration (ms)
   const totalDurationMs = useMemo(() => {
@@ -346,6 +379,29 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
             <span className="text-[10px] text-muted-foreground font-mono">
               {(track.durationMs / 1000).toFixed(1)}s
             </span>
+          )}
+          {track && (
+            <button
+              onClick={toggleAudioPreview}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer ${
+                isPlayingAudio
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                  : 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20'
+              }`}
+              title={isPlayingAudio ? '暂停试听' : '播放试听录音'}
+            >
+              {isPlayingAudio ? (
+                <>
+                  <Pause className="w-2.5 h-2.5 fill-current" />
+                  <span>暂停试听</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-2.5 h-2.5 fill-current" />
+                  <span>播放试听</span>
+                </>
+              )}
+            </button>
           )}
           {snapFeedback?.snapped && (
             <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
