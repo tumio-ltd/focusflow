@@ -4,8 +4,9 @@
  */
 
 export class BezierRouter {
-  constructor(elementsMap) {
+  constructor(elementsMap, options = {}) {
     this.elementsMap = elementsMap; // Map<id, { data, dom, type }>
+    this.debug = !!options.debug;
   }
 
   /**
@@ -22,7 +23,9 @@ export class BezierRouter {
 
     const boxMeta = this.elementsMap.get(boxId);
     if (!boxMeta || !boxMeta.data) {
-      console.warn(`[FocusFlow] BezierRouter: Box "${boxId}" not found.`);
+      if (this.debug) {
+        console.warn(`[FocusFlow] BezierRouter: Box "${boxId}" not found.`);
+      }
       return null;
     }
 

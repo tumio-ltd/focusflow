@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { FocusFlowPlayer } from '@focusflow/player';
 import type { FocusFlowDSL } from '@focusflow/dsl';
 import { 
@@ -12,6 +12,8 @@ import {
   Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
+import { sanitizeDSL } from '@/stores/useProjectStore';
 
 export interface AudienceModalProps {
   isOpen: boolean;
@@ -29,25 +31,103 @@ export function AudienceModal({
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [currentSceneIdx, setCurrentSceneIdx] = useState(initialSceneIndex);
+  const currentSceneIdxRef = useRef(initialSceneIndex);
   const [isPlaying, setIsPlaying] = useState(false);
+  const isPlayingRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const totalScenes = dsl.scenes?.length || 1;
-  const currentScene = dsl.scenes?.[currentSceneIdx] || dsl.scenes?.[0];
+  // 拓扑自愈：过滤掉可能遗留的悬空孤儿路径与失效引用
+  const sanitizedDsl = React.useMemo(() => sanitizeDSL(dsl), [dsl]);
 
+  const dslRef = useRef(sanitizedDsl);
+  dslRef.current = sanitizedDsl;
+
+  const totalScenes = sanitizedDsl.scenes?.length || 1;
+  const currentScene = sanitizedDsl.scenes?.[currentSceneIdx] || sanitizedDsl.scenes?.[0];
+
+  const playSceneTTS = useCallback((sceneIndex: number) => {
+    const activeDsl = dslRef.current;
+    const cfg = getStoredTTSConfig();
+    const mainTrack = activeDsl.audio?.tracks?.[0];
+    const isOfflineVoice =
+      cfg.mode === 'offline' ||
+      !!mainTrack?.isOfflineTTS ||
+      !!mainTrack?.id?.startsWith('track-ai-') ||
+      !!mainTrack?.id?.startsWith('tts-');
+
+    if (isOfflineVoice) {
+      const scene = activeDsl.scenes?.[sceneIndex];
+      const text = scene?.voiceoverScript?.trim() || scene?.title;
+      if (text) {
+        speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+      }
+    }
+  }, []);
+
+  const handleTogglePlay = useCallback(() => {
+    if (!playerRef.current) return;
+    const nextPlaying = !isPlayingRef.current;
+    playerRef.current.togglePlay();
+    setIsPlaying(nextPlaying);
+    isPlayingRef.current = nextPlaying;
+
+    if (nextPlaying) {
+      playSceneTTS(currentSceneIdxRef.current);
+    } else {
+      stopWebSpeech();
+    }
+  }, [playSceneTTS]);
+
+  const handleNext = useCallback(() => {
+    stopWebSpeech();
+    playerRef.current?.next();
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    stopWebSpeech();
+    playerRef.current?.prev();
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    }
+  }, []);
+
+  // 核心 Player 实例生命周期：仅在弹窗打开或 DSL 结构变更时挂载一次，绝对不在切幕或播放状态变化时反复销毁重建
   useEffect(() => {
     if (!isOpen || !containerRef.current) return;
 
     try {
       const player = new FocusFlowPlayer({
         container: containerRef.current,
-        dsl,
+        dsl: sanitizedDsl,
         debug: false,
         showControls: false,
         enableKeyboard: false, // 由 AudienceModal 统一拦截并调度快捷键，防止与播放内核双重触发
         onSceneChange: (index: number) => {
           setCurrentSceneIdx(index);
+          currentSceneIdxRef.current = index;
+          if (isPlayingRef.current) {
+            playSceneTTS(index);
+          }
         },
+      });
+
+      player.on?.('playStateChange', (playing: boolean) => {
+        setIsPlaying(playing);
+        isPlayingRef.current = playing;
+        if (!playing) {
+          stopWebSpeech();
+        }
+      });
+
+      player.on?.('ended', () => {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        stopWebSpeech();
       });
 
       playerRef.current = player;
@@ -58,16 +138,30 @@ export function AudienceModal({
       console.warn('Audience player init error:', err);
     }
 
+    return () => {
+      stopWebSpeech();
+      playerRef.current?.destroy();
+      playerRef.current = null;
+    };
+  }, [isOpen, sanitizedDsl, initialSceneIndex, playSceneTTS]);
+
+  // 全屏演播键盘快捷键监听
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isOpen) return;
       if (e.key === 'Escape') {
+        stopWebSpeech();
         onClose();
-      } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      } else if (e.key === ' ') {
         e.preventDefault();
-        playerRef.current?.next();
+        handleTogglePlay();
+      } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+        e.preventDefault();
+        handleNext();
       } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
         e.preventDefault();
-        playerRef.current?.prev();
+        handlePrev();
       } else if (e.key === 'f' || e.key === 'F') {
         toggleFullscreen();
       }
@@ -77,32 +171,8 @@ export function AudienceModal({
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      playerRef.current?.destroy();
-      playerRef.current = null;
     };
-  }, [isOpen, dsl, initialSceneIndex, onClose]);
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
-    } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
-    }
-  };
-
-  const handleNext = () => {
-    playerRef.current?.next();
-  };
-
-  const handlePrev = () => {
-    playerRef.current?.prev();
-  };
-
-  const handleTogglePlay = () => {
-    if (!playerRef.current) return;
-    playerRef.current.togglePlay();
-    setIsPlaying(!isPlaying);
-  };
+  }, [isOpen, onClose, handleTogglePlay, handleNext, handlePrev, toggleFullscreen]);
 
   if (!isOpen) return null;
 
@@ -139,7 +209,10 @@ export function AudienceModal({
             size="icon"
             variant="ghost"
             data-testid="close-audience-btn"
-            onClick={onClose}
+            onClick={() => {
+              stopWebSpeech();
+              onClose();
+            }}
             className="w-9 h-9 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-800 text-slate-300 hover:text-rose-400"
             title="退出演示 (ESC)"
           >

@@ -2,7 +2,40 @@ import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { useProjectStore } from '@/stores/useProjectStore';
 import { extractPeaks, decodeAudioFile, getAudioContext } from '@/services/audio/audioDecoder';
 import { analyzeVadSilences, snapTimeToSilence, type SilenceBand } from '@/services/audio/vadAnalyzer';
+import { speakWebSpeech, stopWebSpeech } from '@/services/audio/tts/WebSpeechTTSProvider';
+import { getStoredTTSConfig } from '@/services/audio/tts/ttsConfigStore';
+import { type SceneStep } from '@focusflow/dsl';
 import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause, Download } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+
+function generateSpeechPeaks(totalDurationMs: number, scenes: SceneStep[], sampleCount: number = 800): Float32Array {
+  const peaks = new Float32Array(sampleCount);
+  let accumMs = 0;
+  for (let sIdx = 0; sIdx < scenes.length; sIdx++) {
+    const scene = scenes[sIdx];
+    const durMs = (scene.duration || 3.8) * 1000;
+    const sceneStartRatio = accumMs / Math.max(1, totalDurationMs);
+    const sceneEndRatio = (accumMs + durMs) / Math.max(1, totalDurationMs);
+    const startSample = Math.floor(sceneStartRatio * sampleCount);
+    const endSample = Math.min(sampleCount, Math.floor(sceneEndRatio * sampleCount));
+
+    const sceneSampleCount = endSample - startSample;
+    for (let i = startSample; i < endSample; i++) {
+      const relIdx = i - startSample;
+      const progress = relIdx / Math.max(1, sceneSampleCount);
+      if (progress < 0.05 || progress > 0.85) {
+        peaks[i] = 0.02 + Math.abs(Math.sin(i * 0.5)) * 0.03;
+      } else {
+        const envelope = Math.sin(progress * Math.PI);
+        const cadence = Math.sin(i * 0.4) * Math.cos(i * 0.15) * 0.35 + 0.45;
+        const jitter = Math.sin(i * 1.8) * 0.15;
+        peaks[i] = Math.min(1.0, Math.max(0.06, (cadence + jitter) * envelope));
+      }
+    }
+    accumMs += durMs;
+  }
+  return peaks;
+}
 
 interface AudioWaveformTrackProps {
   currentPlayheadMs?: number;
@@ -17,6 +50,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   onSelectScene,
   height = 72,
 }) => {
+  const { t } = useTranslation('audio');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -63,20 +97,37 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     }
   }, [currentPlayheadMs, isScrubbing, stopGrainAnim]);
 
+  const offlineTtsAnimRef = useRef<number | null>(null);
+
+  const stopOfflineTtsPreview = useCallback(() => {
+    stopWebSpeech();
+    if (offlineTtsAnimRef.current) {
+      cancelAnimationFrame(offlineTtsAnimRef.current);
+      offlineTtsAnimRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
       stopGrainAnim();
+      stopOfflineTtsPreview();
       if (audioPreviewRef.current) {
         audioPreviewRef.current.pause();
         audioPreviewRef.current = null;
       }
     };
-  }, [stopGrainAnim]);
+  }, [stopGrainAnim, stopOfflineTtsPreview]);
 
   // Sync playhead smoothly while full audio preview is playing
   useEffect(() => {
     let animId: number;
-    if (isPlayingAudio) {
+    const isOffline = Boolean(
+      track?.isOfflineTTS ||
+      track?.type === 'offline-tts' ||
+      track?.id?.startsWith('track-ai-') ||
+      track?.id?.startsWith('tts-')
+    );
+    if (isPlayingAudio && !isOffline) {
       stopGrainAnim();
       const updateFrame = () => {
         if (audioPreviewRef.current && !audioPreviewRef.current.paused) {
@@ -89,32 +140,112 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     return () => {
       if (animId) cancelAnimationFrame(animId);
     };
-  }, [isPlayingAudio, stopGrainAnim]);
+  }, [isPlayingAudio, stopGrainAnim, track]);
 
   const toggleAudioPreview = () => {
-    if (!track?.url) return;
+    if (!track) return;
     stopGrainAnim();
+
     if (isPlayingAudio) {
       if (audioPreviewRef.current) {
         audioPreviewRef.current.pause();
       }
+      stopOfflineTtsPreview();
       setIsPlayingAudio(false);
-    } else {
-      if (!audioPreviewRef.current) {
-        audioPreviewRef.current = new Audio(track.url);
-        audioPreviewRef.current.onended = () => setIsPlayingAudio(false);
-      } else {
-        audioPreviewRef.current.src = track.url;
-      }
-      // Start playing right from current playhead position
-      const startSec = Math.max(0, Math.min((track.durationMs || 99999) / 1000, playheadMs / 1000));
-      audioPreviewRef.current.currentTime = startSec;
-      audioPreviewRef.current.play().then(() => {
-        setIsPlayingAudio(true);
-      }).catch((e) => {
-        console.warn('Audio preview play failed:', e);
-      });
+      return;
     }
+
+    const isOffline = Boolean(
+      track.isOfflineTTS ||
+      track.type === 'offline-tts' ||
+      track.id.startsWith('track-ai-') ||
+      track.id.startsWith('tts-')
+    );
+
+    if (isOffline) {
+      stopOfflineTtsPreview();
+      const cfg = getStoredTTSConfig();
+
+      // Find starting scene from current playheadMs
+      let accum = 0;
+      let startIdx = 0;
+      for (let i = 0; i < scenes.length; i++) {
+        const durMs = (scenes[i].duration || dsl.meta.controls?.interval || 3800);
+        if (playheadMs < accum + durMs) {
+          startIdx = i;
+          break;
+        }
+        accum += durMs;
+        startIdx = i;
+      }
+
+      setIsPlayingAudio(true);
+
+      const playSceneVoice = (idx: number) => {
+        if (idx >= scenes.length) {
+          setIsPlayingAudio(false);
+          stopOfflineTtsPreview();
+          return;
+        }
+        onSelectScene?.(idx);
+        const scene = scenes[idx];
+        const fullText = scene.voiceoverScript?.trim() || scene.title;
+
+        let sStartMs = 0;
+        for (let i = 0; i < idx; i++) {
+          sStartMs += (scenes[i].duration || dsl.meta.controls?.interval || 3800);
+        }
+        const sDurMs = (scene.duration || dsl.meta.controls?.interval || 3800);
+
+        // Smart text slicing if starting mid-scene
+        let textToSpeak = fullText;
+        if (idx === startIdx && playheadMs > sStartMs + 500) {
+          const ratio = Math.max(0, Math.min(1, (playheadMs - sStartMs) / Math.max(1, sDurMs)));
+          const sentences = fullText.split(/(?<=[。！？；\n,.!?;])\s*/).map((s) => s.trim()).filter(Boolean);
+          if (sentences.length > 1) {
+            const sentenceIdx = Math.min(sentences.length - 1, Math.floor(ratio * sentences.length));
+            textToSpeak = sentences.slice(sentenceIdx).join(' ');
+          }
+        }
+
+        const startT = performance.now();
+        const startPh = idx === startIdx ? Math.max(sStartMs, playheadMs) : sStartMs;
+
+        const step = () => {
+          const elapsed = performance.now() - startT;
+          const currentMs = Math.min(sStartMs + sDurMs, startPh + elapsed);
+          setPlayheadMs(currentMs);
+          if (currentMs < sStartMs + sDurMs) {
+            offlineTtsAnimRef.current = requestAnimationFrame(step);
+          }
+        };
+        if (offlineTtsAnimRef.current) cancelAnimationFrame(offlineTtsAnimRef.current);
+        offlineTtsAnimRef.current = requestAnimationFrame(step);
+
+        speakWebSpeech(textToSpeak, cfg.speed, undefined, cfg.voice, () => {
+          setPlayheadMs(sStartMs + sDurMs);
+          playSceneVoice(idx + 1);
+        });
+      };
+
+      playSceneVoice(startIdx);
+      return;
+    }
+
+    if (!audioPreviewRef.current) {
+      audioPreviewRef.current = new Audio(track.url);
+      audioPreviewRef.current.onended = () => setIsPlayingAudio(false);
+    } else {
+      audioPreviewRef.current.src = track.url;
+    }
+    // Start playing right from current playhead position
+    const startSec = Math.max(0, Math.min((track.durationMs || 99999) / 1000, playheadMs / 1000));
+    audioPreviewRef.current.currentTime = startSec;
+    audioPreviewRef.current.play().then(() => {
+      setIsPlayingAudio(true);
+    }).catch((e) => {
+      console.warn('Audio preview play failed:', e);
+    });
   };
 
   const handleDownloadAudio = async () => {
@@ -185,7 +316,25 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         setAudioBuffer(info.audioBuffer);
         const extracted = await extractPeaks(info.audioBuffer, 1200);
         if (!isMounted) return;
-        setPeaks(extracted);
+
+        const isOffline = Boolean(
+          track.isOfflineTTS ||
+          track.type === 'offline-tts' ||
+          track.id.startsWith('track-ai-') ||
+          track.id.startsWith('tts-')
+        );
+
+        let maxPeak = 0;
+        for (let i = 0; i < extracted.length; i++) {
+          if (extracted[i] > maxPeak) maxPeak = extracted[i];
+        }
+
+        if (isOffline || maxPeak < 0.01) {
+          const speechPeaks = generateSpeechPeaks(track.durationMs || totalDurationMs, scenes, 1200);
+          setPeaks(speechPeaks);
+        } else {
+          setPeaks(extracted);
+        }
 
         const silences = analyzeVadSilences(info.audioBuffer, -42, 120);
         if (!isMounted) return;
@@ -210,11 +359,79 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [track?.url]);
+  }, [track?.url, scenes, totalDurationMs]);
 
   // Scrub audio preview: play a 2.5-second phrase snippet with smooth envelope and animate playhead
   const playScrubGrain = useCallback((timeMs: number, durationSec: number = 2.5) => {
     stopGrainAnim();
+    stopOfflineTtsPreview();
+
+    const isOffline = Boolean(
+      track?.isOfflineTTS ||
+      track?.type === 'offline-tts' ||
+      track?.id.startsWith('track-ai-') ||
+      track?.id.startsWith('tts-')
+    );
+
+    if (isOffline) {
+      let accum = 0;
+      let targetIdx = 0;
+      let targetStartMs = 0;
+      for (let i = 0; i < scenes.length; i++) {
+        const durMs = (scenes[i].duration || dsl.meta.controls?.interval || 3800);
+        if (timeMs < accum + durMs) {
+          targetIdx = i;
+          targetStartMs = accum;
+          break;
+        }
+        accum += durMs;
+        targetIdx = i;
+        targetStartMs = accum;
+      }
+      const targetScene = scenes[targetIdx];
+      const fullText = targetScene?.voiceoverScript?.trim() || targetScene?.title || '';
+      if (!fullText) return;
+
+      // Smart Sentence Slicing:
+      // If the scene is longer and click offset is in the later portion of the scene,
+      // split by sentence marks and start speaking from the sentence matching the offset!
+      const targetDurMs = (targetScene?.duration || dsl.meta.controls?.interval || 3800);
+      const ratioInScene = Math.max(0, Math.min(1, (timeMs - targetStartMs) / Math.max(1, targetDurMs)));
+
+      const sentences = fullText
+        .split(/(?<=[。！？；\n,.!?;])\s*/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      let textToSpeak = fullText;
+      if (sentences.length > 1 && ratioInScene > 0.15) {
+        const sentenceIdx = Math.min(sentences.length - 1, Math.floor(ratioInScene * sentences.length));
+        textToSpeak = sentences.slice(sentenceIdx).join(' ');
+      }
+
+      const cfg = getStoredTTSConfig();
+      speakWebSpeech(textToSpeak, cfg.speed, undefined, cfg.voice);
+
+      // Animate playhead forward for durationSec smoothly so red laser line visibly progresses
+      const startPerfTime = performance.now();
+      const maxMs = track?.durationMs || totalDurationMs;
+      const targetEndMs = Math.min(maxMs, timeMs + durationSec * 1000);
+      const tick = () => {
+        const elapsed = performance.now() - startPerfTime;
+        if (elapsed < durationSec * 1000) {
+          const progress = elapsed / (durationSec * 1000);
+          const nextMs = Math.min(targetEndMs, timeMs + progress * (targetEndMs - timeMs));
+          setPlayheadMs(nextMs);
+          grainAnimRef.current = requestAnimationFrame(tick);
+        } else {
+          setPlayheadMs(targetEndMs);
+          grainAnimRef.current = null;
+        }
+      };
+      grainAnimRef.current = requestAnimationFrame(tick);
+      return;
+    }
+
     if (!audioBuffer) return;
     try {
       const ctx = getAudioContext();
@@ -356,7 +573,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       // Placeholder while loading
       ctx.fillStyle = '#64748b';
       ctx.font = '11px sans-serif';
-      ctx.fillText('波形正在离屏解码中...', 20, midY + 4);
+      ctx.fillText(t('decodingWaveform'), 20, midY + 4);
     }
 
     // Draw Scene Piercing Boundaries
@@ -631,7 +848,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       <div className="flex items-center justify-between px-3 py-1 bg-panel/80 text-[11px] text-muted-foreground border-b border-border/50">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-primary flex items-center gap-1">
-            🎵 音频轨: {track?.name || '主解说声道'}
+            🎵 {t('audioTrack')}: {track?.name || t('mainVoiceoverTrack')}
           </span>
           {track && (
             <span className="text-[10px] text-muted-foreground font-mono">
@@ -646,17 +863,17 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
                   ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                   : 'bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20'
               }`}
-              title={isPlayingAudio ? '暂停试听' : '播放试听录音'}
+              title={isPlayingAudio ? t('pausePreview') : t('playPreviewTitle')}
             >
               {isPlayingAudio ? (
                 <>
                   <Pause className="w-2.5 h-2.5 fill-current" />
-                  <span>暂停试听</span>
+                  <span>{t('pausePreview')}</span>
                 </>
               ) : (
                 <>
                   <Play className="w-2.5 h-2.5 fill-current" />
-                  <span>播放试听</span>
+                  <span>{t('playPreview')}</span>
                 </>
               )}
             </button>
@@ -665,24 +882,24 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
             <button
               onClick={handleDownloadAudio}
               className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer bg-muted hover:bg-muted/80 text-foreground border border-border"
-              title="下载音频文件到本地"
+              title={t('downloadAudioTitle')}
             >
               <Download className="w-2.5 h-2.5" />
-              <span>下载音频</span>
+              <span>{t('downloadAudio')}</span>
             </button>
           )}
           {decodeError && (
             <span className="text-[10px] text-red-400 bg-red-950/60 px-1.5 py-0.5 rounded border border-red-800/40">
-              ⚠️ 音轨已失效
+              ⚠️ {t('trackInvalid')}
             </span>
           )}
           {track && decodeError && (
             <button
               onClick={() => removeAudioTrack(track.id)}
               className="text-[10px] text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 px-2 py-0.5 rounded border border-red-800/50 transition cursor-pointer"
-              title="清除失效的音频轨"
+              title={t('clearInvalidTrack')}
             >
-              清除失效音轨
+              {t('clearInvalidTrack')}
             </button>
           )}
         </div>
@@ -693,7 +910,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
             <button
               onClick={() => setZoomLevel((z) => Math.max(1, z - 0.5))}
               className="hover:text-foreground p-0.5"
-              title="缩小波形视口"
+              title={t('zoomOutWaveform')}
             >
               <ZoomOut className="w-3 h-3" />
             </button>
@@ -701,7 +918,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
             <button
               onClick={() => setZoomLevel((z) => Math.min(10, z + 0.5))}
               className="hover:text-foreground p-0.5"
-              title="放大波形视口"
+              title={t('zoomInWaveform')}
             >
               <ZoomIn className="w-3 h-3" />
             </button>
@@ -711,7 +928,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
             <button
               onClick={() => removeAudioTrack(track.id)}
               className="text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10"
-              title="移除音轨"
+              title={t('removeTrack')}
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -722,6 +939,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       {/* Canvas Waveform Viewport */}
       <div className="relative w-full overflow-hidden">
         <canvas
+          data-testid="waveform-canvas"
           ref={canvasRef}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}

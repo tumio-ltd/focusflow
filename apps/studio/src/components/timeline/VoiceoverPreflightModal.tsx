@@ -4,6 +4,7 @@ import { StudioVoiceRecorder } from '@/services/audio/StudioVoiceRecorder';
 import { useProjectStore } from '@/stores/useProjectStore';
 import { Button } from '@/components/ui';
 import { Mic, MicOff, Square, BookmarkPlus, Play, CheckCircle2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { AudioTrackConfig } from '@focusflow/dsl';
 
 interface VoiceoverPreflightModalProps {
@@ -15,6 +16,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
   isOpen,
   onClose,
 }) => {
+  const { t } = useTranslation('audio');
   const { dsl, setAudioTrack, updateSceneDuration } = useProjectStore();
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
@@ -166,7 +168,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
     const trackUrl = URL.createObjectURL(result.blob);
     const newTrack: AudioTrackConfig = {
       id: `track-mic-${Date.now()}`,
-      name: '演播麦克风解说录音',
+      name: t('recordedVoiceoverName'),
       url: trackUrl,
       durationMs: result.durationMs,
       volume: 1.0,
@@ -212,7 +214,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
         <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
             <Mic className="w-5 h-5 text-primary animate-pulse" />
-            <h3 className="text-sm font-semibold text-foreground">同屏演播麦克风录音器</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t('recorderModalTitle')}</h3>
           </div>
           <button
             onClick={onClose}
@@ -230,7 +232,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
               <div className="text-6xl font-black text-primary animate-ping">
                 {countdown > 0 ? countdown : 'GO!'}
               </div>
-              <p className="text-xs text-muted-foreground">准备开始演播讲解...</p>
+              <p className="text-xs text-muted-foreground">{t('preparingNarration')}</p>
             </div>
           )}
 
@@ -240,11 +242,11 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
                 <span className="text-xs font-mono font-semibold text-red-400">
-                  正在演播录音中: {(elapsedMs / 1000).toFixed(1)}s
+                  {t('recordingStatus', { seconds: (elapsedMs / 1000).toFixed(1) })}
                 </span>
               </div>
               <div className="text-[11px] text-muted-foreground">
-                分幕打点数量: <span className="text-foreground font-mono font-bold">{markersCount}</span>
+                {t('markersCount')} <span className="text-foreground font-mono font-bold">{markersCount}</span>
               </div>
               <Button
                 variant="outline"
@@ -253,7 +255,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
                 className="border-primary/50 text-primary gap-1.5 shadow-sm"
               >
                 <BookmarkPlus className="w-4 h-4" />
-                打入分幕转场标记 (快捷键: M)
+                {t('punchMarkerBtn')}
               </Button>
             </div>
           )}
@@ -264,7 +266,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
               {/* Microphone Selector */}
               <div>
                 <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                  输入音频设备
+                  {t('inputDeviceLabel')}
                 </label>
                 <select
                   value={selectedDeviceId}
@@ -273,10 +275,10 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
                 >
                   {devices.map((d, idx) => (
                     <option key={d.deviceId || idx} value={d.deviceId}>
-                      {d.label || (d.deviceId ? `麦克风 (${d.deviceId.slice(0, 8)})` : `系统默认麦克风`)}
+                      {d.label || (d.deviceId ? `${t('micLabel')} (${d.deviceId.slice(0, 8)})` : t('defaultMic'))}
                     </option>
                   ))}
-                  {devices.length === 0 && <option value="">系统默认麦克风</option>}
+                  {devices.length === 0 && <option value="">{t('defaultMic')}</option>}
                 </select>
               </div>
 
@@ -289,7 +291,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
                     onChange={(e) => setEchoCancel(e.target.checked)}
                     className="accent-primary"
                   />
-                  <span>回声消除 (AEC)</span>
+                  <span>{t('echoCancel')}</span>
                 </label>
                 <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
@@ -298,7 +300,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
                     onChange={(e) => setNoiseSuppress(e.target.checked)}
                     className="accent-primary"
                   />
-                  <span>背景降噪 (ANS)</span>
+                  <span>{t('noiseSuppress')}</span>
                 </label>
               </div>
             </>
@@ -307,7 +309,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
           {/* Real-time Dynamic VU Meter Bar */}
           <div>
             <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-              <span>立体声 VU 电平监视:</span>
+              <span>{t('stereoVuLabel')}</span>
               <span className="font-mono">{vuDbfs} dBFS</span>
             </div>
             <div className="h-3 w-full bg-slate-900 rounded overflow-hidden p-0.5 border border-border/50 flex">
@@ -330,7 +332,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-border bg-muted/10">
           <Button variant="secondary" size="sm" onClick={onClose}>
-            取消
+            {t('cancelRecord')}
           </Button>
 
           {recordState === 'recording' ? (
@@ -341,7 +343,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
               className="gap-1.5 shadow-md"
             >
               <Square className="w-3.5 h-3.5 fill-current" />
-              完成录制并校准时间轴
+              {t('finishRecordBtn')}
             </Button>
           ) : (
             <Button
@@ -351,7 +353,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
               className="gap-1.5 shadow-md"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              3-2-1 开启同屏演播录音
+              {t('startRecordBtn')}
             </Button>
           )}
         </div>

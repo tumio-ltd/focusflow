@@ -6,6 +6,7 @@ import upload from './upload';
 import projects from './projects';
 import templates from './templates';
 import exportLocales from './export';
+import audio from './audio';
 
 export default {
   common,
@@ -16,4 +17,5 @@ export default {
   projects,
   templates,
   export: exportLocales,
+  audio,
 };

@@ -26,7 +26,8 @@ import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
-import { synthesizeSceneVoiceover, speakWebSpeech, getStoredTTSConfig } from '@/services/audio';
+import { synthesizeSceneVoiceover, speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
+import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
 
 export default function App() {
@@ -39,6 +40,8 @@ export default function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
   const [isSingleTtsLoading, setIsSingleTtsLoading] = useState(false);
+  const [ttsPreview, setTtsPreview] = useState<TTSPreviewInfo | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 视口变换与容器尺寸跟踪 (使用 useRef 隔离高频手势平移，避免触发根组件与侧边栏 Re-render)
@@ -86,6 +89,7 @@ export default function App() {
     deleteElement,
     calibrateViewport,
     toggleShowPlayerControls,
+    setAudioTrack,
     markSaved,
   } = useProjectStore();
 
@@ -208,14 +212,139 @@ export default function App() {
     }
   }, [dsl.elements, dsl.scenes, dsl.audio]);
 
+  // 3.4 演播播放联动：当处于离线原生语音模式且自动演播切幕时，自动调用系统原生播音朗读
+  useEffect(() => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    const handleSceneChange = (e: any) => {
+      const newIdx = typeof e === 'number' ? e : e?.sceneIndex ?? 0;
+      setActiveSceneIndex(newIdx);
+
+      const currentlyPlaying = useEditorStore.getState().isPlaying;
+      const cfg = getStoredTTSConfig();
+      const mainTrack = dsl.audio?.tracks?.[0];
+      const isOfflineVoice = cfg.mode === 'offline' || !!mainTrack?.isOfflineTTS || !!mainTrack?.id?.startsWith('track-ai-') || !!mainTrack?.id?.startsWith('tts-');
+
+      if (currentlyPlaying && isOfflineVoice) {
+        const scene = dsl.scenes[newIdx];
+        const text = scene?.voiceoverScript?.trim() || scene?.title;
+        if (text) {
+          speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+        }
+      }
+    };
+
+    const handlePlayStateChange = (playing: boolean) => {
+      if (!playing) {
+        stopWebSpeech();
+      }
+    };
+
+    const handleEnded = () => {
+      stopWebSpeech();
+    };
+
+    player.on?.('sceneChange', handleSceneChange);
+    player.on?.('playStateChange', handlePlayStateChange);
+    player.on?.('ended', handleEnded);
+
+    return () => {
+      player.off?.('sceneChange', handleSceneChange);
+      player.off?.('playStateChange', handlePlayStateChange);
+      player.off?.('ended', handleEnded);
+    };
+  }, [dsl.scenes, dsl.audio, setActiveSceneIndex]);
+
+  // Helper to stop any ongoing TTS preview playback
+  const stopCurrentTtsPreview = useCallback(() => {
+    stopWebSpeech();
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+    }
+    setTtsPreview((prev) => (prev && prev.isPlaying ? { ...prev, isPlaying: false } : prev));
+  }, []);
+
+  // Helper to play preview audio
+  const playCurrentTtsPreview = useCallback((preview: TTSPreviewInfo, text: string) => {
+    stopCurrentTtsPreview();
+    const cfg = getStoredTTSConfig();
+    setTtsPreview({ ...preview, isPlaying: true });
+
+    if (cfg.mode === 'cloud' && preview.audioBlob) {
+      const url = URL.createObjectURL(preview.audioBlob);
+      const audio = new Audio(url);
+      previewAudioRef.current = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        previewAudioRef.current = null;
+        setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        previewAudioRef.current = null;
+        setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
+      };
+      audio.play().catch(() => {});
+    } else {
+      speakWebSpeech(text, cfg.speed, undefined, cfg.voice, () => {
+        setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
+      });
+    }
+  }, [stopCurrentTtsPreview]);
+
+  // 当非播放状态下切换分幕时，中断检查器单幕试听并重置试听卡片
+  useEffect(() => {
+    if (!isPlaying) {
+      stopCurrentTtsPreview();
+      setTtsPreview(null);
+    }
+  }, [activeSceneIndex, isPlaying, stopCurrentTtsPreview]);
+
+  // 当停止播放演播时，立即中断离线语音朗读
+  useEffect(() => {
+    if (!isPlaying) {
+      stopWebSpeech();
+    }
+  }, [isPlaying]);
+
   const handleSelectScene = (index: number) => {
     setActiveSceneIndex(index);
+    if (playerRef.current) {
+      playerRef.current.goTo(index);
+    }
+  };
+
+  const handleSeek = (timeMs: number) => {
+    if (playerRef.current) {
+      playerRef.current.seekTo(timeMs);
+    }
   };
 
   const handleTogglePlay = () => {
     if (!playerRef.current) return;
+    const nextPlaying = !isPlaying;
+    stopCurrentTtsPreview();
+    setTtsPreview(null);
     playerRef.current.togglePlay();
     togglePlay();
+
+    if (nextPlaying) {
+      const cfg = getStoredTTSConfig();
+      const mainTrack = dsl.audio?.tracks?.[0];
+      const isOfflineVoice = cfg.mode === 'offline' || !!mainTrack?.isOfflineTTS || !!mainTrack?.id?.startsWith('track-ai-') || !!mainTrack?.id?.startsWith('tts-');
+
+      if (isOfflineVoice) {
+        const scene = dsl.scenes[activeSceneIndex] || dsl.scenes[0];
+        const text = scene?.voiceoverScript?.trim() || scene?.title;
+        if (text) {
+          speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+        }
+      }
+    } else {
+      stopWebSpeech();
+    }
   };
 
   const handleNext = () => {
@@ -489,6 +618,7 @@ export default function App() {
             onTogglePlay={handleTogglePlay}
             onNext={handleNext}
             onPrev={handlePrev}
+            onSeek={handleSeek}
           />
         }
         rightInspector={
@@ -498,31 +628,68 @@ export default function App() {
             sceneDuration={activeScene?.duration || dsl.meta.controls?.interval || 3800}
             onSceneDurationChange={(duration) => updateSceneDuration(activeSceneIndex, duration)}
             sceneVoiceoverScript={activeScene?.voiceoverScript || ''}
-            onSceneVoiceoverScriptChange={(script) => updateSceneVoiceoverScript(activeSceneIndex, script)}
+            onSceneVoiceoverScriptChange={(script) => {
+              updateSceneVoiceoverScript(activeSceneIndex, script);
+              if (ttsPreview) {
+                stopCurrentTtsPreview();
+                setTtsPreview(null);
+              }
+            }}
             onSynthesizeSceneTTS={async () => {
               if (!activeScene) return;
               try {
                 setIsSingleTtsLoading(true);
+                stopCurrentTtsPreview();
                 const cfg = getStoredTTSConfig();
                 const text = activeScene.voiceoverScript?.trim() || activeScene.title;
-                const res = await synthesizeSceneVoiceover(activeScene);
-                updateSceneDuration(activeSceneIndex, res.adaptedDuration);
+                const defaultInterval = dsl.meta.controls?.interval || 3800;
+                const res = await synthesizeSceneVoiceover(activeScene, undefined, undefined, cfg.speed, defaultInterval);
 
-                if (cfg.mode === 'cloud' && cfg.apiKey) {
-                  const url = URL.createObjectURL(res.audioBlob);
-                  const audio = new Audio(url);
-                  audio.onended = () => URL.revokeObjectURL(url);
-                  await audio.play().catch(() => {});
-                } else {
-                  speakWebSpeech(text, cfg.speed);
-                }
+                const previewInfo: TTSPreviewInfo = {
+                  sceneIndex: activeSceneIndex,
+                  isPlaying: true,
+                  adaptedDuration: res.adaptedDuration,
+                  audioDurationMs: res.durationMs,
+                  audioBlob: res.audioBlob,
+                };
+                playCurrentTtsPreview(previewInfo, text);
               } catch (e) {
-                console.error('Failed to synthesize single scene voiceover:', e);
+                console.error('Failed to preview single scene voiceover:', e);
               } finally {
                 setIsSingleTtsLoading(false);
               }
             }}
             isSingleTtsLoading={isSingleTtsLoading}
+            ttsPreview={ttsPreview}
+            onStopPreviewTTS={stopCurrentTtsPreview}
+            onPlayPreviewTTS={() => {
+              if (!ttsPreview || !activeScene) return;
+              const text = activeScene.voiceoverScript?.trim() || activeScene.title;
+              playCurrentTtsPreview(ttsPreview, text);
+            }}
+            onApplySceneTTS={() => {
+              if (!ttsPreview || !activeScene) return;
+              updateSceneDuration(activeSceneIndex, ttsPreview.adaptedDuration);
+              if (ttsPreview.audioBlob) {
+                const cfg = getStoredTTSConfig();
+                const isOffline = cfg.mode === 'offline';
+                setAudioTrack({
+                  id: `tts-${activeScene.id}-${Date.now()}`,
+                  url: URL.createObjectURL(ttsPreview.audioBlob),
+                  name: `🎙️ ${activeScene.title}`,
+                  durationMs: ttsPreview.adaptedDuration,
+                  volume: 1.0,
+                  isOfflineTTS: isOffline,
+                  type: isOffline ? 'offline-tts' : 'voiceover',
+                });
+              }
+              stopCurrentTtsPreview();
+              setTtsPreview(null);
+            }}
+            onDismissSceneTTS={() => {
+              stopCurrentTtsPreview();
+              setTtsPreview(null);
+            }}
             cameraZoom={activeScene?.camera.zoom}
             onCameraZoomChange={(zoom) => updateSceneCamera(activeSceneIndex, { zoom })}
             cameraX={activeScene?.camera.x ?? 0}

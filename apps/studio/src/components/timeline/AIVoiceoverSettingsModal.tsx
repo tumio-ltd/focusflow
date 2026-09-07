@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import {
   X,
   Volume2,
@@ -38,9 +39,10 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
   onClose,
   onSynthesizeBatch,
 }) => {
+  const { t, i18n } = useTranslation('audio');
   const [config, setConfig] = useState<TTSStoredConfig>(getStoredTTSConfig());
   const [showApiKey, setShowApiKey] = useState(false);
-  const [testText, setTestText] = useState('欢迎使用 FocusFlow，新一代架构演进动态可视化系统。');
+  const [testText, setTestText] = useState(t('previewSampleText'));
   const [isTesting, setIsTesting] = useState(false);
   const [testStatus, setTestStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({
     type: 'idle',
@@ -53,8 +55,9 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
     if (isOpen) {
       setConfig(getStoredTTSConfig());
       setTestStatus({ type: 'idle', message: '' });
+      setTestText(t('previewSampleText'));
     }
-  }, [isOpen]);
+  }, [isOpen, t]);
 
   if (!isOpen) return null;
 
@@ -93,10 +96,10 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
 
     if (config.mode === 'offline') {
       try {
-        speakWebSpeech(testText, config.speed);
-        setTestStatus({ type: 'success', message: '已通过浏览器原生语音朗读试听' });
+        speakWebSpeech(testText, config.speed, undefined, config.voice);
+        setTestStatus({ type: 'success', message: t('previewSuccessOffline') });
       } catch (err: any) {
-        setTestStatus({ type: 'error', message: err?.message || '浏览器语音发音异常' });
+        setTestStatus({ type: 'error', message: err?.message || t('previewErrorRequest') });
       } finally {
         setIsTesting(false);
       }
@@ -105,7 +108,7 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
 
     // Cloud Mode test
     if (!config.apiKey.trim()) {
-      setTestStatus({ type: 'error', message: '请先填写 API Key 才能进行云端试听' });
+      setTestStatus({ type: 'error', message: t('previewErrorNoKey') });
       setIsTesting(false);
       return;
     }
@@ -126,13 +129,13 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
 
       setTestStatus({
         type: 'success',
-        message: `试听合成成功！音频长度 ${(res.durationMs / 1000).toFixed(1)} 秒`,
+        message: t('previewSuccessCloud', { duration: (res.durationMs / 1000).toFixed(1) }),
       });
     } catch (err: any) {
       console.error('Test TTS failed:', err);
       setTestStatus({
         type: 'error',
-        message: err?.message || '请求失败，请检查 Base URL、API Key 或网络连接',
+        message: err?.message || t('previewErrorRequest'),
       });
     } finally {
       setIsTesting(false);
@@ -162,79 +165,79 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-2xl bg-zinc-900 border border-zinc-700/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col text-zinc-100"
+        className="w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col text-card-foreground transition-colors duration-200"
         onClick={(e) => e.stopPropagation()}
         data-testid="ai-voiceover-settings-modal"
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between bg-zinc-900/90">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/20">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
               <Volume2 className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold tracking-wide flex items-center gap-2">
-                AI 提词与语音合成配置
-                <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">
-                  双模式
+              <h2 className="text-base font-semibold tracking-wide flex items-center gap-2 text-foreground">
+                {t('settingsTitle')}
+                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 font-medium">
+                  {t('dualModeBadge')}
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400">
-                可自由选用离线免 Key 浏览器原生发音，或配置云端广播级 AI 真人语音母带
+              <p className="text-xs text-muted-foreground">
+                {t('settingsSubtitle')}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="px-6 pt-4 pb-2 border-b border-zinc-800/80 bg-zinc-950/40 flex gap-3">
+        <div className="px-6 pt-4 pb-3 border-b border-border bg-muted/30 flex gap-3">
           <button
             onClick={() => handleModeChange('offline')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 border ${
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2.5 border ${
               config.mode === 'offline'
-                ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300 shadow-sm shadow-cyan-950'
-                : 'bg-zinc-800/40 border-zinc-800 text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200'
+                ? 'bg-primary/10 border-primary text-foreground shadow-sm'
+                : 'bg-background border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground'
             }`}
             data-testid="tts-mode-offline-btn"
           >
-            <Cpu className="w-4 h-4 text-emerald-400" />
+            <Cpu className="w-4 h-4 text-emerald-500 shrink-0" />
             <div className="text-left">
-              <div className="font-semibold text-zinc-100 flex items-center gap-1.5">
-                离线原生语音
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
-                  免 Key / 0 门槛
+              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                {t('modeOfflineTitle')}
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  {t('modeOfflineBadge')}
                 </span>
               </div>
-              <div className="text-[11px] text-zinc-400">系统原生播音员真实朗读，无蜂鸣电子音</div>
+              <div className="text-[11px] text-muted-foreground">{t('modeOfflineDesc')}</div>
             </div>
           </button>
 
           <button
             onClick={() => handleModeChange('cloud')}
-            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2 border ${
+            className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-2.5 border ${
               config.mode === 'cloud'
-                ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-300 shadow-sm shadow-cyan-950'
-                : 'bg-zinc-800/40 border-zinc-800 text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200'
+                ? 'bg-primary/10 border-primary text-foreground shadow-sm'
+                : 'bg-background border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground'
             }`}
             data-testid="tts-mode-cloud-btn"
           >
-            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <Sparkles className="w-4 h-4 text-primary shrink-0" />
             <div className="text-left">
-              <div className="font-semibold text-zinc-100 flex items-center gap-1.5">
-                云端高清 AI 语音
-                <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  BYOK 自备 Key
+              <div className="font-semibold text-foreground flex items-center gap-1.5">
+                {t('modeCloudTitle')}
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  {t('modeCloudBadge')}
                 </span>
               </div>
-              <div className="text-[11px] text-zinc-400">OpenAI / 硅基流动 / 广播级真人母带</div>
+              <div className="text-[11px] text-muted-foreground">{t('modeCloudDesc')}</div>
             </div>
           </button>
         </div>
@@ -243,32 +246,32 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
         <div className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {config.mode === 'offline' ? (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 text-xs space-y-2">
-                <div className="font-medium text-emerald-300 flex items-center gap-2">
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs space-y-2">
+                <div className="font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                   <Check className="w-4 h-4" />
-                  已启用离线原生语音合成模式
+                  {t('offlineEnabledTitle')}
                 </div>
-                <ul className="list-disc list-inside space-y-1 text-zinc-300 text-[11px] leading-relaxed">
+                <ul className="list-disc list-inside space-y-1 text-foreground/80 text-[11px] leading-relaxed">
                   <li>
-                    <strong>真实语音朗读</strong>：演播试听时，直接由操作系统的本地播音员（如 Mac 婷婷、Windows/Edge 晓晓、Safari 默认）朗读真实台词。
+                    <strong>{t('offlineBullet1Title')}</strong>：{t('offlineBullet1Desc')}
                   </li>
                   <li>
-                    <strong>消除电子音</strong>：底层母带平滑对齐，彻底移除了此前单调刺耳的 320Hz 正弦波蜂鸣（“翁~”）。
+                    <strong>{t('offlineBullet2Title')}</strong>：{t('offlineBullet2Desc')}
                   </li>
                   <li>
-                    <strong>100% 离线与免费</strong>：无需任何 API Key，无网络请求消耗，适合快速本地彩排与离线演示。
+                    <strong>{t('offlineBullet3Title')}</strong>：{t('offlineBullet3Desc')}
                   </li>
                 </ul>
               </div>
 
               {/* Speed Slider */}
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-medium text-zinc-300">
+                <div className="flex justify-between text-xs font-medium text-foreground">
                   <span className="flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-zinc-400" />
-                    发音语速
+                    <Sliders className="w-3.5 h-3.5 text-muted-foreground" />
+                    {t('speechSpeed')}
                   </span>
-                  <span className="text-cyan-400 font-mono">{config.speed.toFixed(1)}x</span>
+                  <span className="text-primary font-mono font-semibold">{config.speed.toFixed(1)}x</span>
                 </div>
                 <input
                   type="range"
@@ -282,12 +285,12 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                     setConfig(updated);
                     saveStoredTTSConfig(updated);
                   }}
-                  className="w-full accent-cyan-500 cursor-pointer h-1.5 bg-zinc-700 rounded-lg"
+                  className="w-full accent-primary cursor-pointer h-1.5 bg-muted rounded-lg"
                 />
-                <div className="flex justify-between text-[10px] text-zinc-500">
-                  <span>0.5x 慢速</span>
-                  <span>1.0x 标准</span>
-                  <span>2.0x 极速</span>
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>{t('speedSlow')}</span>
+                  <span>{t('speedNormal')}</span>
+                  <span>{t('speedFast')}</span>
                 </div>
               </div>
             </div>
@@ -295,34 +298,34 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
             <div className="space-y-4">
               {/* Presets Selector */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-zinc-300">
-                  主流服务商预设 (Preset)
+                <label className="block text-xs font-medium text-foreground">
+                  {t('presetLabel')}
                 </label>
                 <select
                   value={config.preset}
                   onChange={(e) => handlePresetChange(e.target.value as TTSPresetKey)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
                   data-testid="tts-preset-select"
                 >
-                  <option value="openai">OpenAI 官方 (api.openai.com)</option>
-                  <option value="siliconflow">硅基流动 SiliconFlow (api.siliconflow.cn · 国内极速)</option>
-                  <option value="custom">自定义兼容接口 (OneAPI / LocalAI / 私有中转)</option>
+                  <option value="openai">{t('presetOpenAI')}</option>
+                  <option value="siliconflow">{t('presetSiliconFlow')}</option>
+                  <option value="custom">{t('presetCustom')}</option>
                 </select>
               </div>
 
               {/* Base URL */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <label className="font-medium text-zinc-300 flex items-center gap-1.5">
-                    <Globe2 className="w-3.5 h-3.5 text-zinc-400" />
-                    API Endpoint / Base URL
+                  <label className="font-medium text-foreground flex items-center gap-1.5">
+                    <Globe2 className="w-3.5 h-3.5 text-muted-foreground" />
+                    {t('apiEndpointLabel')}
                   </label>
                   <button
                     onClick={handleResetBaseUrl}
-                    className="text-[11px] text-zinc-400 hover:text-cyan-400 flex items-center gap-1 transition-colors"
+                    className="text-[11px] text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    重置默认
+                    {t('resetDefault')}
                   </button>
                 </div>
                 <input
@@ -335,7 +338,7 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                     saveStoredTTSConfig(updated);
                   }}
                   placeholder="https://api.openai.com/v1"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
                   data-testid="tts-base-url-input"
                 />
               </div>
@@ -343,18 +346,18 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
               {/* API Key */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <label className="font-medium text-zinc-300 flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-zinc-400" />
-                    API Key
+                  <label className="font-medium text-foreground flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-muted-foreground" />
+                    {t('apiKeyLabel')}
                   </label>
                   {currentPresetDef.helpUrl && (
                     <a
                       href={currentPresetDef.helpUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[11px] text-cyan-400 hover:underline"
+                      className="text-[11px] text-primary hover:underline"
                     >
-                      获取密钥 &rarr;
+                      {t('getKeyLink')}
                     </a>
                   )}
                 </div>
@@ -369,26 +372,26 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                       saveStoredTTSConfig(updated);
                     }}
                     placeholder="sk-..."
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-100 pr-9 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground pr-9 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
                     data-testid="tts-api-key-input"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   >
                     {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
-                <p className="text-[10px] text-zinc-500">
-                  🔒 密钥仅安全暂存在您的本地浏览器 localStorage 中，直接与服务商端点通信，绝不经过任何第三方服务器。
+                <p className="text-[10px] text-muted-foreground">
+                  🔒 {t('apiKeyStorageNotice')}
                 </p>
               </div>
 
               {/* Model & Voice */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-medium text-zinc-300">模型 (Model)</label>
+                  <label className="block text-xs font-medium text-foreground">{t('modelLabel')}</label>
                   <input
                     type="text"
                     value={config.model}
@@ -399,7 +402,7 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                       saveStoredTTSConfig(updated);
                     }}
                     list="tts-model-suggestions"
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
                   />
                   <datalist id="tts-model-suggestions">
                     {currentPresetDef.models.map((m) => (
@@ -409,7 +412,7 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-medium text-zinc-300">音色 (Voice)</label>
+                  <label className="block text-xs font-medium text-foreground">{t('voiceLabel')}</label>
                   <select
                     value={config.voice}
                     onChange={(e) => {
@@ -418,25 +421,39 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                       setConfig(updated);
                       saveStoredTTSConfig(updated);
                     }}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none focus:border-cyan-500"
+                    className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition"
                   >
-                    {currentPresetDef.voices.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name}
-                      </option>
-                    ))}
+                    {currentPresetDef.voices.map((v) => {
+                      const voiceLabel = i18n.language === 'en' ? ({
+                        alloy: 'Alloy (Neutral & Versatile)',
+                        echo: 'Echo (Calm Male)',
+                        fable: 'Fable (Narrative Storyteller)',
+                        onyx: 'Onyx (Deep Baritone)',
+                        nova: 'Nova (Professional Female)',
+                        shimmer: 'Shimmer (Bright & Expressive)',
+                        alex: 'Alex (Warm Narrator)',
+                        benjamin: 'Benjamin (Rich Male)',
+                        claire: 'Claire (Intelligent Female)',
+                        david: 'David (Standard Male)',
+                      }[v.id.toLowerCase()] || v.name) : v.name;
+                      return (
+                        <option key={v.id} value={v.id}>
+                          {voiceLabel}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
               </div>
 
               {/* Speed Slider */}
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-medium text-zinc-300">
+                <div className="flex justify-between text-xs font-medium text-foreground">
                   <span className="flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-zinc-400" />
-                    发音语速
+                    <Sliders className="w-3.5 h-3.5 text-muted-foreground" />
+                    {t('speechSpeed')}
                   </span>
-                  <span className="text-cyan-400 font-mono">{config.speed.toFixed(1)}x</span>
+                  <span className="text-primary font-mono font-semibold">{config.speed.toFixed(1)}x</span>
                 </div>
                 <input
                   type="range"
@@ -450,36 +467,41 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                     setConfig(updated);
                     saveStoredTTSConfig(updated);
                   }}
-                  className="w-full accent-cyan-500 cursor-pointer h-1.5 bg-zinc-700 rounded-lg"
+                  className="w-full accent-primary cursor-pointer h-1.5 bg-muted rounded-lg"
                 />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>{t('speedSlow')}</span>
+                  <span>{t('speedNormal')}</span>
+                  <span>{t('speedFast')}</span>
+                </div>
               </div>
             </div>
           )}
 
           {/* Test Listen Box */}
-          <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 space-y-2.5">
+          <div className="p-3.5 rounded-xl bg-muted/40 border border-border space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-                单句连通性试听 (Preview)
+              <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                <Volume2 className="w-3.5 h-3.5 text-primary" />
+                {t('previewSectionTitle')}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleTestTTS}
                 disabled={isTesting}
-                className="h-7 px-2.5 text-xs text-cyan-400 border-cyan-800/60 hover:bg-cyan-950/50"
+                className="h-7 px-2.5 text-xs text-primary border-primary/30 hover:bg-primary/10"
                 data-testid="tts-test-preview-btn"
               >
                 {isTesting ? (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-                    生成中...
+                    <span className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    {t('previewGenerating')}
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5">
-                    <Play className="w-3 h-3 fill-cyan-400" />
-                    测试发音
+                    <Play className="w-3 h-3 fill-primary" />
+                    {t('testVoiceBtn')}
                   </span>
                 )}
               </Button>
@@ -488,20 +510,20 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
               type="text"
               value={testText}
               onChange={(e) => setTestText(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-md px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-600"
+              className="w-full bg-background border border-border rounded-md px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
             />
             {testStatus.type !== 'idle' && (
               <div
-                className={`text-[11px] p-2 rounded flex items-center gap-1.5 ${
+                className={`text-[11px] p-2 rounded-lg flex items-center gap-1.5 ${
                   testStatus.type === 'success'
-                    ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40'
-                    : 'bg-red-950/40 text-red-300 border border-red-800/40'
+                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                    : 'bg-destructive/10 text-destructive border border-destructive/20'
                 }`}
               >
                 {testStatus.type === 'success' ? (
-                  <Check className="w-3.5 h-3.5 flex-shrink-0 text-emerald-400" />
+                  <Check className="w-3.5 h-3.5 flex-shrink-0 text-emerald-500" />
                 ) : (
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-red-400" />
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-destructive" />
                 )}
                 <span>{testStatus.message}</span>
               </div>
@@ -510,21 +532,20 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-zinc-800 bg-zinc-900/90 flex items-center justify-between">
-          <span className="text-[11px] text-zinc-500">
-            💾 配置已持久化记忆在本地
+        <div className="px-6 py-3.5 border-t border-border bg-muted/20 flex items-center justify-between">
+          <span className="text-[11px] text-muted-foreground">
+            💾 {t('footerPersistedNote')}
           </span>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-zinc-400 hover:text-white">
-              取消
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              {t('closeBtn')}
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleSaveOnly}
-              className="border-zinc-700 text-zinc-200 hover:bg-zinc-800"
             >
-              保存配置
+              {t('saveConfigBtn')}
             </Button>
             {onSynthesizeBatch && (
               <Button
@@ -532,16 +553,16 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                 size="sm"
                 onClick={handleSaveAndBatchSynthesize}
                 disabled={isBatchLoading}
-                className="bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-950"
+                className="shadow-sm"
                 data-testid="tts-save-and-batch-btn"
               >
                 {isBatchLoading ? (
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    合流中...
+                    <span className="w-3 h-3 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+                    {t('batchSynthesizingBtn')}
                   </span>
                 ) : (
-                  '保存并一键全分幕合成'
+                  t('saveAndBatchBtn')
                 )}
               </Button>
             )}

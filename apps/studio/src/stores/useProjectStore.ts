@@ -102,6 +102,50 @@ const defaultInitialDSL: FocusFlowDSL = {
   ]
 };
 
+/**
+ * 清洗 DSL 中可能存在的悬空路径或失效引用（拓扑完整性自愈机制）
+ * 1. 自动剔除 elements.paths 中端点 box 不存在的悬空孤儿路径
+ * 2. 自动清理各 scene.activeElements 中引用已被删除的图元 ID
+ */
+export function sanitizeDSL(dsl: FocusFlowDSL): FocusFlowDSL {
+  if (!dsl || !dsl.elements) return dsl;
+  const boxIds = new Set((dsl.elements.boxes || []).map((b) => b.id));
+  const validPaths = (dsl.elements.paths || []).filter((p) => {
+    const fromBox = p.from?.split('.')[0];
+    const toBox = p.to?.split('.')[0];
+    if (fromBox && !boxIds.has(fromBox)) return false;
+    if (toBox && !boxIds.has(toBox)) return false;
+    return true;
+  });
+
+  const validPathIds = new Set(validPaths.map((p) => p.id));
+  const dotIds = new Set((dsl.elements.dots || []).map((d) => d.id));
+  const imgIds = new Set((dsl.elements.images || []).map((i) => i.id));
+
+  const scenes = (dsl.scenes || []).map((s) => {
+    if (!s.activeElements) return s;
+    return {
+      ...s,
+      activeElements: {
+        ...s.activeElements,
+        boxes: (s.activeElements.boxes || []).filter((id) => boxIds.has(id)),
+        paths: (s.activeElements.paths || []).filter((id) => validPathIds.has(id)),
+        dots: (s.activeElements.dots || []).filter((id) => dotIds.has(id)),
+        images: (s.activeElements.images || []).filter((id) => imgIds.has(id)),
+      },
+    };
+  });
+
+  return {
+    ...dsl,
+    elements: {
+      ...dsl.elements,
+      paths: validPaths,
+    },
+    scenes,
+  };
+}
+
 export interface ProjectState {
   dsl: FocusFlowDSL;
   isDirty: boolean;
@@ -169,7 +213,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
   future: [],
 
   setDSL: (dsl) =>
-    set((state) => pushHistory(state, dsl)),
+    set((state) => pushHistory(state, sanitizeDSL(dsl))),
 
   calibrateViewport: (viewport) =>
     set((state) => {
@@ -566,8 +610,19 @@ export const useProjectStore = create<ProjectState>((set) => ({
   deleteElement: (elementType, elementId) =>
     set((state) => {
       const elements = { ...state.dsl.elements };
+      const affectedPathIds: string[] = [];
       if (elementType === 'boxes') {
         elements.boxes = elements.boxes?.filter((b: ElementBox) => b.id !== elementId) || [];
+        // 自动级联清理依赖该 box 的悬空孤儿路径，彻底根除 BezierRouter 找不到端点警告
+        elements.paths = elements.paths?.filter((p: ElementPath) => {
+          const fromBox = p.from?.split('.')[0];
+          const toBox = p.to?.split('.')[0];
+          const isConnected = fromBox === elementId || toBox === elementId;
+          if (isConnected) {
+            affectedPathIds.push(p.id);
+          }
+          return !isConnected;
+        }) || [];
       } else if (elementType === 'paths') {
         elements.paths = elements.paths?.filter((p: ElementPath) => p.id !== elementId) || [];
       } else if (elementType === 'dots') {
@@ -591,6 +646,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
           activeElements: {
             ...s.activeElements,
             [elementType]: s.activeElements[elementType]?.filter((id) => id !== elementId) || [],
+            ...(affectedPathIds.length > 0
+              ? {
+                  paths: s.activeElements.paths?.filter((id) => !affectedPathIds.includes(id)) || [],
+                }
+              : {}),
           },
         };
       });

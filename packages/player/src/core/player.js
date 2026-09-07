@@ -86,6 +86,10 @@ export class FocusFlowPlayer {
     }
     if (this.audioTracks && this.audioTracks.length > 0 && typeof Audio !== 'undefined') {
       const mainTrack = this.audioTracks[0];
+      // Offline Web Speech TTS tracks are voiced directly by WebSpeech engine; skip silent HTML5 Audio element
+      if (mainTrack && (mainTrack.isOfflineTTS || mainTrack.type === 'offline-tts')) {
+        return;
+      }
       if (mainTrack && mainTrack.url) {
         try {
           this.audioEl = new Audio();
@@ -106,7 +110,7 @@ export class FocusFlowPlayer {
     // Initialize sub-engines
     this.camera = new CameraKinematics(this.wrapEl, this.viewportWidth, this.viewportHeight, { disabled: this.disableCamera });
     this.geometry = new GeometryCalculator(this.svgEl, this.viewportWidth, this.viewportHeight);
-    this.router = new BezierRouter(this.elementsMap);
+    this.router = new BezierRouter(this.elementsMap, { debug: this.debug });
     this.animator = new MotionAnimator(this.elementsMap, this.calloutsMap);
     this.events = new EventManager(this);
 
@@ -574,6 +578,10 @@ export class FocusFlowPlayer {
   // Public APIs
   goToStep(index, animate = true) {
     this.stateMachine.goTo(index, animate);
+  }
+
+  goTo(index, animate = true) {
+    this.goToStep(index, animate);
   }
 
   goToScene(index, animate = true) {

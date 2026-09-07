@@ -134,6 +134,8 @@ export interface AudioTrackConfig {
   durationMs: number;
   volume?: number; // 0.0 ~ 1.0 (默认 1.0)
   muted?: boolean;
+  type?: 'voiceover' | 'music' | 'sfx' | 'offline-tts';
+  isOfflineTTS?: boolean;
   markers?: AudioMarker[];
   vadSilences?: Array<{ startMs: number; endMs: number; centerMs?: number }>; // VAD 智能停顿带
 }

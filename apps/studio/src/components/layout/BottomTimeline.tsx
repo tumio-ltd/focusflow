@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Play, 
@@ -49,6 +49,7 @@ export interface BottomTimelineProps {
   onTogglePlay?: () => void;
   onNext?: () => void;
   onPrev?: () => void;
+  onSeek?: (timeMs: number) => void;
 }
 
 function BottomTimelineComponent({
@@ -67,9 +68,10 @@ function BottomTimelineComponent({
   onTogglePlay,
   onNext,
   onPrev,
+  onSeek,
 }: BottomTimelineProps) {
   const { t } = useTranslation('timeline');
-  const { dsl, setAudioTrack } = useProjectStore();
+  const { dsl, setAudioTrack, updateSceneDuration } = useProjectStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -96,6 +98,52 @@ function BottomTimelineComponent({
     }
     return sum;
   }, [activeSceneIndex, dsl.scenes, dsl.meta.controls?.interval]);
+
+  // Dynamic live playhead for smooth real-time timeline red laser progress line
+  const [livePlayheadMs, setLivePlayheadMs] = useState(activeSceneStartMs);
+
+  useEffect(() => {
+    setLivePlayheadMs(activeSceneStartMs);
+  }, [activeSceneIndex, activeSceneStartMs]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setLivePlayheadMs(activeSceneStartMs);
+      return;
+    }
+
+    let animId: number;
+    const currentScene = dsl.scenes[activeSceneIndex];
+    const sDurMs = (currentScene?.duration || dsl.meta.controls?.interval || 3800);
+    const startT = performance.now();
+
+    const loop = () => {
+      const elapsed = performance.now() - startT;
+      const currentMs = activeSceneStartMs + Math.min(sDurMs, elapsed);
+      setLivePlayheadMs(currentMs);
+      if (elapsed < sDurMs) {
+        animId = requestAnimationFrame(loop);
+      }
+    };
+
+    animId = requestAnimationFrame(loop);
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isPlaying, activeSceneIndex, activeSceneStartMs, dsl.scenes, dsl.meta.controls?.interval]);
+
+  const handleTimelineSeek = useCallback((timeMs: number) => {
+    onSeek?.(timeMs);
+    let accum = 0;
+    for (let i = 0; i < dsl.scenes.length; i++) {
+      const dur = (dsl.scenes[i].duration || dsl.meta.controls?.interval || 3800);
+      if (timeMs >= accum && (timeMs < accum + dur || i === dsl.scenes.length - 1)) {
+        onSelectScene(i);
+        break;
+      }
+      accum += dur;
+    }
+  }, [dsl.scenes, dsl.meta.controls?.interval, onSeek, onSelectScene]);
 
   const handleImportAudioClick = () => {
     fileInputRef.current?.click();
@@ -133,7 +181,17 @@ function BottomTimelineComponent({
 
     try {
       setIsSynthesizingTTS(true);
-      const res = await synthesizeAllScenesVoiceover(dsl.scenes);
+      const defaultInterval = dsl.meta.controls?.interval || 3800;
+      const res = await synthesizeAllScenesVoiceover(dsl.scenes, undefined, undefined, cfg.speed, defaultInterval);
+
+      // 批量将自适应后的分幕时长（长则扩充、短则留白）同步更新到工程中
+      res.updatedScenes.forEach((scene, idx) => {
+        const nextDur = scene.duration || defaultInterval;
+        if (nextDur !== dsl.scenes[idx]?.duration) {
+          updateSceneDuration(idx, nextDur);
+        }
+      });
+
       setAudioTrack(res.track);
       setIsWaveformExpanded(true);
     } catch (err) {
@@ -193,8 +251,9 @@ function BottomTimelineComponent({
       {isWaveformExpanded && (
         <AudioWaveformTrack
           height={68}
-          currentPlayheadMs={activeSceneStartMs}
+          currentPlayheadMs={isPlaying ? livePlayheadMs : activeSceneStartMs}
           onSelectScene={onSelectScene}
+          onSeek={handleTimelineSeek}
         />
       )}
 
@@ -384,7 +443,7 @@ function BottomTimelineComponent({
         {/* 右侧音频工具与故事板总时长 */}
         <div className="flex items-center gap-2 shrink-0 pl-2 border-l border-border">
           {/* 同屏录音按钮 */}
-          <Tooltip content="同屏演播麦克风录音 (实时 VU 与分幕打点)">
+          <Tooltip content={t('recordVoiceoverTip')}>
             <Button
               size="sm"
               variant="outline"
@@ -393,12 +452,12 @@ function BottomTimelineComponent({
               className="gap-1 text-xs h-7 text-primary border-primary/40 hover:bg-primary/10"
             >
               <Mic className="w-3 h-3" />
-              <span>录音</span>
+              <span>{t('recordVoiceover')}</span>
             </Button>
           </Tooltip>
 
           {/* 导入外部干声音频 */}
-          <Tooltip content="导入成套干声音频文件 (MP3 / WAV / M4A / AAC)">
+          <Tooltip content={t('importAudioTip')}>
             <Button
               size="sm"
               variant="outline"
@@ -407,7 +466,7 @@ function BottomTimelineComponent({
               className="gap-1 text-xs h-7"
             >
               <Upload className="w-3 h-3" />
-              <span>导入音频</span>
+              <span>{t('importAudio')}</span>
             </Button>
           </Tooltip>
           <input
@@ -420,7 +479,7 @@ function BottomTimelineComponent({
 
           {/* AI 提词合流与配置 */}
           <div className="flex items-center">
-            <Tooltip content="AI 分幕提词语音合成与自适应拉伸时长">
+            <Tooltip content={t('aiTeleprompterTip')}>
               <Button
                 size="sm"
                 variant="outline"
@@ -430,10 +489,10 @@ function BottomTimelineComponent({
                 className="gap-1 text-xs h-7 text-amber-500 border-amber-500/30 hover:bg-amber-500/10 rounded-r-none border-r-0"
               >
                 <Sparkles className={`w-3 h-3 ${isSynthesizingTTS ? 'animate-spin' : ''}`} />
-                <span>{isSynthesizingTTS ? '合成中...' : 'AI 提词'}</span>
+                <span>{isSynthesizingTTS ? t('aiTeleprompterSynthesizing') : t('aiTeleprompter')}</span>
               </Button>
             </Tooltip>
-            <Tooltip content="AI 语音合成设置 (离线/OpenAI/硅基流动/API Key)">
+            <Tooltip content={t('aiSettingsTip')}>
               <Button
                 size="icon"
                 variant="outline"
@@ -447,7 +506,7 @@ function BottomTimelineComponent({
           </div>
 
           {/* 展开/收起波形轨切换按钮 */}
-          <Tooltip content={isWaveformExpanded ? '收起波形轨' : '展开波形轨'}>
+          <Tooltip content={isWaveformExpanded ? t('collapseWaveformTip') : t('expandWaveformTip')}>
             <Button
               size="icon"
               variant="ghost"

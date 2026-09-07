@@ -30,7 +30,10 @@ import {
   Info,
   Upload,
   Lock,
-  Unlock
+  Unlock,
+  Play,
+  X,
+  Mic
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
@@ -81,6 +84,14 @@ function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: 
   );
 }
 
+export interface TTSPreviewInfo {
+  sceneIndex: number;
+  isPlaying: boolean;
+  adaptedDuration: number;
+  audioDurationMs: number;
+  audioBlob?: Blob;
+}
+
 export interface RightInspectorProps {
   sceneTitle?: string;
   onSceneTitleChange?: (title: string) => void;
@@ -90,6 +101,11 @@ export interface RightInspectorProps {
   onSceneVoiceoverScriptChange?: (script: string) => void;
   onSynthesizeSceneTTS?: () => void;
   isSingleTtsLoading?: boolean;
+  ttsPreview?: TTSPreviewInfo | null;
+  onStopPreviewTTS?: () => void;
+  onPlayPreviewTTS?: () => void;
+  onApplySceneTTS?: () => void;
+  onDismissSceneTTS?: () => void;
   cameraZoom?: number;
   onCameraZoomChange?: (zoom: number) => void;
   cameraX?: number;
@@ -126,6 +142,11 @@ function RightInspectorComponent({
   onSceneVoiceoverScriptChange,
   onSynthesizeSceneTTS,
   isSingleTtsLoading = false,
+  ttsPreview = null,
+  onStopPreviewTTS,
+  onPlayPreviewTTS,
+  onApplySceneTTS,
+  onDismissSceneTTS,
   cameraZoom = 1.0,
   onCameraZoomChange,
   cameraX = 0,
@@ -150,6 +171,7 @@ function RightInspectorComponent({
   const { t } = useTranslation('inspector');
   const [activeTab, setActiveTab] = useState<'scene' | 'elements'>('scene');
   const [isCameraOpen, setIsCameraOpen] = useState(true);
+  const [isVoiceoverOpen, setIsVoiceoverOpen] = useState(true);
   const [isLayersOpen, setIsLayersOpen] = useState(true);
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -447,34 +469,6 @@ function RightInspectorComponent({
                     />
                   </div>
 
-                  {/* 分幕台词脚本 (AI 提词) */}
-                  <div className="space-y-1.5 pt-0.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-muted-foreground text-[10px] font-medium">分幕旁白台词 (AI 提词)</label>
-                    </div>
-                    <textarea
-                      data-testid="scene-voiceover-script-input"
-                      rows={2}
-                      value={sceneVoiceoverScript}
-                      onChange={(e) => onSceneVoiceoverScriptChange?.(e.target.value)}
-                      placeholder="请输入当前分镜的配音解说词，用于 AI 语音合成与自适应拉伸时长..."
-                      className="w-full text-xs bg-background border border-border rounded-md p-2 text-foreground focus:outline-none focus:border-primary resize-none placeholder:text-muted-foreground/60"
-                    />
-                    {onSynthesizeSceneTTS && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        data-testid="synthesize-scene-tts-btn"
-                        onClick={onSynthesizeSceneTTS}
-                        disabled={isSingleTtsLoading}
-                        className="w-full gap-1.5 text-xs text-amber-500 border-amber-500/40 hover:bg-amber-500/10 h-7 font-medium"
-                      >
-                        <Sparkles className={`w-3.5 h-3.5 ${isSingleTtsLoading ? 'animate-spin' : ''}`} />
-                        <span>{isSingleTtsLoading ? '语音合成中...' : '🎙️ 生成 TTS 试听并拉伸时长'}</span>
-                      </Button>
-                    )}
-                  </div>
-
                   {/* 一键捕获当前视野为关键帧 */}
                   <Button
                     size="sm"
@@ -538,7 +532,111 @@ function RightInspectorComponent({
               )}
             </div>
 
-            {/* 1.2 标定助手常驻控制面板 (Calibration Assistant HUD) */}
+            {/* 1.2 分幕旁白与配音独立卡片 (Voiceover & TTS) */}
+            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="scene-voiceover-panel">
+              <div
+                onClick={() => setIsVoiceoverOpen(!isVoiceoverOpen)}
+                className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
+              >
+                <div className="flex items-center gap-2">
+                  <Mic className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs font-bold text-foreground">{t('sceneVoiceoverTitle', '分幕旁白与配音')}</span>
+                  {sceneVoiceoverScript.trim() && (
+                    <span className="text-[9px] px-1.5 py-0.5 font-mono rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                      {sceneVoiceoverScript.trim().length} {t('chars', '字')}
+                    </span>
+                  )}
+                </div>
+                {isVoiceoverOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+              </div>
+
+              {isVoiceoverOpen && (
+                <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-muted-foreground text-[10px] font-medium">{t('sceneVoiceoverLabel')}</label>
+                    </div>
+                    <textarea
+                      data-testid="scene-voiceover-script-input"
+                      rows={3}
+                      value={sceneVoiceoverScript}
+                      onChange={(e) => onSceneVoiceoverScriptChange?.(e.target.value)}
+                      placeholder={t('sceneVoiceoverPlaceholder')}
+                      className="w-full text-xs bg-background border border-border rounded-md p-2 text-foreground focus:outline-none focus:border-primary resize-none placeholder:text-muted-foreground/60 leading-relaxed"
+                    />
+                    {ttsPreview ? (
+                      <div
+                        data-testid="tts-preview-controller"
+                        className="flex items-center justify-between gap-1.5 p-1.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            data-testid="tts-preview-toggle-btn"
+                            onClick={ttsPreview.isPlaying ? onStopPreviewTTS : onPlayPreviewTTS}
+                            className="h-6 w-6 p-0 text-amber-500 hover:bg-amber-500/20 flex-shrink-0"
+                            title={ttsPreview.isPlaying ? t('stopPreviewTTS') : t('playPreviewTTS')}
+                          >
+                            {ttsPreview.isPlaying ? (
+                              <Square className="w-3 h-3 fill-current" />
+                            ) : (
+                              <Play className="w-3 h-3 fill-current" />
+                            )}
+                          </Button>
+                          <div className="flex flex-col text-[10px] leading-tight min-w-0">
+                            <span className="text-foreground/90 font-medium truncate">
+                              {ttsPreview.isPlaying ? t('ttsPlaying') : t('ttsReady')}
+                            </span>
+                            <span className="text-muted-foreground font-mono text-[9px]">
+                              {t('suggestedDuration')}: {(ttsPreview.adaptedDuration / 1000).toFixed(1)}s
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <Button
+                            size="sm"
+                            data-testid="tts-apply-btn"
+                            onClick={onApplySceneTTS}
+                            className="h-6 px-2 text-[11px] gap-1 bg-amber-500 hover:bg-amber-600 text-white font-medium shadow-none"
+                            title={t('applyTTSTip')}
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>{t('applyTTS')}</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            data-testid="tts-dismiss-btn"
+                            onClick={onDismissSceneTTS}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-background/40"
+                            title={t('dismissTTS')}
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : onSynthesizeSceneTTS ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        data-testid="synthesize-scene-tts-btn"
+                        onClick={onSynthesizeSceneTTS}
+                        disabled={isSingleTtsLoading}
+                        title={t('synthesizeSceneTTSTip')}
+                        className="w-full gap-1.5 text-xs text-amber-500 border-amber-500/40 hover:bg-amber-500/10 h-7 font-medium"
+                      >
+                        <Sparkles className={`w-3.5 h-3.5 ${isSingleTtsLoading ? 'animate-spin' : ''}`} />
+                        <span>{isSingleTtsLoading ? t('synthesizingSceneTTS') : t('synthesizeSceneTTS')}</span>
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 1.3 标定助手常驻控制面板 (Calibration Assistant HUD) */}
             <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="calibration-assistant-panel">
               <div
                 onClick={() => setIsCalibrationOpen(!isCalibrationOpen)}

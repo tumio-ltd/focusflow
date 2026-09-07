@@ -29,12 +29,21 @@ export function createTTSProviderFromConfig(config?: TTSStoredConfig): ITTSProvi
 }
 
 /**
- * Calculate adaptive scene duration to fit audio voiceover with comfortable pause buffer
+ * Calculate adaptive scene duration to fit audio voiceover:
+ * - Keeps audio speech at its natural, normal rate (never stretch or slow down audio).
+ * - If speech is longer than scene duration, extend the scene duration to speech duration + 500ms breathing buffer.
+ * - If scene duration is already longer than speech, KEEP the original scene duration to leave visual blank space (留白)
+ *   so the audience has comfortable time to digest the architectural graphics.
  */
-export function adaptSceneDurationToAudio(scene: SceneStep, audioDurationMs: number): number {
+export function adaptSceneDurationToAudio(
+  scene: SceneStep,
+  audioDurationMs: number,
+  defaultInterval = 3800
+): number {
+  const currentDuration = scene.duration || defaultInterval;
   const cameraTransitionMs = Math.round((scene.camera?.duration ?? 1.2) * 1000);
-  // Add 300ms natural breathing buffer, ensuring it never cuts off faster than camera transition
-  return Math.max(audioDurationMs + 300, cameraTransitionMs + 500);
+  const requiredMinMs = Math.max(audioDurationMs + 500, cameraTransitionMs + 500);
+  return Math.max(currentDuration, requiredMinMs);
 }
 
 export interface BatchVoiceoverResult {
@@ -49,7 +58,8 @@ export async function synthesizeSceneVoiceover(
   scene: SceneStep,
   provider?: ITTSProvider,
   voiceId?: string,
-  speed?: number
+  speed?: number,
+  defaultInterval = 3800
 ): Promise<{ audioBlob: Blob; durationMs: number; adaptedDuration: number }> {
   const cfg = getStoredTTSConfig();
   const activeProvider = provider || createTTSProviderFromConfig(cfg);
@@ -58,7 +68,7 @@ export async function synthesizeSceneVoiceover(
 
   const text = scene.voiceoverScript?.trim() || scene.title;
   const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
-  const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs);
+  const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs, defaultInterval);
 
   return {
     audioBlob: res.audioBlob,
@@ -75,7 +85,8 @@ export async function synthesizeAllScenesVoiceover(
   scenes: SceneStep[],
   provider?: ITTSProvider,
   voiceId?: string,
-  speed?: number
+  speed?: number,
+  defaultInterval = 3800
 ): Promise<BatchVoiceoverResult> {
   const cfg = getStoredTTSConfig();
   const activeProvider = provider || createTTSProviderFromConfig(cfg);
@@ -95,7 +106,7 @@ export async function synthesizeAllScenesVoiceover(
     const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
 
     renderedBlobs.push(res.audioBlob);
-    const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs);
+    const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs, defaultInterval);
     sceneDurations.push(adaptedDuration);
 
     markers.push({
@@ -138,6 +149,7 @@ export async function synthesizeAllScenesVoiceover(
     duration: sceneDurations[idx],
   }));
 
+  const isOffline = activeProvider.name.includes('Web Speech') || activeProvider.name.includes('离线') || cfg.mode === 'offline';
   const track: AudioTrackConfig = {
     id: `track-ai-${Date.now()}`,
     name: `AI 智能配音合流 (${activeProvider.name})`,
@@ -145,6 +157,8 @@ export async function synthesizeAllScenesVoiceover(
     durationMs: currentOffsetMs,
     volume: 1.0,
     muted: false,
+    isOfflineTTS: isOffline,
+    type: isOffline ? 'offline-tts' : 'voiceover',
     markers,
   };
 

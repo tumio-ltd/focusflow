@@ -9,6 +9,7 @@ export class FocusFlowPlayer {
   init(): void;
   goToStep(index: number, animate?: boolean): void;
   goToScene(index: number, animate?: boolean): void;
+  goTo(index: number, animate?: boolean): void;
   next(): void;
   prev(): void;
   play(): void;
