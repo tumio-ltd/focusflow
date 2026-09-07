@@ -66,6 +66,14 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
       try {
         await rec.startPreflight();
         setRecordState('preflight');
+        // Re-enumerate devices after microphone permission is granted to get real hardware labels
+        const activeDevs = await StudioVoiceRecorder.getAudioInputDevices();
+        if (activeDevs.length > 0) {
+          setDevices(activeDevs);
+          if (!selectedDeviceId && activeDevs[0]?.deviceId) {
+            setSelectedDeviceId(activeDevs[0].deviceId);
+          }
+        }
       } catch (err) {
         console.warn('Microphone access denied or unavailable in preflight:', err);
       }
@@ -111,6 +119,31 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [recordState]);
+
+  const handleDeviceChange = async (devId: string) => {
+    setSelectedDeviceId(devId);
+    if (recorderRef.current && (recordState === 'preflight' || recordState === 'idle')) {
+      recorderRef.current.stopPreflight();
+      const rec = new StudioVoiceRecorder({
+        deviceId: devId,
+        echoCancellation: echoCancel,
+        noiseSuppression: noiseSuppress,
+        onVuLevel: (level, dbfs) => {
+          setVuLevel(level);
+          setVuDbfs(dbfs);
+        },
+        onTick: (ms) => {
+          setElapsedMs(ms);
+        },
+      });
+      recorderRef.current = rec;
+      try {
+        await rec.startPreflight();
+      } catch (err) {
+        console.warn('Switch mic preflight error:', err);
+      }
+    }
+  };
 
   const startCountdown = () => {
     setCountdown(3);
@@ -172,7 +205,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
       data-testid="voiceover-preflight-modal"
     >
-      <div className="relative w-full max-w-lg bg-panel border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-lg max-h-[90vh] bg-panel border border-border rounded-xl shadow-2xl overflow-y-auto flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/20">
           <div className="flex items-center gap-2">
@@ -233,15 +266,15 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
                 </label>
                 <select
                   value={selectedDeviceId}
-                  onChange={(e) => setSelectedDeviceId(e.target.value)}
+                  onChange={(e) => handleDeviceChange(e.target.value)}
                   className="w-full h-8 text-xs bg-muted/40 border border-border rounded-md px-2.5 text-foreground focus:outline-none focus:border-primary"
                 >
-                  {devices.map((d) => (
-                    <option key={d.deviceId} value={d.deviceId}>
-                      {d.label || `麦克风 (${d.deviceId.slice(0, 8)})`}
+                  {devices.map((d, idx) => (
+                    <option key={d.deviceId || idx} value={d.deviceId}>
+                      {d.label || (d.deviceId ? `麦克风 (${d.deviceId.slice(0, 8)})` : `系统默认麦克风`)}
                     </option>
                   ))}
-                  {devices.length === 0 && <option value="">默认系统麦克风</option>}
+                  {devices.length === 0 && <option value="">系统默认麦克风</option>}
                 </select>
               </div>
 
