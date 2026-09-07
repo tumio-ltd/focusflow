@@ -31,6 +31,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   const [draggingSceneIndex, setDraggingSceneIndex] = useState<number | null>(null);
   const [snapFeedback, setSnapFeedback] = useState<{ snapped: boolean; deltaMs: number } | null>(null);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [decodeError, setDecodeError] = useState<string | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -87,13 +88,18 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       setPeaks(null);
       setAudioBuffer(null);
       setVadSilences([]);
+      setDecodeError(null);
       return;
     }
 
+    setDecodeError(null);
     let isMounted = true;
     (async () => {
       try {
         const resp = await fetch(track.url);
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}`);
+        }
         const blob = await resp.blob();
         const info = await decodeAudioFile(blob);
         if (!isMounted) return;
@@ -117,6 +123,9 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         }
       } catch (err) {
         console.warn('[AudioWaveform] Failed to decode audio track:', err);
+        if (isMounted) {
+          setDecodeError('音频会话已过期或文件丢失');
+        }
       }
     })();
 
@@ -219,6 +228,11 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
 
         ctx.fillRect(x, midY - barHeight / 2, Math.max(1, (width * zoomLevel) / numBuckets), barHeight);
       }
+    } else if (decodeError) {
+      // Decode or fetch error placeholder
+      ctx.fillStyle = '#f87171';
+      ctx.font = '11px sans-serif';
+      ctx.fillText(`⚠️ ${decodeError}，请清除后重新录制或导入音频`, 20, midY + 4);
     } else if (track) {
       // Placeholder while loading
       ctx.fillStyle = '#64748b';
@@ -288,6 +302,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     currentPlayheadMs,
     draggingSceneIndex,
     snapFeedback,
+    decodeError,
   ]);
 
   // Handle Scrubbing and Scene Boundary Dragging
@@ -403,10 +418,19 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
               )}
             </button>
           )}
-          {snapFeedback?.snapped && (
-            <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-800/40">
-              🧲 已磁吸至停顿带 ({snapFeedback.deltaMs > 0 ? `+${snapFeedback.deltaMs}` : snapFeedback.deltaMs}ms)
+          {decodeError && (
+            <span className="text-[10px] text-red-400 bg-red-950/60 px-1.5 py-0.5 rounded border border-red-800/40">
+              ⚠️ 音轨已失效
             </span>
+          )}
+          {track && decodeError && (
+            <button
+              onClick={() => removeAudioTrack(track.id)}
+              className="text-[10px] text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 px-2 py-0.5 rounded border border-red-800/50 transition cursor-pointer"
+              title="清除失效的音频轨"
+            >
+              清除失效音轨
+            </button>
           )}
         </div>
 

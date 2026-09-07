@@ -19,9 +19,9 @@ export interface StorageState {
 
   // Actions
   loadProjects: () => Promise<void>;
-  createProject: (title: string, dsl: FocusFlowDSL, imageBlob?: Blob) => Promise<string>;
+  createProject: (title: string, dsl: FocusFlowDSL, imageBlob?: Blob, audioBlob?: Blob) => Promise<string>;
   openProject: (id: string) => Promise<ProjectRecord | null>;
-  saveProject: (id: string, dsl: FocusFlowDSL, imageBlob?: Blob) => Promise<void>;
+  saveProject: (id: string, dsl: FocusFlowDSL, imageBlob?: Blob, audioBlob?: Blob) => Promise<void>;
   renameProject: (id: string, newTitle: string) => Promise<void>;
   duplicateProject: (id: string) => Promise<string>;
   deleteProject: (id: string) => Promise<void>;
@@ -44,9 +44,20 @@ export const useStorageStore = create<StorageState>((set, get) => ({
     }
   },
 
-  createProject: async (title, dsl, imageBlob) => {
+  createProject: async (title, dsl, imageBlob, audioBlob) => {
     const id = `proj_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const now = Date.now();
+    let resolvedAudioBlob = audioBlob;
+    const mainAudioUrl = dsl.audio?.tracks?.[0]?.url;
+    if (!resolvedAudioBlob && mainAudioUrl && mainAudioUrl.startsWith('blob:')) {
+      try {
+        const resp = await fetch(mainAudioUrl);
+        if (resp.ok) {
+          resolvedAudioBlob = await resp.blob();
+        }
+      } catch {}
+    }
+
     const record: ProjectRecord = {
       id,
       title,
@@ -55,6 +66,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       sceneCount: dsl.scenes.length,
       dsl,
       imageBlob,
+      audioBlob: resolvedAudioBlob,
     };
 
     await saveProjectRecord(record);
@@ -72,17 +84,42 @@ export const useStorageStore = create<StorageState>((set, get) => ({
         const freshUrl = URL.createObjectURL(record.imageBlob);
         record.dsl.asset.url = freshUrl;
       }
+      // 关键会话保鲜机制：若工程包含持久化的音频解说 (audioBlob)，自动在当前会话中重新生成有效的 ObjectURL
+      if (record.audioBlob && record.dsl?.audio?.tracks?.[0]) {
+        const freshAudioUrl = URL.createObjectURL(record.audioBlob);
+        record.dsl.audio.tracks[0].url = freshAudioUrl;
+      }
       await setCurrentProjectId(id);
       set({ currentProjectId: id });
     }
     return record;
   },
 
-  saveProject: async (id, dsl, imageBlob) => {
+  saveProject: async (id, dsl, imageBlob, audioBlob) => {
     set({ isSaving: true });
     try {
       const existing = await getProjectRecord(id);
       const now = Date.now();
+
+      // 智能提取待持久化的 audioBlob
+      let resolvedAudioBlob = audioBlob || existing?.audioBlob;
+      const mainAudioUrl = dsl.audio?.tracks?.[0]?.url;
+      if (mainAudioUrl) {
+        if (mainAudioUrl.startsWith('blob:')) {
+          try {
+            const resp = await fetch(mainAudioUrl);
+            if (resp.ok) {
+              resolvedAudioBlob = await resp.blob();
+            }
+          } catch {
+            // Keep existing if fetch fails
+          }
+        }
+      } else {
+        // Track was removed
+        resolvedAudioBlob = undefined;
+      }
+
       const record: ProjectRecord = {
         id,
         title: dsl.meta.title || existing?.title || '未命名工程',
@@ -91,6 +128,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
         sceneCount: dsl.scenes.length,
         dsl,
         imageBlob: imageBlob || existing?.imageBlob,
+        audioBlob: resolvedAudioBlob,
         thumbnail: existing?.thumbnail,
       };
 

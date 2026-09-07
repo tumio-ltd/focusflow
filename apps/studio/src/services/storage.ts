@@ -13,6 +13,7 @@ export interface ProjectMetaIndex {
 export interface ProjectRecord extends ProjectMetaIndex {
   dsl: FocusFlowDSL;
   imageBlob?: Blob;
+  audioBlob?: Blob;
 }
 
 const INDEX_KEY = 'focusflow_project_index';
