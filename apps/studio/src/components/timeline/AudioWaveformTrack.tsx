@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { useProjectStore } from '@/stores/useProjectStore';
 import { extractPeaks, decodeAudioFile, getAudioContext } from '@/services/audio/audioDecoder';
 import { analyzeVadSilences, snapTimeToSilence, type SilenceBand } from '@/services/audio/vadAnalyzer';
-import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause } from 'lucide-react';
+import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause, Download } from 'lucide-react';
 
 interface AudioWaveformTrackProps {
   currentPlayheadMs?: number;
@@ -114,6 +114,32 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       }).catch((e) => {
         console.warn('Audio preview play failed:', e);
       });
+    }
+  };
+
+  const handleDownloadAudio = async () => {
+    if (!track?.url) return;
+    try {
+      const resp = await fetch(track.url);
+      const blob = await resp.blob();
+      const mime = blob.type || 'audio/webm';
+      let ext = 'webm';
+      if (mime.includes('mp4')) ext = 'm4a';
+      else if (mime.includes('wav')) ext = 'wav';
+      else if (mime.includes('ogg')) ext = 'ogg';
+      else if (mime.includes('mpeg') || mime.includes('mp3')) ext = 'mp3';
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      const safeName = (track.name || 'focusflow-audio').replace(/[\\/:*?"<>|]/g, '_');
+      a.download = `${safeName}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.warn('Failed to download audio file:', err);
     }
   };
 
@@ -633,6 +659,16 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
                   <span>播放试听</span>
                 </>
               )}
+            </button>
+          )}
+          {track && !decodeError && (
+            <button
+              onClick={handleDownloadAudio}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer bg-muted hover:bg-muted/80 text-foreground border border-border"
+              title="下载音频文件到本地"
+            >
+              <Download className="w-2.5 h-2.5" />
+              <span>下载音频</span>
             </button>
           )}
           {decodeError && (
