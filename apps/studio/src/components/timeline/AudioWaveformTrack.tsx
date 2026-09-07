@@ -36,6 +36,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const audioPreviewRef = useRef<HTMLAudioElement | null>(null);
   const activeScrubSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const scrubStartTimeRef = useRef<number | null>(null);
+  const scrubHasMovedRef = useRef<boolean>(false);
 
   useEffect(() => {
     return () => {
@@ -137,8 +139,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     };
   }, [track?.url]);
 
-  // Scrub audio preview: play a clear recognizable speech snippet (e.g. 600ms on click, 250ms on drag)
-  const playScrubGrain = useCallback((timeMs: number, durationSec: number = 0.6) => {
+  // Scrub audio preview: play a 2.5-second phrase snippet with smooth envelope
+  const playScrubGrain = useCallback((timeMs: number, durationSec: number = 2.5) => {
     if (!audioBuffer) return;
     try {
       const ctx = getAudioContext();
@@ -159,10 +161,10 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       const gain = ctx.createGain();
 
       const now = ctx.currentTime;
-      // Smooth fade-in & fade-out envelope to eliminate click/pop artifacts
+      // Smooth fade-in (20ms) & fade-out (60ms) envelope
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.6, now + 0.02);
-      gain.gain.setValueAtTime(0.6, now + Math.max(0.05, durationSec - 0.05));
+      gain.gain.linearRampToValueAtTime(0.7, now + 0.02);
+      gain.gain.setValueAtTime(0.7, now + Math.max(0.1, durationSec - 0.06));
       gain.gain.linearRampToValueAtTime(0.001, now + durationSec);
 
       source.connect(gain);
@@ -349,8 +351,10 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     } else {
       setIsScrubbing(true);
+      scrubStartTimeRef.current = clickTimeMs;
+      scrubHasMovedRef.current = false;
       onSeek?.(clickTimeMs);
-      playScrubGrain(clickTimeMs, 0.6); // 600ms clear speech snippet
+      playScrubGrain(clickTimeMs, 2.5); // 2.5s clear sentence preview
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
       // Auto-switch to the scene under this timestamp
@@ -397,13 +401,47 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       updateSceneDuration(draggingSceneIndex, newSceneDuration);
     } else if (isScrubbing) {
       const clampedMs = Math.max(0, Math.min(totalDurationMs, currentTimeMs));
+      if (scrubStartTimeRef.current !== null && Math.abs(clampedMs - scrubStartTimeRef.current) > 80) {
+        scrubHasMovedRef.current = true;
+        // While dragging, stop the initial click playback so the drag operation is silent and responsive
+        if (activeScrubSourceRef.current) {
+          try {
+            activeScrubSourceRef.current.stop();
+          } catch {}
+          activeScrubSourceRef.current = null;
+        }
+      }
       onSeek?.(clampedMs);
-      playScrubGrain(clampedMs, 0.25); // 250ms dynamic grain while scrubbing
     }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (isScrubbing && scrubHasMovedRef.current) {
+      // User dragged to a new position: on release, preview 2.5s from the final dropped location!
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const currentX = e.clientX - rect.left;
+        const pixelsPerMs = (rect.width * zoomLevel) / totalDurationMs;
+        const finalMs = Math.max(0, Math.min(totalDurationMs, (currentX + scrollLeft) / pixelsPerMs));
+        playScrubGrain(finalMs, 2.5);
+
+        if (onSelectScene && sceneBoundaries.length > 0) {
+          let prevEnd = 0;
+          for (let i = 0; i < sceneBoundaries.length; i++) {
+            if (finalMs >= prevEnd && (finalMs < sceneBoundaries[i].endMs || i === sceneBoundaries.length - 1)) {
+              onSelectScene(i);
+              break;
+            }
+            prevEnd = sceneBoundaries[i].endMs;
+          }
+        }
+      }
+    }
+
     setIsScrubbing(false);
+    scrubStartTimeRef.current = null;
+    scrubHasMovedRef.current = false;
     setDraggingSceneIndex(null);
     setSnapFeedback(null);
     try {
