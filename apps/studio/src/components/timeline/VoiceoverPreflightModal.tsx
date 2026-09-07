@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { StudioVoiceRecorder } from '@/services/audio/StudioVoiceRecorder';
 import { useProjectStore } from '@/stores/useProjectStore';
 import { Button } from '@/components/ui';
@@ -199,10 +200,11 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
   };
 
   if (!isOpen) return null;
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-150"
       data-testid="voiceover-preflight-modal"
     >
       <div className="relative w-full max-w-lg max-h-[90vh] bg-panel border border-border rounded-xl shadow-2xl overflow-y-auto flex flex-col">
@@ -354,6 +356,7 @@ export const VoiceoverPreflightModal: React.FC<VoiceoverPreflightModalProps> = (
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
