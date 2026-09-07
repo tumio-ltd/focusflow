@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useTranslation } from 'react-i18next';
 import { 
-  Sparkles, 
   Undo2, 
   Redo2, 
   Save, 
@@ -20,7 +19,7 @@ import {
   SlidersHorizontal,
   Code2
 } from 'lucide-react';
-import { Button, Badge, Tooltip } from '@/components/ui';
+import { Button, Badge, Tooltip, BrandLogo } from '@/components/ui';
 
 export interface TopBarProps {
   title?: string;
@@ -102,14 +101,7 @@ function TopBarComponent({
     <header className="h-14 border-b border-border bg-panel px-4 flex items-center justify-between select-none z-30 shrink-0">
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3 min-w-0 max-w-[42%] shrink">
-        <div className="flex items-center gap-2 font-bold tracking-wide text-primary shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary shadow-sm">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <span className="text-sm font-extrabold tracking-tight bg-gradient-to-r from-primary to-accent-hover bg-clip-text text-transparent hidden sm:inline">
-            {t('appName')}
-          </span>
-        </div>
+        <BrandLogo size="md" className="shrink-0" />
 
         <Badge variant="cyan" className="shrink-0">{t('modeOffline')}</Badge>
 
