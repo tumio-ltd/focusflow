@@ -10,11 +10,14 @@ import {
   Maximize2, 
   Minimize2, 
   X, 
-  Layers
+  Layers,
+  Clock,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
 import { sanitizeDSL } from '@/stores/useProjectStore';
+import { useEditorStore } from '@/stores/useEditorStore';
 
 export interface AudienceModalProps {
   isOpen: boolean;
@@ -43,16 +46,7 @@ export function AudienceModal({
   const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  // 每次打开弹窗或 initialSceneIndex 变更时，重置当前分幕索引
-  useEffect(() => {
-    if (isOpen) {
-      setCurrentSceneIdx(initialSceneIndex);
-      currentSceneIdxRef.current = initialSceneIndex;
-      setIsPlaying(false);
-      isPlayingRef.current = false;
-    }
-  }, [isOpen, initialSceneIndex]);
+  const { playbackHudMode, cyclePlaybackHudMode } = useEditorStore();
 
   // 拓扑自愈：过滤掉可能遗留的悬空孤儿路径与失效引用
   const sanitizedDsl = React.useMemo(() => sanitizeDSL(dsl), [dsl]);
@@ -62,6 +56,100 @@ export function AudienceModal({
 
   const totalScenes = sanitizedDsl.scenes?.length || 1;
   const currentScene = sanitizedDsl.scenes?.[currentSceneIdx] || sanitizedDsl.scenes?.[0];
+
+  // 分幕时长与整场时长高精度计算
+  const getSceneDurationMs = useCallback((idx: number) => {
+    const scene = sanitizedDsl.scenes?.[idx];
+    if (scene && typeof scene.duration === 'number' && scene.duration > 0) {
+      return scene.duration > 100 ? scene.duration : scene.duration * 1000;
+    }
+    return sanitizedDsl.meta?.controls?.interval || 3800;
+  }, [sanitizedDsl]);
+
+  const totalDurationMs = React.useMemo(() => {
+    const scenes = sanitizedDsl.scenes || [];
+    if (scenes.length === 0) return 3800;
+    return scenes.reduce((sum, _, i) => sum + getSceneDurationMs(i), 0);
+  }, [sanitizedDsl, getSceneDurationMs]);
+
+  const currentSceneDurationMs = getSceneDurationMs(currentSceneIdx);
+
+  const currentSceneStartMs = React.useMemo(() => {
+    let sum = 0;
+    for (let i = 0; i < currentSceneIdx; i++) {
+      sum += getSceneDurationMs(i);
+    }
+    return sum;
+  }, [currentSceneIdx, getSceneDurationMs]);
+
+  const [sceneElapsedMs, setSceneElapsedMs] = useState(0);
+  const animFrameRef = useRef<number | null>(null);
+  const lastTickTimeRef = useRef<number | null>(null);
+
+  // requestAnimationFrame 高精度时钟推演
+  useEffect(() => {
+    if (!isOpen || !isPlaying) {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      lastTickTimeRef.current = null;
+      return;
+    }
+
+    lastTickTimeRef.current = performance.now();
+
+    const loop = (now: number) => {
+      if (lastTickTimeRef.current !== null) {
+        const delta = now - lastTickTimeRef.current;
+        lastTickTimeRef.current = now;
+        setSceneElapsedMs((prev) => Math.min(prev + delta, currentSceneDurationMs));
+      }
+      animFrameRef.current = requestAnimationFrame(loop);
+    };
+
+    animFrameRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isOpen, isPlaying, currentSceneDurationMs]);
+
+  const totalElapsedMs = Math.min(totalDurationMs, currentSceneStartMs + sceneElapsedMs);
+
+  const formatTime = (ms: number) => {
+    const totalSec = Math.floor(Math.max(0, ms) / 1000);
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  // 鼠标活跃度与 3 秒静止平滑淡出定时器
+  const [isUserActive, setIsUserActive] = useState(true);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleUserActivity = useCallback(() => {
+    setIsUserActive(true);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      setIsUserActive(false);
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
+
+  // 每次打开弹窗或 initialSceneIndex 变更时，重置当前分幕索引
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentSceneIdx(initialSceneIndex);
+      currentSceneIdxRef.current = initialSceneIndex;
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+      setSceneElapsedMs(0);
+      setIsUserActive(true);
+    }
+  }, [isOpen, initialSceneIndex]);
 
   const playSceneTTS = useCallback((sceneIndex: number) => {
     const activeDsl = dslRef.current;
@@ -98,6 +186,7 @@ export function AudienceModal({
     playerRef.current.togglePlay();
     setIsPlaying(nextPlaying);
     isPlayingRef.current = nextPlaying;
+    lastTickTimeRef.current = performance.now();
 
     if (nextPlaying) {
       playSceneTTS(currentSceneIdxRef.current);
@@ -108,11 +197,15 @@ export function AudienceModal({
 
   const handleNext = useCallback(() => {
     stopWebSpeech();
+    setSceneElapsedMs(0);
+    lastTickTimeRef.current = performance.now();
     playerRef.current?.next();
   }, []);
 
   const handlePrev = useCallback(() => {
     stopWebSpeech();
+    setSceneElapsedMs(0);
+    lastTickTimeRef.current = performance.now();
     playerRef.current?.prev();
   }, []);
 
@@ -138,6 +231,8 @@ export function AudienceModal({
         onSceneChange: (index: number) => {
           setCurrentSceneIdx(index);
           currentSceneIdxRef.current = index;
+          setSceneElapsedMs(0);
+          lastTickTimeRef.current = performance.now();
           if (isPlayingRef.current) {
             playSceneTTS(index);
           }
@@ -202,6 +297,9 @@ export function AudienceModal({
       } else if (e.key === ' ') {
         e.preventDefault();
         handleTogglePlay();
+      } else if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        cyclePlaybackHudMode();
       } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
         e.preventDefault();
         handleNext();
@@ -218,18 +316,26 @@ export function AudienceModal({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose, isRecording, onFinishRecording, handleTogglePlay, handleNext, handlePrev, toggleFullscreen]);
+  }, [isOpen, onClose, isRecording, onFinishRecording, handleTogglePlay, handleNext, handlePrev, toggleFullscreen, cyclePlaybackHudMode]);
 
   if (!isOpen) return null;
 
   return (
     <div
       data-testid="audience-modal"
+      onMouseMove={handleUserActivity}
+      onMouseDown={handleUserActivity}
       className="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center select-none overflow-hidden animate-in fade-in duration-150"
     >
       {/* 1. 顶部右侧控制按钮：录制模式下彻底隐藏，确保捕获视频 100% 纯净 */}
       {!isRecording && (
-        <div className="absolute top-4 right-6 flex items-center gap-2 pointer-events-auto z-30">
+        <div
+          className={`absolute top-4 right-6 flex items-center gap-2 pointer-events-auto z-30 transition-opacity duration-300 ${
+            playbackHudMode === 'zen'
+              ? (isUserActive ? 'opacity-40 hover:opacity-100' : 'opacity-0 pointer-events-none')
+              : (isUserActive || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none')
+          }`}
+        >
           <Button
             size="icon"
             variant="ghost"
@@ -256,27 +362,44 @@ export function AudienceModal({
         </div>
       )}
 
-      {/* 2. 场景指示微缩胶囊 (下移至左下角，彻底避开顶部架构图主标题与技术栈标签) */}
-      <div
-        data-testid="audience-scene-pill"
-        className="absolute bottom-6 left-6 flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-800 pointer-events-auto z-30 shadow-lg"
-      >
-        <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-        <span className="text-xs font-mono font-semibold text-white">
-          {String(currentSceneIdx + 1).padStart(2, '0')} / {String(totalScenes).padStart(2, '0')}
-        </span>
-        <div className="h-3 w-px bg-slate-800" />
-        <span className="text-xs text-slate-300 font-medium max-w-sm truncate">
-          {currentScene?.title}
-        </span>
-      </div>
+      {/* 2. 场景指示与时间刻度胶囊 (下移至左下角，完整态 full 下展示) */}
+      {!isRecording && playbackHudMode === 'full' && (
+        <div
+          data-testid="audience-scene-pill"
+          className={`absolute bottom-6 left-6 flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-800 pointer-events-auto z-30 shadow-lg transition-opacity duration-300 ${
+            isUserActive || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-xs font-mono font-semibold text-white">
+            {String(currentSceneIdx + 1).padStart(2, '0')} / {String(totalScenes).padStart(2, '0')}
+          </span>
+          <div className="h-3 w-px bg-slate-800" />
+          <span className="text-xs text-slate-300 font-medium max-w-sm truncate">
+            {currentScene?.title}
+          </span>
+          <div className="h-3 w-px bg-slate-800" />
+          <div className="flex items-center gap-1.5 text-xs font-mono text-cyan-300" data-testid="audience-scene-timer">
+            <Clock className="w-3 h-3 text-cyan-400" />
+            <span>{formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)}</span>
+          </div>
+          <span className="text-[10px] font-mono text-slate-400" title="整场累计进度">
+            (总 {formatTime(totalElapsedMs)} / {formatTime(totalDurationMs)})
+          </span>
+        </div>
+      )}
 
       {/* 3. 核心 60FPS 渲染容器 */}
       <div ref={containerRef} className="w-full h-full relative" />
 
-      {/* 3. 底部半透明悬浮演播控制浮岛 (录制模式下自动隐匿，保证录出纯净画面) */}
-      {!isRecording && (
-        <div className="absolute bottom-6 flex items-center gap-2 bg-slate-900/85 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800/80 shadow-2xl z-30">
+      {/* 4. 底部半透明悬浮演播控制浮岛 (完整态 full 下展示，录制模式下自动隐匿) */}
+      {!isRecording && playbackHudMode === 'full' && (
+        <div
+          data-testid="audience-controls"
+          className={`absolute bottom-6 flex items-center gap-2 bg-slate-900/85 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800/80 shadow-2xl z-30 transition-opacity duration-300 ${
+            isUserActive || !isPlaying ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+        >
           <Button
             size="icon"
             variant="ghost"
@@ -312,6 +435,43 @@ export function AudienceModal({
             <Layers className="w-3 h-3 text-cyan-400" />
             <span>{(currentScene?.activeElements.boxes || []).length} 图元</span>
           </div>
+
+          <div className="h-4 w-px bg-slate-800 mx-1" />
+
+          <Button
+            size="icon"
+            variant="ghost"
+            data-testid="hud-mode-toggle"
+            onClick={cyclePlaybackHudMode}
+            className="h-8 w-8 text-slate-300 hover:text-white"
+            title="切换 HUD 模式 (H: 完整/胶囊/纯净)"
+          >
+            <Eye className="w-4 h-4 text-cyan-400" />
+          </Button>
+        </div>
+      )}
+
+      {/* 5. 微缩胶囊态 (minimal) */}
+      {!isRecording && playbackHudMode === 'minimal' && (
+        <div
+          data-testid="audience-hud-minimal"
+          className={`absolute bottom-6 right-6 flex items-center gap-2.5 bg-slate-900/85 backdrop-blur-md px-3 py-1 rounded-full border border-slate-800 shadow-xl z-30 transition-opacity duration-300 ${
+            isUserActive || !isPlaying ? 'opacity-90 hover:opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+          style={{ height: '28px' }}
+        >
+          <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+          <span className="text-[12px] font-mono font-medium text-slate-200">
+            {formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)} · {String(currentSceneIdx + 1).padStart(2, '0')}/{String(totalScenes).padStart(2, '0')}
+          </span>
+          <button
+            data-testid="hud-mode-toggle"
+            onClick={cyclePlaybackHudMode}
+            className="text-slate-400 hover:text-white transition p-0.5"
+            title="切换 HUD 模式 (H)"
+          >
+            <Eye className="w-3.5 h-3.5 text-cyan-400" />
+          </button>
         </div>
       )}
     </div>

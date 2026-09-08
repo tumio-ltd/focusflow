@@ -792,33 +792,33 @@ flowchart TD
 #### 4. 实施 Checklist 与测试用例规划
 
 ##### (1) 模块与代码实现清单
-- [ ] **状态扩展 (`useEditorStore.ts`)**：
+- [x] **状态扩展 (`useEditorStore.ts`)**：
   - 增加 `playbackHudMode: 'full' | 'minimal' | 'zen'`；
   - 增加 `setPlaybackHudMode(mode: PlaybackHudMode)` 并集成 LocalStorage 同步；
-- [ ] **演播播放态 HUD 组件升级 (`AudienceModal.tsx`)**：
+- [x] **演播播放态 HUD 组件升级 (`AudienceModal.tsx`)**：
   - 支持分幕精准时长与整场时长格式化计算（`mm:ss / mm:ss`）；
   - 实现三态显隐渲染：`full`、`minimal` 悬浮微型胶囊、`zen` 沉浸纯净态；
   - 增加鼠标移动检测器与 3 秒静止淡出定时器；
   - 挂载全局键盘快捷键监听器（按键 `H` 循环切换模式）；
-- [ ] **录制画中画控制器 (`RecordingPiPController.ts`)**：
+- [x] **录制画中画控制器 (`RecordingPiPController.ts`)**：
   - 封装 `openRecordingPiP()`，调用 `window.documentPictureInPicture.requestWindow`；
   - 挂载 React 根节点注入 Tailwind 基础样式与 `<RecordingPiPContent />`；
   - 建立与主线程录制状态机（`screenRecorder.ts`）的双向通讯通道（时间同步与终止事件）；
-- [ ] **录制服务集成与降级适配 (`screenRecorder.ts`)**：
+- [x] **录制服务集成与降级适配 (`screenRecorder.ts`)**：
   - 在 `startRecording` 时检测 Document PiP 特性支持度；
   - 支持画中画窗口随录制结束自动安全关闭（`pipWindow.close()`）。
 
 ##### (2) 自动化 E2E 测试用例规划 (Playwright)
 遵从规范：所有测试用例逻辑均抽取为独立的 async 函数，并在 `it()` 中直接调用。
 
-- [ ] **`TC577: 演播播放态 HUD 三态显隐与时间刻度验证 (test_playback_hud_modes)`**：
+- [x] **`TC577: 演播播放态 HUD 三态显隐与时间刻度验证 (test_playback_hud_modes)`**：
   1. 打开测试项目并启动演播播放模式（`AudienceModal`）；
   2. 验证默认 `full` 模式下存在分幕时间刻度（如 `00:00 / 00:06`）；
   3. 模拟按下键盘快捷键 `H`，断言切换至 `minimal` 模式（仅微型时间胶囊可见，完整控制条收起）；
   4. 再次按下 `H`，断言切换至 `zen` 模式（所有 HUD 元素 `opacity` 为 0 或不可见）；
   5. 再次按下 `H`，断言恢复为 `full` 模式；
   6. 验证 LocalStorage 中正确保存了最后一次的 HUD 偏好模式。
-- [ ] **`TC578: 录制时无痕出片与独立画中画生命周期验证 (test_recording_pip_isolation)`**：
+- [x] **`TC578: 录制时无痕出片与独立画中画生命周期验证 (test_recording_pip_isolation)`**：
   1. 模拟 Document PiP API 支持环境并触发 60FPS 录制；
   2. 验证主标签页全屏画布内无任何录制控制器 DOM 节点，录制视口干净纯净；
   3. 验证独立 PiP 窗口成功创建并正常接收到时间推移数据（`REC 00:01` -> `REC 00:02`）；

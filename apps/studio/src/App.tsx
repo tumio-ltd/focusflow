@@ -29,7 +29,7 @@ import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { synthesizeSceneVoiceover, speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
-import { startTabRecording, downloadVideoBlob, type RecordingSession } from '@/services/canvasRecorder';
+import { startCleanScreenRecording, downloadVideoBlob, type RecordingSession } from '@/services/screenRecorder';
 import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
 
@@ -511,15 +511,31 @@ export default function App() {
         }
       }
 
-      const session = await startTabRecording({
+      const defaultInterval = (dsl.meta.controls?.interval || 3800) / 1000;
+      const totalDurationSeconds = (dsl.scenes || []).reduce((sum, s) => {
+        const dur = typeof s.duration === 'number' && s.duration > 0
+          ? (s.duration > 100 ? s.duration / 1000 : s.duration)
+          : defaultInterval;
+        return sum + dur;
+      }, 0);
+
+      const session = await startCleanScreenRecording({
         fps: 60,
         audio: true,
+        totalDurationSeconds,
         externalAudioStream: externalStream,
         onTick: (elapsed) => {
           setRecordingElapsed(elapsed);
         },
         onStreamEnded: () => {
           handleFinishVideoRecording();
+        },
+        onFinishRequest: () => {
+          handleFinishVideoRecording();
+        },
+        onCancelRequest: () => {
+          setIsRecordingVideo(false);
+          setIsAudienceModalOpen(false);
         },
       });
 

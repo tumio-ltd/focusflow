@@ -73,11 +73,12 @@ export async function startTabRecording(
   const videoBitsPerSecond = 6000000;
 
   if (typeof MediaRecorder !== 'undefined') {
-    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
+    const hasAudio = displayStream.getAudioTracks().length > 0;
+    if (hasAudio && MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
       mimeType = 'video/webm;codecs=vp9,opus';
     } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
       mimeType = 'video/webm;codecs=vp9';
-    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+    } else if (hasAudio && MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
       mimeType = 'video/webm;codecs=vp8,opus';
     } else if (MediaRecorder.isTypeSupported('video/webm')) {
       mimeType = 'video/webm';
