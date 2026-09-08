@@ -633,14 +633,54 @@ flowchart TD
 ---
 
 ### 8.3 [P1 速赢] 导出中心英文语言环境下的中文残留清理与彻底国际化 (Export Center English i18n Cleanup)
-- **问题排查**：
-  用户在英文语言环境下打开【导出演播工程 (Export Center)】弹窗时，发现部分辅助文本、提示信息仍显示为中文（存在硬编码或缺少对应的 `t()` 包装）。
-- **待排查与治理范围**：
-  - [ ] 顶部副标题：`纯前端编译输出 · 0 依赖 · 100% 本地离线隐私保护`；
-  - [ ] HTML 导出卡片特性标签：`跨平台双击即看` / `60FPS 硬件加速运镜`；
-  - [ ] 工程 ZIP 导出卡片内部说明与元数据提示；
-  - [ ] 录制视频 Tab 内的提示文案、授权提醒、状态横幅以及导出中状态（`打包编译中...`、`已成功导出！`）；
-  - [ ] 全量扫描 `apps/studio/src/components/modals/ExportModal.tsx`，确保所有可见文本 100% 使用 `t('key')`，并在 `zh/export.ts` 与 `en/export.ts` 中完成严格的一对一双语补齐。
+
+- **问题根因排查**：
+  用户在英文语言环境下打开【导出演播工程 (Export Center)】弹窗时，由于 [`apps/studio/src/components/modals/ExportModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx) 存在大量硬编码中文 JSX 节点，导致即使切换为 EN 模式，弹窗内仍大面积显示中文。
+
+#### 1. 全量硬编码中文排查与映射对照表 (15 处精准定位)
+
+| 位置/组件区域 | 代码所在行 | 原硬编码中文 | 目标 i18n 词条 Key | 英文规范翻译 (`en/export.ts`) |
+| :--- | :--- | :--- | :--- | :--- |
+| **弹窗头部主标题** | L87 | `导出演播工程 (Export Center)` | `t('exportCenter')` | `Export Presentation (Export Center)` |
+| **弹窗头部副标题** | L88 | `纯前端编译输出 · 0 依赖 · 100% 本地离线隐私保护` | `t('exportSubtitle')` | `Pure client-side compile · 0 dependencies · 100% offline privacy` |
+| **Tab 1 导航标签** | L114 | `独立单文件 HTML` | `t('tabHtml')` | `Standalone HTML` |
+| **Tab 2 导航标签** | L127 | `工程 ZIP 归档包` | `t('tabZip')` | `Project ZIP Archive` |
+| **Tab 3 导航标签** | L140 | `客户端视频录制` | `t('tabVideo')` | `Client Video Recording` |
+| **HTML 标题** | L152 | `0 依赖单个 HTML 文件 (Single File Artifact)` | `t('htmlDescTitle')` | `0-Dependency Single HTML File (Single File Artifact)` |
+| **HTML 说明** | L154 | `将底图、样式表与 FocusFlow 播放引擎全部内联为单一 .html 文件...` | `t('htmlDescText')` | `Inlines background image, stylesheets and FocusFlow runtime into a single self-contained .html file. Double-click to run offline anywhere.` |
+| **HTML 特性 1** | L162 | `跨平台双击即看` | `t('crossPlatform')` | `Cross-platform double-click to view` |
+| **HTML 特性 2** | L166 | `60FPS 硬件加速运镜` | `t('fps60')` | `60FPS Hardware-accelerated camera` |
+| **HTML 取消按钮** | L173 | `取消` | `t('cancel')` | `Cancel` |
+| **HTML 下载按钮** | L183 | `{isSuccess ? '已成功导出！' : isExporting ? '打包编译中...' : '立即下载 .html 文件'}` | `{isSuccess ? t('successExport') : isExporting ? t('packaging') : t('downloadHtml')}` | `Exported successfully!` / `Packaging...` / `Download .html File` |
+| **ZIP 标题** | L195 | `标准工程 ZIP 归档 (Full Project Bundle)` | `t('zipDescTitle')` | `Standard Project ZIP Archive (Full Project Bundle)` |
+| **ZIP 说明** | L197 | `包含标准 config.json DSL 语法树、assets/ 原始高清素材与独立 index.html...` | `t('zipDescText')` | `Contains standard config.json DSL, assets/ raw graphics and index.html entry point for secondary development.` |
+| **ZIP 取消按钮** | L205 | `取消` | `t('cancel')` | `Cancel` |
+| **ZIP 下载按钮** | L215 | `{isSuccess ? '已成功归档！' : isExporting ? 'ZIP 压缩中...' : '立即下载 .zip 压缩包'}` | `{isSuccess ? t('successArchive') : isExporting ? t('compressing') : t('downloadZip')}` | `Archived successfully!` / `Compressing ZIP...` / `Download .zip Archive` |
+
+#### 2. 多语言字典扩展 Checklist (i18n Dictionaries Delta)
+- [ ] 检查并在 [`apps/studio/src/locales/zh/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/export.ts) 补齐状态词条：
+  ```typescript
+  successArchive: '已成功归档！',
+  compressing: 'ZIP 压缩中...',
+  ```
+- [ ] 检查并在 [`apps/studio/src/locales/en/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/export.ts) 补齐状态词条：
+  ```typescript
+  successArchive: 'Archived successfully!',
+  compressing: 'Compressing ZIP...',
+  ```
+
+#### 3. 重构实施与代码替换 Checklist
+- [ ] 在 [`ExportModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx) 中全面移除 15 处硬编码中文，绑定 `t('key')`；
+- [ ] 校验各按钮动态三态切换（`isSuccess` / `isExporting` / 初始态）的双语流畅呈现；
+- [ ] 执行 `pnpm --filter @focusflow/studio typecheck` 验证 TS 编译通过。
+
+#### 4. E2E 自动化测试覆盖方案 (TC576)
+- [ ] 在 [`apps/studio/e2e/stage5-audio-sync.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-audio-sync.spec.ts) 中增加独立验证函数 `verifyEnglishExportModalLocalization(page: Page)`：
+  1. 切换至 EN 语言环境；
+  2. 点击顶部导航栏 `data-testid="export-btn"` 唤起 `ExportModal`；
+  3. 依次点击切换 `tab-html`、`tab-zip`、`tab-video`；
+  4. 读取弹窗全量可见文本并执行正向断言，同时正则断言 `/[一-龥]/` 匹配结果严格为 0（零中文残留）；
+  5. 点击取消关闭弹窗。
 
 ---
 
