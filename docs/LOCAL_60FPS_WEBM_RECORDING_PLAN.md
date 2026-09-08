@@ -454,31 +454,181 @@ sequenceDiagram
 ---
 
 ### 8.2 [P1 紧急] 分幕 AI 提词与外部上传音频的冲突治理与优先级调度 (Audio Conflict & Mutual Exclusivity)
-- **故障现象还原**：
-  - 当工程中已有分幕台词并启用了 TTS 时，用户又在时间轴中上传了外部音频文件（如背景音乐 BGM 或真人完整配音）；
-  - **录制过程中**：演播模式既触发了分幕 TTS（通过 `speechSynthesis` 发声），又通过 `<audio>` 播放了上传的音频，导致**耳机/扬声器中同时听到两路声音混叠刺耳**；
-  - **视频导出后播放**：由于离线 TTS 无法被录制，而上传的音频走实体音轨被捕获，导致**最终导出的视频中只有上传的音频声，没有 TTS 旁白**。
-- **根本原因剖析**：
-  - 状态层与演播生命周期中缺乏**“音频模式优先级与互斥策略（Audio Source Priority & Mutual Exclusivity）”**；
-  - `dsl.audio.tracks` 与分幕层级的 `scene.voiceoverScript` 并存时，没有明确哪一个是主声源，导致播放内核同时调度了两套互不感知的发声链路。
-- **重构治理与任务 Checklist**：
-  - [ ] **时间轴音频来源互斥选择模式**：
-    - 明确区分音频工作模式：
-      - **模式 A：分幕 AI 旁白模式（Per-Scene AI Voiceover）**：以各分幕的台词提词为核心，自动拉伸分幕驻留时长，驱动分幕 TTS 发声；
-      - **模式 B：全局音频轨模式（Global Master Audio Track）**：以上传的音频文件或麦克风录制音频为主导，时间轴对齐音轨波形；
-  - [ ] **上传外部音频时的防冲突守卫交互**：
-    - 当用户在已有分幕台词的工程中上传外部音频时，弹出友好决策选择框：
-      - *选项 1（作为伴奏 BGM）*：外部音频自动降为低音量背景音乐（例如 volume: 0.15），并允许 AI 旁白作为前景人声；
-      - *选项 2（替代旁白母带）*：将上传的音频作为唯一主音轨，**自动静音/抑制分幕 TTS 实时触发**；
-  - [ ] **AudienceModal 与 FocusFlowPlayer 播放调度严格防重叠**：
-    - 在 `AudienceModal.tsx` 的 `playSceneTTS` 中增加守卫：
-      ```typescript
-      // 若当前存在已上传的全局主音频轨且非纯伴奏模式，严格禁止分幕 TTS 并行发声
-      if (mainTrack?.url && !mainTrack.isBackgroundBGM) {
-        return;
+
+- **故障现象还原与用户痛点**：
+  - **播放时两路声音混叠重刺**：工程各分幕已有台词并开启了离线 TTS，用户在时间轴中上传了外部音频（如真人录音、配乐或现成旁白音频）。点击演播预览时，播放内核通过 `<audio>` 播放了上传音频，同时 `AudienceModal` 唤醒了浏览器的 `speechSynthesis` 朗读分幕台词，**两路声音同时轰鸣混叠**；
+  - **出片后只有音乐没有旁白（非所听即所录）**：由于离线 TTS（Web Speech API）调用的是操作系统本地声卡合成器，无法被浏览器的 `AudioContext` 捕获至 `MediaStreamDestination`；而上传的外部音频走 HTML5 Audio 可以被内录。导致最终生成的 WebM 视频**只有背景音频，分幕 TTS 完全静音**；
+  - **双向误操作无二次确认造成资产丢失**：用户辛辛苦苦上传并剪辑对齐了一段外部音频后，若误点了时间轴底部的【一键生成分幕 AI 旁白】，当前代码直接无条件执行覆盖，**导致用户原本上传的音频被静默抹杀丢失**。
+
+---
+
+#### 3 大核心根因深度解剖（精确到文件与代码逻辑）
+
+1. **根因 1：缺乏音频仲裁裁决器（Audio Arbiter Missing）与逻辑误判**
+   - **涉及文件**：[`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx#L66-L83)
+   - **机制解剖**：
+     - 在 `AudienceModal.tsx` 的 `playSceneTTS` 中，判断是否发声的逻辑如下：
+       ```typescript
+       const isOfflineVoice =
+         cfg.mode === 'offline' ||
+         !!mainTrack?.isOfflineTTS ||
+         !!mainTrack?.id?.startsWith('track-ai-') ||
+         !!mainTrack?.id?.startsWith('tts-');
+       ```
+     - 系统的默认全局 TTS 配置 `cfg.mode` 恒为 `'offline'`。这意味着无论用户是否在时间轴上传了音频、无论该音频是什么性质，`isOfflineVoice` 恒为 `true`；
+     - 结果：播放器内核启动播放 `<audio>`（上传音频）的同时，演播模态框无条件触发 `speakWebSpeech`，造成不可控的声音物理重叠。
+
+2. **根因 2：数据流类型规范缺失与单轨架构（Single Track Model）约束**
+   - **涉及文件**：
+     - [`packages/dsl/src/schema.ts`](file:///Users/xt/WebstormProjects/focusflow/packages/dsl/src/schema.ts#L130-L141)
+     - [`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx#L152-L173)
+     - [`apps/studio/src/stores/useProjectStore.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/stores/useProjectStore.ts#L885-L895)
+   - **机制解剖**：
+     - 用户在 `BottomTimeline.tsx` 上传音频时，创建的 `AudioTrackConfig` 仅设置了 `url` 与 `durationMs`，`type` 字段为 `undefined`，没有区分该音轨是“旁白主音轨 (voiceover)”还是“背景伴奏音乐 (music)”；
+     - `useProjectStore` 中的 `setAudioTrack` 强制执行单轨覆盖（`tracks: [track]`），导致数据层无法区分多音频角色的协同关系。
+
+3. **根因 3：双向生成缺少防卫拦截机制（Bi-directional Overwrite Hazard）**
+   - **涉及文件**：[`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx#L175-L202)
+   - **机制解剖**：
+     - `handleBatchAIVoiceover` 在批量请求完 TTS 或应用台词时长后，直接执行 `setAudioTrack(res.track)`，未检查工程中是否已存在非 AI 生成的自定义音频，直接破坏了用户的工程数据。
+
+---
+
+#### 核心状态机设计：音频仲裁裁决矩阵 (Audio Source Arbitration Matrix)
+
+播放、录制与导出时，系统必须根据当前 **音轨类型 (`track.type`)**、**TTS 工作模式 (`cfg.mode`)** 以及 **分幕台词存在状态**，由统一的音频仲裁器给出排他性裁决：
+
+| 模式分类 | 音轨存在状态 (`tracks[0]`) | 音轨类型 `track.type` | TTS 模式 (`cfg.mode`) | 分幕台词状态 | 播放器 `<audio>` 行为 | 演播 WebSpeech 行为 | 录制 WebM 混音内录 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **A. 纯离线分幕旁白** | 无 / 占位符轨 | `offline-tts` 或无轨 | `offline` | 各分幕有台词 | 保持静音 (不挂载) | **激活朗读** (每幕切播) | 无实体流 (纯画面录制) |
+| **B. 云端分幕旁白文件** | 存在合成音频轨 | `voiceover` (`track-ai-*`) | `cloud` | 各分幕有台词 | **播放实体音频** (随时间轴) | **严格静音** (严禁双播) | **捕获实体音频流** (完美出片) |
+| **C. 外部上传替代旁白** | 存在用户上传轨 | `voiceover` (`track-custom`) | 任意 | 任意 | **播放上传音频** (音量 1.0) | **严格静音** (以用户旁白为主) | **捕获上传音频流** (出片有声) |
+| **D. 外部上传伴奏 BGM** | 存在用户配乐轨 | `music` (背景伴奏) | `offline` | 各分幕有台词 | **低音量播放** (音量自动为 0.2) | **激活朗读** (听感为 BGM+旁白) | **仅捕获 BGM 音频** (⚠️需前检提醒) |
+| **E. 外部上传伴奏+云端TTS**| 存在两轨或混流 | `mixed` / 云端实体 | `cloud` | 各分幕有台词 | **播放伴奏** | **严格静音** | **捕获伴奏流** |
+
+> [!IMPORTANT]
+> **关键设计突破**：
+> 1. 当用户上传音频并选为 **“替换为主旁白 (`voiceover`)”** 时，系统**彻底阻断 Web Speech 发声**，杜绝声音混叠；
+> 2. 当用户上传音频并选为 **“作为背景伴奏 (`music`)”** 时，系统将音轨音量自动设定为 **0.2 (20% 背景音)**，此时如果分幕有台词且处于 `offline` 模式，演播过程中浏览器朗读台词（前景人声），但录制前系统会弹出 **所见即所得前检提示框**。
+
+---
+
+#### 双向防冲突交互流程设计 (Bi-directional Guard Protocol)
+
+```mermaid
+flowchart TD
+    A[用户操作] --> B{触发操作类型}
+    
+    B -->|上传外部音频| C{工程中各分幕是否存在台词?}
+    C -->|否 (纯空白工程)| D[直接导入为 voiceover 主音轨]
+    C -->|是 (存在分幕台词)| E[弹出 AudioConflictModal 决策窗]
+    E -->|选择 A: 设为背景伴奏| F[标记 track.type='music', 自动设置 volume=0.2]
+    E -->|选择 B: 替代分幕旁白| G[标记 track.type='voiceover', 自动抑制分幕 TTS]
+    E -->|取消操作| H[终止导入, 保持原状]
+
+    B -->|一键生成分幕 AI 旁白| I{当前时间轴是否已存在自定义音频?}
+    I -->|否 (无音轨或已有旧 AI 轨)| J[直接启动批量合成与应用]
+    I -->|是 (存在用户自定义上传音轨)| K[弹出 Secondary Confirm 覆盖确认框]
+    K -->|确认覆盖| L[清空旧上传音频, 写入新 AI 音轨]
+    K -->|放弃覆盖| M[保持原音频, 仅自适应调整分幕时长]
+```
+
+---
+
+#### 6 步详细重构落地实施方案与 Checklist
+
+- [ ] **步骤 1：规范化 DSL 数据模型与 Track 属性扩展**
+  - 在 [`packages/dsl/src/schema.ts`](file:///Users/xt/WebstormProjects/focusflow/packages/dsl/src/schema.ts) 中明确 `AudioTrackConfig` 的角色类型：
+    ```typescript
+    export type AudioTrackRole = 'voiceover' | 'music' | 'offline-tts';
+    export interface AudioTrackConfig {
+      id: string;
+      url: string;
+      name?: string;
+      durationMs: number;
+      volume?: number; // 0.0 ~ 1.0 (BGM 模式建议 0.15~0.25)
+      muted?: boolean;
+      type: AudioTrackRole; // 强约束音轨类型
+      isBackgroundBGM?: boolean; // 便捷布尔标识
+      // ...
+    }
+    ```
+  - 在 [`apps/studio/src/stores/useProjectStore.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/stores/useProjectStore.ts) 中新增类型更新方法：
+    ```typescript
+    updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number) => void;
+    ```
+
+- [ ] **步骤 2：创建冲突决策弹窗组件 `AudioConflictModal.tsx`**
+  - 在 `apps/studio/src/components/modals/AudioConflictModal.tsx` 中创建专用交互模态框：
+    - **弹窗标题**：`检测到分幕提词与导入音频冲突` / `Audio Conflict Detected`；
+    - **提示文案**：`当前工程中已有 ${count} 幕包含台词提词。请选择该音频的使用方式：`；
+    - **卡片选项 1 (推荐：作为背景伴奏)**：
+      - 图标：`🎵` 音乐图标；
+      - 标题：`作为背景音乐 (BGM)`；
+      - 描述：`音频音量自动降为 20%，演播时分幕 AI 提词将作为前景人声同步朗读。`；
+    - **卡片选项 2 (替换：替代旁白母带)**：
+      - 图标：`🗣️` 麦克风/旁白图标；
+      - 标题：`作为主旁白音频 (Voiceover)`；
+      - 描述：`将该音频作为演播核心配音，演播时将静音分幕 TTS，完全由该音频主导。`；
+    - **操作按钮**：`取消导入` 与 `确认应用`；
+  - 严格同步补齐 `zh/common.ts` 与 `en/common.ts` 国际化字典。
+
+- [ ] **步骤 3：`BottomTimeline.tsx` 上传入口接入前置拦截守卫**
+  - 在 [`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx) 的 `handleAudioFileChange` 中：
+    ```typescript
+    const hasVoiceoverScripts = dsl.scenes.some(s => !!s.voiceoverScript?.trim());
+    if (hasVoiceoverScripts) {
+      // 暂存待导入音频信息并唤醒弹窗
+      setPendingImportFile(newTrack);
+      setIsConflictModalOpen(true);
+      return;
+    }
+    ```
+  - 在 `handleBatchAIVoiceover` 中增加反向防覆盖守卫：
+    ```typescript
+    const currentTrack = dsl.audio?.tracks?.[0];
+    const isUserUploaded = currentTrack?.url && !currentTrack.id.startsWith('track-ai-');
+    if (isUserUploaded) {
+      const confirmOverwrite = window.confirm(
+        t('timeline.confirmOverwriteCustomAudio', '工程中已有您上传的音频文件，生成 AI 旁白将替换该音频，是否继续？')
+      );
+      if (!confirmOverwrite) return;
+    }
+    ```
+
+- [ ] **步骤 4：时间轴波形轨头增加模式切换指示器与音量联动**
+  - 在 [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/timeline/AudioWaveformTrack.tsx) 轨头左侧工具区添加模式切换胶囊按钮：
+    - 若 `track.type === 'music'`：展示 `[🎵 背景伴奏 20%]` 绿色徽章；点击可切换为 `[🗣️ 旁白主音轨 100%]`；
+    - 切换为伴奏时，自动调用 `setAudioTrack({ ...track, type: 'music', volume: 0.2, isBackgroundBGM: true })`；
+    - 切换为旁白时，自动调用 `setAudioTrack({ ...track, type: 'voiceover', volume: 1.0, isBackgroundBGM: false })`；
+    - 让创作者无需重新上传即可随时在时间轴上快速调整音频定位。
+
+- [ ] **步骤 5：`AudienceModal.tsx` 重构为严格音频仲裁裁决器函数**
+  - 在 [`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx) 中实现仲裁逻辑：
+    ```typescript
+    const shouldPlayWebSpeech = useCallback((sceneIndex: number) => {
+      const activeDsl = dslRef.current;
+      const mainTrack = activeDsl.audio?.tracks?.[0];
+      
+      // 1. 若当前存在音轨，且被标记为主旁白 (voiceover) 或已有实体云端旁白文件，绝对禁止 WebSpeech 发声！
+      if (mainTrack?.url && mainTrack.type === 'voiceover') {
+        return false;
       }
-      ```
-    - 确保录制监听与最终导出视频在听觉体验上保持 100% 的“所听即所录（WYSIWYG）”。
+      
+      // 2. 若音轨被标记为伴奏 (music) 或无音轨，检查当前幕是否有提词脚本
+      const scene = activeDsl.scenes?.[sceneIndex];
+      const text = scene?.voiceoverScript?.trim() || scene?.title;
+      return !!text;
+    }, []);
+    ```
+  - 彻底铲除 `cfg.mode === 'offline'` 盲目触发的问题，保证当工程指定了主音频时，分幕提词 100% 静默避让。
+
+- [ ] **步骤 6：录制前检中心安全警告与“所见即所得 (WYSIWYG)”保障**
+  - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 的 `handleStartVideoRecording` 中：
+    - 若检测到 `mainTrack?.type === 'music'`（用户选了伴奏）且 `cfg.mode === 'offline'`（且工程有分幕台词）：
+    - 弹出高可见度提醒确认框：
+      `"友情提醒：当前工程启用了【离线系统语音】，因浏览器沙箱限制，导出的视频中将只包含背景音乐，无法内录离线旁白。如需包含旁白出片，建议使用【云端 TTS】生成实体音频或使用麦克风录制。是否继续录制？"`
+    - 允许用户知情后继续录制或取消调整，彻底消除用户的心理预期差。
 
 ---
 
