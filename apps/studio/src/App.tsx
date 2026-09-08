@@ -519,6 +519,11 @@ export default function App() {
         return sum + dur;
       }, 0);
 
+      // 预先让全屏演播舞台就绪（第 1 幕），确保浏览器标签页分享缩略图中清晰呈现演示画面
+      setActiveSceneIndex(0);
+      setIsAudienceModalOpen(true);
+      setIsRecordingVideo(true);
+
       const session = await startCleanScreenRecording({
         fps: 60,
         audio: true,
@@ -541,12 +546,9 @@ export default function App() {
 
       recordingSessionRef.current = session;
       setRecordingElapsed(0);
-      setIsRecordingVideo(true);
-      setIsExportModalOpen(false);
-      // 开启受众演示模态框，从第 1 幕自动起播录制
-      setActiveSceneIndex(0);
-      setIsAudienceModalOpen(true);
     } catch (err: any) {
+      setIsRecordingVideo(false);
+      setIsAudienceModalOpen(false);
       if (err?.name === 'NotAllowedError' || err?.message?.includes('Permission denied') || err?.message?.includes('denied')) {
         console.log('[FocusFlow] 用户取消了屏幕录制授权');
         return;

@@ -474,6 +474,64 @@ export function AudienceModal({
           </button>
         </div>
       )}
+
+      {/* 6. 录制模式下的在屏无痕控制条：
+          创作者移动鼠标时清晰展示当前录制时间与【完成并保存】按钮；
+          鼠标静止 3 秒后 100% 自动平滑淡出隐藏（opacity: 0），确保捕获出片的视频绝对纯净无痕！ */}
+      {isRecording && (
+        <div
+          data-testid="recording-hud-bar"
+          className={`absolute bottom-6 flex items-center gap-3 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-rose-500/40 shadow-2xl z-30 transition-opacity duration-300 ${
+            isUserActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+            <span className="text-xs font-mono font-bold text-rose-400">REC</span>
+          </div>
+
+          <div className="h-4 w-px bg-slate-800" />
+
+          <div className="flex items-center gap-1.5 text-xs font-mono text-white" data-testid="recording-elapsed-time">
+            <Clock className="w-3.5 h-3.5 text-cyan-400" />
+            <span>{formatTime(recordingElapsed * 1000)} / {formatTime(totalDurationMs)}</span>
+          </div>
+
+          <div className="h-4 w-px bg-slate-800" />
+
+          <span className="text-xs text-slate-400 font-mono">
+            第 {currentSceneIdx + 1}/{totalScenes} 幕
+          </span>
+
+          <div className="h-4 w-px bg-slate-800" />
+
+          <Button
+            size="sm"
+            variant="cyan"
+            data-testid="recording-finish-btn"
+            onClick={() => {
+              stopWebSpeech();
+              onFinishRecording?.();
+            }}
+            className="h-7 text-xs px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg shadow-sm"
+          >
+            完成并导出
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              stopWebSpeech();
+              onClose();
+            }}
+            className="h-7 text-xs px-2 text-slate-400 hover:text-rose-400"
+            title="退出录制 (ESC)"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

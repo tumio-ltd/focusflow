@@ -45,7 +45,27 @@ export async function startCleanScreenRecording(
   let pipInstance: RecordingPiPInstance | null = null;
   let rawSession: RecordingSession | null = null;
 
-  // 1. 尝试初始化桌面画中画独立微型控制台 (Chrome 111+)
+  // 1. 优先启动原生标签页屏幕捕获 (getDisplayMedia)
+  // 此时尚未创建独立画中画微型浮窗，浏览器分享列表中绝无浮窗干扰，100% 确保捕获真实的演播画面
+  try {
+    rawSession = await startTabRecording({
+      fps,
+      audio,
+      externalAudioStream,
+      onTick: (elapsed) => {
+        onTick?.(elapsed);
+        pipInstance?.updateElapsed(elapsed);
+      },
+      onStreamEnded: () => {
+        pipInstance?.close();
+        onStreamEnded?.();
+      },
+    });
+  } catch (err) {
+    throw err;
+  }
+
+  // 2. 演播画面捕获锁定后，再尝试拉起桌面 Document PiP 独立微型控制台 (Chrome 111+)
   if (enablePiP && isDocumentPiPSupported()) {
     try {
       pipInstance = await openRecordingPiP({
@@ -68,28 +88,8 @@ export async function startCleanScreenRecording(
         },
       });
     } catch (e) {
-      console.warn('[FocusFlow] 打开 Document PiP 控制台失败，降级为常规无浮窗模式:', e);
+      console.info('[FocusFlow PiP] 无法创建桌面画中画浮窗，使用在屏无痕控制浮岛:', e);
     }
-  }
-
-  // 2. 启动原生标签页屏幕捕获 (getDisplayMedia)
-  try {
-    rawSession = await startTabRecording({
-      fps,
-      audio,
-      externalAudioStream,
-      onTick: (elapsed) => {
-        onTick?.(elapsed);
-        pipInstance?.updateElapsed(elapsed);
-      },
-      onStreamEnded: () => {
-        pipInstance?.close();
-        onStreamEnded?.();
-      },
-    });
-  } catch (err) {
-    pipInstance?.close();
-    throw err;
   }
 
   return {
