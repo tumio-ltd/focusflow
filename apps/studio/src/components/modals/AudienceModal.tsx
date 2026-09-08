@@ -67,18 +67,22 @@ export function AudienceModal({
     const activeDsl = dslRef.current;
     const cfg = getStoredTTSConfig();
     const mainTrack = activeDsl.audio?.tracks?.[0];
-    const isOfflineVoice =
-      cfg.mode === 'offline' ||
-      !!mainTrack?.isOfflineTTS ||
-      !!mainTrack?.id?.startsWith('track-ai-') ||
-      !!mainTrack?.id?.startsWith('tts-');
 
-    if (isOfflineVoice) {
-      const scene = activeDsl.scenes?.[sceneIndex];
-      const text = scene?.voiceoverScript?.trim() || scene?.title;
-      if (text) {
-        speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
-      }
+    // 1. 若当前存在主旁白实体音频（voiceover 模式且包含 url），严禁 WebSpeech 朗读以防两路混叠双播！
+    if (mainTrack?.url && (mainTrack.type === 'voiceover' || (!mainTrack.isBackgroundBGM && mainTrack.type !== 'music'))) {
+      return;
+    }
+
+    // 2. 若当前配置为云端 TTS 且有实体音轨，由 HTML5 Audio 实体播放，严禁 WebSpeech 介入
+    if (cfg.mode === 'cloud' && mainTrack?.url) {
+      return;
+    }
+
+    // 3. 当处于纯离线模式、或当前音轨被明确设为背景伴奏 (music / isBackgroundBGM) 时，由 WebSpeech 朗读分幕台词
+    const scene = activeDsl.scenes?.[sceneIndex];
+    const text = scene?.voiceoverScript?.trim() || scene?.title;
+    if (text) {
+      speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
     }
   }, []);
 

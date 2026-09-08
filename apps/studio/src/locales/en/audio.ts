@@ -83,4 +83,28 @@ export default {
   saveConfigBtn: 'Save Settings',
   saveAndBatchBtn: 'Save & Synthesize All Scenes',
   batchSynthesizingBtn: 'Synthesizing...',
+
+  // Audio Conflict Modal
+  conflictModalTitle: 'Audio Conflict Detected',
+  conflictModalSubtitle: 'Current project has {{count}} scene(s) with voiceover scripts. Please choose how to use this audio:',
+  conflictOptionBgmTitle: 'As Background Music (BGM)',
+  conflictOptionBgmBadge: 'Recommended · BGM Mode',
+  conflictOptionBgmDesc: 'Audio volume is set to 20%. Scene voiceovers will be spoken aloud as foreground voice.',
+  conflictOptionVoiceoverTitle: 'As Master Voiceover',
+  conflictOptionVoiceoverBadge: 'Replace Voiceover',
+  conflictOptionVoiceoverDesc: 'Use this audio as the primary narration track. Scene TTS will be silenced and driven by this audio.',
+  conflictCancelBtn: 'Cancel Import',
+  conflictApplyBtn: 'Apply Choice',
+
+  // Overwrite confirm
+  confirmOverwriteCustomAudio: 'A custom audio track is already loaded. Generating AI voiceover will replace it. Continue?',
+
+  // Mode Badges in Timeline
+  bgmBadge: 'Background BGM',
+  voiceoverBadge: 'Master Voiceover',
+  switchToVoiceover: 'Click to switch to Master Voiceover (100% vol)',
+  switchToBgm: 'Click to switch to Background BGM (20% vol)',
+
+  // Recording WYSIWYG Warning
+  offlineBgmRecordWarning: 'Notice: Offline native speech cannot be captured into recorded videos due to browser sandbox limits. The exported video will contain BGM only without speech. To record voiceover, please use Cloud TTS or microphone recording. Continue recording?',
 } as const;

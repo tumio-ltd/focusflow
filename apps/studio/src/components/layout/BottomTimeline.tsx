@@ -23,10 +23,11 @@ import { useProjectStore } from '@/stores/useProjectStore';
 import { AudioWaveformTrack } from '../timeline/AudioWaveformTrack';
 import { VoiceoverPreflightModal } from '../timeline/VoiceoverPreflightModal';
 import { AIVoiceoverSettingsModal } from '../timeline/AIVoiceoverSettingsModal';
+import { AudioConflictModal } from '../modals/AudioConflictModal';
 import { decodeAudioFile } from '@/services/audio/audioDecoder';
 import { synthesizeAllScenesVoiceover } from '@/services/audio/tts/aiTtsSynthesizer';
 import { getStoredTTSConfig } from '@/services/audio/tts/ttsConfigStore';
-import type { AudioTrackConfig } from '@focusflow/dsl';
+import type { AudioTrackConfig, AudioTrackRole } from '@focusflow/dsl';
 
 export interface SceneCardItem {
   id: string;
@@ -70,7 +71,7 @@ function BottomTimelineComponent({
   onPrev,
   onSeek,
 }: BottomTimelineProps) {
-  const { t } = useTranslation('timeline');
+  const { t } = useTranslation(['timeline', 'audio']);
   const { dsl, setAudioTrack, updateSceneDuration } = useProjectStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -81,6 +82,9 @@ function BottomTimelineComponent({
   const [isWaveformExpanded, setIsWaveformExpanded] = useState(Boolean(dsl.audio?.tracks?.length));
   const [isSynthesizingTTS, setIsSynthesizingTTS] = useState(false);
   const [isAIVoiceoverSettingsOpen, setIsAIVoiceoverSettingsOpen] = useState(false);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [pendingImportTrack, setPendingImportTrack] = useState<AudioTrackConfig | null>(null);
+  const [pendingFileName, setPendingFileName] = useState('');
 
   // Sync isWaveformExpanded when audio track is updated
   useEffect(() => {
@@ -156,20 +160,45 @@ function BottomTimelineComponent({
     try {
       const info = await decodeAudioFile(file);
       const url = URL.createObjectURL(file);
-      const newTrack: AudioTrackConfig = {
+      const baseTrack: AudioTrackConfig = {
         id: `track-${Date.now()}`,
         name: file.name.replace(/\.[^/.]+$/, ''),
         url,
         durationMs: info.durationMs,
         volume: 1.0,
         muted: false,
+        type: 'voiceover',
+        isBackgroundBGM: false,
       };
-      setAudioTrack(newTrack);
-      setIsWaveformExpanded(true);
+
+      const scenesWithScript = dsl.scenes.filter((s) => !!s.voiceoverScript?.trim());
+      if (scenesWithScript.length > 0) {
+        setPendingImportTrack(baseTrack);
+        setPendingFileName(file.name);
+        setIsConflictModalOpen(true);
+      } else {
+        setAudioTrack(baseTrack);
+        setIsWaveformExpanded(true);
+      }
     } catch (err) {
       console.error('Failed to import audio file:', err);
     }
     e.target.value = '';
+  };
+
+  const handleConfirmConflictChoice = (mode: AudioTrackRole) => {
+    if (!pendingImportTrack) return;
+    const isBgm = mode === 'music';
+    const finalTrack: AudioTrackConfig = {
+      ...pendingImportTrack,
+      type: mode,
+      isBackgroundBGM: isBgm,
+      volume: isBgm ? 0.2 : 1.0,
+    };
+    setAudioTrack(finalTrack);
+    setIsWaveformExpanded(true);
+    setIsConflictModalOpen(false);
+    setPendingImportTrack(null);
   };
 
   const handleBatchAIVoiceover = async () => {
@@ -177,6 +206,16 @@ function BottomTimelineComponent({
     if (cfg.mode === 'cloud' && !cfg.apiKey.trim()) {
       setIsAIVoiceoverSettingsOpen(true);
       return;
+    }
+
+    // 双向防覆盖拦截守卫：若当前工程中已存在用户自行上传的音频，二次确认
+    const currentTrack = dsl.audio?.tracks?.[0];
+    const isUserUploaded = currentTrack?.url && !currentTrack.id.startsWith('track-ai-') && !currentTrack.id.startsWith('tts-');
+    if (isUserUploaded) {
+      const confirmMsg = t('audio:confirmOverwriteCustomAudio', '工程中已有您上传的音频文件，生成 AI 旁白将替换该音频，是否继续？');
+      if (!window.confirm(confirmMsg)) {
+        return;
+      }
     }
 
     try {
@@ -539,6 +578,18 @@ function BottomTimelineComponent({
         isOpen={isAIVoiceoverSettingsOpen}
         onClose={() => setIsAIVoiceoverSettingsOpen(false)}
         onSynthesizeBatch={handleBatchAIVoiceover}
+      />
+
+      {/* 导入音频与分幕提词冲突决策弹层 */}
+      <AudioConflictModal
+        isOpen={isConflictModalOpen}
+        onClose={() => {
+          setIsConflictModalOpen(false);
+          setPendingImportTrack(null);
+        }}
+        onConfirm={handleConfirmConflictChoice}
+        sceneScriptCount={dsl.scenes.filter((s) => !!s.voiceoverScript?.trim()).length}
+        fileName={pendingFileName}
       />
     </footer>
   );

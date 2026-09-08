@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { FocusFlowPlayer } from '@focusflow/player';
 import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem } from '@focusflow/dsl';
@@ -33,6 +34,7 @@ import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
 
 export default function App() {
+  const { t } = useTranslation(['audio', 'common']);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -442,9 +444,23 @@ export default function App() {
 
   const handleStartVideoRecording = useCallback(async () => {
     try {
+      // 0. 所见即所得前检：若当前音轨为伴奏且使用离线系统语音，提示出片无旁白
+      const cfg = getStoredTTSConfig();
+      const mainTrack = dsl.audio?.tracks?.[0];
+      const isBgm = mainTrack?.type === 'music' || !!mainTrack?.isBackgroundBGM;
+      const hasSceneScript = dsl.scenes?.some((s) => !!s.voiceoverScript?.trim());
+      if (isBgm && cfg.mode === 'offline' && hasSceneScript) {
+        const warningMsg = t(
+          'audio:offlineBgmRecordWarning',
+          '友情提醒：当前工程启用了【离线系统语音】，因浏览器沙箱限制，导出的视频中将只包含背景音乐，无法内录离线旁白。如需包含旁白出片，建议使用【云端 TTS】生成实体音频或使用麦克风录制。是否继续录制？'
+        );
+        if (!window.confirm(warningMsg)) {
+          return;
+        }
+      }
+
       // 1. 若工程内包含已合成/录制的音轨，提取其实体音频流混入视频录制
       let externalStream: MediaStream | undefined = undefined;
-      const mainTrack = dsl.audio?.tracks?.[0];
       if (mainTrack?.url) {
         try {
           const audioEl = new Audio();
@@ -496,7 +512,7 @@ export default function App() {
       console.error('[FocusFlow] 启动录制异常:', err);
       alert('无法启动屏幕录制: ' + (err?.message || '未知错误'));
     }
-  }, [dsl.audio?.tracks, handleFinishVideoRecording, setActiveSceneIndex]);
+  }, [dsl.audio?.tracks, dsl.scenes, handleFinishVideoRecording, setActiveSceneIndex, t]);
 
   // 全局异常与窗口卸载兜底安全清理：确保在异常退出、误关窗口或崩溃前微秒级硬释放录制管道与音频上下文
   useEffect(() => {

@@ -537,7 +537,7 @@ flowchart TD
 
 #### 6 步详细重构落地实施方案与 Checklist
 
-- [ ] **步骤 1：规范化 DSL 数据模型与 Track 属性扩展**
+- [x] **步骤 1：规范化 DSL 数据模型与 Track 属性扩展**
   - 在 [`packages/dsl/src/schema.ts`](file:///Users/xt/WebstormProjects/focusflow/packages/dsl/src/schema.ts) 中明确 `AudioTrackConfig` 的角色类型：
     ```typescript
     export type AudioTrackRole = 'voiceover' | 'music' | 'offline-tts';
@@ -558,7 +558,7 @@ flowchart TD
     updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number) => void;
     ```
 
-- [ ] **步骤 2：创建冲突决策弹窗组件 `AudioConflictModal.tsx`**
+- [x] **步骤 2：创建冲突决策弹窗组件 `AudioConflictModal.tsx`**
   - 在 `apps/studio/src/components/modals/AudioConflictModal.tsx` 中创建专用交互模态框：
     - **弹窗标题**：`检测到分幕提词与导入音频冲突` / `Audio Conflict Detected`；
     - **提示文案**：`当前工程中已有 ${count} 幕包含台词提词。请选择该音频的使用方式：`；
@@ -573,7 +573,7 @@ flowchart TD
     - **操作按钮**：`取消导入` 与 `确认应用`；
   - 严格同步补齐 `zh/common.ts` 与 `en/common.ts` 国际化字典。
 
-- [ ] **步骤 3：`BottomTimeline.tsx` 上传入口接入前置拦截守卫**
+- [x] **步骤 3：`BottomTimeline.tsx` 上传入口接入前置拦截守卫**
   - 在 [`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx) 的 `handleAudioFileChange` 中：
     ```typescript
     const hasVoiceoverScripts = dsl.scenes.some(s => !!s.voiceoverScript?.trim());
@@ -596,14 +596,14 @@ flowchart TD
     }
     ```
 
-- [ ] **步骤 4：时间轴波形轨头增加模式切换指示器与音量联动**
+- [x] **步骤 4：时间轴波形轨头增加模式切换指示器与音量联动**
   - 在 [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/timeline/AudioWaveformTrack.tsx) 轨头左侧工具区添加模式切换胶囊按钮：
     - 若 `track.type === 'music'`：展示 `[🎵 背景伴奏 20%]` 绿色徽章；点击可切换为 `[🗣️ 旁白主音轨 100%]`；
     - 切换为伴奏时，自动调用 `setAudioTrack({ ...track, type: 'music', volume: 0.2, isBackgroundBGM: true })`；
     - 切换为旁白时，自动调用 `setAudioTrack({ ...track, type: 'voiceover', volume: 1.0, isBackgroundBGM: false })`；
     - 让创作者无需重新上传即可随时在时间轴上快速调整音频定位。
 
-- [ ] **步骤 5：`AudienceModal.tsx` 重构为严格音频仲裁裁决器函数**
+- [x] **步骤 5：`AudienceModal.tsx` 重构为严格音频仲裁裁决器函数**
   - 在 [`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx) 中实现仲裁逻辑：
     ```typescript
     const shouldPlayWebSpeech = useCallback((sceneIndex: number) => {
@@ -623,7 +623,7 @@ flowchart TD
     ```
   - 彻底铲除 `cfg.mode === 'offline'` 盲目触发的问题，保证当工程指定了主音频时，分幕提词 100% 静默避让。
 
-- [ ] **步骤 6：录制前检中心安全警告与“所见即所得 (WYSIWYG)”保障**
+- [x] **步骤 6：录制前检中心安全警告与“所见即所得 (WYSIWYG)”保障**
   - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 的 `handleStartVideoRecording` 中：
     - 若检测到 `mainTrack?.type === 'music'`（用户选了伴奏）且 `cfg.mode === 'offline'`（且工程有分幕台词）：
     - 弹出高可见度提醒确认框：

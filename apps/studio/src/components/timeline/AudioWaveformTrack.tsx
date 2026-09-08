@@ -870,6 +870,40 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
           )}
           {track && (
             <button
+              onClick={() => {
+                const nextType = track.type === 'music' ? 'voiceover' : 'music';
+                const isBgm = nextType === 'music';
+                setAudioTrack({
+                  ...track,
+                  type: nextType,
+                  isBackgroundBGM: isBgm,
+                  volume: isBgm ? 0.2 : 1.0,
+                });
+              }}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border transition cursor-pointer ${
+                track.type === 'music'
+                  ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                  : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/25'
+              }`}
+              title={track.type === 'music' ? t('switchToVoiceover', '点击切换为主旁白 (100% 音量)') : t('switchToBgm', '点击切换为背景伴奏 (20% 音量)')}
+            >
+              {track.type === 'music' ? (
+                <>
+                  <span>🎵</span>
+                  <span>{t('bgmBadge', '背景伴奏')}</span>
+                  <span className="opacity-75">20%</span>
+                </>
+              ) : (
+                <>
+                  <span>🗣️</span>
+                  <span>{t('voiceoverBadge', '旁白主音轨')}</span>
+                  <span className="opacity-75">100%</span>
+                </>
+              )}
+            </button>
+          )}
+          {track && (
+            <button
               onClick={toggleAudioPreview}
               className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition cursor-pointer ${
                 isPlayingAudio

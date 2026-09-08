@@ -83,4 +83,28 @@ export default {
   saveConfigBtn: '保存配置',
   saveAndBatchBtn: '保存并一键全分幕合成',
   batchSynthesizingBtn: '合流中...',
+
+  // Audio Conflict Modal
+  conflictModalTitle: '检测到分幕提词与导入音频冲突',
+  conflictModalSubtitle: '当前工程已有 {{count}} 个分幕包含解说提词。请选择该音频文件的用途：',
+  conflictOptionBgmTitle: '作为背景音乐 (BGM)',
+  conflictOptionBgmBadge: '推荐 · 伴奏模式',
+  conflictOptionBgmDesc: '音频音量自动调至 20%，演播时分幕提词将作为前景人声同步朗读。',
+  conflictOptionVoiceoverTitle: '作为主旁白母带 (Voiceover)',
+  conflictOptionVoiceoverBadge: '替代解说',
+  conflictOptionVoiceoverDesc: '将该音频作为演播核心配音。演播时将自动静音分幕提词，完全由该音频主导。',
+  conflictCancelBtn: '取消导入',
+  conflictApplyBtn: '确认应用',
+
+  // Overwrite confirm
+  confirmOverwriteCustomAudio: '工程中已有您上传的音频文件，生成 AI 旁白将替换该音频，是否继续？',
+
+  // Mode Badges in Timeline
+  bgmBadge: '背景伴奏',
+  voiceoverBadge: '旁白主音轨',
+  switchToVoiceover: '点击切换为主旁白 (100% 音量)',
+  switchToBgm: '点击切换为背景伴奏 (20% 音量)',
+
+  // Recording WYSIWYG Warning
+  offlineBgmRecordWarning: '友情提醒：当前工程启用了【离线系统语音】，因浏览器沙箱限制，导出的视频中将只包含背景音乐，无法内录离线旁白。如需包含旁白出片，建议使用【云端 TTS】生成实体音频或使用麦克风录制。是否继续录制？',
 } as const;

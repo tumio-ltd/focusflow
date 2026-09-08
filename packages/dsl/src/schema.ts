@@ -127,6 +127,8 @@ export interface AudioMarker {
   sceneIndex?: number;
 }
 
+export type AudioTrackRole = 'voiceover' | 'music' | 'sfx' | 'offline-tts';
+
 export interface AudioTrackConfig {
   id: string;
   url: string; // 本地 blob URL、相对路径、HTTP(S) 或 Base64 Data URI
@@ -134,8 +136,9 @@ export interface AudioTrackConfig {
   durationMs: number;
   volume?: number; // 0.0 ~ 1.0 (默认 1.0)
   muted?: boolean;
-  type?: 'voiceover' | 'music' | 'sfx' | 'offline-tts';
+  type?: AudioTrackRole;
   isOfflineTTS?: boolean;
+  isBackgroundBGM?: boolean; // 便捷布尔标识，指示该音轨是否作为低音量背景音乐
   markers?: AudioMarker[];
   vadSilences?: Array<{ startMs: number; endMs: number; centerMs?: number }>; // VAD 智能停顿带
 }

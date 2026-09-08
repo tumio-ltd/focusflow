@@ -8,7 +8,8 @@ import type {
   ElementImage,
   CalloutItem,
   AudioTrackConfig,
-  AudioMarker
+  AudioMarker,
+  AudioTrackRole
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
 
@@ -188,6 +189,7 @@ export interface ProjectState {
   setAudioTrack: (track: AudioTrackConfig) => void;
   removeAudioTrack: (trackId: string) => void;
   updateAudioTrackVolume: (volume: number) => void;
+  updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number, isBackgroundBGM?: boolean) => void;
   addAudioMarker: (marker: AudioMarker) => void;
   batchUpdateScenesDuration: (durations: number[]) => void;
   undo: () => void;
@@ -914,6 +916,24 @@ export const useProjectStore = create<ProjectState>((set) => ({
         ...t,
         volume: Math.max(0, Math.min(1, volume)),
       }));
+      return pushHistory(state, {
+        ...state.dsl,
+        audio: { ...state.dsl.audio, tracks },
+      });
+    }),
+
+  updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number, isBackgroundBGM?: boolean) =>
+    set((state) => {
+      const tracks = (state.dsl.audio?.tracks || []).map((t) => {
+        if (t.id !== trackId) return t;
+        const nextVol = volume !== undefined ? Math.max(0, Math.min(1, volume)) : (type === 'music' ? 0.2 : 1.0);
+        return {
+          ...t,
+          type,
+          isBackgroundBGM: isBackgroundBGM !== undefined ? isBackgroundBGM : (type === 'music'),
+          volume: nextVol,
+        };
+      });
       return pushHistory(state, {
         ...state.dsl,
         audio: { ...state.dsl.audio, tracks },
