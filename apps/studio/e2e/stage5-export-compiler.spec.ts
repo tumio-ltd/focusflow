@@ -161,8 +161,35 @@ async function verifyPlaybackHudTriState(page: Page): Promise<void> {
   await hudToggleBtn.click();
   await expect(hudMinimal).toBeVisible();
 
-  const storedMode = await page.evaluate(() => localStorage.getItem('focusflow_playback_hud_mode'));
+  let storedMode = await page.evaluate(() => localStorage.getItem('focusflow_playback_hud_mode'));
   expect(storedMode).toBe('minimal');
+
+  // (6) 在胶囊态下点击切换，进入 zen 沉浸纯净态，验证底部唤醒浮岛可点击一键找回控制栏
+  const minimalToggleBtn = page.locator('[data-testid="audience-hud-minimal"] [data-testid="hud-mode-toggle"]');
+  await expect(minimalToggleBtn).toBeVisible();
+  await minimalToggleBtn.click();
+
+  storedMode = await page.evaluate(() => localStorage.getItem('focusflow_playback_hud_mode'));
+  expect(storedMode).toBe('zen');
+  await expect(controlsIsland).not.toBeVisible();
+  await expect(hudMinimal).not.toBeVisible();
+
+  // 模拟鼠标移动唤醒
+  await page.mouse.move(500, 500);
+  const zenRestoreBtn = page.locator('[data-testid="zen-restore-hud-btn"]');
+  await expect(zenRestoreBtn).toBeVisible();
+  await zenRestoreBtn.click();
+
+  // 验证成功一键找回 controlsIsland，并切回 full 完整态
+  await expect(controlsIsland).toBeVisible();
+  storedMode = await page.evaluate(() => localStorage.getItem('focusflow_playback_hud_mode'));
+  expect(storedMode).toBe('full');
+
+  // (7) 验证右上角全屏工具栏中的 HUD 切换按钮也可正常操作
+  const topHudToggleBtn = page.locator('[data-testid="hud-mode-toggle-top"]');
+  await expect(topHudToggleBtn).toBeVisible();
+  await topHudToggleBtn.click();
+  await expect(hudMinimal).toBeVisible();
 
   // 按 Escape 退出模态框
   await page.keyboard.press('Escape');

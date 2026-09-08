@@ -13,6 +13,7 @@ import {
   Layers,
   Clock,
   Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
@@ -46,7 +47,7 @@ export function AudienceModal({
   const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const { playbackHudMode, cyclePlaybackHudMode } = useEditorStore();
+  const { playbackHudMode, cyclePlaybackHudMode, setPlaybackHudMode } = useEditorStore();
 
   // 拓扑自愈：过滤掉可能遗留的悬空孤儿路径与失效引用
   const sanitizedDsl = React.useMemo(() => sanitizeDSL(dsl), [dsl]);
@@ -282,17 +283,25 @@ export function AudienceModal({
     return () => clearTimeout(timer);
   }, [isOpen, isRecording, handleTogglePlay]);
 
+  const handleClose = useCallback(() => {
+    stopWebSpeech();
+    if (playbackHudMode === 'zen') {
+      setPlaybackHudMode('full');
+    }
+    onClose();
+  }, [playbackHudMode, setPlaybackHudMode, onClose]);
+
   // 全屏演播键盘快捷键监听
   useEffect(() => {
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        stopWebSpeech();
         if (isRecording) {
+          stopWebSpeech();
           onFinishRecording?.();
         } else {
-          onClose();
+          handleClose();
         }
       } else if (e.key === ' ') {
         e.preventDefault();
@@ -316,7 +325,7 @@ export function AudienceModal({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose, isRecording, onFinishRecording, handleTogglePlay, handleNext, handlePrev, toggleFullscreen, cyclePlaybackHudMode]);
+  }, [isOpen, handleClose, isRecording, onFinishRecording, handleTogglePlay, handleNext, handlePrev, toggleFullscreen, cyclePlaybackHudMode]);
 
   if (!isOpen) return null;
 
@@ -332,10 +341,36 @@ export function AudienceModal({
         <div
           className={`absolute top-4 right-6 flex items-center gap-2 pointer-events-auto z-30 transition-opacity duration-300 ${
             playbackHudMode === 'zen'
-              ? (isUserActive ? 'opacity-40 hover:opacity-100' : 'opacity-0 pointer-events-none')
+              ? (isUserActive ? 'opacity-90 hover:opacity-100' : 'opacity-0 pointer-events-none')
               : (isUserActive || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none')
           }`}
         >
+          {/* HUD 模式切换与恢复按钮：任何模式下鼠标活动时均可在右上角直接点击切换或恢复，彻底消除“找不回控制栏” */}
+          <Button
+            size="icon"
+            variant="ghost"
+            data-testid="hud-mode-toggle-top"
+            onClick={cyclePlaybackHudMode}
+            className={`w-9 h-9 rounded-full bg-slate-900/80 backdrop-blur-md border text-slate-300 hover:text-white transition-all ${
+              playbackHudMode === 'zen'
+                ? 'border-cyan-500/60 text-cyan-400 hover:bg-cyan-500/20 shadow-lg'
+                : 'border-slate-800'
+            }`}
+            title={
+              playbackHudMode === 'zen'
+                ? '恢复 HUD 控制栏 (快捷键 H)'
+                : playbackHudMode === 'minimal'
+                ? '切换 HUD 模式: 沉浸纯净 (快捷键 H)'
+                : '切换 HUD 模式: 微缩胶囊 (快捷键 H)'
+            }
+          >
+            {playbackHudMode === 'zen' ? (
+              <EyeOff className="w-4 h-4 text-cyan-400 animate-pulse" />
+            ) : (
+              <Eye className={`w-4 h-4 ${playbackHudMode === 'minimal' ? 'text-amber-400' : 'text-cyan-400'}`} />
+            )}
+          </Button>
+
           <Button
             size="icon"
             variant="ghost"
@@ -350,10 +385,7 @@ export function AudienceModal({
             size="icon"
             variant="ghost"
             data-testid="close-audience-btn"
-            onClick={() => {
-              stopWebSpeech();
-              onClose();
-            }}
+            onClick={handleClose}
             className="w-9 h-9 rounded-full bg-slate-900/80 backdrop-blur-md border border-slate-800 text-slate-300 hover:text-rose-400"
             title="退出演示 (ESC)"
           >
@@ -455,24 +487,61 @@ export function AudienceModal({
       {!isRecording && playbackHudMode === 'minimal' && (
         <div
           data-testid="audience-hud-minimal"
-          className={`absolute bottom-6 right-6 flex items-center gap-2.5 bg-slate-900/85 backdrop-blur-md px-3 py-1 rounded-full border border-slate-800 shadow-xl z-30 transition-opacity duration-300 ${
+          className={`absolute bottom-6 right-6 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-full border border-slate-800 shadow-xl z-30 transition-opacity duration-300 ${
             isUserActive || !isPlaying ? 'opacity-90 hover:opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
-          style={{ height: '28px' }}
+          style={{ height: '32px' }}
         >
-          <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-[12px] font-mono font-medium text-slate-200">
-            {formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)} · {String(currentSceneIdx + 1).padStart(2, '0')}/{String(totalScenes).padStart(2, '0')}
-          </span>
+          <button
+            onClick={() => setPlaybackHudMode('full')}
+            className="flex items-center gap-2 hover:text-white transition group cursor-pointer"
+            title="点击展开完整控制栏 (快捷键 H)"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-[12px] font-mono font-medium text-slate-200 group-hover:text-cyan-300 transition-colors">
+              {formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)} · {String(currentSceneIdx + 1).padStart(2, '0')}/{String(totalScenes).padStart(2, '0')}
+            </span>
+          </button>
+          <div className="h-3 w-px bg-slate-800" />
+          <button
+            onClick={() => setPlaybackHudMode('full')}
+            className="text-slate-400 hover:text-cyan-400 transition p-0.5 cursor-pointer"
+            title="展开为完整控制栏"
+          >
+            <Maximize2 className="w-3.5 h-3.5" />
+          </button>
           <button
             data-testid="hud-mode-toggle"
             onClick={cyclePlaybackHudMode}
-            className="text-slate-400 hover:text-white transition p-0.5"
-            title="切换 HUD 模式 (H)"
+            className="text-slate-400 hover:text-white transition p-0.5 cursor-pointer"
+            title="切换 HUD 模式: 沉浸纯净 (快捷键 H)"
           >
             <Eye className="w-3.5 h-3.5 text-cyan-400" />
           </button>
         </div>
+      )}
+
+      {/* 6. 沉浸纯净态 (zen) 下的底部感应区与唤醒恢复浮岛：
+          解决“控制条不见了再也找不回来”的痛点！
+          鼠标移动或滑向屏幕底部时即刻柔和现身，点击直接一键恢复完整控制栏；静止 3 秒后再度平滑淡出 */}
+      {!isRecording && playbackHudMode === 'zen' && (
+        <>
+          <div
+            className="absolute bottom-0 left-0 right-0 h-16 z-20 pointer-events-auto"
+            onMouseMove={handleUserActivity}
+          />
+          <button
+            data-testid="zen-restore-hud-btn"
+            onClick={() => setPlaybackHudMode('full')}
+            className={`absolute bottom-6 flex items-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white backdrop-blur-md px-4 py-2 rounded-full border border-cyan-500/40 hover:border-cyan-400 shadow-2xl z-30 transition-all duration-300 text-xs font-medium cursor-pointer ${
+              isUserActive ? 'opacity-90 hover:opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'
+            }`}
+            title="点击恢复演播控制栏 (或按键盘 H)"
+          >
+            <Eye className="w-3.5 h-3.5 text-cyan-400" />
+            <span>纯净演播中 · 点击恢复控制栏 (快捷键 H)</span>
+          </button>
+        </>
       )}
 
       {/* 6. 录制模式下的在屏无痕控制条：
