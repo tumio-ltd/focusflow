@@ -84,8 +84,8 @@ export function ExportModal({
               <Download className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">{t('exportCenter')}</h2>
-              <p className="text-[11px] text-muted-foreground">{t('exportSubtitle')}</p>
+              <h2 className="text-base font-semibold text-foreground">{t('exportCenter')}</h2>
+              <p className="text-xs text-muted-foreground">{t('exportSubtitle')}</p>
             </div>
           </div>
 
@@ -104,7 +104,7 @@ export function ExportModal({
           <button
             onClick={() => setActiveTab('html')}
             data-testid="tab-html"
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition -mb-px ${
+            className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium border-b-2 transition -mb-px ${
               activeTab === 'html'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -117,7 +117,7 @@ export function ExportModal({
           <button
             onClick={() => setActiveTab('zip')}
             data-testid="tab-zip"
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition -mb-px ${
+            className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium border-b-2 transition -mb-px ${
               activeTab === 'zip'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -130,7 +130,7 @@ export function ExportModal({
           <button
             onClick={() => setActiveTab('video')}
             data-testid="tab-video"
-            className={`flex items-center gap-2 px-3 py-2 text-xs font-medium border-b-2 transition -mb-px ${
+            className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium border-b-2 transition -mb-px ${
               activeTab === 'video'
                 ? 'border-primary text-primary font-semibold'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -142,21 +142,21 @@ export function ExportModal({
         </div>
 
         {/* 选项卡内容 */}
-        <div className="p-6 space-y-4 text-xs">
+        <div className="p-6 space-y-4">
           {activeTab === 'html' && (
             <div className="space-y-4 animate-in fade-in duration-100">
               <div className="bg-muted/30 border border-border rounded-xl p-4 space-y-3">
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-xs">{t('htmlDescTitle')}</h3>
-                    <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
+                    <h3 className="font-semibold text-foreground text-sm">{t('htmlDescTitle')}</h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
                       {t('htmlDescText')}
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border text-[11px] text-muted-foreground">
+                <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-border text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Laptop className="w-3.5 h-3.5 text-primary" />
                     <span>{t('crossPlatform')}</span>
@@ -192,8 +192,8 @@ export function ExportModal({
                 <div className="flex items-start gap-3">
                   <Archive className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-xs">{t('zipDescTitle')}</h3>
-                    <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
+                    <h3 className="font-semibold text-foreground text-sm">{t('zipDescTitle')}</h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
                       {t('zipDescText')}
                     </p>
                   </div>
@@ -224,11 +224,11 @@ export function ExportModal({
                 <div className="flex items-start gap-3">
                   <Video className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-xs">{t('videoDescTitle', '本地 60FPS WebM 高清录制')}</h3>
-                    <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
+                    <h3 className="font-semibold text-foreground text-sm">{t('videoDescTitle', '本地 60FPS WebM 高清录制')}</h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
                       {t('videoDescText', '直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清 WebM 格式视频，无水印且无需任何服务端。')}
                     </p>
-                    <div className="mt-2.5 p-2 bg-primary/10 border border-primary/20 rounded-lg text-[11px] text-primary leading-relaxed">
+                    <div className="mt-2.5 p-2.5 bg-primary/10 border border-primary/20 rounded-lg text-xs text-primary leading-relaxed">
                       {t('videoTip', '💡 提示：点击后系统将唤起浏览器原生“共享标签页”授权，选择当前 FocusFlow 标签页即可自动开启全屏演播并一键下载 60FPS 视频。')}
                     </div>
 
@@ -245,7 +245,7 @@ export function ExportModal({
 
                       if (hasRealMasterAudio) {
                         return (
-                          <div className="mt-2 p-2.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                          <div className="mt-2.5 p-2.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                             <Volume2 className="w-4 h-4 text-emerald-500 shrink-0" />
                             <span>{t('audioTrackDetected', '🎵 已检测到实体母带音轨，录制时将自动为您音画同步合流导出！')}</span>
                           </div>
@@ -253,11 +253,11 @@ export function ExportModal({
                       }
 
                       return (
-                        <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-2 leading-relaxed">
+                        <div className="mt-2.5 p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg text-xs text-amber-700 dark:text-amber-400 flex items-start gap-2.5 leading-relaxed">
                           <VolumeX className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                           <div>
-                            <div className="font-semibold text-amber-800 dark:text-amber-300">{t('offlineTtsNoticeTitle', '⚠️ 音频录制与内录提示')}</div>
-                            <div className="text-amber-700/90 dark:text-amber-400/90 mt-0.5">
+                            <div className="font-semibold text-amber-800 dark:text-amber-300 text-xs">{t('offlineTtsNoticeTitle', '⚠️ 音频录制与内录提示')}</div>
+                            <div className="text-amber-700/90 dark:text-amber-400/90 text-xs mt-1 leading-relaxed">
                               {t('offlineTtsNoticeDesc')}
                             </div>
                           </div>
