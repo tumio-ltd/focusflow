@@ -25,5 +25,5 @@ export default {
   recordSuccess: '🎉 60FPS WebM 高清视频已生成并开始下载！',
   audioTrackDetected: '🎵 已检测到工程母带音轨，录制时将自动为您音画同步合流导出！',
   offlineTtsNoticeTitle: '⚠️ 音频录制提示',
-  offlineTtsNoticeDesc: '当前工程尚未生成母带音轨。浏览器离线 TTS（Web Speech）受系统沙箱限制无法直接被录屏抓取。如需导出带语音的视频，推荐先在底部时间轴点击【AI 提词】(✨) 或配置云端 TTS 生成母带音轨。',
+  offlineTtsNoticeDesc: '当前使用的是浏览器离线系统语音（Web Speech）。受浏览器安全沙箱限制，标签页内录无法捕获离线系统语音（导出视频将无声）。如需导出带语音的视频，请先配置云端 TTS（点击底部时间轴【AI 提词】旁的 ⚙️ 设置图标配置 API Key 并合成实体母带），或使用麦克风录音 / 导入现成音频。',
 } as const;
