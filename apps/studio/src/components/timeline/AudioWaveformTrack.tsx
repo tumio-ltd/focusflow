@@ -118,6 +118,32 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     };
   }, [stopGrainAnim, stopOfflineTtsPreview]);
 
+  // 当音轨被删除或置空时，立即彻底关停正在播放的试听音频与离线语音
+  useEffect(() => {
+    if (!track) {
+      stopGrainAnim();
+      stopOfflineTtsPreview();
+      if (audioPreviewRef.current) {
+        audioPreviewRef.current.pause();
+        audioPreviewRef.current = null;
+      }
+      setIsPlayingAudio(false);
+      stopWebSpeech();
+    }
+  }, [track, stopGrainAnim, stopOfflineTtsPreview]);
+
+  const handleRemoveTrack = useCallback((trackId: string) => {
+    stopGrainAnim();
+    stopOfflineTtsPreview();
+    if (audioPreviewRef.current) {
+      audioPreviewRef.current.pause();
+      audioPreviewRef.current = null;
+    }
+    setIsPlayingAudio(false);
+    stopWebSpeech();
+    removeAudioTrack(trackId);
+  }, [stopGrainAnim, stopOfflineTtsPreview, removeAudioTrack]);
+
   // Sync playhead smoothly while full audio preview is playing
   useEffect(() => {
     let animId: number;
@@ -942,7 +968,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
           )}
           {track && decodeError && (
             <button
-              onClick={() => removeAudioTrack(track.id)}
+              onClick={() => handleRemoveTrack(track.id)}
               className="text-[10px] text-red-400 hover:text-red-300 bg-red-950/40 hover:bg-red-900/60 px-2 py-0.5 rounded border border-red-800/50 transition cursor-pointer"
               title={t('clearInvalidTrack')}
             >
@@ -973,7 +999,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
 
           {track && (
             <button
-              onClick={() => removeAudioTrack(track.id)}
+              data-testid="remove-audio-track-btn"
+              onClick={() => handleRemoveTrack(track.id)}
               className="text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10"
               title={t('removeTrack')}
             >

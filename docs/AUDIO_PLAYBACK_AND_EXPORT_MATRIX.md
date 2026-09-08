@@ -121,26 +121,26 @@ FocusFlow 作为新一代架构演进动态可视化系统，其核心体验是*
 ### 4.3 Studio 画板日常播放测试 (Studio Canvas Preview)
 - **调用位置**：工作区主画布下方的控制栏【播放/暂停】按钮或按空格键。
 - **技术路径**：
-  - 由 `App.tsx` 统一协调：
+  - 由 `App.tsx` 统一协调四象限音频仲裁状态机：
     ```typescript
-    const isRealAudibleVoiceTrack = Boolean(
-      mainTrack?.url &&
-      !mainTrack.isOfflineTTS &&
-      mainTrack.type !== 'offline-tts' &&
-      mainTrack.type !== 'music' &&
-      !mainTrack.isBackgroundBGM &&
-      (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
-    );
+    // 若工程中无任何音轨、或音轨处于静音/0音量状态，绝对不发声（删除音轨后彻底静音）
+    if (!currentlyPlaying || !mainTrack || mainTrack.muted || (mainTrack.volume ?? 1) <= 0) {
+      return;
+    }
     ```
-  - 若 `isRealAudibleVoiceTrack` 为真：由底层 `FocusFlowPlayer` 内部的 `audioEl` 播放真实声音，WebSpeech 保持静默；
-  - 若 `isRealAudibleVoiceTrack` 为假：由 `App.tsx` 的切幕监听自动调用 `speakWebSpeech` 朗读各分幕台词，耳朵可清晰听到真实旁白。
+  - **四象限仲裁决策**：
+    1. **工程无音轨（未添加或已删除音轨）**：内核 `<audio>` 与系统 WebSpeech **双静默**，保证画板播放 100% 纯净无声；
+    2. **实体旁白主音轨（上传/录音/云端 TTS）**：底层 `FocusFlowPlayer` 内部 `audioEl` 独占发声，WebSpeech 严格静默，避免双音混叠；
+    3. **离线 TTS 音轨（AI 提词生成的 offline-tts 轨）**：`<audio>` 跳过静音占位，由 WebSpeech 实时朗读当前分幕台词；
+    4. **背景音乐模式（music / BGM 伴奏）**：`<audio>` 播放伴奏，WebSpeech 叠加朗读前景台词。
 
 ### 4.4 受众全屏演播模式 (AudienceModal Presentation)
 - **调用位置**：点击顶部导航栏的【受众演播模式】（或全屏汇报）。
 - **技术路径**：
   - 挂载独立的 `AudienceModal.tsx` 容器与受众级纯净播放器；
-  - 采用严格的 **音频仲裁状态机（Audio Arbiter）**：
-    - 实体旁白主音轨 ➔ 播放器 `<audio>` 播放，WebSpeech 严格静默；
+  - 采用同源的 **音频仲裁状态机（Audio Arbiter）**：
+    - 工程无音轨或音轨被删除 ➔ 全局彻底静默，不触发任何声音；
+    - 实体旁白主音轨 ➔ 播放器 `<audio>` 独占播放，WebSpeech 严格静默；
     - 背景伴奏 BGM 模式 ➔ 播放器 `<audio>` 降为 20% 音量播放，WebSpeech 同步朗读前景人声；
     - 离线 TTS 模式 ➔ 播放器跳过静音占位轨，WebSpeech 同步朗读分幕台词。
 

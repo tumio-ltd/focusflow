@@ -68,27 +68,27 @@ export function AudienceModal({
     const cfg = getStoredTTSConfig();
     const mainTrack = activeDsl.audio?.tracks?.[0];
 
-    // 判断当前音轨是否为“已具备实体解说语音的音轨”（如：用户上传的旁白、麦克风录音、或云端 TTS 合成的实体音频）
-    // 只有当存在由播放器负责播放的真实旁白实体音频时，才静音 WebSpeech，彻底防止双播混叠
-    const isRealAudibleVoiceTrack = Boolean(
-      mainTrack?.url &&
-      !mainTrack.isOfflineTTS &&
-      mainTrack.type !== 'offline-tts' &&
-      mainTrack.type !== 'music' &&
-      !mainTrack.isBackgroundBGM &&
-      (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
-    );
-
-    if (isRealAudibleVoiceTrack) {
+    // 若工程中无任何音轨、或音轨处于静音/0音量状态，绝对不发声（删除音轨后彻底静音）
+    if (!mainTrack || mainTrack.muted || (mainTrack.volume ?? 1) <= 0) {
       return;
     }
 
-    // 只要不是实体语音在播放（包括：纯离线 TTS、AI 离线占位音轨、背景伴奏 BGM 模式、或工程无音轨），
-    // 均必须由 WebSpeech 朗读当前分幕的台词提词！
-    const scene = activeDsl.scenes?.[sceneIndex];
-    const text = scene?.voiceoverScript?.trim() || scene?.title;
-    if (text) {
-      speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+    const isOfflineVoice = Boolean(
+      mainTrack.isOfflineTTS ||
+      mainTrack.type === 'offline-tts' ||
+      mainTrack.id?.startsWith('track-ai-') ||
+      mainTrack.id?.startsWith('tts-')
+    );
+    const isBgmWithVoiceover = Boolean(
+      mainTrack.type === 'music' || mainTrack.isBackgroundBGM
+    );
+
+    if (isOfflineVoice || isBgmWithVoiceover) {
+      const scene = activeDsl.scenes?.[sceneIndex];
+      const text = scene?.voiceoverScript?.trim() || (isOfflineVoice ? scene?.title : '');
+      if (text) {
+        speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+      }
     }
   }, []);
 

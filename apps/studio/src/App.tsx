@@ -232,18 +232,25 @@ export default function App() {
       const currentlyPlaying = useEditorStore.getState().isPlaying;
       const cfg = getStoredTTSConfig();
       const mainTrack = dsl.audio?.tracks?.[0];
-      const isRealAudibleVoiceTrack = Boolean(
-        mainTrack?.url &&
-        !mainTrack.isOfflineTTS &&
-        mainTrack.type !== 'offline-tts' &&
-        mainTrack.type !== 'music' &&
-        !mainTrack.isBackgroundBGM &&
-        (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
+
+      // 若工程中无任何音轨、或音轨处于静音/0音量状态，绝对不发声（删除音轨后彻底静音）
+      if (!currentlyPlaying || !mainTrack || mainTrack.muted || (mainTrack.volume ?? 1) <= 0) {
+        return;
+      }
+
+      const isOfflineVoice = Boolean(
+        mainTrack.isOfflineTTS ||
+        mainTrack.type === 'offline-tts' ||
+        mainTrack.id?.startsWith('track-ai-') ||
+        mainTrack.id?.startsWith('tts-')
+      );
+      const isBgmWithVoiceover = Boolean(
+        mainTrack.type === 'music' || mainTrack.isBackgroundBGM
       );
 
-      if (currentlyPlaying && !isRealAudibleVoiceTrack) {
+      if (isOfflineVoice || isBgmWithVoiceover) {
         const scene = dsl.scenes[newIdx];
-        const text = scene?.voiceoverScript?.trim() || scene?.title;
+        const text = scene?.voiceoverScript?.trim() || (isOfflineVoice ? scene?.title : '');
         if (text) {
           speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
         }
@@ -348,20 +355,25 @@ export default function App() {
     if (nextPlaying) {
       const cfg = getStoredTTSConfig();
       const mainTrack = dsl.audio?.tracks?.[0];
-      const isRealAudibleVoiceTrack = Boolean(
-        mainTrack?.url &&
-        !mainTrack.isOfflineTTS &&
-        mainTrack.type !== 'offline-tts' &&
-        mainTrack.type !== 'music' &&
-        !mainTrack.isBackgroundBGM &&
-        (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
-      );
 
-      if (!isRealAudibleVoiceTrack) {
-        const scene = dsl.scenes[activeSceneIndex] || dsl.scenes[0];
-        const text = scene?.voiceoverScript?.trim() || scene?.title;
-        if (text) {
-          speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+      // 若工程中无任何音轨、或音轨处于静音/0音量状态，绝对不发声（删除音轨后彻底静音）
+      if (mainTrack && !mainTrack.muted && (mainTrack.volume ?? 1) > 0) {
+        const isOfflineVoice = Boolean(
+          mainTrack.isOfflineTTS ||
+          mainTrack.type === 'offline-tts' ||
+          mainTrack.id?.startsWith('track-ai-') ||
+          mainTrack.id?.startsWith('tts-')
+        );
+        const isBgmWithVoiceover = Boolean(
+          mainTrack.type === 'music' || mainTrack.isBackgroundBGM
+        );
+
+        if (isOfflineVoice || isBgmWithVoiceover) {
+          const scene = dsl.scenes[activeSceneIndex] || dsl.scenes[0];
+          const text = scene?.voiceoverScript?.trim() || (isOfflineVoice ? scene?.title : '');
+          if (text) {
+            speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
+          }
         }
       }
     } else {

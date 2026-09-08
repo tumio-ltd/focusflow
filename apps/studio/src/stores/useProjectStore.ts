@@ -12,6 +12,7 @@ import type {
   AudioTrackRole
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
+import { stopWebSpeech } from '@/services/audio';
 
 const MAX_HISTORY = 50;
 
@@ -896,7 +897,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
       return pushHistory(state, nextDSL);
     }),
 
-  removeAudioTrack: (trackId: string) =>
+  removeAudioTrack: (trackId: string) => {
+    stopWebSpeech();
     set((state) => {
       const currentTracks = state.dsl.audio?.tracks || [];
       const filtered = currentTracks.filter((t) => t.id !== trackId);
@@ -908,7 +910,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
         },
       };
       return pushHistory(state, nextDSL);
-    }),
+    });
+  },
 
   updateAudioTrackVolume: (volume: number) =>
     set((state) => {

@@ -587,6 +587,55 @@ async function verifyLocalWebmVideoRecording(page: Page): Promise<void> {
   await expect(audienceModal).not.toBeVisible({ timeout: 5000 });
 }
 
+/**
+ * 验证删除音频轨后时间轴波形移除且演播播放彻底静音无声 (TC575)
+ */
+async function verifyAudioTrackDeletionAndZeroSilence(page: Page): Promise<void> {
+  // 1. 先通过 AI 提词批量生成一段音频轨
+  const batchBtn = page.locator('[data-testid="ai-tts-batch-btn"]');
+  await expect(batchBtn).toBeVisible();
+  await batchBtn.click();
+
+  const waveformTrack = page.locator('[data-testid="audio-waveform-track"]');
+  await expect(waveformTrack).toBeVisible({ timeout: 10000 });
+
+  // 2. 注入针对 window.speechSynthesis.speak 的调用拦截与计数监控
+  await page.evaluate(() => {
+    (window as any).__speechSynthesisCalls = 0;
+    if (window.speechSynthesis) {
+      const orig = window.speechSynthesis.speak.bind(window.speechSynthesis);
+      window.speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
+        (window as any).__speechSynthesisCalls++;
+        return orig(u);
+      };
+    }
+  });
+
+  // 3. 点击移除音轨按钮 (Trash2)
+  const removeBtn = page.locator('[data-testid="remove-audio-track-btn"]');
+  await expect(removeBtn).toBeVisible();
+  await removeBtn.click();
+
+  // 4. 验证删除音轨按钮已从波形轨控制区消失（音轨已被彻底移除）
+  await expect(removeBtn).not.toBeVisible();
+
+  // 5. 点击时间轴主播放按钮启动演播
+  const playBtn = page.locator('[data-testid="timeline-play-btn"]');
+  await expect(playBtn).toBeVisible();
+  await playBtn.click();
+
+  // 演播运行 1.5 秒，跨越切幕
+  await page.waitForTimeout(1500);
+
+  // 6. 核心断言：音轨删除后演播运行过程中绝对不应触发系统 WebSpeech 发声（保持 100% 纯净静音）
+  const speakCount = await page.evaluate(() => (window as any).__speechSynthesisCalls || 0);
+  expect(speakCount).toBe(0);
+
+  // 7. 停止演播
+  await playBtn.click();
+  await page.waitForTimeout(300);
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -647,6 +696,10 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC574: 验证导出中心唤起本地 60FPS WebM 高清录制与演播自动合流', async ({ page }) => {
     await verifyLocalWebmVideoRecording(page);
+  });
+
+  test('TC575: 验证删除音频轨后时间轴波形移除且演播播放彻底静音无声', async ({ page }) => {
+    await verifyAudioTrackDeletionAndZeroSilence(page);
   });
 });
 
