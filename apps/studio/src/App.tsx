@@ -27,6 +27,7 @@ import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { synthesizeSceneVoiceover, speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
+import { startTabRecording, downloadVideoBlob, type RecordingSession } from '@/services/canvasRecorder';
 import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
 
@@ -41,6 +42,9 @@ export default function App() {
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
   const [isSingleTtsLoading, setIsSingleTtsLoading] = useState(false);
   const [ttsPreview, setTtsPreview] = useState<TTSPreviewInfo | null>(null);
+  const [isRecordingVideo, setIsRecordingVideo] = useState(false);
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
+  const recordingSessionRef = useRef<RecordingSession | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -405,6 +409,82 @@ export default function App() {
     console.log('Created project from template:', newProjectId);
   };
 
+  const handleFinishVideoRecording = useCallback(async () => {
+    const session = recordingSessionRef.current;
+    if (!session) {
+      setIsRecordingVideo(false);
+      setIsAudienceModalOpen(false);
+      return;
+    }
+    try {
+      const blob = await session.stop();
+      recordingSessionRef.current = null;
+      setIsRecordingVideo(false);
+      setIsAudienceModalOpen(false);
+      if (blob && blob.size > 0) {
+        downloadVideoBlob(blob, `${dsl.meta?.title || 'focusflow'}-60fps`);
+      }
+    } catch (err) {
+      console.error('[FocusFlow] 结束录制失败:', err);
+      recordingSessionRef.current = null;
+      setIsRecordingVideo(false);
+      setIsAudienceModalOpen(false);
+    }
+  }, [dsl.meta?.title]);
+
+  const handleStartVideoRecording = useCallback(async () => {
+    try {
+      // 1. 若工程内包含已合成/录制的音轨，提取其实体音频流混入视频录制
+      let externalStream: MediaStream | undefined = undefined;
+      const mainTrack = dsl.audio?.tracks?.[0];
+      if (mainTrack?.url) {
+        try {
+          const audioEl = new Audio();
+          audioEl.src = mainTrack.url;
+          audioEl.crossOrigin = 'anonymous';
+          const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const source = ctx.createMediaElementSource(audioEl);
+            const destination = ctx.createMediaStreamDestination();
+            source.connect(destination);
+            source.connect(ctx.destination);
+            externalStream = destination.stream;
+          }
+        } catch (e) {
+          console.warn('[FocusFlow] 提取工程音轨流失败:', e);
+        }
+      }
+
+      const session = await startTabRecording({
+        fps: 60,
+        audio: true,
+        externalAudioStream: externalStream,
+        onTick: (elapsed) => {
+          setRecordingElapsed(elapsed);
+        },
+        onStreamEnded: () => {
+          handleFinishVideoRecording();
+        },
+      });
+
+      recordingSessionRef.current = session;
+      setRecordingElapsed(0);
+      setIsRecordingVideo(true);
+      setIsExportModalOpen(false);
+      // 开启受众演示模态框，从第 1 幕自动起播录制
+      setActiveSceneIndex(0);
+      setIsAudienceModalOpen(true);
+    } catch (err: any) {
+      if (err?.name === 'NotAllowedError' || err?.message?.includes('Permission denied') || err?.message?.includes('denied')) {
+        console.log('[FocusFlow] 用户取消了屏幕录制授权');
+        return;
+      }
+      console.error('[FocusFlow] 启动录制异常:', err);
+      alert('无法启动屏幕录制: ' + (err?.message || '未知错误'));
+    }
+  }, [handleFinishVideoRecording, setActiveSceneIndex]);
+
   useStudioKeyboard({
     onExport: () => setIsExportModalOpen(true),
     onSave: handleSaveDraft,
@@ -751,15 +831,25 @@ export default function App() {
 
       <AudienceModal
         isOpen={isAudienceModalOpen}
-        onClose={() => setIsAudienceModalOpen(false)}
+        onClose={() => {
+          if (isRecordingVideo) {
+            handleFinishVideoRecording();
+          } else {
+            setIsAudienceModalOpen(false);
+          }
+        }}
         dsl={dsl}
-        initialSceneIndex={activeSceneIndex}
+        initialSceneIndex={isRecordingVideo ? 0 : activeSceneIndex}
+        isRecording={isRecordingVideo}
+        recordingElapsed={recordingElapsed}
+        onFinishRecording={handleFinishVideoRecording}
       />
 
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         dsl={dsl}
+        onStartRecording={handleStartVideoRecording}
       />
 
       <DslEditorModal

@@ -18,4 +18,12 @@ export default {
   cancel: '取消',
   successExport: '已成功导出！',
   packaging: '打包编译中...',
+  videoTip: '💡 提示：点击后系统将唤起浏览器原生“共享标签页”授权，选择当前 FocusFlow 标签页即可自动开启全屏演播并一键下载 60FPS 视频。',
+  recordingInProgress: '正在录制 60FPS 演播...',
+  finishAndSave: '完成保存',
+  recordPermDenied: '未授予标签页屏幕录制权限',
+  recordSuccess: '🎉 60FPS WebM 高清视频已生成并开始下载！',
+  audioTrackDetected: '🎵 已检测到工程母带音轨，录制时将自动为您音画同步合流导出！',
+  offlineTtsNoticeTitle: '⚠️ 音频录制提示',
+  offlineTtsNoticeDesc: '当前工程尚未生成母带音轨。浏览器离线 TTS（Web Speech）受系统沙箱限制无法直接被录屏抓取。如需导出带语音的视频，推荐先在底部时间轴点击【AI 提词批量生成】或配置云端 TTS 生成母带音轨。',
 } as const;

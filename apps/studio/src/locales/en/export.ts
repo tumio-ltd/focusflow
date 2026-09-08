@@ -18,4 +18,12 @@ export default {
   cancel: 'Cancel',
   successExport: 'Exported successfully!',
   packaging: 'Packaging...',
+  videoTip: '💡 Tip: Clicking will trigger browser native "Share Tab" dialog. Select the current FocusFlow tab to automatically start full-screen presentation and export 60FPS video.',
+  recordingInProgress: 'Recording 60FPS Presentation...',
+  finishAndSave: 'Finish & Save',
+  recordPermDenied: 'Screen capture permission was not granted',
+  recordSuccess: '🎉 60FPS WebM video generated and download started!',
+  audioTrackDetected: '🎵 Master audio track detected. It will be automatically mixed into the recorded video!',
+  offlineTtsNoticeTitle: '⚠️ Audio Recording Notice',
+  offlineTtsNoticeDesc: 'No master audio track has been generated yet. Browser offline TTS (Web Speech) is restricted by the OS sandbox and cannot be captured directly by screen recorders. To export video with sound, please click "Batch AI Voiceover" in the bottom timeline or configure Cloud TTS to generate an audio track.',
 } as const;

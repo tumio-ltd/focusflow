@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FocusFlowDSL } from '@focusflow/dsl';
 import { 
   FileCode2, 
@@ -9,7 +10,9 @@ import {
   Sparkles, 
   ShieldCheck, 
   Laptop,
-  X
+  X,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { downloadStandaloneHtml } from '@/services/standalonePackager';
@@ -28,6 +31,7 @@ export function ExportModal({
   dsl,
   onStartRecording,
 }: ExportModalProps) {
+  const { t } = useTranslation('export');
   const [activeTab, setActiveTab] = useState<'html' | 'zip' | 'video'>('html');
   const [isExporting, setIsExporting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -219,20 +223,42 @@ export function ExportModal({
                 <div className="flex items-start gap-3">
                   <Video className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-xs">本地 60FPS WebM 高清录制</h3>
+                    <h3 className="font-semibold text-foreground text-xs">{t('videoDescTitle', '本地 60FPS WebM 高清录制')}</h3>
                     <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
-                      直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清 WebM 格式视频，无水印且无需任何服务端。
+                      {t('videoDescText', '直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清 WebM 格式视频，无水印且无需任何服务端。')}
                     </p>
+                    <div className="mt-2.5 p-2 bg-primary/10 border border-primary/20 rounded-lg text-[11px] text-primary leading-relaxed">
+                      {t('videoTip', '💡 提示：点击后系统将唤起浏览器原生“共享标签页”授权，选择当前 FocusFlow 标签页即可自动开启全屏演播并一键下载 60FPS 视频。')}
+                    </div>
+
+                    {/* 音频合流状态与提示卡片 */}
+                    {dsl.audio?.tracks?.[0]?.url ? (
+                      <div className="mt-2 p-2.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                        <Volume2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>{t('audioTrackDetected', '🎵 已检测到工程母带音轨，录制时将自动为您音画同步合流导出！')}</span>
+                      </div>
+                    ) : (
+                      <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-2 leading-relaxed">
+                        <VolumeX className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-semibold text-amber-800 dark:text-amber-300">{t('offlineTtsNoticeTitle', '⚠️ 音频录制提示')}</div>
+                          <div className="text-amber-700/90 dark:text-amber-400/90 mt-0.5">
+                            {t('offlineTtsNoticeDesc', '当前工程尚未生成母带音轨。浏览器离线 TTS（Web Speech）受系统沙箱限制无法直接被录屏抓取。如需导出带语音的视频，推荐先在底部时间轴点击【AI 提词批量生成】或配置云端 TTS 生成母带音轨。')}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={onClose}>
-                  取消
+                  {t('cancel', '取消')}
                 </Button>
                 <Button
                   variant="cyan"
+                  data-testid="start-video-recording-btn"
                   onClick={() => {
                     onClose();
                     onStartRecording?.();
@@ -240,7 +266,7 @@ export function ExportModal({
                   className="gap-2"
                 >
                   <Video className="w-4 h-4" />
-                  <span>启动全自动录制</span>
+                  <span>{t('startRecording', '启动全自动录制')}</span>
                 </Button>
               </div>
             </div>

@@ -511,6 +511,82 @@ async function verifyDanglingPathSelfHealing(page: Page): Promise<void> {
   await expect(audienceModal).not.toBeVisible();
 }
 
+// 辅助函数：验证导出中心唤起本地 60FPS WebM 高清录制与演播自动合流 (TC574)
+async function verifyLocalWebmVideoRecording(page: Page): Promise<void> {
+  // 1. 注入合成 getDisplayMedia 模拟流以支持无头/自动化端到端验证
+  await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280;
+    canvas.height = 720;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 1280, 720);
+    }
+    const syntheticStream = canvas.captureStream(60);
+
+    // 注入合成静音音频轨
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const dst = audioCtx.createMediaStreamDestination();
+      osc.connect(dst);
+      osc.start();
+      dst.stream.getAudioTracks().forEach((t) => syntheticStream.addTrack(t));
+    } catch {}
+
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.getDisplayMedia = async () => syntheticStream;
+    }
+  });
+
+  // 2. 点击顶栏【导出】按钮唤起 ExportModal
+  const exportBtn = page.locator('button').filter({ hasText: /导出演播|导出/ }).first();
+  await expect(exportBtn).toBeVisible();
+  await exportBtn.click();
+
+  const exportModal = page.locator('[data-testid="export-modal"]');
+  await expect(exportModal).toBeVisible({ timeout: 5000 });
+
+  // 3. 切换至【客户端视频录制】选项卡
+  const videoTab = exportModal.locator('[data-testid="tab-video"]');
+  await expect(videoTab).toBeVisible();
+  await videoTab.click();
+
+  // 验证视频录制卡片与启动按钮
+  await expect(exportModal).toContainText('本地 60FPS WebM 高清录制');
+  const startRecordingBtn = exportModal.locator('[data-testid="start-video-recording-btn"]');
+  await expect(startRecordingBtn).toBeVisible();
+
+  // 4. 点击【启动全自动录制】
+  await startRecordingBtn.click();
+
+  // 5. 验证自动关闭导出弹窗，并唤起受众全屏演示模态框 (AudienceModal)
+  await expect(exportModal).not.toBeVisible();
+  const audienceModal = page.locator('[data-testid="audience-modal"]');
+  await expect(audienceModal).toBeVisible({ timeout: 5000 });
+
+  // 6. 核心视觉断言：验证右上角按钮与 REC 标签在录制模式下 100% 隐藏（画面纯净无水印）
+  await expect(audienceModal.locator('[data-testid="recording-hud-badge"]')).not.toBeVisible();
+  await expect(audienceModal.locator('[data-testid="close-audience-btn"]')).not.toBeVisible();
+
+  // 验证场景指示微缩胶囊已成功置于屏幕左下角，避开架构图顶部主标题
+  const scenePill = audienceModal.locator('[data-testid="audience-scene-pill"]');
+  await expect(scenePill).toBeVisible();
+  await expect(scenePill).toContainText(/01 \//);
+
+  // 验证录制模式下底部交互浮岛已自动隐藏，保持画面纯净
+  const bottomIsland = audienceModal.locator('.absolute.bottom-6.flex.items-center.gap-2.bg-slate-900\\/85');
+  await expect(bottomIsland).not.toBeVisible();
+
+  // 7. 验证按 ESC 键可安全终止录制并触发导出保存
+  await page.waitForTimeout(500); // 采集分片
+  await page.keyboard.press('Escape');
+
+  // 8. 验证录制结束后自动退出全屏演示模式，安全恢复 Studio 主工作区
+  await expect(audienceModal).not.toBeVisible({ timeout: 5000 });
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -567,6 +643,10 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC573: 验证悬空孤儿路径自愈剔除与演播模式零警告运行', async ({ page }) => {
     await verifyDanglingPathSelfHealing(page);
+  });
+
+  test('TC574: 验证导出中心唤起本地 60FPS WebM 高清录制与演播自动合流', async ({ page }) => {
+    await verifyLocalWebmVideoRecording(page);
   });
 });
 
