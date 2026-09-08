@@ -232,9 +232,16 @@ export default function App() {
       const currentlyPlaying = useEditorStore.getState().isPlaying;
       const cfg = getStoredTTSConfig();
       const mainTrack = dsl.audio?.tracks?.[0];
-      const isOfflineVoice = cfg.mode === 'offline' || !!mainTrack?.isOfflineTTS || !!mainTrack?.id?.startsWith('track-ai-') || !!mainTrack?.id?.startsWith('tts-');
+      const isRealAudibleVoiceTrack = Boolean(
+        mainTrack?.url &&
+        !mainTrack.isOfflineTTS &&
+        mainTrack.type !== 'offline-tts' &&
+        mainTrack.type !== 'music' &&
+        !mainTrack.isBackgroundBGM &&
+        (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
+      );
 
-      if (currentlyPlaying && isOfflineVoice) {
+      if (currentlyPlaying && !isRealAudibleVoiceTrack) {
         const scene = dsl.scenes[newIdx];
         const text = scene?.voiceoverScript?.trim() || scene?.title;
         if (text) {
@@ -341,9 +348,16 @@ export default function App() {
     if (nextPlaying) {
       const cfg = getStoredTTSConfig();
       const mainTrack = dsl.audio?.tracks?.[0];
-      const isOfflineVoice = cfg.mode === 'offline' || !!mainTrack?.isOfflineTTS || !!mainTrack?.id?.startsWith('track-ai-') || !!mainTrack?.id?.startsWith('tts-');
+      const isRealAudibleVoiceTrack = Boolean(
+        mainTrack?.url &&
+        !mainTrack.isOfflineTTS &&
+        mainTrack.type !== 'offline-tts' &&
+        mainTrack.type !== 'music' &&
+        !mainTrack.isBackgroundBGM &&
+        (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
+      );
 
-      if (isOfflineVoice) {
+      if (!isRealAudibleVoiceTrack) {
         const scene = dsl.scenes[activeSceneIndex] || dsl.scenes[0];
         const text = scene?.voiceoverScript?.trim() || scene?.title;
         if (text) {

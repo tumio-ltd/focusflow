@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui';
 import { downloadStandaloneHtml } from '@/services/standalonePackager';
 import { exportProjectZip } from '@/services/zipExporter';
+import { getStoredTTSConfig } from '@/services/audio';
 
 export interface ExportModalProps {
   isOpen: boolean;
@@ -232,22 +233,37 @@ export function ExportModal({
                     </div>
 
                     {/* 音频合流状态与提示卡片 */}
-                    {dsl.audio?.tracks?.[0]?.url ? (
-                      <div className="mt-2 p-2.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                        <Volume2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>{t('audioTrackDetected', '🎵 已检测到工程母带音轨，录制时将自动为您音画同步合流导出！')}</span>
-                      </div>
-                    ) : (
-                      <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-2 leading-relaxed">
-                        <VolumeX className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                          <div className="font-semibold text-amber-800 dark:text-amber-300">{t('offlineTtsNoticeTitle', '⚠️ 音频录制提示')}</div>
-                          <div className="text-amber-700/90 dark:text-amber-400/90 mt-0.5">
-                            {t('offlineTtsNoticeDesc', '当前工程尚未生成母带音轨。浏览器离线 TTS（Web Speech）受系统沙箱限制无法直接被录屏抓取。如需导出带语音的视频，推荐先在底部时间轴点击【AI 提词批量生成】或配置云端 TTS 生成母带音轨。')}
+                    {(() => {
+                      const mainTrack = dsl.audio?.tracks?.[0];
+                      const ttsConfig = getStoredTTSConfig();
+                      const hasRealMasterAudio = Boolean(
+                        mainTrack?.url &&
+                        !mainTrack.isOfflineTTS &&
+                        mainTrack.type !== 'offline-tts' &&
+                        (!mainTrack.id?.startsWith('track-ai-') || ttsConfig.mode === 'cloud')
+                      );
+
+                      if (hasRealMasterAudio) {
+                        return (
+                          <div className="mt-2 p-2.5 bg-emerald-500/10 border border-emerald-500/25 rounded-lg text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <Volume2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <span>{t('audioTrackDetected', '🎵 已检测到实体母带音轨，录制时将自动为您音画同步合流导出！')}</span>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="mt-2 p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[11px] text-amber-700 dark:text-amber-400 flex items-start gap-2 leading-relaxed">
+                          <VolumeX className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                          <div>
+                            <div className="font-semibold text-amber-800 dark:text-amber-300">{t('offlineTtsNoticeTitle', '⚠️ 音频录制与内录提示')}</div>
+                            <div className="text-amber-700/90 dark:text-amber-400/90 mt-0.5">
+                              {t('offlineTtsNoticeDesc', '当前使用的是浏览器离线系统语音（Web Speech）。受浏览器安全沙箱限制，标签页内录无法直接捕获离线语音，导出的视频将无声。如需导出带语音的视频，推荐：1. 配置云端 TTS（自备 Key 一键合成实体母带）；2. 使用时间轴麦克风录制配音；3. 或直接导入现成配音音频。')}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

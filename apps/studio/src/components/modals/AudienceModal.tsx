@@ -68,17 +68,23 @@ export function AudienceModal({
     const cfg = getStoredTTSConfig();
     const mainTrack = activeDsl.audio?.tracks?.[0];
 
-    // 1. 若当前存在主旁白实体音频（voiceover 模式且包含 url），严禁 WebSpeech 朗读以防两路混叠双播！
-    if (mainTrack?.url && (mainTrack.type === 'voiceover' || (!mainTrack.isBackgroundBGM && mainTrack.type !== 'music'))) {
+    // 判断当前音轨是否为“已具备实体解说语音的音轨”（如：用户上传的旁白、麦克风录音、或云端 TTS 合成的实体音频）
+    // 只有当存在由播放器负责播放的真实旁白实体音频时，才静音 WebSpeech，彻底防止双播混叠
+    const isRealAudibleVoiceTrack = Boolean(
+      mainTrack?.url &&
+      !mainTrack.isOfflineTTS &&
+      mainTrack.type !== 'offline-tts' &&
+      mainTrack.type !== 'music' &&
+      !mainTrack.isBackgroundBGM &&
+      (!mainTrack.id?.startsWith('track-ai-') || cfg.mode === 'cloud')
+    );
+
+    if (isRealAudibleVoiceTrack) {
       return;
     }
 
-    // 2. 若当前配置为云端 TTS 且有实体音轨，由 HTML5 Audio 实体播放，严禁 WebSpeech 介入
-    if (cfg.mode === 'cloud' && mainTrack?.url) {
-      return;
-    }
-
-    // 3. 当处于纯离线模式、或当前音轨被明确设为背景伴奏 (music / isBackgroundBGM) 时，由 WebSpeech 朗读分幕台词
+    // 只要不是实体语音在播放（包括：纯离线 TTS、AI 离线占位音轨、背景伴奏 BGM 模式、或工程无音轨），
+    // 均必须由 WebSpeech 朗读当前分幕的台词提词！
     const scene = activeDsl.scenes?.[sceneIndex];
     const text = scene?.voiceoverScript?.trim() || scene?.title;
     if (text) {
