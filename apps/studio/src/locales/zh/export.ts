@@ -18,6 +18,8 @@ export default {
   cancel: '取消',
   successExport: '已成功导出！',
   packaging: '打包编译中...',
+  successArchive: '已成功归档！',
+  compressing: 'ZIP 压缩中...',
   videoTip: '💡 提示：点击后系统将唤起浏览器原生“共享标签页”授权，选择当前 FocusFlow 标签页即可自动开启全屏演播并一键下载 60FPS 视频。',
   recordingInProgress: '正在录制 60FPS 演播...',
   finishAndSave: '完成保存',

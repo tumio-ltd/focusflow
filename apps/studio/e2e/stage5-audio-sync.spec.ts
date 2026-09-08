@@ -636,6 +636,71 @@ async function verifyAudioTrackDeletionAndZeroSilence(page: Page): Promise<void>
   await page.waitForTimeout(300);
 }
 
+/**
+ * 验证导出中心模态框全英文国际化与零中文残留 (TC576)
+ */
+async function verifyEnglishExportModalLocalization(page: Page): Promise<void> {
+  // 1. 确保当前处于 EN 语言环境
+  const localePicker = page.locator('[data-testid="locale-picker"]');
+  await expect(localePicker).toBeVisible();
+  const currentLangText = await localePicker.innerText();
+  if (currentLangText.includes('ZH')) {
+    await localePicker.click();
+  }
+  await expect(localePicker).toContainText('EN');
+
+  // 2. 点击顶栏导出按钮唤起 ExportModal
+  const exportBtn = page.locator('[data-testid="export-btn"]');
+  await expect(exportBtn).toBeVisible();
+  await exportBtn.click();
+
+  const exportModal = page.locator('[data-testid="export-modal"]');
+  await expect(exportModal).toBeVisible({ timeout: 5000 });
+
+  // 3. 验证头部标题与副标题为纯正英文
+  await expect(exportModal).toContainText('Export Presentation (Export Center)');
+  await expect(exportModal).toContainText('Pure client-side compile · 0 dependencies · 100% offline privacy');
+
+  // 4. 验证 HTML Tab 为纯英文且无中文残留
+  const tabHtml = exportModal.locator('[data-testid="tab-html"]');
+  await expect(tabHtml).toContainText('Standalone HTML');
+  await tabHtml.click();
+
+  const htmlCardText = await exportModal.innerText();
+  expect(htmlCardText).toContain('0-Dependency Single HTML File');
+  expect(htmlCardText).toContain('Cross-platform double-click to view');
+  expect(htmlCardText).toContain('60FPS Hardware-accelerated camera');
+  expect(htmlCardText).toContain('Download .html File');
+  expect(htmlCardText).toContain('Cancel');
+
+  // 5. 切换至 ZIP Tab 并验证
+  const tabZip = exportModal.locator('[data-testid="tab-zip"]');
+  await expect(tabZip).toContainText('Project ZIP Archive');
+  await tabZip.click();
+
+  const zipCardText = await exportModal.innerText();
+  expect(zipCardText).toContain('Standard Project ZIP Archive');
+  expect(zipCardText).toContain('Download .zip Archive');
+
+  // 6. 切换至 Video Tab 并验证
+  const tabVideo = exportModal.locator('[data-testid="tab-video"]');
+  await expect(tabVideo).toContainText('Client Video Recording');
+  await tabVideo.click();
+
+  const videoCardText = await exportModal.innerText();
+  expect(videoCardText).toContain('Local 60FPS WebM High-Definition Recording');
+  expect(videoCardText).toContain('Start Auto Recording');
+
+  // 7. 核心断言：全量扫描 ExportModal 容器，断言绝对不含任何中文字符（零中文残留）
+  const chineseCharsMatch = videoCardText.match(/[\u4e00-\u9fa5]/g);
+  expect(chineseCharsMatch || []).toHaveLength(0);
+
+  // 8. 安全关闭弹窗
+  const cancelBtn = exportModal.locator('button', { hasText: 'Cancel' }).first();
+  await cancelBtn.click();
+  await expect(exportModal).not.toBeVisible();
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -700,6 +765,10 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC575: 验证删除音频轨后时间轴波形移除且演播播放彻底静音无声', async ({ page }) => {
     await verifyAudioTrackDeletionAndZeroSilence(page);
+  });
+
+  test('TC576: 验证导出中心模态框全英文国际化与零中文残留', async ({ page }) => {
+    await verifyEnglishExportModalLocalization(page);
   });
 });
 

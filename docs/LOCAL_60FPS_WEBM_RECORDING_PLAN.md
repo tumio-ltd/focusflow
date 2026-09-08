@@ -658,24 +658,24 @@ flowchart TD
 | **ZIP 下载按钮** | L215 | `{isSuccess ? '已成功归档！' : isExporting ? 'ZIP 压缩中...' : '立即下载 .zip 压缩包'}` | `{isSuccess ? t('successArchive') : isExporting ? t('compressing') : t('downloadZip')}` | `Archived successfully!` / `Compressing ZIP...` / `Download .zip Archive` |
 
 #### 2. 多语言字典扩展 Checklist (i18n Dictionaries Delta)
-- [ ] 检查并在 [`apps/studio/src/locales/zh/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/export.ts) 补齐状态词条：
+- [x] 检查并在 [`apps/studio/src/locales/zh/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/export.ts) 补齐状态词条：
   ```typescript
   successArchive: '已成功归档！',
   compressing: 'ZIP 压缩中...',
   ```
-- [ ] 检查并在 [`apps/studio/src/locales/en/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/export.ts) 补齐状态词条：
+- [x] 检查并在 [`apps/studio/src/locales/en/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/export.ts) 补齐状态词条：
   ```typescript
   successArchive: 'Archived successfully!',
   compressing: 'Compressing ZIP...',
   ```
 
 #### 3. 重构实施与代码替换 Checklist
-- [ ] 在 [`ExportModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx) 中全面移除 15 处硬编码中文，绑定 `t('key')`；
-- [ ] 校验各按钮动态三态切换（`isSuccess` / `isExporting` / 初始态）的双语流畅呈现；
-- [ ] 执行 `pnpm --filter @focusflow/studio typecheck` 验证 TS 编译通过。
+- [x] 在 [`ExportModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx) 中全面移除 15 处硬编码中文，绑定 `t('key')`；
+- [x] 校验各按钮动态三态切换（`isSuccess` / `isExporting` / 初始态）的双语流畅呈现；
+- [x] 执行 `pnpm --filter @focusflow/studio typecheck` 验证 TS 编译通过。
 
 #### 4. E2E 自动化测试覆盖方案 (TC576)
-- [ ] 在 [`apps/studio/e2e/stage5-audio-sync.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-audio-sync.spec.ts) 中增加独立验证函数 `verifyEnglishExportModalLocalization(page: Page)`：
+- [x] 在 [`apps/studio/e2e/stage5-audio-sync.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-audio-sync.spec.ts) 中增加独立验证函数 `verifyEnglishExportModalLocalization(page: Page)`：
   1. 切换至 EN 语言环境；
   2. 点击顶部导航栏 `data-testid="export-btn"` 唤起 `ExportModal`；
   3. 依次点击切换 `tab-html`、`tab-zip`、`tab-video`；

@@ -84,8 +84,8 @@ export function ExportModal({
               <Download className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-foreground">导出演播工程 (Export Center)</h2>
-              <p className="text-[11px] text-muted-foreground">纯前端编译输出 · 0 依赖 · 100% 本地离线隐私保护</p>
+              <h2 className="text-sm font-semibold text-foreground">{t('exportCenter')}</h2>
+              <p className="text-[11px] text-muted-foreground">{t('exportSubtitle')}</p>
             </div>
           </div>
 
@@ -111,7 +111,7 @@ export function ExportModal({
             }`}
           >
             <FileCode2 className="w-4 h-4" />
-            <span>独立单文件 HTML</span>
+            <span>{t('tabHtml')}</span>
           </button>
 
           <button
@@ -124,7 +124,7 @@ export function ExportModal({
             }`}
           >
             <Archive className="w-4 h-4" />
-            <span>工程 ZIP 归档包</span>
+            <span>{t('tabZip')}</span>
           </button>
 
           <button
@@ -137,7 +137,7 @@ export function ExportModal({
             }`}
           >
             <Video className="w-4 h-4" />
-            <span>客户端视频录制</span>
+            <span>{t('tabVideo')}</span>
           </button>
         </div>
 
@@ -149,9 +149,9 @@ export function ExportModal({
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-xs">0 依赖单个 HTML 文件 (Single File Artifact)</h3>
+                    <h3 className="font-semibold text-foreground text-xs">{t('htmlDescTitle')}</h3>
                     <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
-                      将底图、样式表与 FocusFlow 播放引擎全部内联为单一 <code className="text-primary">.html</code> 文件。双击即可在任意无网设备上流畅运行，适合团队内网邮件分发与高管汇报。
+                      {t('htmlDescText')}
                     </p>
                   </div>
                 </div>
@@ -159,18 +159,18 @@ export function ExportModal({
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border text-[11px] text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Laptop className="w-3.5 h-3.5 text-primary" />
-                    <span>跨平台双击即看</span>
+                    <span>{t('crossPlatform')}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
-                    <span>60FPS 硬件加速运镜</span>
+                    <span>{t('fps60')}</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={onClose}>
-                  取消
+                  {t('cancel')}
                 </Button>
                 <Button
                   variant="cyan"
@@ -180,7 +180,7 @@ export function ExportModal({
                   className="gap-2"
                 >
                   {isSuccess ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                  <span>{isSuccess ? '已成功导出！' : isExporting ? '打包编译中...' : '立即下载 .html 文件'}</span>
+                  <span>{isSuccess ? t('successExport') : isExporting ? t('packaging') : t('downloadHtml')}</span>
                 </Button>
               </div>
             </div>
@@ -192,9 +192,9 @@ export function ExportModal({
                 <div className="flex items-start gap-3">
                   <Archive className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-xs">标准工程 ZIP 归档 (Full Project Bundle)</h3>
+                    <h3 className="font-semibold text-foreground text-xs">{t('zipDescTitle')}</h3>
                     <p className="text-muted-foreground text-[11px] leading-relaxed mt-1">
-                      包含标准 <code className="text-primary">config.json</code> DSL 语法树、<code className="text-primary">assets/</code> 原始高清素材与独立 <code className="text-primary">index.html</code>，便于二次开发与集成。
+                      {t('zipDescText')}
                     </p>
                   </div>
                 </div>
@@ -202,7 +202,7 @@ export function ExportModal({
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={onClose}>
-                  取消
+                  {t('cancel')}
                 </Button>
                 <Button
                   variant="cyan"
@@ -212,7 +212,7 @@ export function ExportModal({
                   className="gap-2"
                 >
                   {isSuccess ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-                  <span>{isSuccess ? '已成功归档！' : isExporting ? 'ZIP 压缩中...' : '立即下载 .zip 压缩包'}</span>
+                  <span>{isSuccess ? t('successArchive') : isExporting ? t('compressing') : t('downloadZip')}</span>
                 </Button>
               </div>
             </div>
@@ -258,7 +258,7 @@ export function ExportModal({
                           <div>
                             <div className="font-semibold text-amber-800 dark:text-amber-300">{t('offlineTtsNoticeTitle', '⚠️ 音频录制与内录提示')}</div>
                             <div className="text-amber-700/90 dark:text-amber-400/90 mt-0.5">
-                              {t('offlineTtsNoticeDesc', '当前使用的是浏览器离线系统语音（Web Speech）。受浏览器安全沙箱限制，标签页内录无法直接捕获离线语音，导出的视频将无声。如需导出带语音的视频，推荐：1. 配置云端 TTS（自备 Key 一键合成实体母带）；2. 使用时间轴麦克风录制配音；3. 或直接导入现成配音音频。')}
+                              {t('offlineTtsNoticeDesc')}
                             </div>
                           </div>
                         </div>
@@ -270,7 +270,7 @@ export function ExportModal({
 
               <div className="flex justify-end gap-3 pt-2">
                 <Button variant="outline" onClick={onClose}>
-                  {t('cancel', '取消')}
+                  {t('cancel')}
                 </Button>
                 <Button
                   variant="cyan"
@@ -282,7 +282,7 @@ export function ExportModal({
                   className="gap-2"
                 >
                   <Video className="w-4 h-4" />
-                  <span>{t('startRecording', '启动全自动录制')}</span>
+                  <span>{t('startRecording')}</span>
                 </Button>
               </div>
             </div>

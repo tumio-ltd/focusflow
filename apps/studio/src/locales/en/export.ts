@@ -18,6 +18,8 @@ export default {
   cancel: 'Cancel',
   successExport: 'Exported successfully!',
   packaging: 'Packaging...',
+  successArchive: 'Archived successfully!',
+  compressing: 'Compressing ZIP...',
   videoTip: '💡 Tip: Clicking will trigger browser native "Share Tab" dialog. Select the current FocusFlow tab to automatically start full-screen presentation and export 60FPS video.',
   recordingInProgress: 'Recording 60FPS Presentation...',
   finishAndSave: 'Finish & Save',
