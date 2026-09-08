@@ -25,5 +25,5 @@ export default {
   recordSuccess: '🎉 60FPS WebM video generated and download started!',
   audioTrackDetected: '🎵 Master audio track detected. It will be automatically mixed into the recorded video!',
   offlineTtsNoticeTitle: '⚠️ Audio Recording Notice',
-  offlineTtsNoticeDesc: 'No master audio track has been generated yet. Browser offline TTS (Web Speech) is restricted by the OS sandbox and cannot be captured directly by screen recorders. To export video with sound, please click "Batch AI Voiceover" in the bottom timeline or configure Cloud TTS to generate an audio track.',
+  offlineTtsNoticeDesc: 'No master audio track has been generated yet. Browser offline TTS (Web Speech) is restricted by the OS sandbox and cannot be captured directly by screen recorders. To export video with sound, please click "AI Teleprompter" (✨) in the bottom timeline or configure Cloud TTS to generate an audio track.',
 } as const;
