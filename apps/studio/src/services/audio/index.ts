@@ -1,5 +1,4 @@
 export * from './audioDecoder';
-export * from './waveformWorker';
 export * from './vadAnalyzer';
 export * from './StudioVoiceRecorder';
 export * from './tts/ttsProvider';

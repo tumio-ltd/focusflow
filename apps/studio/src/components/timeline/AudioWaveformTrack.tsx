@@ -291,15 +291,28 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     return boundaries;
   }, [scenes, dsl.meta.controls?.interval]);
 
+  const lastDecodedUrlRef = useRef<string | null>(null);
+  const scenesRef = useRef(scenes);
+  scenesRef.current = scenes;
+  const totalDurationMsRef = useRef(totalDurationMs);
+  totalDurationMsRef.current = totalDurationMs;
+
   // Load and decode audio when track URL changes
   useEffect(() => {
     if (!track?.url) {
+      lastDecodedUrlRef.current = null;
       setPeaks(null);
       setAudioBuffer(null);
       setVadSilences([]);
       setDecodeError(null);
       return;
     }
+
+    // 防死循环重入守卫：若当前 URL 已成功解码，严禁重复拉取、解码与派发 Web Worker
+    if (lastDecodedUrlRef.current === track.url) {
+      return;
+    }
+    lastDecodedUrlRef.current = track.url;
 
     setDecodeError(null);
     let isMounted = true;
@@ -330,7 +343,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         }
 
         if (isOffline || maxPeak < 0.01) {
-          const speechPeaks = generateSpeechPeaks(track.durationMs || totalDurationMs, scenes, 1200);
+          const speechPeaks = generateSpeechPeaks(track.durationMs || totalDurationMsRef.current, scenesRef.current, 1200);
           setPeaks(speechPeaks);
         } else {
           setPeaks(extracted);
@@ -359,7 +372,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [track?.url, scenes, totalDurationMs]);
+  }, [track?.url, setAudioTrack]);
 
   // Scrub audio preview: play a 2.5-second phrase snippet with smooth envelope and animate playhead
   const playScrubGrain = useCallback((timeMs: number, durationSec: number = 2.5) => {
