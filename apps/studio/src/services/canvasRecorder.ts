@@ -36,9 +36,12 @@ export async function startTabRecording(
   }
 
   // 1. 唤起浏览器原生屏幕/标签页捕获授权（引导优先捕获当前标签页）
+  // 施加 1080p 上限约束，彻底防止 Retina 3K/4K 导致 VP9 纯 CPU 软件编码器 400% 满载
   const displayStream: MediaStream = await navigator.mediaDevices.getDisplayMedia({
     video: {
       displaySurface: 'browser',
+      width: { max: 1920 },
+      height: { max: 1080 },
       frameRate: { ideal: fps, max: fps },
     },
     audio: audio ? true : false,
@@ -65,9 +68,9 @@ export async function startTabRecording(
   let elapsed = 0;
   let isStopped = false;
 
-  // 3. 智能选择最高保真编码格式（优先 VP9 8Mbps，回退普通 WebM）
+  // 3. 智能选择最高保真编码格式（优先 VP9 6Mbps，回退普通 WebM）
   let mimeType = 'video/webm';
-  const videoBitsPerSecond = 8000000;
+  const videoBitsPerSecond = 6000000;
 
   if (typeof MediaRecorder !== 'undefined') {
     if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')) {
@@ -114,9 +117,15 @@ export async function startTabRecording(
     try {
       displayStream.getTracks().forEach((track) => {
         track.stop();
+        track.enabled = false;
         track.onended = null;
       });
     } catch {}
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      try {
+        mediaRecorder.stop();
+      } catch {}
+    }
   };
 
   return {

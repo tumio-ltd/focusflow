@@ -85,10 +85,13 @@ export class UserKeyOpenAITTSProvider implements ITTSProvider {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       const ctx = new AudioCtx();
-      const arrayBuffer = await audioBlob.slice(0).arrayBuffer();
-      const decoded = await ctx.decodeAudioData(arrayBuffer);
-      durationMs = Math.round(decoded.duration * 1000);
-      ctx.close().catch(() => {});
+      try {
+        const arrayBuffer = await audioBlob.slice(0).arrayBuffer();
+        const decoded = await ctx.decodeAudioData(arrayBuffer);
+        durationMs = Math.round(decoded.duration * 1000);
+      } finally {
+        ctx.close().catch(() => {});
+      }
     } catch {
       // Estimate fallback
       durationMs = Math.max(1000, Math.round((text.length / 4) * 1000));

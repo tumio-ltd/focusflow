@@ -4,8 +4,26 @@
  */
 
 let globalAudioCtx: AudioContext | null = null;
+let idleSuspendTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * 安排 AudioContext 空闲休眠 (Idle Suspend Watchdog)
+ * 在无音频播放/解码活动 2.5 秒后自动 suspend，释放底层 CoreAudio/WASAPI 系统声卡线程，将音频 CPU 占用降至 0%
+ */
+export function scheduleAudioCtxIdleSuspend(idleDelayMs = 2500) {
+  if (idleSuspendTimer) clearTimeout(idleSuspendTimer);
+  idleSuspendTimer = setTimeout(() => {
+    if (globalAudioCtx && globalAudioCtx.state === 'running') {
+      globalAudioCtx.suspend().catch(() => {});
+    }
+  }, idleDelayMs);
+}
 
 export function getAudioContext(): AudioContext {
+  if (idleSuspendTimer) {
+    clearTimeout(idleSuspendTimer);
+    idleSuspendTimer = null;
+  }
   if (!globalAudioCtx || globalAudioCtx.state === 'closed') {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     globalAudioCtx = new AudioCtx();
@@ -30,16 +48,21 @@ export async function decodeAudioFile(fileOrBlob: Blob): Promise<DecodedAudioInf
   const arrayBuffer = await fileOrBlob.arrayBuffer();
   const ctx = getAudioContext();
   
-  // decodeAudioData detaches the arrayBuffer in some browsers, so slice if needed
-  const bufferCopy = arrayBuffer.slice(0);
-  const audioBuffer = await ctx.decodeAudioData(bufferCopy);
+  try {
+    // decodeAudioData detaches the arrayBuffer in some browsers, so slice if needed
+    const bufferCopy = arrayBuffer.slice(0);
+    const audioBuffer = await ctx.decodeAudioData(bufferCopy);
 
-  return {
-    audioBuffer,
-    durationMs: Math.round(audioBuffer.duration * 1000),
-    sampleRate: audioBuffer.sampleRate,
-    numberOfChannels: audioBuffer.numberOfChannels,
-  };
+    return {
+      audioBuffer,
+      durationMs: Math.round(audioBuffer.duration * 1000),
+      sampleRate: audioBuffer.sampleRate,
+      numberOfChannels: audioBuffer.numberOfChannels,
+    };
+  } finally {
+    // 解码完成启动空闲休眠看门狗
+    scheduleAudioCtxIdleSuspend();
+  }
 }
 
 /**

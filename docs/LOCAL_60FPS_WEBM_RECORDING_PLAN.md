@@ -313,7 +313,7 @@ sequenceDiagram
 
 #### 5 步详细落地治理方案与实施 Checklist
 
-- [ ] **步骤 1：录制混音上下文生命周期绑定与全链路硬终止 (Hard Teardown Protocol)**
+- [x] **步骤 1：录制混音上下文生命周期绑定与全链路硬终止 (Hard Teardown Protocol)**
   - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 中新增专用上下文引用 `mixingAudioCtxRef = useRef<AudioContext | null>(null)`；
   - 在 `handleStartVideoRecording` 创建混流上下文时存入该 ref；
   - 在 `handleFinishVideoRecording` 中通过 `finally` 块强制执行硬终止与彻底置空：
@@ -330,7 +330,7 @@ sequenceDiagram
     ```
   - 在 [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts) 的 `stopTracks` 中，确保对 `displayStream.getTracks()` 进行无死角遍历：切断 `track.stop()`、置 `track.enabled = false` 并清空 `track.onended = null`，斩断操作系统级捕获管道。
 
-- [ ] **步骤 2：Web Audio 上下文单例池化、即用即关与空闲休眠看门狗 (Idle Suspend Watchdog)**
+- [x] **步骤 2：Web Audio 上下文单例池化、即用即关与空闲休眠看门狗 (Idle Suspend Watchdog)**
   - 在 [`apps/studio/src/services/audio/audioDecoder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/audioDecoder.ts) 中增加空闲自动挂起定时器：
     ```typescript
     let idleSuspendTimer: ReturnType<typeof setTimeout> | null = null;
@@ -346,7 +346,7 @@ sequenceDiagram
   - 每次解码完成后自动调用 `scheduleAudioCtxIdleSuspend()`，无音频播放 2.5 秒后自动释放 CoreAudio/WASAPI 系统声卡线程，恢复 0% 音频底噪 CPU；
   - 在 [`aiTtsSynthesizer.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts) 与 [`UserKeyOpenAITTSProvider.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts) 中，将所有临时 `AudioContext` 的创建与释放严格包裹在 `try ... finally { await ctx.close(); }` 中，杜绝任何异常路径泄漏。
 
-- [ ] **步骤 3：录制捕获分辨率上限钳制与动态编码降级防过载 (Resolution Clamping & Codec Fallback)**
+- [x] **步骤 3：录制捕获分辨率上限钳制与动态编码降级防过载 (Resolution Clamping & Codec Fallback)**
   - 在 [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts) 的 `getDisplayMedia` 中为视轨施加最大分辨率封顶约束（1080P 封顶）：
     ```typescript
     video: {
@@ -359,7 +359,7 @@ sequenceDiagram
   - 防止 Retina 屏将 3K/4K 超大位图塞入编码器。对于超高分屏，降采样至 1080p 既能保证 60FPS 极佳清晰度，又能直接节省 **65% 以上** 的 CPU 编码算力；
   - 智能码率动态调优：在 1080p 下将码率设定在适宜的 5Mbps~6Mbps，避免多核纯软解满载（从 400% 降至 60%~100% 舒适区间）。
 
-- [ ] **步骤 4：Studio 静态编辑态流光动效按需冻结与 GPU 硬件加速分层 (Idle Animation Pausing)**
+- [x] **步骤 4：Studio 静态编辑态流光动效按需冻结与 GPU 硬件加速分层 (Idle Animation Pausing)**
   - 在 [`packages/player/src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/packages/player/src/styles/focusflow.css) 中定义编辑态空闲挂起规则：
     ```css
     /* 当画布处于静态非播放编辑态时，挂起无限循环流光与呼吸脉冲 */
@@ -372,7 +372,7 @@ sequenceDiagram
   - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 主画布容器中，依据当前是否处于全屏演示或播放态（`isPlaying` / `isAudienceModalOpen`），动态赋予 `.ff-canvas-idle` 类名；
   - 为带有滤镜的节点添加 `will-change: transform; transform: translateZ(0);` 强制提升为独立 GPU 合成图层，彻底消除 Blink Raster Threads 的高频无用重绘，将日常静止 CPU 从 **106% 直接暴降至 < 5%**！
 
-- [ ] **步骤 5：组件卸载与页面生命周期全局异常兜底钩子 (Unmount & Window Teardown Safe Guard)**
+- [x] **步骤 5：组件卸载与页面生命周期全局异常兜底钩子 (Unmount & Window Teardown Safe Guard)**
   - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 挂载全局 `beforeunload` 与 `useEffect` 清理钩子：
     ```typescript
     useEffect(() => {
@@ -393,7 +393,7 @@ sequenceDiagram
     ```
   - 确保即使用户强行刷新、误关页面或发生非受控崩溃，底层捕获流与音频上下文也能在微秒级时间内触发操作系统硬释放。
 
-- [ ] **步骤 6：基于本地实测工具进行量化验证闭环 (Verification Benchmark Protocol)**
+- [x] **步骤 6：基于本地实测工具进行量化验证闭环 (Verification Benchmark Protocol)**
   - 工具脚本：[`apps/studio/scripts/measure-cpu.mjs`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/scripts/measure-cpu.mjs)；
   - 详细使用指南：[`apps/studio/scripts/README.md`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/scripts/README.md)；
   - 运行命令：`pnpm --filter @focusflow/studio test:cpu` 或 `node apps/studio/scripts/measure-cpu.mjs [秒数]`；

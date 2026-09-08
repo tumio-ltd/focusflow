@@ -200,12 +200,24 @@
 
 .ff-dot.active {
   opacity: 1;
+  will-change: transform;
+  transform: translateZ(0);
   animation: ffDotPulse 1.8s ease-in-out infinite alternate;
 }
 
 @keyframes ffDotPulse {
   0% { transform: scale(0.85); opacity: 0.7; }
   100% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 8px currentColor); }
+}
+
+/* ==========================================================================
+   2.1 Idle Animation Freezing (CPU 节能与防重绘风暴)
+   当画布处于静态非播放编辑态时，挂起无限循环流光与呼吸脉冲，将日常编辑态 CPU 从 100%+ 降至 < 5%
+   ========================================================================== */
+.ff-canvas-idle .ff-stream,
+.ff-canvas-idle .ff-path.ff-path-pulse,
+.ff-canvas-idle .ff-dot.active {
+  animation-play-state: paused !important;
 }
 
 /* ==========================================================================

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import clsx from 'clsx';
 import { FocusFlowPlayer } from '@focusflow/player';
 import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem } from '@focusflow/dsl';
 import { 
@@ -45,6 +46,7 @@ export default function App() {
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const recordingSessionRef = useRef<RecordingSession | null>(null);
+  const mixingAudioCtxRef = useRef<AudioContext | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -411,24 +413,30 @@ export default function App() {
 
   const handleFinishVideoRecording = useCallback(async () => {
     const session = recordingSessionRef.current;
-    if (!session) {
-      setIsRecordingVideo(false);
-      setIsAudienceModalOpen(false);
-      return;
-    }
+    recordingSessionRef.current = null;
+    setIsRecordingVideo(false);
+    setIsAudienceModalOpen(false);
+
     try {
-      const blob = await session.stop();
-      recordingSessionRef.current = null;
-      setIsRecordingVideo(false);
-      setIsAudienceModalOpen(false);
-      if (blob && blob.size > 0) {
-        downloadVideoBlob(blob, `${dsl.meta?.title || 'focusflow'}-60fps`);
+      if (session) {
+        const blob = await session.stop();
+        if (blob && blob.size > 0) {
+          downloadVideoBlob(blob, `${dsl.meta?.title || 'focusflow'}-60fps`);
+        }
       }
     } catch (err) {
       console.error('[FocusFlow] 结束录制失败:', err);
-      recordingSessionRef.current = null;
-      setIsRecordingVideo(false);
-      setIsAudienceModalOpen(false);
+    } finally {
+      // 彻底硬终止录制混音上下文，释放 macOS CoreAudio / WASAPI 底层系统音频硬件线程
+      if (mixingAudioCtxRef.current && mixingAudioCtxRef.current.state !== 'closed') {
+        try {
+          await mixingAudioCtxRef.current.close();
+        } catch (e) {
+          console.warn('[FocusFlow] 释放录制混音上下文异常:', e);
+        } finally {
+          mixingAudioCtxRef.current = null;
+        }
+      }
     }
   }, [dsl.meta?.title]);
 
@@ -444,7 +452,12 @@ export default function App() {
           audioEl.crossOrigin = 'anonymous';
           const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
           if (AudioCtx) {
+            // 若存在未释放的旧混音上下文，先行安全终止
+            if (mixingAudioCtxRef.current && mixingAudioCtxRef.current.state !== 'closed') {
+              mixingAudioCtxRef.current.close().catch(() => {});
+            }
             const ctx = new AudioCtx();
+            mixingAudioCtxRef.current = ctx;
             const source = ctx.createMediaElementSource(audioEl);
             const destination = ctx.createMediaStreamDestination();
             source.connect(destination);
@@ -483,7 +496,29 @@ export default function App() {
       console.error('[FocusFlow] 启动录制异常:', err);
       alert('无法启动屏幕录制: ' + (err?.message || '未知错误'));
     }
-  }, [handleFinishVideoRecording, setActiveSceneIndex]);
+  }, [dsl.audio?.tracks, handleFinishVideoRecording, setActiveSceneIndex]);
+
+  // 全局异常与窗口卸载兜底安全清理：确保在异常退出、误关窗口或崩溃前微秒级硬释放录制管道与音频上下文
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (recordingSessionRef.current) {
+        try {
+          recordingSessionRef.current.cancel();
+        } catch {}
+      }
+      if (mixingAudioCtxRef.current && mixingAudioCtxRef.current.state !== 'closed') {
+        try {
+          mixingAudioCtxRef.current.close();
+        } catch {}
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      handleBeforeUnload();
+    };
+  }, []);
 
   useStudioKeyboard({
     onExport: () => setIsExportModalOpen(true),
@@ -650,8 +685,14 @@ export default function App() {
             onTransformChange={handleCanvasTransformChange}
           >
             <div className="w-full h-full relative">
-              {/* [特性 2] 底层 FocusFlow 播放器挂载容器 - 真实加载工程底图 */}
-              <div ref={containerRef} className="w-full h-full absolute inset-0 pointer-events-none" />
+              {/* [特性 2] 底层 FocusFlow 播放器挂载容器 - 真实加载工程底图 (非播放态挂起流光动效防 CPU 占用) */}
+              <div
+                ref={containerRef}
+                className={clsx(
+                  'w-full h-full absolute inset-0 pointer-events-none',
+                  !isPlaying && !isAudienceModalOpen && 'ff-canvas-idle'
+                )}
+              />
 
               {/* [特性 6] 四大标定标注工具全量图层 (选框 / 连线 / 圆点 / 气泡 / 取景框 / 激光准星) */}
               <CanvasOverlay

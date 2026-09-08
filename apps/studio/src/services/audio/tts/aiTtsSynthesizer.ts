@@ -95,79 +95,82 @@ export async function synthesizeAllScenesVoiceover(
   const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
   const ctx = new AudioCtx();
 
-  const renderedBlobs: Blob[] = [];
-  const sceneDurations: number[] = [];
-  const markers: AudioMarker[] = [];
-  let currentOffsetMs = 0;
+  try {
+    const renderedBlobs: Blob[] = [];
+    const sceneDurations: number[] = [];
+    const markers: AudioMarker[] = [];
+    let currentOffsetMs = 0;
 
-  for (let i = 0; i < scenes.length; i++) {
-    const scene = scenes[i];
-    const text = scene.voiceoverScript?.trim() || scene.title;
-    const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      const text = scene.voiceoverScript?.trim() || scene.title;
+      const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
 
-    renderedBlobs.push(res.audioBlob);
-    const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs, defaultInterval);
-    sceneDurations.push(adaptedDuration);
+      renderedBlobs.push(res.audioBlob);
+      const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs, defaultInterval);
+      sceneDurations.push(adaptedDuration);
 
-    markers.push({
-      id: `marker-scene-${i}`,
-      timeMs: currentOffsetMs,
-      label: scene.title,
-      sceneIndex: i,
-    });
+      markers.push({
+        id: `marker-scene-${i}`,
+        timeMs: currentOffsetMs,
+        label: scene.title,
+        sceneIndex: i,
+      });
 
-    currentOffsetMs += adaptedDuration;
+      currentOffsetMs += adaptedDuration;
+    }
+
+    // Concatenate rendered audio blobs into one master AudioBuffer
+    const decodedBuffers: AudioBuffer[] = [];
+    for (const blob of renderedBlobs) {
+      const decoded = await decodeAudioFile(blob);
+      decodedBuffers.push(decoded.audioBuffer);
+    }
+
+    const sampleRate = decodedBuffers[0]?.sampleRate || 44100;
+    const totalLength = Math.ceil((currentOffsetMs / 1000) * sampleRate);
+    const combinedBuffer = ctx.createBuffer(1, Math.max(1, totalLength), sampleRate);
+    const combinedChannel = combinedBuffer.getChannelData(0);
+
+    let writeOffset = 0;
+    for (let i = 0; i < decodedBuffers.length; i++) {
+      const buf = decodedBuffers[i];
+      const channel = buf.getChannelData(0);
+      combinedChannel.set(channel, writeOffset);
+      // Move to next scene's start time
+      writeOffset = Math.floor((markers[i + 1]?.timeMs ?? currentOffsetMs) / 1000 * sampleRate);
+    }
+
+    // Encode combinedBuffer to WAV Blob
+    const wavBlob = audioBufferToWavBlob(combinedBuffer);
+    const trackUrl = URL.createObjectURL(wavBlob);
+
+    const updatedScenes = scenes.map((scene, idx) => ({
+      ...scene,
+      duration: sceneDurations[idx],
+    }));
+
+    const isOffline = activeProvider.name.includes('Web Speech') || activeProvider.name.includes('离线') || cfg.mode === 'offline';
+    const track: AudioTrackConfig = {
+      id: `track-ai-${Date.now()}`,
+      name: `AI 智能配音合流 (${activeProvider.name})`,
+      url: trackUrl,
+      durationMs: currentOffsetMs,
+      volume: 1.0,
+      muted: false,
+      isOfflineTTS: isOffline,
+      type: isOffline ? 'offline-tts' : 'voiceover',
+      markers,
+    };
+
+    return {
+      track,
+      updatedScenes,
+    };
+  } finally {
+    // 强制关闭上下文，避免硬件音频线程未释放导致 CPU 泄漏
+    ctx.close().catch(() => {});
   }
-
-  // Concatenate rendered audio blobs into one master AudioBuffer
-  const decodedBuffers: AudioBuffer[] = [];
-  for (const blob of renderedBlobs) {
-    const decoded = await decodeAudioFile(blob);
-    decodedBuffers.push(decoded.audioBuffer);
-  }
-
-  const sampleRate = decodedBuffers[0]?.sampleRate || 44100;
-  const totalLength = Math.ceil((currentOffsetMs / 1000) * sampleRate);
-  const combinedBuffer = ctx.createBuffer(1, Math.max(1, totalLength), sampleRate);
-  const combinedChannel = combinedBuffer.getChannelData(0);
-
-  let writeOffset = 0;
-  for (let i = 0; i < decodedBuffers.length; i++) {
-    const buf = decodedBuffers[i];
-    const channel = buf.getChannelData(0);
-    combinedChannel.set(channel, writeOffset);
-    // Move to next scene's start time
-    writeOffset = Math.floor((markers[i + 1]?.timeMs ?? currentOffsetMs) / 1000 * sampleRate);
-  }
-
-  // Encode combinedBuffer to WAV Blob
-  const wavBlob = audioBufferToWavBlob(combinedBuffer);
-  const trackUrl = URL.createObjectURL(wavBlob);
-
-  const updatedScenes = scenes.map((scene, idx) => ({
-    ...scene,
-    duration: sceneDurations[idx],
-  }));
-
-  const isOffline = activeProvider.name.includes('Web Speech') || activeProvider.name.includes('离线') || cfg.mode === 'offline';
-  const track: AudioTrackConfig = {
-    id: `track-ai-${Date.now()}`,
-    name: `AI 智能配音合流 (${activeProvider.name})`,
-    url: trackUrl,
-    durationMs: currentOffsetMs,
-    volume: 1.0,
-    muted: false,
-    isOfflineTTS: isOffline,
-    type: isOffline ? 'offline-tts' : 'voiceover',
-    markers,
-  };
-
-  ctx.close().catch(() => {});
-
-  return {
-    track,
-    updatedScenes,
-  };
 }
 
 /**
