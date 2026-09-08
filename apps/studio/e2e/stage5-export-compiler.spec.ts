@@ -124,15 +124,25 @@ async function verifyPlaybackHudTriState(page: Page): Promise<void> {
   await expect(audienceModal).toBeVisible();
 
   // (1) 默认 full 完整态：
-  // 底部控制浮岛存在、左下角分幕胶囊存在，且包含精准时间刻度与 HUD 模式切换按钮
+  // 底部居中统一 MVP 胶囊存在，分幕指示器存在；
+  // 核心特性检验：手动自控/暂停态下时间刻度严格隐藏 (not.toBeVisible)，点击空格播放时动态展开显示！
+  const controlsIsland = page.locator('[data-testid="audience-controls"]');
+  await expect(controlsIsland).toBeVisible();
+
   const scenePill = page.locator('[data-testid="audience-scene-pill"]');
   await expect(scenePill).toBeVisible();
+
   const sceneTimer = page.locator('[data-testid="audience-scene-timer"]');
+  await expect(sceneTimer).not.toBeVisible(); // 手动暂停态下严格隐藏时间
+
+  // 触发播放，验证时间刻度微勋章平滑展开
+  await page.keyboard.press(' ');
   await expect(sceneTimer).toBeVisible();
   await expect(sceneTimer).toContainText(/00:00/);
 
-  const controlsIsland = page.locator('[data-testid="audience-controls"]');
-  await expect(controlsIsland).toBeVisible();
+  // 再次暂停，验证时间微勋章自动收起隐匿
+  await page.keyboard.press(' ');
+  await expect(sceneTimer).not.toBeVisible();
 
   const hudMinimal = page.locator('[data-testid="audience-hud-minimal"]');
   await expect(hudMinimal).not.toBeVisible();
@@ -141,13 +151,10 @@ async function verifyPlaybackHudTriState(page: Page): Promise<void> {
   await page.keyboard.press('h');
   await expect(hudMinimal).toBeVisible();
   await expect(controlsIsland).not.toBeVisible();
-  await expect(scenePill).not.toBeVisible();
-  await expect(hudMinimal).toContainText(/00:00/);
 
   // (3) 再次按下 H：切换至 zen 沉浸纯净态
   await page.keyboard.press('h');
   await expect(controlsIsland).not.toBeVisible();
-  await expect(scenePill).not.toBeVisible();
   await expect(hudMinimal).not.toBeVisible();
 
   // (4) 再次按下 H：恢复至 full 完整排练态

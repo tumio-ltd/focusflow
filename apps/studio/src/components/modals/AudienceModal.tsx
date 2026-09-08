@@ -394,96 +394,108 @@ export function AudienceModal({
         </div>
       )}
 
-      {/* 2. 场景指示与时间刻度胶囊 (下移至左下角，完整态 full 下展示) */}
-      {!isRecording && playbackHudMode === 'full' && (
-        <div
-          data-testid="audience-scene-pill"
-          className={`absolute bottom-6 left-6 flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-800 pointer-events-auto z-30 shadow-lg transition-opacity duration-300 ${
-            isUserActive || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-          <span className="text-xs font-mono font-semibold text-white">
-            {String(currentSceneIdx + 1).padStart(2, '0')} / {String(totalScenes).padStart(2, '0')}
-          </span>
-          <div className="h-3 w-px bg-slate-800" />
-          <span className="text-xs text-slate-300 font-medium max-w-sm truncate">
-            {currentScene?.title}
-          </span>
-          <div className="h-3 w-px bg-slate-800" />
-          <div className="flex items-center gap-1.5 text-xs font-mono text-cyan-300" data-testid="audience-scene-timer">
-            <Clock className="w-3 h-3 text-cyan-400" />
-            <span>{formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)}</span>
-          </div>
-          <span className="text-[10px] font-mono text-slate-400" title="整场累计进度">
-            (总 {formatTime(totalElapsedMs)} / {formatTime(totalDurationMs)})
-          </span>
-        </div>
-      )}
-
-      {/* 3. 核心 60FPS 渲染容器 */}
+      {/* 2. 核心 60FPS 渲染容器 */}
       <div ref={containerRef} className="w-full h-full relative" />
 
-      {/* 4. 底部半透明悬浮演播控制浮岛 (完整态 full 下展示，录制模式下自动隐匿) */}
+      {/* 3. 底部居中统一 MVP 演播控制胶囊 (完整态 full 下展示，录制模式下物理剥离 0 DOM) */}
       {!isRecording && playbackHudMode === 'full' && (
         <div
           data-testid="audience-controls"
-          className={`absolute bottom-6 flex items-center gap-2 bg-slate-900/85 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-800/80 shadow-2xl z-30 transition-opacity duration-300 ${
-            isUserActive || !isPlaying ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          className={`absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2.5 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-full border border-slate-800/90 shadow-2xl z-30 transition-all duration-300 max-w-[92vw] ${
+            isUserActive || !isPlaying ? 'opacity-100 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95'
           }`}
         >
+          {/* 上一幕 */}
           <Button
             size="icon"
             variant="ghost"
             onClick={handlePrev}
             disabled={currentSceneIdx === 0}
-            className="h-8 w-8 text-slate-300 hover:text-white"
+            className="h-8 w-8 text-slate-300 hover:text-white rounded-full"
+            title="上一幕 (ArrowLeft / PageUp)"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
 
+          {/* 播放 / 暂停 */}
           <Button
             size="icon"
             variant="cyan"
             onClick={handleTogglePlay}
-            className="h-9 w-9 rounded-xl"
+            className="h-8 w-8 rounded-full shadow-sm"
+            title={isPlaying ? '暂停 (Space)' : '自动演播 (Space)'}
           >
-            {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+            {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
           </Button>
 
+          {/* 下一幕 */}
           <Button
             size="icon"
             variant="ghost"
             onClick={handleNext}
             disabled={currentSceneIdx === totalScenes - 1}
-            className="h-8 w-8 text-slate-300 hover:text-white"
+            className="h-8 w-8 text-slate-300 hover:text-white rounded-full"
+            title="下一幕 (ArrowRight / PageDown)"
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
 
-          <div className="h-4 w-px bg-slate-800 mx-1" />
+          <div className="h-4 w-px bg-slate-800" />
 
-          <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
-            <Layers className="w-3 h-3 text-cyan-400" />
-            <span>{(currentScene?.activeElements.boxes || []).length} 图元</span>
+          {/* 分幕序号与标题指示器 */}
+          <div data-testid="audience-scene-pill" className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-xs font-mono font-semibold text-white">
+              {String(currentSceneIdx + 1).padStart(2, '0')} / {String(totalScenes).padStart(2, '0')}
+            </span>
+            <div className="h-3 w-px bg-slate-800" />
+            <span className="text-xs text-slate-300 font-medium max-w-[160px] truncate" title={currentScene?.title}>
+              {currentScene?.title}
+            </span>
           </div>
 
-          <div className="h-4 w-px bg-slate-800 mx-1" />
+          {/* 动态时间刻度微区域：
+              仅在自动演播推演中 (isPlaying=true) 动态展开，毫秒级秒表精准掌控排练节奏；
+              手动单步交互态 (isPlaying=false) 下 100% 严格隐藏，消除无效时间焦虑！ */}
+          {isPlaying && (
+            <>
+              <div className="h-4 w-px bg-slate-800" />
+              <div
+                data-testid="audience-scene-timer"
+                className="flex items-center gap-1.5 text-xs font-mono text-cyan-300 bg-cyan-950/50 border border-cyan-500/20 px-2.5 py-0.5 rounded-full animate-in fade-in zoom-in-95 duration-200"
+                title={`当前分幕: ${formatTime(sceneElapsedMs)} / ${formatTime(currentSceneDurationMs)} · 整场累计: ${formatTime(totalElapsedMs)} / ${formatTime(totalDurationMs)}`}
+              >
+                <Clock className="w-3 h-3 text-cyan-400 animate-pulse" />
+                <span>{formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)}</span>
+              </div>
+            </>
+          )}
 
+          <div className="h-4 w-px bg-slate-800" />
+
+          {/* 图元统计 */}
+          <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono hidden md:flex">
+            <Layers className="w-3 h-3 text-cyan-400" />
+            <span>{(currentScene?.activeElements.boxes || []).length}</span>
+          </div>
+
+          <div className="h-4 w-px bg-slate-800 hidden md:block" />
+
+          {/* HUD 模式切换按钮 */}
           <Button
             size="icon"
             variant="ghost"
             data-testid="hud-mode-toggle"
             onClick={cyclePlaybackHudMode}
-            className="h-8 w-8 text-slate-300 hover:text-white"
-            title="切换 HUD 模式 (H: 完整/胶囊/纯净)"
+            className="h-8 w-8 text-slate-300 hover:text-white rounded-full"
+            title="切换 HUD 模式 (H: 完整/胶囊/沉浸)"
           >
             <Eye className="w-4 h-4 text-cyan-400" />
           </Button>
         </div>
       )}
 
-      {/* 5. 微缩胶囊态 (minimal) */}
+      {/* 4. 微缩胶囊态 (minimal) */}
       {!isRecording && playbackHudMode === 'minimal' && (
         <div
           data-testid="audience-hud-minimal"
@@ -499,7 +511,10 @@ export function AudienceModal({
           >
             <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
             <span className="text-[12px] font-mono font-medium text-slate-200 group-hover:text-cyan-300 transition-colors">
-              {formatTime(sceneElapsedMs)} / {formatTime(currentSceneDurationMs)} · {String(currentSceneIdx + 1).padStart(2, '0')}/{String(totalScenes).padStart(2, '0')}
+              {isPlaying
+                ? `${formatTime(sceneElapsedMs)} / ${formatTime(currentSceneDurationMs)} · `
+                : ''}
+              {String(currentSceneIdx + 1).padStart(2, '0')}/{String(totalScenes).padStart(2, '0')}
             </span>
           </button>
           <div className="h-3 w-px bg-slate-800" />
@@ -521,8 +536,7 @@ export function AudienceModal({
         </div>
       )}
 
-      {/* 6. 沉浸纯净态 (zen) 下的底部感应区与唤醒恢复浮岛：
-          解决“控制条不见了再也找不回来”的痛点！
+      {/* 5. 沉浸纯净态 (zen) 下的底部感应区与唤醒恢复浮岛：
           鼠标移动或滑向屏幕底部时即刻柔和现身，点击直接一键恢复完整控制栏；静止 3 秒后再度平滑淡出 */}
       {!isRecording && playbackHudMode === 'zen' && (
         <>
@@ -542,64 +556,6 @@ export function AudienceModal({
             <span>纯净演播中 · 点击恢复控制栏 (快捷键 H)</span>
           </button>
         </>
-      )}
-
-      {/* 6. 录制模式下的在屏无痕控制条：
-          创作者移动鼠标时清晰展示当前录制时间与【完成并保存】按钮；
-          鼠标静止 3 秒后 100% 自动平滑淡出隐藏（opacity: 0），确保捕获出片的视频绝对纯净无痕！ */}
-      {isRecording && (
-        <div
-          data-testid="recording-hud-bar"
-          className={`absolute bottom-6 flex items-center gap-3 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-rose-500/40 shadow-2xl z-30 transition-opacity duration-300 ${
-            isUserActive ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-            <span className="text-xs font-mono font-bold text-rose-400">REC</span>
-          </div>
-
-          <div className="h-4 w-px bg-slate-800" />
-
-          <div className="flex items-center gap-1.5 text-xs font-mono text-white" data-testid="recording-elapsed-time">
-            <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{formatTime(recordingElapsed * 1000)} / {formatTime(totalDurationMs)}</span>
-          </div>
-
-          <div className="h-4 w-px bg-slate-800" />
-
-          <span className="text-xs text-slate-400 font-mono">
-            第 {currentSceneIdx + 1}/{totalScenes} 幕
-          </span>
-
-          <div className="h-4 w-px bg-slate-800" />
-
-          <Button
-            size="sm"
-            variant="cyan"
-            data-testid="recording-finish-btn"
-            onClick={() => {
-              stopWebSpeech();
-              onFinishRecording?.();
-            }}
-            className="h-7 text-xs px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg shadow-sm"
-          >
-            完成并导出
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              stopWebSpeech();
-              onClose();
-            }}
-            className="h-7 text-xs px-2 text-slate-400 hover:text-rose-400"
-            title="退出录制 (ESC)"
-          >
-            <X className="w-3.5 h-3.5" />
-          </Button>
-        </div>
       )}
     </div>
   );
