@@ -684,22 +684,146 @@ flowchart TD
 
 ---
 
-### 8.4 [P2 重要] 录制时 HUD 进度显示与“无痕出片”隔离方案 (Document PiP / Region Capture)
-- **核心诉求**：
-  用户在录制视频时，希望能看到实时的录制时长进度（`REC 00:08`）与【提前完成并保存】按钮，以便掌控节奏和随时安全退出；**但该 HUD 绝对不能被录制到最终导出的视频画面里**。
-- **技术可行性评估与创新方案**：
-  由于 `navigator.mediaDevices.getDisplayMedia` 捕获的是当前标签页的**最终光栅化画面（Composited Surface）**，任何直接渲染在当前标签页 DOM 树内的常规 HTML 节点都必然会被录进视频中。
-- **落地实施路线**：
-  - [ ] **方案 A：文档画中画独立浮窗（Document Picture-in-Picture API，最佳方案 ⭐）**：
-    - Chrome 111+ 提供了原生的 `window.documentPictureInPicture.requestWindow({ width, height })`；
-    - 启动录制时，系统自动在桌面弹出一个轻量无边框的画中画独立微型控制窗口（显示 `🔴 REC 00:08` 和 `[完成保存]` 按钮）；
-    - **由于画中画窗口是独立的 OS 顶层窗口，物理上脱离当前标签页**，`getDisplayMedia` 捕获当前标签页时，录制视频中 **100% 绝对纯净无任何 HUD**，而用户的屏幕上始终悬浮着可操作的控制浮窗；
-    - 若用户点击浮窗内的 `[完成保存]` 或关闭浮窗，主标签页立即安全收尾并触发下载；
-  - [ ] **方案 B：区域裁剪捕获（Region Capture API）**：
-    - 利用 Chrome 104+ 的 `CropTarget.fromElement(viewportElement)`；
-    - 仅将捕获视口绑定至内层的纯画布容器，将 HUD 放在画布外层侧边，通过硬件级裁剪保证外层 HUD 不被录入；
-  - [ ] **方案 C：鼠标移出即隐匿（Hover-Revealed HUD）**：
-    - 在不支持 Document PiP 的浏览器中提供降级方案：录制时不移动鼠标时 HUD 保持 100% 完全透明（`opacity: 0`），仅当用户将鼠标移至屏幕边缘时微弱显现。
+### 8.4 [P2 重要] 全场景 HUD 进度显示、显隐配置与“无痕出片”隔离方案 (Playback & Recording HUD Architecture)
+
+- **核心诉求升级**：
+  HUD（Heads-Up Display 抬头信息显示）不仅是“视频录制”的专属功能，更贯穿**“演播播放 (Playback)”**与**“视频录制 (Recording)”**两大核心业务流程：
+  1. **演播播放态 (Playback)**：演讲者既需要掌控演讲节奏的**“排练计时刻度模式”**（清晰展示当前分幕已播/总时长以及整场累计进度），又需要在正式大屏投影或演示时一键进入无任何视觉干扰的**“沉浸纯净模式 (Zen Mode)”**；
+  2. **视频录制态 (Recording)**：用户在屏幕前需要实时直观掌握录制时长进度（`🔴 REC 00:08`）与【提前完成并保存】控制器，以便随时掌控录制节奏和退出；**但该 HUD 绝对不能被光栅化录制到最终导出的视频画面中（无痕出片）**。
+
+#### 1. 双模态场景与核心诉求矩阵
+
+| 维度 / 特征 | 演播播放态 (Audience Playback) | 视频录制态 (Video Recording) |
+| :--- | :--- | :--- |
+| **典型场景** | 全屏演示、团队评审、自练排练计时 | 导出 60FPS 纯净 WebM/MP4 视频文件 |
+| **受众主体** | 演讲者自身 / 现场观众 | 观看最终视频的最终用户 |
+| **核心诉求** | 兼顾“排练把控进度时间”与“大屏极简无遮挡演示” | 用户操作台需要看到时间与停止按钮，但**视频像素内 100% 绝对纯净** |
+| **显示载体** | 当前标签页全屏画布上方的浮动控制器或角落 HUD | 桌面独立 OS 顶层浮窗 (Document PiP) 或外层隔离区 |
+| **显隐状态** | `full`（完整态）/ `minimal`（胶囊态）/ `zen`（完全隐藏） | 独立于视口物理隔离，录制区域内永远不可见 |
+| **交互快捷键** | 键盘 `H` 循环切换 HUD 模式，鼠标静止 3s 自动淡出 | 独立浮窗内点击【完成并保存】或按 `Esc` 安全退出 |
+
+---
+
+#### 2. 演播播放态 (Playback) 进度时间与显隐配置设计
+
+##### (1) 时间维度呈现规范
+在演播模式（`AudienceModal`）中，不仅展示当前分幕索引（如 `2 / 5 幕`），同时引入精准的时间刻度显示：
+- **分幕精准计时**：格式化为 `mm:ss / mm:ss`（例如 `00:03 / 00:06`，表示当前幕已播放 3 秒，总时长 6 秒）；
+- **整场累计刻度**：支持展开或切换显示总时长进度 `00:15 / 01:28`（总时长为各幕时长相加）；
+- **时间推进驱动**：由 `requestAnimationFrame` 配合演播状态机高精度推进，与舞台图元关键帧步调严格同步。
+
+##### (2) 三态显隐模型 (`PlaybackHudMode`)
+```typescript
+export type PlaybackHudMode = 'full' | 'minimal' | 'zen';
+```
+1. **`full`（排练计时完整态，默认排练推荐）**：
+   - 底部控制浮岛常驻展开：播放/暂停、前后幕切换、当前幕刻度 `00:03 / 00:06`、整场刻度 `00:15 / 01:28`、音量控制及 HUD 切换按钮；
+   - 适合制作者自测演讲时长或进行节奏排练。
+2. **`minimal`（微缩胶囊态）**：
+   - 收起完整浮岛，仅在屏幕右上角或右下角保留微型半透明磨砂胶囊（高度 28px，字号 12px）：`00:03 / 00:06 · 2/5`；
+   - 鼠标悬停时平滑渐变展开操作按钮，最大程度减少舞台遮挡。
+3. **`zen`（沉浸纯净态 / 演播模式）**：
+   - **完全隐藏所有 HUD 元素与控制器**（`opacity: 0, pointer-events: none`），舞台画面 100% 满屏无遮挡；
+   - 鼠标在屏幕上静止超过 3 秒自动平滑淡出隐藏；移动鼠标或轻触触控板时平滑唤醒临时浮岛；
+   - 随时按键盘快捷键 `H` 或 `Space` 恢复控制。
+
+##### (3) 交互控制与配置持久化
+- **浮岛快捷按钮**：在演播浮岛控制栏右侧增加 HUD 模式切换图标（眼睛/仪表盘图标），点击后弹出模式选择菜单或直接顺序切换；
+- **全局快捷键**：支持单键 `H`（HUD Toggle），在 `full -> minimal -> zen -> full` 之间无缝循环切换；
+- **用户偏好记忆**：存储在 LocalStorage `focusflow_playback_hud_mode`，用户下次开启演播模式时自动继承上次的偏好设置。
+
+---
+
+#### 3. 视频录制态 (Recording) Document PiP 隔离方案设计
+
+##### (1) “无痕出片”的技术冲突与根本解法
+- **底层限制**：`navigator.mediaDevices.getDisplayMedia` 捕获的是当前视口渲染层（Composited Surface）。任何渲染在当前标签页 DOM 树上的常规 HTML 浮层（无论 `z-index` 多高），都会被光栅化为视频像素，无法在录像中过滤。
+- **创新解法：文档画中画独立浮窗（Document Picture-in-Picture API，最佳方案 ⭐）**：
+  - Chrome 111+ 提供了原生的 `window.documentPictureInPicture.requestWindow({ width: 340, height: 130 })`；
+  - 启动无痕录制时，主标签页将演播画面全屏渲染并交由 `getDisplayMedia` 捕获；
+  - 同时在用户桌面上拉起一个原生 OS 顶层独立的微型控制窗口 `<RecordingPiPController />`；
+  - **物理隔离特性**：由于画中画窗口是独立的 OS 原生顶层窗口，**在物理上完全独立于被捕获的标签页 DOM 树**。因此录制视频像素画面中 **100% 绝对纯净无痕**，而用户的桌面上始终悬浮着可操作、可查看计时的精美控制面板。
+
+```mermaid
+flowchart TD
+    subgraph Browser["主浏览器窗口 (录制捕获区)"]
+        Canvas["全屏演播舞台 Stage (100% 纯净光栅化画面)"]
+        Stream["getDisplayMedia Tab Capture 视频流 (零 HUD 污染)"]
+        Recorder["MediaRecorder 编码器 -> 60FPS WebM 文件"]
+        Canvas --> Stream --> Recorder
+    end
+
+    subgraph OSWindow["OS 原生桌面顶层独立窗口 (Document PiP)"]
+        PiP["Document PiP 独立微型控制台 (340x130)"]
+        Timer["🔴 REC 00:08 (实时计时)"]
+        FPS["60 FPS · 1080P 状态指示"]
+        Action["[完成并保存] / [安全取消] 按钮"]
+        PiP --> Timer
+        PiP --> FPS
+        PiP --> Action
+    end
+
+    User(["用户视线与物理操作"]) -->|视觉监控时间| Timer
+    User -->|点击收尾保存| Action
+    Action -->|跨窗口事件通知 postMessage / EventTarget| Recorder
+```
+
+##### (2) 画中画独立控制台 UI 规格 (`RecordingPiPWindow`)
+- **窗口规格**：宽 340px、高 130px，暗色玻璃拟态背景（`#0f172a`），系统圆角；
+- **核心元素**：
+  1. 状态行：呼吸红点 `🔴 REC`、录制时间码 `00:12 / 01:28`（单幕/总长）、帧率与分辨率标签 `60fps · 1080p`；
+  2. 进度条：微型 2px 高精度进度条反映整体录制百分比；
+  3. 控制操作组：
+     - `[提前完成并保存]`（高亮绿色主按钮，带下载图标）；
+     - `[放弃录制]`（幽灵灰色次按钮，带确认防止误触）；
+- **生命周期互锁**：
+  - 若用户在桌面主动关闭画中画窗口，主线程监听 `pipWindow.addEventListener('pagehide', ...)`，自动视为录制完成，平滑收尾导出，绝不丢失数据。
+
+##### (3) 降级方案矩阵 (Fallback Matrix)
+- **方案 B：区域裁剪捕获 (Region Capture API)**：
+  - 适用于 Chrome 104+ 但用户禁止弹出 PiP 窗口的情况；
+  - 利用 `CropTarget.fromElement(stageElement)`，仅将捕获视口绑定至内层的纯画布容器，将录制 HUD 放置于外层侧边，通过浏览器硬件级裁剪保证外层 HUD 不被录入。
+- **方案 C：静止 0% 透明度纯隐匿 (Hover-Revealed In-DOM HUD)**：
+  - 适用于 Safari/Firefox 等不支持 Document PiP 的宿主环境；
+  - 录制时 HUD 默认处于 `opacity: 0, pointer-events: none` 状态；仅当鼠标移入特定热区时短暂微弱呈现，鼠标移开或录制推演过程中始终保持 0% 完全透明，最大程度降低对画面的污染。
+
+---
+
+#### 4. 实施 Checklist 与测试用例规划
+
+##### (1) 模块与代码实现清单
+- [ ] **状态扩展 (`useEditorStore.ts`)**：
+  - 增加 `playbackHudMode: 'full' | 'minimal' | 'zen'`；
+  - 增加 `setPlaybackHudMode(mode: PlaybackHudMode)` 并集成 LocalStorage 同步；
+- [ ] **演播播放态 HUD 组件升级 (`AudienceModal.tsx`)**：
+  - 支持分幕精准时长与整场时长格式化计算（`mm:ss / mm:ss`）；
+  - 实现三态显隐渲染：`full`、`minimal` 悬浮微型胶囊、`zen` 沉浸纯净态；
+  - 增加鼠标移动检测器与 3 秒静止淡出定时器；
+  - 挂载全局键盘快捷键监听器（按键 `H` 循环切换模式）；
+- [ ] **录制画中画控制器 (`RecordingPiPController.ts`)**：
+  - 封装 `openRecordingPiP()`，调用 `window.documentPictureInPicture.requestWindow`；
+  - 挂载 React 根节点注入 Tailwind 基础样式与 `<RecordingPiPContent />`；
+  - 建立与主线程录制状态机（`screenRecorder.ts`）的双向通讯通道（时间同步与终止事件）；
+- [ ] **录制服务集成与降级适配 (`screenRecorder.ts`)**：
+  - 在 `startRecording` 时检测 Document PiP 特性支持度；
+  - 支持画中画窗口随录制结束自动安全关闭（`pipWindow.close()`）。
+
+##### (2) 自动化 E2E 测试用例规划 (Playwright)
+遵从规范：所有测试用例逻辑均抽取为独立的 async 函数，并在 `it()` 中直接调用。
+
+- [ ] **`TC577: 演播播放态 HUD 三态显隐与时间刻度验证 (test_playback_hud_modes)`**：
+  1. 打开测试项目并启动演播播放模式（`AudienceModal`）；
+  2. 验证默认 `full` 模式下存在分幕时间刻度（如 `00:00 / 00:06`）；
+  3. 模拟按下键盘快捷键 `H`，断言切换至 `minimal` 模式（仅微型时间胶囊可见，完整控制条收起）；
+  4. 再次按下 `H`，断言切换至 `zen` 模式（所有 HUD 元素 `opacity` 为 0 或不可见）；
+  5. 再次按下 `H`，断言恢复为 `full` 模式；
+  6. 验证 LocalStorage 中正确保存了最后一次的 HUD 偏好模式。
+- [ ] **`TC578: 录制时无痕出片与独立画中画生命周期验证 (test_recording_pip_isolation)`**：
+  1. 模拟 Document PiP API 支持环境并触发 60FPS 录制；
+  2. 验证主标签页全屏画布内无任何录制控制器 DOM 节点，录制视口干净纯净；
+  3. 验证独立 PiP 窗口成功创建并正常接收到时间推移数据（`REC 00:01` -> `REC 00:02`）；
+  4. 触发 PiP 窗口内的【完成并保存】按钮，断言录制流正常触发 `stop` 并触发文件下载；
+  5. 验证 PiP 窗口随录制结束自动安全销毁。
 
 ---
 
