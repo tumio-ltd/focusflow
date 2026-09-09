@@ -167,6 +167,11 @@ export default function App() {
         },
       });
 
+      const initialIdx = useEditorStore.getState().activeSceneIndex || 0;
+      if (initialIdx > 0) {
+        player.goToStep(initialIdx, false);
+      }
+
       playerRef.current = player;
       // 预先缓存底图像素到 Sobel 空间分析器，并在底图载入时自动校准画布物理 Viewport (消除黑边与比例失真)
       if (player.imgEl) {
@@ -199,7 +204,7 @@ export default function App() {
     } catch (err) {
       console.warn('Player init warning:', err);
     }
-  }, [dsl.asset?.url, currentProjectId, setActiveSceneIndex, calibrateViewport]);
+  }, [dsl.asset?.url, setActiveSceneIndex, calibrateViewport]);
 
   // 3.1 同步播放器独立控制栏显隐
   useEffect(() => {

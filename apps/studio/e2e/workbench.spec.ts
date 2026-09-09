@@ -143,21 +143,23 @@ async function verifyToolSelectionBehavior(page: Page): Promise<void> {
  */
 async function verifySceneTimelineNavigation(page: Page): Promise<void> {
   const timeline = page.locator('[data-testid="timeline"]');
-  const sceneCards = timeline.locator('div.group');
+  const sceneCards = timeline.locator('[data-testid^="scene-card-"]');
 
-  // 初始有 2 个场景
+  // 初始有 2 个场景，且首个场景为高亮激活态
   await expect(sceneCards).toHaveCount(2);
+  await expect(sceneCards.nth(0)).toHaveClass(/border-primary/);
 
   // 切换到第 2 个场景
   await sceneCards.nth(1).click();
   await expect(sceneCards.nth(1)).toHaveClass(/border-primary/);
+  await expect(sceneCards.nth(0)).not.toHaveClass(/border-primary/);
 
   // 点击添加新场景
   const addSceneBtn = timeline.getByRole('button', { name: /添加新场景|Add Scene/ });
   await addSceneBtn.click();
 
   // 验证新增后场景数为 3
-  await expect(timeline.locator('div.group')).toHaveCount(3);
+  await expect(timeline.locator('[data-testid^="scene-card-"]')).toHaveCount(3);
 }
 
 /**
