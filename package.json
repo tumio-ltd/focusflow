@@ -21,8 +21,7 @@
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
     "version:packages": "changeset version",
-    "release": "changeset publish",
-    "sync:oss": "node scripts/sync-oss.js"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
