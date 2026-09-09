@@ -423,10 +423,10 @@ npx gitleaks detect --source . -v
 ## 7. 全流程执行任务 Checklist (全景详细分解清单)
 
 ### 📋 阶段一：仓库安全审计、合规与双端协同
-- [ ] **1.1 开源协议落地**
-  - [ ] 根目录确认并创建主 `LICENSE` 文件（MIT 内核 + AGPL-3.0 工作台）
-  - [ ] `packages/player/package.json` 与 `packages/dsl/package.json` 标注 `"license": "MIT"`
-  - [ ] `apps/studio/package.json` 标注 `"license": "AGPL-3.0"`
+- [x] **1.1 开源协议落地**
+  - [x] 根目录确认并创建主 `LICENSE` 文件（MIT 内核 + AGPL-3.0 工作台）
+  - [x] `packages/player/package.json` 与 `packages/dsl/package.json` 标注 `"license": "MIT"`
+  - [x] `apps/studio/package.json` 标注 `"license": "AGPL-3.0"`
 - [ ] **1.2 仓库双远端（GitHub 组织 + 私有 Gitea）协同配置**
   - [ ] 在 GitHub 企业组织创建 `focusflow` 公共仓库
   - [ ] 在私有 Gitea 创建 `focusflow` 镜像仓库

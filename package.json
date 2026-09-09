@@ -1,6 +1,7 @@
 {
   "name": "focusflow-monorepo",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "scripts": {
     "dev": "turbo run dev",

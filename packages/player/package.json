@@ -1,6 +1,7 @@
 {
   "name": "@focusflow/player",
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/focusflow.es.js",
   "module": "./dist/focusflow.es.js",
