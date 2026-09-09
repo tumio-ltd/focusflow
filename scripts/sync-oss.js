@@ -52,6 +52,7 @@ const PRIVATE_BLACKLIST = [
   'apps/api',
   'apps/render-worker',
   'packages/database',
+  'scripts/sync-oss.js',
   '.env',
   '.env.local'
 ];
@@ -73,10 +74,11 @@ function copyRecursive(src, dest) {
   if (stat.isDirectory()) {
     fs.mkdirSync(dest, { recursive: true });
     for (const item of fs.readdirSync(src)) {
-      if (item === 'node_modules' || item === '.git' || item === 'dist' || item === '.turbo') continue;
+      if (item === 'node_modules' || item === '.git' || item === 'dist' || item === '.turbo' || item === 'sync-oss.js') continue;
       copyRecursive(path.join(src, item), path.join(dest, item));
     }
   } else {
+    if (path.basename(src) === 'sync-oss.js') return;
     fs.mkdirSync(path.dirname(dest), { recursive: true });
     fs.copyFileSync(src, dest);
   }
@@ -127,7 +129,17 @@ async function main() {
       }
     }
 
-    // 4. Strict security verification: ensure NO blacklisted paths exist in staging
+    // 4. Sanitize package.json for open-source (strip internal sync:oss script)
+    const stagedPkgPath = path.join(tempDir, 'package.json');
+    if (fs.existsSync(stagedPkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(stagedPkgPath, 'utf-8'));
+      if (pkg.scripts && pkg.scripts['sync:oss']) {
+        delete pkg.scripts['sync:oss'];
+        fs.writeFileSync(stagedPkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
+      }
+    }
+
+    // 5. Strict security verification: ensure NO blacklisted paths exist in staging
     console.log('🔒 Verifying security blacklist isolation...');
     for (const badPath of PRIVATE_BLACKLIST) {
       const checkPath = path.join(tempDir, badPath);
