@@ -2,6 +2,7 @@
   "name": "focusflow-monorepo",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
+  "author": "Tumio Soft Technology Co., Ltd.",
   "type": "module",
   "scripts": {
     "dev": "turbo run dev",

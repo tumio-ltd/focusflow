@@ -2,6 +2,7 @@
   "name": "@focusflow/dsl",
   "version": "1.0.0",
   "license": "MIT",
+  "author": "Tumio Soft Technology Co., Ltd.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

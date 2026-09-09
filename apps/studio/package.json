@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "license": "AGPL-3.0",
+  "author": "Tumio Soft Technology Co., Ltd.",
   "type": "module",
   "scripts": {
     "dev": "vite",
