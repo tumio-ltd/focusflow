@@ -34,4 +34,8 @@ export default {
   showPlayerControls: 'Show Standalone Player Controls',
   hidePlayerControls: 'Hide Standalone Player Controls',
   playerControls: 'Player Bar',
+  cameraRadarTip: 'Camera Frustum ({{zoom}}x) · Click to Focus',
+  dragToFineTuneCamera: 'Drag to adjust camera',
+  holdToZoomCamera: 'Hold to scale camera proportionally',
 } as const;
+

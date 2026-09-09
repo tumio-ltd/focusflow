@@ -45,8 +45,23 @@ export function useCanvasGesture({
   const wheelRafIdRef = useRef<number | null>(null);
 
   // 铁律 9 落地：极小缩放比 (< 0.25) 逆向投影杠杆阻尼与微颤滤波追踪器
-  const activeFocalPointRef = useRef<{ x: number; y: number; lastTime: number } | null>(null);
+  const activeFocalPointRef = useRef<{ worldX: number; worldY: number; lastTime: number } | null>(null);
   const lastWheelTimeRef = useRef<number>(0);
+
+  // 变换手势活跃状态追踪器（用于动态挂载 will-change: transform 硬件加速与 CSS contain）
+  const [isGesturing, setIsGesturing] = useState(false);
+  const gestureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const markGestureActive = useCallback(() => {
+    setIsGesturing(true);
+    if (gestureTimerRef.current) {
+      clearTimeout(gestureTimerRef.current);
+    }
+    gestureTimerRef.current = setTimeout(() => {
+      setIsGesturing(false);
+      gestureTimerRef.current = null;
+    }, 200);
+  }, []);
 
   // 保持 currentTransformRef 与 state 始终双向对齐
   useEffect(() => {
@@ -80,6 +95,9 @@ export function useCanvasGesture({
       if (wheelRafIdRef.current !== null) {
         cancelAnimationFrame(wheelRafIdRef.current);
       }
+      if (gestureTimerRef.current !== null) {
+        clearTimeout(gestureTimerRef.current);
+      }
     };
   }, []);
 
@@ -100,6 +118,8 @@ export function useCanvasGesture({
       const container = containerRef.current;
       if (!container) return;
 
+      markGestureActive();
+
       const rect = cachedRectRef.current || container.getBoundingClientRect();
       const Px = cursorScreenX !== undefined ? cursorScreenX - rect.left : rect.width / 2;
       const Py = cursorScreenY !== undefined ? cursorScreenY - rect.top : rect.height / 2;
@@ -118,11 +138,13 @@ export function useCanvasGesture({
       currentTransformRef.current = nextTransform;
       setTransform(nextTransform);
     },
-    [minScale, maxScale]
+    [minScale, maxScale, markGestureActive]
   );
 
   // 2. 平移画布 (硬件物理像素对齐，杜绝浮点亚像素在物理液晶栅格移动时的插值呼吸微颤)
   const panBy = useCallback((dx: number, dy: number) => {
+    markGestureActive();
+
     const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
     const rawX = currentTransformRef.current.x + dx;
     const rawY = currentTransformRef.current.y + dy;
@@ -139,7 +161,7 @@ export function useCanvasGesture({
         setTransform(currentTransformRef.current);
       });
     }
-  }, []);
+  }, [markGestureActive]);
 
   // 3. 视口自适应居中算法 (Fit-to-Screen / Shift + 1)
   const fitToScreen = useCallback(
@@ -238,16 +260,34 @@ export function useCanvasGesture({
       e.preventDefault();
 
       const now = performance.now();
-      const isPinchOrModifier = e.ctrlKey || e.metaKey || e.altKey;
-      const isHorizontalTrackpadPan = Math.abs(e.deltaX) > 0 && !isPinchOrModifier;
+      const dt = now - lastWheelTimeRef.current;
+      lastWheelTimeRef.current = now;
 
+      // 1. 硬件输入特征分类
+      // Mac 触控板 Pinch 双指捏合缩放必带 e.ctrlKey === true (Chrome/Safari 规范)
+      const isPinch = e.ctrlKey;
+      const isShift = e.shiftKey && !isPinch;
+
+      // 2. 意图分流 A：触控板双指水平平移 (具备明确水平滑动分量 deltaX !== 0 且无修饰键)
+      const isHorizontalTrackpadPan = Math.abs(e.deltaX) > 0 && !isPinch && !e.metaKey && !e.altKey && !isShift;
       if (isHorizontalTrackpadPan) {
         panBy(-e.deltaX, -e.deltaY);
         return;
       }
 
-      // 铁律 8 落地：优先读取缓存 Rect，当缓存缺失或手势停滞超 250ms 时安全校验刷新一次
-      if (!cachedRectRef.current || now - lastWheelTimeRef.current > 250) {
+      // 3. 意图分流 B：Shift + 滚轮水平平移 (针对鼠标滚轮用户)
+      if (isShift) {
+        const delta = Math.abs(e.deltaX) > 0 ? e.deltaX : e.deltaY;
+        panBy(-delta, 0);
+        return;
+      }
+
+      // 4. 意图分流 C：鼠标滚轮滚动 (deltaX === 0) 或 Mac Pinch 捏合 -> 统一以光标为中心执行平滑缩放 (Zoom In / Zoom Out)
+      // 用户核心交互习惯铁律：普通鼠标上下滚动必须为放大缩小（滚轮向上放大，滚轮向下缩小），平移由中键/空格拖拽承载
+      markGestureActive();
+
+      // 优先读取缓存 Rect，手势停滞超 250ms 时安全校验刷新一次
+      if (!cachedRectRef.current || dt > 250) {
         const r = container.getBoundingClientRect();
         cachedRectRef.current = {
           left: r.left,
@@ -258,13 +298,20 @@ export function useCanvasGesture({
       }
       const rect = cachedRectRef.current;
 
-      // 鼠标滚轮灵敏度自适应：行模式 (deltaMode === 1) 与像素模式
-      const sensitivity = e.deltaMode === 1 ? 0.05 : 0.0025;
-      const zoomFactor = Math.exp(-e.deltaY * sensitivity);
-
-      // 从本地即时同步基准读取当前矩阵（杜绝同一帧内后续事件基于过时 React State 产生折叠）
+      // 尺度自适应缩放补偿方程：在超大底图全景小尺度 (< 0.8) 下动态提升变焦动力
       const prev = currentTransformRef.current;
-      const targetScale = prev.scale * zoomFactor;
+      const scaleBoost = prev.scale < 0.8
+        ? 1 + 1.5 * Math.max(0, (0.8 - prev.scale) / 0.8)
+        : 1.0;
+
+      // 设备类型基础步长校准：Pinch (触控板双指捏合) 取 0.009，传统滚轮行模式取 0.04，像素模式取 0.0025
+      const baseSensitivity = isPinch ? 0.009 : (e.deltaMode === 1 ? 0.04 : 0.0025);
+      const sensitivity = baseSensitivity * scaleBoost;
+      const zoomFactor = Math.exp(-e.deltaY * sensitivity);
+      // 限制单次事件变焦倍率，防止离散阶跃突变
+      const clampedZoomFactor = Math.min(Math.max(zoomFactor, 0.35), 2.5);
+
+      const targetScale = prev.scale * clampedZoomFactor;
       const clampedScale = Math.min(Math.max(targetScale, minScale), maxScale);
       if (clampedScale === prev.scale) return;
 
@@ -276,14 +323,14 @@ export function useCanvasGesture({
       let worldX: number;
       let worldY: number;
 
-      if (isOngoingGesture && activeFocalPointRef.current && 'worldX' in activeFocalPointRef.current) {
-        worldX = (activeFocalPointRef.current as any).worldX;
-        worldY = (activeFocalPointRef.current as any).worldY;
+      if (isOngoingGesture && activeFocalPointRef.current) {
+        worldX = activeFocalPointRef.current.worldX;
+        worldY = activeFocalPointRef.current.worldY;
         activeFocalPointRef.current.lastTime = now;
       } else {
         worldX = (rawPx - prev.x) / prev.scale;
         worldY = (rawPy - prev.y) / prev.scale;
-        activeFocalPointRef.current = { worldX, worldY, lastTime: now } as any;
+        activeFocalPointRef.current = { worldX, worldY, lastTime: now };
       }
 
       // 实时计算下一帧目标矩阵 (严格连续，0 累积截断阶跃)
@@ -313,9 +360,9 @@ export function useCanvasGesture({
         wheelRafIdRef.current = null;
       }
     };
-  }, [minScale, maxScale, panBy]);
+  }, [minScale, maxScale, panBy, markGestureActive]);
 
-  // 6. 监听空格键按压 (Space)
+  // 6. 监听空格键按压 (Space) 与键盘缩放快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !e.repeat && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
@@ -328,6 +375,18 @@ export function useCanvasGesture({
       if (e.shiftKey && e.code === 'Digit0') {
         e.preventDefault();
         resetZoom100();
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.code === 'Equal' || e.code === 'NumpadAdd')) {
+        e.preventDefault();
+        const prev = currentTransformRef.current;
+        const scaleBoost = prev.scale < 0.8 ? 1 + 1.5 * Math.max(0, (0.8 - prev.scale) / 0.8) : 1.0;
+        zoomTo(prev.scale * (1 + 0.25 * scaleBoost));
+      }
+      if ((e.metaKey || e.ctrlKey) && (e.code === 'Minus' || e.code === 'NumpadSubtract')) {
+        e.preventDefault();
+        const prev = currentTransformRef.current;
+        const scaleBoost = prev.scale < 0.8 ? 1 + 1.5 * Math.max(0, (0.8 - prev.scale) / 0.8) : 1.0;
+        zoomTo(prev.scale / (1 + 0.25 * scaleBoost));
       }
     };
 
@@ -343,7 +402,7 @@ export function useCanvasGesture({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [fitToScreen, resetZoom100]);
+  }, [fitToScreen, resetZoom100, zoomTo]);
 
   // 7. 鼠标拖拽平移事件 (Pointer Events)
   const onPointerDown = useCallback(
@@ -391,6 +450,7 @@ export function useCanvasGesture({
     flyToCamera,
     isPanning,
     isSpacePressed,
+    isTransforming: isPanning || isGesturing,
     pointerHandlers: {
       onPointerDown,
       onPointerMove,

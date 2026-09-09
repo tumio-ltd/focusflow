@@ -9,7 +9,7 @@ export const microservicesTemplate: FocusFlowDSL = {
     controls: { showHUDButton: true, autoplay: false, interval: 3800 },
   },
   asset: {
-    url: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=3840&q=80',
+    url: './templates/microservices-architecture.svg',
   },
   elements: {
     boxes: [

@@ -9,7 +9,7 @@ export const aiRagPipelineTemplate: FocusFlowDSL = {
     controls: { showHUDButton: true, autoplay: false, interval: 3600 },
   },
   asset: {
-    url: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=3840&q=80',
+    url: './templates/ai-rag-pipeline.svg',
   },
   elements: {
     boxes: [

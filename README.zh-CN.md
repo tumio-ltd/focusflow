@@ -166,4 +166,4 @@ FocusFlow 采用双重开源许可模式：
 * **核心渲染内核与 DSL** (`packages/player`, `packages/dsl`, `tooling/*`, `examples/*`)：遵循 **[MIT 许可协议](LICENSE)**。
 * **Studio 可视化创作工作台** (`apps/studio`)：遵循 **[GNU Affero General Public License v3.0 (AGPL-3.0)](apps/studio/LICENSE)**。
 
-版权所有 &copy; 2026 **Tumio Soft Technology Co., Ltd. (图米奥软件科技)**
+版权所有 &copy; 2026 **Tumio Soft Technology Co., Ltd. (途铭软件科技)**

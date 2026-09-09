@@ -3,7 +3,7 @@ import { hotelPmsTemplate } from './tpl-hotel-pms';
 import { microservicesTemplate } from './tpl-microservices';
 import { dddArchitectureTemplate } from './tpl-ddd-architecture';
 import { k8sCloudNativeTemplate } from './tpl-k8s-cloudnative';
-import { distributedTxTemplate } from './tpl-distributed-tx';
+import { distributedTxTemplate, realtimeLakehouseTemplate } from './tpl-realtime-lakehouse';
 import { aiRagPipelineTemplate } from './tpl-ai-rag-pipeline';
 
 export interface ArchitectureTemplate {
@@ -43,7 +43,7 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
     sceneCount: 3,
     estimatedDuration: 4.1,
     accentColor: '#34d399',
-    coverImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    coverImage: './templates/microservices-architecture.svg',
     dsl: microservicesTemplate,
   },
   {
@@ -71,16 +71,16 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
     dsl: k8sCloudNativeTemplate,
   },
   {
-    id: 'tpl-distributed-tx',
-    title: '分布式事务与可靠消息最终一致性架构',
+    id: 'tpl-realtime-lakehouse',
+    title: '实时流批一体湖仓与智能分析拓扑',
     category: 'database',
-    categoryLabel: '分布式事务 & 消息',
-    desc: '单库本地事务 + Debezium CDC 增量捕获 + Kafka 分布式消息队列持久化 + 幂等重试机制',
-    sceneCount: 2,
-    estimatedDuration: 2.6,
-    accentColor: '#f43f5e',
-    coverImage: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80',
-    dsl: distributedTxTemplate,
+    categoryLabel: '实时计算 & 数据湖仓',
+    desc: 'Debezium CDC 增量采集 + Kafka 3.7 KRaft 削峰 + Flink 1.19 状态计算 + Apache Iceberg 湖仓与 ClickHouse OLAP',
+    sceneCount: 3,
+    estimatedDuration: 4.2,
+    accentColor: '#34d399',
+    coverImage: './templates/realtime-lakehouse.svg',
+    dsl: realtimeLakehouseTemplate,
   },
   {
     id: 'tpl-ai-rag-pipeline',
@@ -91,7 +91,7 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
     sceneCount: 3,
     estimatedDuration: 4.1,
     accentColor: '#a855f7',
-    coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=600&q=80',
+    coverImage: './templates/ai-rag-pipeline.svg',
     dsl: aiRagPipelineTemplate,
   },
 ];

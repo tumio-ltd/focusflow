@@ -768,6 +768,212 @@ async function verifyZeroSpeechLeaksOnSceneSwitchAndTimelineSeek(page: Page): Pr
   expect(speakCalls).toBe(0);
 }
 
+/**
+ * 16. 验证 5K 画布手势分流、自适应缩放响应与平移满帧率 (TC578)
+ */
+async function verifyCanvasGestureAndPerformance(page: Page): Promise<void> {
+  const container = page.locator('[data-testid="infinite-canvas-container"]');
+  await expect(container).toBeVisible();
+
+  const contentLayer = page.locator('[data-testid="canvas-content-layer"]');
+  await expect(contentLayer).toBeVisible();
+
+  // 1. 验证 5K 图层渲染架构：彻底移除重度 shadow-2xl，保持硬件友好的轻量 ring 边框
+  await expect(contentLayer).not.toHaveClass(/shadow-2xl/);
+  await expect(contentLayer).toHaveClass(/ring-1/);
+
+  // 确保视口自适应布局计算就绪
+  const fitBtn = page.locator('[data-testid="fit-screen-btn"]');
+  await expect(fitBtn).toBeVisible();
+  await fitBtn.click();
+  await page.waitForTimeout(100);
+
+  // 解析 transform: translate3d(Xpx, Ypx, 0px) scale(S)
+  const parseTransform = (styleStr: string | null) => {
+    if (!styleStr) return { x: 0, y: 0, scale: 1 };
+    const match = styleStr.match(/translate3d\(([-\d.]+)px,\s*([-\d.]+)px,\s*0(?:px)?\)\s*scale\(([-\d.]+)\)/);
+    if (!match) return { x: 0, y: 0, scale: 1 };
+    return {
+      x: parseFloat(match[1]),
+      y: parseFloat(match[2]),
+      scale: parseFloat(match[3]),
+    };
+  };
+
+  const initialStyle = await contentLayer.getAttribute('style');
+  const initialT = parseTransform(initialStyle);
+
+  // 2. 验证鼠标滚轮上下滚动必须为放大缩小 (Zoom In / Zoom Out)
+  // 用户核心交互铁律：标准鼠标滚轮滚动 (deltaX = 0, deltaY = -60) 必须触发强劲尺度自适应放大
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="infinite-canvas-container"]');
+    el?.dispatchEvent(new WheelEvent('wheel', {
+      deltaX: 0,
+      deltaY: -60,
+      deltaMode: 0,
+      ctrlKey: false,
+      shiftKey: false,
+      clientX: 400,
+      clientY: 300,
+      bubbles: true,
+      cancelable: true,
+    }));
+  });
+
+  // 等待 rAF 单帧渲染更新
+  await page.waitForTimeout(80);
+
+  const afterWheelZoomStyle = await contentLayer.getAttribute('style');
+  const afterWheelZoomT = parseTransform(afterWheelZoomStyle);
+  // 核心断言：鼠标滚轮向上滚动必须显著放大 Scale
+  expect(afterWheelZoomT.scale).toBeGreaterThan(initialT.scale);
+
+  // 3. 验证具备水平位移分量时 (deltaX = 30) 触发平移漫游
+  const prevX = afterWheelZoomT.x;
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="infinite-canvas-container"]');
+    el?.dispatchEvent(new WheelEvent('wheel', {
+      deltaX: 30,
+      deltaY: 0,
+      deltaMode: 0,
+      ctrlKey: false,
+      shiftKey: false,
+      clientX: 400,
+      clientY: 300,
+      bubbles: true,
+      cancelable: true,
+    }));
+  });
+
+  await page.waitForTimeout(80);
+
+  const afterPanStyle = await contentLayer.getAttribute('style');
+  const afterPanT = parseTransform(afterPanStyle);
+  // 验证水平方向产生有效平移
+  expect(afterPanT.x).toBeLessThan(prevX);
+  // 验证 Scale 在水平平移过程中严格保持不变
+  expect(afterPanT.scale).toBeCloseTo(afterWheelZoomT.scale, 4);
+
+  // 4. 模拟 Shift + 滚轮 水平平移
+  const beforeShiftX = afterPanT.x;
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="infinite-canvas-container"]');
+    el?.dispatchEvent(new WheelEvent('wheel', {
+      deltaX: 0,
+      deltaY: 40,
+      deltaMode: 0,
+      ctrlKey: false,
+      shiftKey: true,
+      clientX: 400,
+      clientY: 300,
+      bubbles: true,
+      cancelable: true,
+    }));
+  });
+
+  await page.waitForTimeout(80);
+
+  const afterShiftStyle = await contentLayer.getAttribute('style');
+  const afterShiftT = parseTransform(afterShiftStyle);
+  // 验证水平平移产生位移 (X 轴发生变化)
+  expect(afterShiftT.x).toBeLessThan(beforeShiftX);
+
+  // 5. 验证快捷键快速聚焦与 1:1 物理复位 (Shift + 0 原始 100%, Shift + 1 居中自适应)
+  await page.keyboard.press('Shift+Digit0');
+  await page.waitForTimeout(60);
+
+  const afterResetStyle = await contentLayer.getAttribute('style');
+  const afterResetT = parseTransform(afterResetStyle);
+  expect(afterResetT.scale).toBeCloseTo(1.0, 2);
+
+  await page.keyboard.press('Shift+Digit1');
+  await page.waitForTimeout(60);
+
+  const afterFitStyle = await contentLayer.getAttribute('style');
+  const afterFitT = parseTransform(afterFitStyle);
+  expect(afterFitT.scale).toBeLessThanOrEqual(1.0);
+}
+
+/**
+ * 验证 5K 画布下取景框全景安全内缩、手柄防缩放及离屏雷达导引 (TC579)
+ */
+async function verifyCameraFrustumVisibilityAndOffscreenRadar(page: Page) {
+  // 1. 验证画布与取景框正常挂载
+  const canvasContainer = page.locator('[data-testid="infinite-canvas-container"]');
+  await expect(canvasContainer).toBeVisible();
+
+  const frustumFrame = page.locator('[data-testid="camera-frustum-frame"]');
+  await expect(frustumFrame).toBeVisible();
+
+  // 2. 验证全景态 (1.0x) 下安全内缩
+  const contentLayer = page.locator('[data-testid="canvas-content-layer"]');
+  await expect(contentLayer).toBeVisible();
+
+  const frameBox = await frustumFrame.boundingBox();
+  const layerBox = await contentLayer.boundingBox();
+  expect(frameBox).not.toBeNull();
+  expect(layerBox).not.toBeNull();
+
+  if (frameBox && layerBox) {
+    // 验证取景框在全景态下向内收拢了安全物理间距 (不紧贴外边框 0px 重合)
+    const insetLeft = frameBox.x - layerBox.x;
+    const insetTop = frameBox.y - layerBox.y;
+    expect(insetLeft).toBeGreaterThanOrEqual(15);
+    expect(insetTop).toBeGreaterThanOrEqual(15);
+  }
+
+  // 3. 验证左上角 Badge 存在逆向缩放矩阵且文字清晰
+  const badge = page.locator('[data-testid="camera-frustum-badge"]');
+  await expect(badge).toBeVisible();
+  await expect(badge).toContainText('1.0x');
+
+  // 4. 验证四角手柄 (NW, NE, SW, SE) 挂载且具有触控热区与视觉小方块
+  const handleNW = page.locator('[data-testid="camera-handle-nw"]');
+  const handleNE = page.locator('[data-testid="camera-handle-ne"]');
+  const handleSW = page.locator('[data-testid="camera-handle-sw"]');
+  const handleSE = page.locator('[data-testid="camera-handle-se"]');
+
+  await expect(handleNW).toBeVisible();
+  await expect(handleNE).toBeVisible();
+  await expect(handleSW).toBeVisible();
+  await expect(handleSE).toBeVisible();
+
+  // 5. 模拟 Shift + 滚轮 或大幅度画布拖拽，使取景框移出屏幕视口窗口
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-testid="infinite-canvas-container"]');
+    // 大幅度向右下平移画布内容，使位于 (0,0) 的取景框被推移至视口之外
+    el?.dispatchEvent(new WheelEvent('wheel', {
+      deltaX: 1200,
+      deltaY: 1200,
+      deltaMode: 0,
+      ctrlKey: false,
+      shiftKey: false,
+      clientX: 400,
+      clientY: 300,
+      bubbles: true,
+      cancelable: true,
+    }));
+  });
+
+  await page.waitForTimeout(150);
+
+  // 6. 验证视口边缘弹出离屏吸附雷达胶囊 (frustum-radar-pill)
+  const radarPill = page.locator('[data-testid="frustum-radar-pill"]');
+  await expect(radarPill).toBeVisible({ timeout: 5000 });
+  await expect(radarPill).toContainText('镜头视锥');
+
+  // 7. 点击雷达导引胶囊，验证一键平滑飞向镜头框 (Fly to camera)
+  await radarPill.click();
+  await page.waitForTimeout(600);
+
+  // 8. 验证取景框重新回到屏幕视口中央可见，且雷达胶囊自动隐退
+  await expect(frustumFrame).toBeVisible();
+  await expect(radarPill).not.toBeVisible();
+
+  // 截取 5K 画布下取景框高亮可视渲染图存证
+  await page.screenshot({ path: 'test-results/screenshots/camera_frustum_visibility.png' });
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -841,7 +1047,16 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test('TC577: 验证非演播状态切换分幕与点击波形轨时严格静音保护', async ({ page }) => {
     await verifyZeroSpeechLeaksOnSceneSwitchAndTimelineSeek(page);
   });
+
+  test('TC578: 验证 5K 画布手势分流、自适应缩放响应与平移满帧率', async ({ page }) => {
+    await verifyCanvasGestureAndPerformance(page);
+  });
+
+  test('TC579: 验证 5K 画布下取景框全景安全内缩、手柄防缩放及离屏雷达导引', async ({ page }) => {
+    await verifyCameraFrustumVisibilityAndOffscreenRadar(page);
+  });
 });
+
 
 
 

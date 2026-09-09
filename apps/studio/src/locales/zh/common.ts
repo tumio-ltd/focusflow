@@ -34,4 +34,8 @@ export default {
   showPlayerControls: '显示底图独立播放控制栏',
   hidePlayerControls: '隐藏底图独立播放控制栏',
   playerControls: '播放控制栏',
+  cameraRadarTip: '镜头视锥 ({{zoom}}x) · 点击导向',
+  dragToFineTuneCamera: '按住微调镜头',
+  holdToZoomCamera: '按住等比例缩放镜头',
 } as const;
+

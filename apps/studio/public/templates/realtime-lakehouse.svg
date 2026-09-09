@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3840 2160" width="3840" height="2160">
+  
+    <defs>
+      
+    <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#1e293b" stroke-width="1" stroke-opacity="0.25" />
+      <circle cx="80" cy="80" r="1.5" fill="#334155" fill-opacity="0.4" />
+    </pattern>
+    <radialGradient id="bgVignette" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c1322" />
+      <stop offset="60%" stop-color="#070b14" />
+      <stop offset="100%" stop-color="#030508" />
+    </radialGradient>
+  
+      
+      <!-- Glow Filters -->
+      <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+      <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+      <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+      <filter id="glow-indigo" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+
+      <!-- Card Gradients -->
+      <linearGradient id="cardGradCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a" stop-opacity="0.95" />
+        <stop offset="100%" stop-color="#082f49" stop-opacity="0.85" />
+      </linearGradient>
+      <linearGradient id="cardGradEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a" stop-opacity="0.95" />
+        <stop offset="100%" stop-color="#064e3b" stop-opacity="0.85" />
+      </linearGradient>
+      <linearGradient id="cardGradAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a" stop-opacity="0.95" />
+        <stop offset="100%" stop-color="#78350f" stop-opacity="0.85" />
+      </linearGradient>
+      <linearGradient id="cardGradIndigo" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a" stop-opacity="0.95" />
+        <stop offset="100%" stop-color="#312e81" stop-opacity="0.85" />
+      </linearGradient>
+      <linearGradient id="cardGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1e293b" stop-opacity="0.75" />
+        <stop offset="100%" stop-color="#0f172a" stop-opacity="0.85" />
+      </linearGradient>
+
+      <!-- Explicit userSpaceOnUse Gradients for horizontal pipelines -->
+      <linearGradient id="flowCdcToKafka" gradientUnits="userSpaceOnUse" x1="950" y1="830" x2="1200" y2="830">
+        <stop offset="0%" stop-color="#38bdf8" />
+        <stop offset="100%" stop-color="#34d399" />
+      </linearGradient>
+      <linearGradient id="flowKafkaToFlink" gradientUnits="userSpaceOnUse" x1="1950" y1="830" x2="2150" y2="830">
+        <stop offset="0%" stop-color="#34d399" />
+        <stop offset="100%" stop-color="#fbbf24" />
+      </linearGradient>
+      <linearGradient id="flowFlinkToLakehouse" gradientUnits="userSpaceOnUse" x1="2850" y1="830" x2="3050" y2="830">
+        <stop offset="0%" stop-color="#fbbf24" />
+        <stop offset="100%" stop-color="#818cf8" />
+      </linearGradient>
+
+      <!-- Markers -->
+      <marker id="arrowCyan" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8" />
+      </marker>
+      <marker id="arrowEmerald" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#34d399" />
+      </marker>
+      <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#fbbf24" />
+      </marker>
+      <marker id="arrowIndigo" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#818cf8" />
+      </marker>
+    </defs>
+  
+  <rect width="100%" height="100%" fill="url(#bgVignette)" />
+  <rect width="100%" height="100%" fill="url(#grid)" />
+
+  
+    <!-- Blueprint Header -->
+    <g id="header" transform="translate(160, 80)">
+      <!-- System Tag -->
+      <rect x="0" y="0" width="280" height="34" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" />
+      <circle cx="16" cy="17" r="5" fill="#38bdf8" />
+      <text x="32" y="22" font-family="monospace" font-size="14" font-weight="600" fill="#38bdf8" letter-spacing="1">SYSTEM TOPOLOGY // STREAM-LAKEHOUSE</text>
+
+      <!-- Main Title -->
+      <text x="0" y="82" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-size="44" font-weight="800" fill="#f8fafc" letter-spacing="-1">
+        Real-Time Lakehouse &amp; Stream-Batch Computing Topology
+      </text>
+      <text x="0" y="118" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif" font-size="20" font-weight="400" fill="#94a3b8">
+        Debezium CDC • Apache Kafka Buffer • Apache Flink Stateful CEP • Apache Iceberg ACID Lakehouse &amp; ClickHouse OLAP
+      </text>
+
+      <!-- Right Metadata Badges -->
+      <g transform="translate(2900, 20)">
+        <rect x="0" y="0" width="180" height="64" rx="10" fill="#0f172a" stroke="#1e293b" />
+        <text x="20" y="26" font-family="monospace" font-size="12" fill="#64748b">INGEST THROUGHPUT</text>
+        <text x="20" y="52" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#38bdf8">280k evt/s</text>
+
+        <rect x="200" y="0" width="180" height="64" rx="10" fill="#0f172a" stroke="#1e293b" />
+        <text x="220" y="26" font-family="monospace" font-size="12" fill="#64748b">END-TO-END LAG</text>
+        <text x="220" y="52" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#34d399">&lt; 850 ms</text>
+
+        <rect x="400" y="0" width="200" height="64" rx="10" fill="#0f172a" stroke="#1e293b" />
+        <text x="420" y="26" font-family="monospace" font-size="12" fill="#64748b">OLAP QUERY SPEED</text>
+        <text x="420" y="52" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#818cf8">&lt; 120 ms</text>
+      </g>
+    </g>
+  
+  
+    <!-- Upper Cluster: Upstream Databases, Governance & Downstream BI -->
+    <g id="row1-upper">
+      <!-- 1A: Production Data Sources -->
+      <g transform="translate(300, 240)">
+        <rect width="650" height="180" rx="16" fill="url(#cardGradDark)" stroke="#334155" stroke-width="2" />
+        <rect x="20" y="20" width="10" height="10" rx="2" fill="#38bdf8" />
+        <text x="40" y="30" font-family="monospace" font-size="14" font-weight="700" fill="#38bdf8" letter-spacing="1">UPSTREAM OPERATIONAL SOURCES</text>
+        <text x="24" y="66" font-family="-apple-system, sans-serif" font-size="20" font-weight="700" fill="#f1f5f9">OLTP Databases &amp; IoT Gateways</text>
+        <text x="24" y="92" font-family="-apple-system, sans-serif" font-size="14" fill="#94a3b8">MySQL RDS Master, PostgreSQL Shards &amp; MQTT Edge Telemetry</text>
+        <!-- Badges -->
+        <rect x="24" y="122" width="130" height="26" rx="5" fill="#1e293b" />
+        <text x="38" y="139" font-family="monospace" font-size="12" fill="#cbd5e1">Binlog ROW Mode</text>
+        <rect x="166" y="122" width="140" height="26" rx="5" fill="#1e293b" />
+        <text x="180" y="139" font-family="monospace" font-size="12" fill="#cbd5e1">Wal2JSON Stream</text>
+        <rect x="318" y="122" width="120" height="26" rx="5" fill="#1e293b" />
+        <text x="332" y="139" font-family="monospace" font-size="12" fill="#cbd5e1">MQTT QoS 1</text>
+      </g>
+
+      <!-- 1B: Data Governance & Lineage (Nessie & Atlas) -->
+      <g transform="translate(1200, 240)">
+        <rect width="750" height="120" rx="14" fill="url(#cardGradDark)" stroke="#334155" stroke-width="2" />
+        <rect x="20" y="18" width="10" height="10" rx="2" fill="#34d399" />
+        <text x="40" y="28" font-family="monospace" font-size="13" font-weight="700" fill="#34d399" letter-spacing="1">DATA GOVERNANCE &amp; GIT-LIKE LINEAGE</text>
+        <text x="24" y="60" font-family="-apple-system, sans-serif" font-size="18" font-weight="700" fill="#f1f5f9">Project Nessie REST Catalog + Apache Atlas</text>
+        <text x="24" y="86" font-family="-apple-system, sans-serif" font-size="13" fill="#94a3b8">Git-for-Data Branching, Tagging &amp; OpenLineage Automated Provenance Audit</text>
+        <g transform="translate(560, 24)">
+          <rect width="160" height="30" rx="6" fill="#0b1329" stroke="#34d399" stroke-width="1" />
+          <text x="80" y="20" text-anchor="middle" font-family="monospace" font-size="12" fill="#34d399">ZERO COPY CLONE</text>
+        </g>
+      </g>
+
+      <!-- 1C: Real-Time BI & Alerting -->
+      <g transform="translate(2150, 240)">
+        <rect width="1550" height="120" rx="14" fill="url(#cardGradDark)" stroke="#334155" stroke-width="2" />
+        <rect x="20" y="18" width="10" height="10" rx="2" fill="#818cf8" />
+        <text x="40" y="28" font-family="monospace" font-size="13" font-weight="700" fill="#818cf8" letter-spacing="1">REAL-TIME CONSUMPTION &amp; INTELLIGENCE</text>
+        <text x="24" y="60" font-family="-apple-system, sans-serif" font-size="18" font-weight="700" fill="#f1f5f9">Apache Superset + Grafana Live SLA + Automated Fraud Detection Trigger</text>
+        <text x="24" y="86" font-family="-apple-system, sans-serif" font-size="13" fill="#94a3b8">Sub-second executive dashboard updates, financial risk rule triggers &amp; reverse webhook push</text>
+        <g transform="translate(1360, 24)">
+          <rect width="150" height="30" rx="6" fill="#0b1329" stroke="#818cf8" stroke-width="1" />
+          <text x="75" y="20" text-anchor="middle" font-family="monospace" font-size="12" fill="#818cf8">QUERY P90: 88ms</text>
+        </g>
+      </g>
+    </g>
+  
+  
+    <!-- ROW 2: Core 4 Streaming Stages -->
+    <g id="row2-core">
+      <!-- 1. CDC INGEST: box-cdc-ingest (x: 300, y: 600, w: 650, h: 460) -->
+      <g id="box-cdc-ingest-group" transform="translate(300, 600)">
+        <rect width="650" height="460" rx="16" fill="url(#cardGradCyan)" stroke="#38bdf8" stroke-width="3" filter="url(#glow-cyan)" />
+        <rect width="650" height="460" rx="16" fill="url(#cardGradCyan)" stroke="#38bdf8" stroke-width="2" />
+
+        <!-- Header badge -->
+        <rect x="24" y="24" width="110" height="26" rx="6" fill="#0284c7" />
+        <text x="36" y="42" font-family="monospace" font-size="13" font-weight="700" fill="#ffffff">STAGE 01</text>
+        <text x="150" y="42" font-family="monospace" font-size="13" font-weight="600" fill="#7dd3fc">CDC CHANGE LOG HARVEST</text>
+
+        <text x="24" y="86" font-family="-apple-system, sans-serif" font-size="24" font-weight="800" fill="#ffffff">
+          Debezium CDC Stream Ingestion
+        </text>
+        <text x="24" y="114" font-family="-apple-system, sans-serif" font-size="15" fill="#bae6fd">
+          Non-locking log-based Change Data Capture across heterogeneous databases
+        </text>
+
+        <!-- Sub-features -->
+        <g transform="translate(24, 142)">
+          <!-- Item 1 -->
+          <rect x="0" y="0" width="602" height="54" rx="8" fill="#0b1329" stroke="#1e3a8a" stroke-width="1" />
+          <circle cx="20" cy="27" r="6" fill="#38bdf8" />
+          <text x="38" y="26" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">MySQL &amp; Postgres WAL Log Miner</text>
+          <text x="38" y="44" font-family="monospace" font-size="12" fill="#93c5fd">Zero table lock impact; low-overhead memory buffer parsing</text>
+
+          <!-- Item 2 -->
+          <rect x="0" y="66" width="602" height="54" rx="8" fill="#0b1329" stroke="#1e3a8a" stroke-width="1" />
+          <circle cx="20" cy="93" r="6" fill="#38bdf8" />
+          <text x="38" y="92" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Schema Registry &amp; Avro Evolution</text>
+          <text x="38" y="110" font-family="monospace" font-size="12" fill="#93c5fd">Confluent Schema Registry with backward &amp; forward compatibility check</text>
+
+          <!-- Item 3 -->
+          <rect x="0" y="132" width="602" height="54" rx="8" fill="#0b1329" stroke="#1e3a8a" stroke-width="1" />
+          <circle cx="20" cy="159" r="6" fill="#38bdf8" />
+          <text x="38" y="158" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Dynamic Backpressure &amp; Flow Control</text>
+          <text x="38" y="176" font-family="monospace" font-size="12" fill="#93c5fd">Adaptive throttling prevents downstream Kafka broker saturation</text>
+
+          <!-- Metrics Footer -->
+          <g transform="translate(0, 214)">
+            <text x="0" y="14" font-family="monospace" font-size="13" fill="#38bdf8">▶ HARVEST LAG: &lt; 8ms</text>
+            <text x="340" y="14" font-family="monospace" font-size="13" fill="#38bdf8">THROUGHPUT: 280,000 evt/s</text>
+          </g>
+        </g>
+      </g>
+
+      <!-- 2. KAFKA CLUSTER: box-kafka-bus (x: 1200, y: 600, w: 750, h: 460) -->
+      <g id="box-kafka-bus-group" transform="translate(1200, 600)">
+        <rect width="750" height="460" rx="16" fill="url(#cardGradEmerald)" stroke="#34d399" stroke-width="3" filter="url(#glow-emerald)" />
+        <rect width="750" height="460" rx="16" fill="url(#cardGradEmerald)" stroke="#34d399" stroke-width="2" />
+
+        <!-- Header badge -->
+        <rect x="24" y="24" width="110" height="26" rx="6" fill="#059669" />
+        <text x="36" y="42" font-family="monospace" font-size="13" font-weight="700" fill="#ffffff">STAGE 02</text>
+        <text x="150" y="42" font-family="monospace" font-size="13" font-weight="600" fill="#6ee7b7">BUFFER &amp; EXACTLY-ONCE</text>
+
+        <text x="24" y="86" font-family="-apple-system, sans-serif" font-size="24" font-weight="800" fill="#ffffff">
+          Apache Kafka 3.7 KRaft Bus
+        </text>
+        <text x="24" y="114" font-family="-apple-system, sans-serif" font-size="15" fill="#a7f3d0">
+          High-throughput distributed event streaming with transactional idempotence
+        </text>
+
+        <!-- Sub-features -->
+        <g transform="translate(24, 142)">
+          <!-- Item 1 -->
+          <rect x="0" y="0" width="702" height="54" rx="8" fill="#062e24" stroke="#065f46" stroke-width="1" />
+          <circle cx="20" cy="27" r="6" fill="#34d399" />
+          <text x="38" y="26" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">KRaft Consensus Quorum (Zero ZooKeeper)</text>
+          <text x="38" y="44" font-family="monospace" font-size="12" fill="#6ee7b7">Metadata management within Kafka itself; instant sub-second failover</text>
+
+          <!-- Item 2 -->
+          <rect x="0" y="66" width="702" height="54" rx="8" fill="#062e24" stroke="#065f46" stroke-width="1" />
+          <circle cx="20" cy="93" r="6" fill="#34d399" />
+          <text x="38" y="92" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Exactly-Once Semantics (EOS / 2PC Produce)</text>
+          <text x="38" y="110" font-family="monospace" font-size="12" fill="#6ee7b7">Producer ID + Sequence Number eliminates duplicate and out-of-order writes</text>
+
+          <!-- Item 3 -->
+          <rect x="0" y="132" width="702" height="54" rx="8" fill="#062e24" stroke="#065f46" stroke-width="1" />
+          <circle cx="20" cy="159" r="6" fill="#34d399" />
+          <text x="38" y="158" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Tiered Storage &amp; Long-Retention Partitions</text>
+          <text x="38" y="176" font-family="monospace" font-size="12" fill="#6ee7b7">Hot segments in NVMe SSD; cold segments auto-offloaded to MinIO S3</text>
+
+          <!-- Metrics Footer -->
+          <g transform="translate(0, 214)">
+            <text x="0" y="14" font-family="monospace" font-size="13" fill="#34d399">▶ CLUSTER BANDWIDTH: 8.5 GB/s</text>
+            <text x="440" y="14" font-family="monospace" font-size="13" fill="#34d399">PARTITIONS: 48 (REPLICA 3)</text>
+          </g>
+        </g>
+      </g>
+
+      <!-- 3. FLINK ENGINE: box-flink-engine (x: 2150, y: 600, w: 700, h: 460) -->
+      <g id="box-flink-engine-group" transform="translate(2150, 600)">
+        <rect width="700" height="460" rx="16" fill="url(#cardGradAmber)" stroke="#fbbf24" stroke-width="3" filter="url(#glow-amber)" />
+        <rect width="700" height="460" rx="16" fill="url(#cardGradAmber)" stroke="#fbbf24" stroke-width="2" />
+
+        <!-- Header badge -->
+        <rect x="24" y="24" width="110" height="26" rx="6" fill="#d97706" />
+        <text x="36" y="42" font-family="monospace" font-size="13" font-weight="700" fill="#ffffff">STAGE 03</text>
+        <text x="150" y="42" font-family="monospace" font-size="13" font-weight="600" fill="#fde68a">STATEFUL STREAM &amp; CEP</text>
+
+        <text x="24" y="86" font-family="-apple-system, sans-serif" font-size="24" font-weight="800" fill="#ffffff">
+          Apache Flink 1.19 Stream Engine
+        </text>
+        <text x="24" y="114" font-family="-apple-system, sans-serif" font-size="15" fill="#fef3c7">
+          Stateful event-time computation, double-stream join &amp; real-time rule engine
+        </text>
+
+        <!-- Sub-features -->
+        <g transform="translate(24, 142)">
+          <!-- Item 1 -->
+          <rect x="0" y="0" width="652" height="54" rx="8" fill="#381d06" stroke="#92400e" stroke-width="1" />
+          <circle cx="20" cy="27" r="6" fill="#fbbf24" />
+          <text x="38" y="26" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">RocksDB Incremental State Backend</text>
+          <text x="38" y="44" font-family="monospace" font-size="12" fill="#fde68a">Terabyte-scale managed state with sub-second checkpoint snapshot</text>
+
+          <!-- Item 2 -->
+          <rect x="0" y="66" width="652" height="54" rx="8" fill="#381d06" stroke="#92400e" stroke-width="1" />
+          <circle cx="20" cy="93" r="6" fill="#fbbf24" />
+          <text x="38" y="92" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Event-Time Watermark &amp; Sliding Window</text>
+          <text x="38" y="110" font-family="monospace" font-size="12" fill="#fde68a">Tolerates out-of-order records (Allowed Lateness: 5s); zero data dropped</text>
+
+          <!-- Item 3 -->
+          <rect x="0" y="132" width="652" height="54" rx="8" fill="#381d06" stroke="#92400e" stroke-width="1" />
+          <circle cx="20" cy="159" r="6" fill="#fbbf24" />
+          <text x="38" y="158" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Double-Stream Temporal Join (Order + Payment)</text>
+          <text x="38" y="176" font-family="monospace" font-size="12" fill="#fde68a">Dynamic interval matching within a ±15min state window</text>
+
+          <!-- Metrics Footer -->
+          <g transform="translate(0, 214)">
+            <text x="0" y="14" font-family="monospace" font-size="13" fill="#fbbf24">▶ PROCESSING LATENCY: 12ms</text>
+            <text x="400" y="14" font-family="monospace" font-size="13" fill="#fbbf24">EVENTS: 1.2M rec/s</text>
+          </g>
+        </g>
+      </g>
+
+      <!-- 4. LAKEHOUSE & OLAP: box-lakehouse-olap (x: 3050, y: 600, w: 650, h: 460) -->
+      <g id="box-lakehouse-olap-group" transform="translate(3050, 600)">
+        <rect width="650" height="460" rx="16" fill="url(#cardGradIndigo)" stroke="#818cf8" stroke-width="3" filter="url(#glow-indigo)" />
+        <rect width="650" height="460" rx="16" fill="url(#cardGradIndigo)" stroke="#818cf8" stroke-width="2" />
+
+        <!-- Header badge -->
+        <rect x="24" y="24" width="120" height="26" rx="6" fill="#4338ca" />
+        <text x="36" y="42" font-family="monospace" font-size="13" font-weight="700" fill="#ffffff">STAGE 04</text>
+        <text x="160" y="42" font-family="monospace" font-size="13" font-weight="600" fill="#c7d2fe">ACID LAKE &amp; OLAP</text>
+
+        <text x="24" y="86" font-family="-apple-system, sans-serif" font-size="24" font-weight="800" fill="#ffffff">
+          Apache Iceberg &amp; ClickHouse
+        </text>
+        <text x="24" y="114" font-family="-apple-system, sans-serif" font-size="15" fill="#e0e7ff">
+          ACID lakehouse storage format paired with vector-accelerated columnar OLAP
+        </text>
+
+        <!-- Sub-features -->
+        <g transform="translate(24, 142)">
+          <!-- Item 1 -->
+          <rect x="0" y="0" width="602" height="54" rx="8" fill="#1e1b4b" stroke="#3730a3" stroke-width="1" />
+          <circle cx="20" cy="27" r="6" fill="#818cf8" />
+          <text x="38" y="26" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Iceberg V2 Upsert (Equality Deletes)</text>
+          <text x="38" y="44" font-family="monospace" font-size="12" fill="#c7d2fe">ACID transactions, snapshot isolation &amp; instant time-travel rollbacks</text>
+
+          <!-- Item 2 -->
+          <rect x="0" y="66" width="602" height="54" rx="8" fill="#1e1b4b" stroke="#3730a3" stroke-width="1" />
+          <circle cx="20" cy="93" r="6" fill="#818cf8" />
+          <text x="38" y="92" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">ClickHouse 24 Columnar Acceleration</text>
+          <text x="38" y="110" font-family="monospace" font-size="12" fill="#c7d2fe">SIMD vectorization, sparse primary index &amp; high-concurrency aggregation</text>
+
+          <!-- Item 3 -->
+          <rect x="0" y="132" width="602" height="54" rx="8" fill="#1e1b4b" stroke="#3730a3" stroke-width="1" />
+          <circle cx="20" cy="159" r="6" fill="#818cf8" />
+          <text x="38" y="158" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Automated Parquet Compaction Loop</text>
+          <text x="38" y="176" font-family="monospace" font-size="12" fill="#c7d2fe">Merges small CDC delta files into optimized 512MB columnar files</text>
+
+          <!-- Metrics Footer -->
+          <g transform="translate(0, 214)">
+            <text x="0" y="14" font-family="monospace" font-size="13" fill="#818cf8">▶ OLAP QUERY: &lt; 120ms</text>
+            <text x="360" y="14" font-family="monospace" font-size="13" fill="#818cf8">TOTAL ROWS: 100B+</text>
+          </g>
+        </g>
+      </g>
+    </g>
+  
+  
+    <!-- ROW 3: Deep Object Storage & AI Feature Store -->
+    <g id="row3-bottom" transform="translate(300, 1180)">
+      <!-- 3A: Object Storage Parquet Lake -->
+      <g transform="translate(0, 0)">
+        <rect width="1100" height="240" rx="16" fill="url(#cardGradDark)" stroke="#334155" stroke-width="2" />
+        <rect x="24" y="20" width="10" height="10" rx="2" fill="#38bdf8" />
+        <text x="44" y="30" font-family="monospace" font-size="14" font-weight="700" fill="#38bdf8" letter-spacing="1">OBJECT STORAGE &amp; PARQUET PERSISTENCE</text>
+        <text x="24" y="68" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#f1f5f9">MinIO / Amazon S3 Distributed Storage</text>
+        <text x="24" y="96" font-family="-apple-system, sans-serif" font-size="15" fill="#94a3b8">Immutable Snappy/ZSTD compressed Parquet files + Iceberg metadata manifest JSON trees</text>
+        <!-- Mini items -->
+        <rect x="24" y="130" width="330" height="70" rx="8" fill="#1e293b" />
+        <text x="40" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Tier 1: Hot NVMe SSD</text>
+        <text x="40" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Active partitions &amp; write ahead log</text>
+
+        <rect x="374" y="130" width="330" height="70" rx="8" fill="#1e293b" />
+        <text x="390" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Tier 2: S3 Standard</text>
+        <text x="390" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Compacted Parquet tables (99.999999999%)</text>
+
+        <rect x="724" y="130" width="350" height="70" rx="8" fill="#1e293b" />
+        <text x="740" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Tier 3: Glacier Deep Archive</text>
+        <text x="740" y="180" font-family="monospace" font-size="12" fill="#94a3b8">7-year regulatory financial cold data</text>
+      </g>
+
+      <!-- 3B: AI Feature Store & ML Training Feeder -->
+      <g transform="translate(1200, 0)">
+        <rect width="1150" height="240" rx="16" fill="url(#cardGradDark)" stroke="#334155" stroke-width="2" />
+        <rect x="24" y="20" width="10" height="10" rx="2" fill="#fbbf24" />
+        <text x="44" y="30" font-family="monospace" font-size="14" font-weight="700" fill="#fbbf24" letter-spacing="1">AI / ML FEATURE STORE &amp; OFFLINE PIPELINE</text>
+        <text x="24" y="68" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#f1f5f9">Feast Feature Store + PySpark 3.5 Model Training Feeder</text>
+        <text x="24" y="96" font-family="-apple-system, sans-serif" font-size="15" fill="#94a3b8">Point-in-Time correct feature joins for real-time recommendation, fraud score &amp; LLM Fine-Tuning</text>
+        <!-- Mini items -->
+        <rect x="24" y="130" width="350" height="70" rx="8" fill="#1e293b" />
+        <text x="40" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Real-Time Feature Sync (Redis)</text>
+        <text x="40" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Sub-millisecond online feature lookup</text>
+
+        <rect x="394" y="130" width="350" height="70" rx="8" fill="#1e293b" />
+        <text x="410" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Offline Historical Features</text>
+        <text x="410" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Iceberg time-travel training dataset</text>
+
+        <rect x="764" y="130" width="360" height="70" rx="8" fill="#1e293b" />
+        <text x="780" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">Data Quality Gate (Great Expectation)</text>
+        <text x="780" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Null check, outlier &amp; schema drift alert</text>
+      </g>
+
+      <!-- 3C: Cross-Cluster Mirroring -->
+      <g transform="translate(2450, 0)">
+        <rect width="950" height="240" rx="16" fill="url(#cardGradDark)" stroke="#334155" stroke-width="2" />
+        <rect x="24" y="20" width="10" height="10" rx="2" fill="#818cf8" />
+        <text x="44" y="30" font-family="monospace" font-size="14" font-weight="700" fill="#818cf8" letter-spacing="1">MULTI-REGION DISASTER RECOVERY</text>
+        <text x="24" y="68" font-family="-apple-system, sans-serif" font-size="22" font-weight="700" fill="#f1f5f9">Active-Active Geo-Replication</text>
+        <text x="24" y="96" font-family="-apple-system, sans-serif" font-size="15" fill="#94a3b8">MirrorMaker 2 Kafka synchronization + Iceberg multi-cloud cross-region bucket sync</text>
+        <!-- Mini items -->
+        <rect x="24" y="130" width="430" height="70" rx="8" fill="#1e293b" />
+        <text x="40" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">MirrorMaker 2 Cluster</text>
+        <text x="40" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Zero offset divergence跨机房双活</text>
+
+        <rect x="474" y="130" width="450" height="70" rx="8" fill="#1e293b" />
+        <text x="490" y="156" font-family="-apple-system, sans-serif" font-size="15" font-weight="600" fill="#f8fafc">RPO = 0 / RTO &lt; 30s</text>
+        <text x="490" y="180" font-family="monospace" font-size="12" fill="#94a3b8">Financial grade disaster recovery SLA</text>
+      </g>
+    </g>
+  
+  
+    <!-- Flow Connections -->
+    <g id="connections" fill="none">
+      <!-- 1. Ambient Glow Underlay Lines -->
+      <g stroke-width="8" opacity="0.3">
+        <!-- Stage 01 -> Stage 02 -->
+        <path d="M 950 830 L 1200 830" stroke="#38bdf8" />
+        <!-- Stage 02 -> Stage 03 -->
+        <path d="M 1950 830 L 2150 830" stroke="#34d399" />
+        <!-- Stage 03 -> Stage 04 -->
+        <path d="M 2850 830 L 3050 830" stroke="#fbbf24" />
+      </g>
+
+      <!-- 2. Crisp Gradient Main Pipeline Lines -->
+      <g stroke-width="4">
+        <!-- Stage 01 -> Stage 02 -->
+        <path d="M 950 830 L 1196 830" stroke="url(#flowCdcToKafka)" marker-end="url(#arrowEmerald)" />
+        
+        <!-- Stage 02 -> Stage 03 -->
+        <path d="M 1950 830 L 2146 830" stroke="url(#flowKafkaToFlink)" marker-end="url(#arrowAmber)" />
+
+        <!-- Stage 03 -> Stage 04 -->
+        <path d="M 2850 830 L 3046 830" stroke="url(#flowFlinkToLakehouse)" marker-end="url(#arrowIndigo)" />
+      </g>
+
+      <!-- 3. Protocol Floating Badges -->
+      <g id="protocol-badges">
+        <!-- Badge 1: CDC -> Kafka -->
+        <g transform="translate(1005, 816)">
+          <rect width="140" height="28" rx="6" fill="#0b1329" stroke="#38bdf8" stroke-width="1.5" />
+          <circle cx="16" cy="14" r="3.5" fill="#38bdf8" />
+          <text x="78" y="19" text-anchor="middle" font-family="monospace" font-size="12" font-weight="600" fill="#7dd3fc">Avro CDC Topic</text>
+        </g>
+
+        <!-- Badge 2: Kafka -> Flink -->
+        <g transform="translate(1990, 816)">
+          <rect width="130" height="28" rx="6" fill="#0b1329" stroke="#34d399" stroke-width="1.5" />
+          <circle cx="16" cy="14" r="3.5" fill="#34d399" />
+          <text x="73" y="19" text-anchor="middle" font-family="monospace" font-size="12" font-weight="600" fill="#6ee7b7">48x Partitions</text>
+        </g>
+
+        <!-- Badge 3: Flink -> Lakehouse -->
+        <g transform="translate(2885, 816)">
+          <rect width="130" height="28" rx="6" fill="#0b1329" stroke="#fbbf24" stroke-width="1.5" />
+          <circle cx="16" cy="14" r="3.5" fill="#fbbf24" />
+          <text x="73" y="19" text-anchor="middle" font-family="monospace" font-size="12" font-weight="600" fill="#fde68a">Parquet Upsert</text>
+        </g>
+      </g>
+
+      <!-- 4. Upper Cluster Inflow Paths -->
+      <g stroke-width="2" stroke-dasharray="6,6" opacity="0.6">
+        <path d="M 625 420 L 625 600" stroke="#38bdf8" marker-end="url(#arrowCyan)" />
+        <path d="M 1575 360 L 1575 600" stroke="#34d399" marker-end="url(#arrowEmerald)" />
+        <path d="M 3375 600 L 3375 360" stroke="#818cf8" marker-end="url(#arrowIndigo)" />
+      </g>
+
+      <!-- 5. Lower Cluster Outflow / Sync Paths -->
+      <g stroke-width="2" stroke-dasharray="4,4" opacity="0.5">
+        <path d="M 1575 1060 L 1575 1180" stroke="#34d399" marker-end="url(#arrowEmerald)" />
+        <path d="M 2500 1060 C 2500 1120, 1800 1120, 1800 1180" stroke="#fbbf24" marker-end="url(#arrowAmber)" />
+        <path d="M 3375 1060 C 3375 1120, 2900 1120, 2900 1180" stroke="#818cf8" marker-end="url(#arrowIndigo)" />
+      </g>
+    </g>
+  
+  
+    <!-- Footer Brand & Attribution -->
+    <g transform="translate(160, 2040)">
+      <text font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif" font-size="16" font-weight="600" fill="#475569">
+        Designed for FocusFlow Interactive Storytelling • 60fps Deep-Zoom Cinematic Preset
+      </text>
+    </g>
+    <g transform="translate(3200, 2040)">
+      <text font-family="monospace" font-size="15" fill="#64748b" text-anchor="end">
+        RESOLUTION: 3840 × 2160 (4K UHD) • Tumio Soft Technology Co., Ltd.
+      </text>
+    </g>
+  
+</svg>
