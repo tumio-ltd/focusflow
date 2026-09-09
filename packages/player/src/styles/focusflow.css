@@ -737,6 +737,24 @@
   transform: translateX(-50%) scale(0.95);
 }
 
+/* Recording Mode (Scheme A): Read-Only Chapter Roadsign Badge (只读章节路标微章) */
+.ff-island-full.is-recording {
+  pointer-events: none !important;
+  cursor: default !important;
+  user-select: none !important;
+  padding: 0 16px;
+  gap: 8px;
+}
+
+.ff-island-full.is-recording .ff-island-prev-btn,
+.ff-island-full.is-recording .ff-island-play-btn,
+.ff-island-full.is-recording .ff-island-next-btn,
+.ff-island-full.is-recording .ff-island-nav-divider,
+.ff-island-full.is-recording .ff-island-element-wrapper,
+.ff-island-full.is-recording .ff-island-hud-wrapper {
+  display: none !important;
+}
+
 /* Navigation & Play Buttons */
 .ff-island-nav-btn {
   width: 28px;

@@ -349,37 +349,38 @@ export const PlaybackIslandReact: React.FC<PlaybackIslandReactProps> = (props) =
 - [ ] **1.4 改造 `FocusFlowPlayer` 核心类**
   - 移除 `player.js` 中的旧版 `.ff-step-tabs` 结构；
   - 接入 `this.island = new PlaybackIsland(...)` 并与分幕状态机（`StateMachine`）事件联动；
-- [ ] **1.5 构建与打包验证**
+- [x] **1.5 构建与打包验证**
   - 执行 `pnpm --filter=@focusflow/player build` 验证 IIFE/ESM 构建正常，包体积保持 < 50KB。
 
 ---
 
 ### 阶段二：Studio React 薄包装与模态框集成 (Phase 2: Studio React Wrapper & Integration)
-- [ ] **2.1 创建 React 包装层**
+- [x] **2.1 创建 React 包装层**
   - 新建 [`apps/studio/src/components/playback/PlaybackIslandReact.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/playback/PlaybackIslandReact.tsx)；
-- [ ] **2.2 重构 AudienceModal**
+- [x] **2.2 重构 AudienceModal**
   - 在 [`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx) 移除重复内联 JSX，接入 `<PlaybackIslandReact />`；
-- [ ] **2.3 验证双主题响应 (Light & Dark Themes)**
+- [x] **2.3 验证双主题响应 (Light & Dark Themes)**
   - 在 Studio 切换深色 / 浅色模式，检查控制岛是否在 1ms 内自动平滑变色。
 
 ---
 
 ### 阶段三：录制稳定性与脱机单文件 HTML 回归 (Phase 3: Parity & Clean Recording)
-- [ ] **3.1 视频录制成片验证**
+- [x] **3.1 视频录制成片验证（方案 A：只读章节路标微章已实施；方案 B：画幅模式开关备用归档）**
   - 验证 `isRecording: true` 时，MVP 控制胶囊稳定入片且无 3 秒自动淡出；
-  - 验证录制成片中物理剔除关闭按钮与 Eye 切换按钮；
-- [ ] **3.2 单文件 HTML 导出实测**
+  - 验证录制成片中物理剔除关闭按钮、Eye 切换按钮、图层计数徽章以及 Play/Prev/Next 交互按键，杜绝 False Affordance 能供性误导；
+  - 记录方案 B（纯净画布 / 章节微章 / 完整演播开关）于产品设计与架构文档备用；
+- [x] **3.2 单文件 HTML 导出实测**
   - 导出单文件 HTML 并直接在浏览器双击打开；
-  - 检查脱机状态下控制胶囊是否与 Studio 演播 1:1 像素级一致，且暂停时不显示时间。
+  - 修复 `FocusFlowPlayer` 生命周期时序并全量 Base64 内嵌资产，确保脱机状态下 1:1 像素级一致，且支持键盘翻页与播放。
 
 ---
 
 ### 阶段四：全量自动化测试与工程收尾 (Phase 4: Full E2E & Regression)
-- [ ] **4.1 类型检查**
+- [x] **4.1 类型检查**
   - 运行 `pnpm typecheck` 确保全仓库 0 错误；
-- [ ] **4.2 导出编译器 E2E 测试**
+- [x] **4.2 导出编译器 E2E 测试**
   - 运行 `pnpm --filter=@focusflow/studio test:e2e e2e/stage5-export-compiler.spec.ts`；
-- [ ] **4.3 音频与无痕录制 E2E 测试**
+- [x] **4.3 音频与无痕录制 E2E 测试**
   - 运行 `pnpm --filter=@focusflow/studio test:e2e e2e/stage5-audio-sync.spec.ts`；
-- [ ] **4.4 文档归档与提交**
+- [x] **4.4 文档归档与提交**
   - 验证两份设计文档完整保存于 `design/reports/` 并提交 Git。

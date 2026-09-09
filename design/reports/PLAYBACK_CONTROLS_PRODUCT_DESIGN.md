@@ -200,21 +200,57 @@ export interface PlaybackIslandProps {
 
 ---
 
-## 6. 实施路线图与验收基准 (Roadmap & Acceptance Criteria)
+## 6. 视频录制呈现策略与画幅模式（Video Export Telemetry & Framing Strategy）
 
-### 6.1 分阶段实施规划
+### 6.1 问题本质与 HCI 能供性考量
+导出的视频文件本质是 **MP4 / WebM 平面像素流（Rasterized Video Stream）**，并非网页 DOM 树。在视频中若出现可点击样式的三角播放按钮与左右翻页箭头，受众在播放视频时极易产生**人机交互能供性假象（False Affordance）**，误以为画面中的按钮可以点击，造成点击挫败感并与宿主播放器本身的控制条产生重叠冲突。
+
+### 6.2 方案 A：只读章节路标微章（当前已实施生效）
+* **定位**：影视发布会级的 HUD 章节路标微章（Read-Only Chapter Roadsign Badge）。
+* **行为表现**：
+  * 当进入录制模式（`isRecording = true`）时，自动剥离所有具交互暗示的按钮组件：
+    * 彻底隐藏 `Prev`（上一幕）、`Play / Pause`（播放/暂停）、`Next`（下一幕）按键；
+    * 彻底隐藏创作者工具（`Eye` 模式切换按钮、图层数量计数徽章、关闭按钮）；
+  * 仅保留核心信息路标：
+    * 呼吸青色小圆点 + 分幕序号（`01 / 05`）+ 分幕标题文本；
+    * 播放中动态展开的时间微勋章（`⏱️ 00:04 / 00:15`）；
+  * 样式强制追加 `pointer-events: none` 与 `cursor: default`，外形紧凑居中，宛如专业影视字幕与 HUD 状态栏，零误导、高质感。
+
+### 6.3 方案 B：视频导出面板提供“录制画幅模式”开关（架构储备备用方案）
+为了满足未来创作者在不同发布渠道（如 Bilibili/YouTube 投稿需要纯净画面，而教学演示需要路标）的个性化需求，在此定义未来扩展开关规范：
+
+1. **配置界面入口**：
+   * 在 `ExportModal` 视频选项卡（`tab-video`）增加单选控件：【录制画幅风格 (Video Framing Style)】。
+2. **三档模式定义**：
+   * **模式 1：只读章节微章（Chapter Roadsign - 默认推荐）**：即上述方案 A，保留章节结构感知，杜绝误触假象；
+   * **模式 2：纯净无痕画布（Pure Canvas - Zen 态）**：画布内实施物理级 **0 DOM 遮挡**，100% 画面全部让位给架构图与流光动效，外层完全依赖视频播放平台控制；
+   * **模式 3：完整演播胶囊（Full Presentation Capsule）**：保留完整播放按钮胶囊，适合录制“FocusFlow 软件操作与功能演示”类教辅视频。
+3. **DSL 与状态契约储备**：
+   ```typescript
+   export interface VideoExportOptions {
+     framingMode: 'roadsign' | 'pure' | 'full'; // 默认 'roadsign'
+     fps: 60 | 30;
+     includeAudio: boolean;
+   }
+   ```
+
+---
+
+## 7. 实施路线图与验收基准 (Roadmap & Acceptance Criteria)
+
+### 7.1 分阶段实施规划
 * **Phase 1：React 受控组件抽离**
-  * 在 Studio 中建立独立组件 `PlaybackIsland.tsx`，将 `AudienceModal` 内部内联代码解耦替换；
+  * 在 Studio 中建立独立组件 `PlaybackIslandReact.tsx`，将 `AudienceModal` 内部内联代码解耦替换；
 * **Phase 2：Vanilla JS 播放器 DOM 与 CSS 1:1 像素级升级**
-  * 重构 `packages/player/src/core/player.js` 中的控制栏 HTML 模板，剔除长 Tab，引入与 `PlaybackIsland` 一致的居中胶囊与分幕标题指示器；
+  * 重构 `packages/player/src/ui/playback-island.js` 与 `packages/player/src/styles/focusflow.css`，实现内核级单源码驱动；
   * 重新构建 `@focusflow/player`，确保单文件 HTML 导出自带顶级美学质感；
 * **Phase 3：全场景 E2E 自动化测试固化**
-  * 覆盖 HTML 导出独立播放、Studio 全屏演播三态流转、60FPS 录制控制条稳定入片且屏蔽创作者按钮的全链路回归测试。
+  * 覆盖 HTML 导出独立播放、Studio 全屏演播三态流转、60FPS 录制只读路标微章且屏蔽创作者按钮的全链路回归测试。
 
-### 6.2 质量验收基准 (Acceptance Checklist)
-- [ ] **视觉一致性**：导出的单文件 HTML 底部控制条与 Studio 演播大屏底部控制胶囊在比例、圆角、文字字号、图标风格上完全一致；
-- [ ] **时间自适应**：
+### 7.2 质量验收基准 (Acceptance Checklist)
+- [x] **视觉一致性**：导出的单文件 HTML 底部控制条与 Studio 演播大屏底部控制胶囊在比例、圆角、文字字号、图标风格上完全一致；
+- [x] **时间自适应**：
   - 手动单步操作或暂停时，时间刻度 100% 物理隐藏，消除读者卡顿疑虑；
   - 自动演播推演时，动态时间秒表微勋章平滑展开，准确呈现分幕进度；
-- [ ] **录制稳定性**：录制生成的视频成片中，MVP 演示胶囊全程高亮稳定常驻，不随鼠标静止而闪烁淡出；同时视频中绝无任何 `X` 关闭按钮或 `Eye` 切换按钮残留；
-- [ ] **测试覆盖率**：`stage5-export-compiler.spec.ts` 与 `stage5-audio-sync.spec.ts` 保持 100% 通过。
+- [x] **录制无误导性**：录制视频采用方案 A 只读章节路标微章，剔除所有可点击按钮，杜绝 False Affordance，保留优雅章节导航；
+- [x] **测试覆盖率**：`stage5-export-compiler.spec.ts` 与 `stage5-audio-sync.spec.ts` 保持 100% 通过。

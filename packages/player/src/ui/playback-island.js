@@ -48,6 +48,7 @@ export class PlaybackIsland {
     this.prevBtnEl = null;
     this.playBtnEl = null;
     this.nextBtnEl = null;
+    this.navDividerEl = null;
     this.sceneIndexTextEl = null;
     this.sceneTitleTextEl = null;
     this.timerPillEl = null;
@@ -94,7 +95,7 @@ export class PlaybackIsland {
         ${ICONS.NEXT}
       </button>
 
-      <div class="ff-island-divider"></div>
+      <div class="ff-island-divider ff-island-nav-divider"></div>
 
       <div class="ff-island-scene-pill" data-testid="audience-scene-pill">
         <div class="ff-island-dot"></div>
@@ -175,6 +176,7 @@ export class PlaybackIsland {
     this.prevBtnEl = fullIsland.querySelector('.ff-island-prev-btn');
     this.playBtnEl = fullIsland.querySelector('.ff-island-play-btn');
     this.nextBtnEl = fullIsland.querySelector('.ff-island-next-btn');
+    this.navDividerEl = fullIsland.querySelector('.ff-island-nav-divider');
     this.sceneIndexTextEl = fullIsland.querySelector('.ff-island-scene-idx');
     this.sceneTitleTextEl = fullIsland.querySelector('.ff-island-scene-title');
     this.timerWrapperEl = fullIsland.querySelector('.ff-island-timer-wrapper');
@@ -263,18 +265,29 @@ export class PlaybackIsland {
       elementCount,
     } = this.state;
 
-    // 1. Update Play Button
+    // Toggle Scheme A Read-Only Chapter Roadsign Badge in recording mode
+    if (this.fullIslandEl) {
+      this.fullIslandEl.classList.toggle('is-recording', isRecording);
+    }
+
+    // 1. Update Play Button (Hidden in recording mode to eliminate false affordance)
     if (this.playBtnEl) {
+      this.playBtnEl.style.display = isRecording ? 'none' : 'inline-flex';
       this.playBtnEl.innerHTML = isPlaying ? ICONS.PAUSE : ICONS.PLAY;
       this.playBtnEl.title = isPlaying ? '暂停 (Space)' : '自动演播 (Space)';
     }
 
-    // 2. Update Prev / Next Buttons
+    // 2. Update Prev / Next Buttons & Nav Divider (Hidden in recording mode)
     if (this.prevBtnEl) {
+      this.prevBtnEl.style.display = isRecording ? 'none' : 'inline-flex';
       this.prevBtnEl.disabled = currentSceneIdx === 0;
     }
     if (this.nextBtnEl) {
+      this.nextBtnEl.style.display = isRecording ? 'none' : 'inline-flex';
       this.nextBtnEl.disabled = currentSceneIdx === totalScenes - 1;
+    }
+    if (this.navDividerEl) {
+      this.navDividerEl.style.display = isRecording ? 'none' : 'block';
     }
 
     // 3. Update Scene Index & Title
@@ -299,8 +312,9 @@ export class PlaybackIsland {
       }
     }
 
-    // 5. Update Element Count
+    // 5. Update Element Count (Hidden in recording mode)
     if (this.elementCountWrapperEl) {
+      this.elementCountWrapperEl.style.display = isRecording ? 'none' : 'flex';
       const count = elementCount || 0;
       if (this.elementCountTextEl) {
         this.elementCountTextEl.textContent = String(count);
