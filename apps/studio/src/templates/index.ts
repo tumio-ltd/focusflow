@@ -3,7 +3,7 @@ import { hotelPmsTemplate } from './tpl-hotel-pms';
 import { microservicesTemplate } from './tpl-microservices';
 import { dddArchitectureTemplate } from './tpl-ddd-architecture';
 import { k8sCloudNativeTemplate } from './tpl-k8s-cloudnative';
-import { distributedTxTemplate, realtimeLakehouseTemplate } from './tpl-realtime-lakehouse';
+import { realtimeLakehouseTemplate } from './tpl-realtime-lakehouse';
 import { aiRagPipelineTemplate } from './tpl-ai-rag-pipeline';
 
 export interface ArchitectureTemplate {
