@@ -27,6 +27,7 @@
   - [2.6 为什么选用 Oxlint + Prettier 而不是传统 ESLint？(现代化极速代码质量流选型)](#26-为什么选用-oxlint--prettier-而不是传统-eslint现代化极速代码质量流选型)
 - [3. 完整 Monorepo 工作区目录全景](#3-完整-monorepo-工作区目录全景)
   - [3.1 POC & Phase 1 (MVP) 现有代码资产与 Monorepo 映射关系对照表](#31-poc--phase-1-mvp-现有代码资产与-monorepo-映射关系对照表)
+  - [3.2 商业隔离型 Open-Core 架构规范与开源目录投影过滤](#32-商业隔离型-open-core-架构规范与开源目录投影过滤)
 - [4. 各子包核心职责与协同机制](#4-各子包核心职责与协同机制)
   - [4.1 `packages/player` (底层播放器内核)](#41-packagesplayer-底层播放器内核)
   - [4.2 `apps/studio` (上层可视化创作工作台)](#42-appsstudio-上层可视化创作工作台)
@@ -550,7 +551,49 @@ focusflow/                                     # 🏗️ FocusFlow Monorepo 根�
 
 ---
 
----
+### 3.2 商业隔离型 Open-Core 架构规范与开源目录投影过滤
+
+为了兼顾**开源社区生态爆发（模式 A 单机版）**与**商业变现与数据主权壁垒（模式 B 云端 SaaS 全栈）**，FocusFlow 确立 **Open-Core Monorepo 治理范式**：
+
+```
+                    开发者本地全量 Monorepo 工作区 (Local Workspace)
+                                   │
+                    ┌──────────────┴──────────────┐
+                    ▼                             ▼
+       git push origin main               pnpm sync:oss (开源投影过滤同步)
+                    │                             │
+                    ▼                             ▼
+        🔒 公司私有 Gitea (真理之源)        🌐 外部 GitHub (开源公开仓)
+    ┌──────────────────────────────┐   ┌──────────────────────────────┐
+    │ • 内部全量资产库 (模式 A+B)   │   │ • 纯开源代码库 (仅模式 A)     │
+    │ • 包含 apps/api, database    │   │ • 包含 packages/player, dsl  │
+    │ • 包含 design/, docs-internal│   │ • 包含 apps/studio 单机版    │
+    │ • 数据主权与商业机密绝对防护 │   │ • 仅包含公开 docs/ 技术白皮书│
+    │ • 支撑内部生产、计费与云集群 │   │ • 吸引社区 PR / Issues / 星标│
+    └──────────────────────────────┘   └──────────────────────────────┘
+```
+
+#### 1. 资产权限与开源许可矩阵 (Asset Permission & License Matrix)
+
+| 目录资产路径 | 资产归属属性 | 包含核心内容 | 分发目标端 | 适用协议 (License) |
+| :--- | :--- | :--- | :--- | :--- |
+| `packages/player/` | 🟢 公开开源 (Core) | 纯原生 JS 运镜渲染内核、动效管线 | Gitea + GitHub | **MIT** |
+| `packages/dsl/` | 🟢 公开开源 (Contract) | 统一 DSL 语法树与场景/相机 TypeScript 定义 | Gitea + GitHub | **MIT** |
+| `apps/studio/` | 🟢 公开开源 (App) | 单机版 Web 录制工作台（本地 IndexedDB） | Gitea + GitHub | **AGPL-3.0** |
+| `tooling/*` | 🟢 公开开源 (Tooling) | 跨包 Oxlint、Tailwind Token、TSConfig 共享配置 | Gitea + GitHub | **MIT** |
+| `examples/*` | 🟢 公开开源 (Examples) | 官方 4K 架构图样例（LuxeHMS、Overlay Demo 等） | Gitea + GitHub | **MIT** |
+| `docs/*` | 🟢 公开开源 (Public Docs) | 面向社区的算法白皮书、快速上手指南、开发规范 | Gitea + GitHub | **CC-BY-4.0 / MIT** |
+| `apps/api/` | 🔴 商业私有 (Cloud API) | NestJS 核心业务微服务、多租户鉴权、项目存取 | **仅私有 Gitea** | **Proprietary (全商业所有权)** |
+| `apps/render-worker/` | 🔴 商业私有 (Worker) | 服务端 4K/60fps Playwright 批量视频转码与渲染集群 | **仅私有 Gitea** | **Proprietary (全商业所有权)** |
+| `packages/database/` | 🔴 商业私有 (DB) | Prisma ORM 商业多租户数据模型与迁移脚本 | **仅私有 Gitea** | **Proprietary (全商业所有权)** |
+| `docs-internal/` | 🔴 商业私有 (Internal Docs) | 商业化定价战略、出海宣发操盘手记、销售转化策略 | **仅私有 Gitea** | **商业机密 (Confidential)** |
+| `design/` | 🔴 商业私有 (Design) | 商业版全套 PRD、竞品拆解、各阶段复盘报告 | **仅私有 Gitea** | **商业机密 (Confidential)** |
+| `legacy/` | 🔴 内部归档 (Archive) | 历史 Phase 0/1 研发留存 | **仅私有 Gitea** | **内部归档** |
+
+#### 2. 双端同步与工作流规范
+
+* **内部主控中心（Single Source of Truth）**：私有 Gitea 作为唯一全量代码库。开发者平时 `git commit` 和 `git push origin main` 只推向 Gitea，完全不用担心因误操作泄露模式 B 代码或商业机密。
+* **对外开源发布（Selective Open-Source Projection）**：在需要向 GitHub 发版或同步社区时，运行 `pnpm sync:oss`，脚本基于白名单机制自动生成干净的公开投影分支推送到 GitHub，从物理链路机制上杜绝商业秘密外泄。
 
 ## 4. 各子包核心职责与协同机制
 

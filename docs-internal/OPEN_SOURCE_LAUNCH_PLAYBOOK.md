@@ -103,47 +103,60 @@
 目前已具备 **GitHub 个人及企业组织账号**，且拥有 **自建私有 Gitea 账号**。建议采用**“公开开源门户 + 内部私有备份与商业闭源隔离”**的标准企业级双远端拓扑架构：
 
 ```
-                    开发者本地工作区 (Local Workspace)
+                    开发者本地全量 Monorepo 工作区 (Local Workspace)
                                    │
-                      git push origin main (单命令双推)
-                                   ├───┐
-                                   ▼   ▼
-        ┌──────────────────────────────┐   ┌──────────────────────────────┐
-        │  🌐 GitHub (企业组织 Public) │   │   🔒 私有 Gitea (Private)     │
-        ├──────────────────────────────┤   ├──────────────────────────────┤
-        │ • 开源公共仓库代码入口        │   │ • 内部全量资产安全主控备份   │
-        │ • 社区 PR / Issues / Stars   │   │ • 数据主权与内网高速拉取     │
-        │ • GitHub Actions CI/CD 流水线│   │ • 未来模式 B 云端服务研发基座│
-        │ • GitHub Pages / Demo 托管   │   │   (NestJS API / 计费 / 算力) │
-        └──────────────────────────────┘   └──────────────────────────────┘
+                    ┌──────────────┴──────────────┐
+                    ▼                             ▼
+       git push origin main               pnpm sync:oss (开源投影过滤同步)
+                    │                             │
+                    ▼                             ▼
+        🔒 公司私有 Gitea (真理之源)        🌐 外部 GitHub (开源公开仓)
+    ┌──────────────────────────────┐   ┌──────────────────────────────┐
+    │ • 内部全量资产库 (模式 A+B)   │   │ • 纯开源代码库 (仅模式 A)     │
+    │ • 包含 apps/api, database    │   │ • 包含 packages/player, dsl  │
+    │ • 包含 design/, docs-internal│   │ • 包含 apps/studio 单机版    │
+    │ • 数据主权与商业机密绝对防护 │   │ • 仅包含公开 docs/ 技术白皮书│
+    │ • 支撑内部生产、计费与云集群 │   │ • 吸引社区 PR / Issues / 星标│
+    └──────────────────────────────┘   └──────────────────────────────┘
 ```
 
-#### 配置实战方案：单命令双远端自动并发/串行推送
-无需手动执行两次 `git push`，可以在本地 Git 的 `origin` 上配置多个 `pushurl`：
+#### Open-Core 资产权限边界划分矩阵
 
-```bash
-# 1. 保留 origin 默认抓取源 (推荐从 Gitea 或 GitHub 抓取)
-git remote set-url origin git@github.com:<your-org>/focusflow.git
+| 目录资产 | 资产类型 | 包含内容 | 存储仓库 | 开源许可 |
+| :--- | :--- | :--- | :--- | :--- |
+| `packages/player` | 🟢 公开开源 | 纯原生 JS 运镜渲染内核 | Gitea + GitHub | MIT |
+| `packages/dsl` | 🟢 公开开源 | 统一 DSL 结构与类型契约 | Gitea + GitHub | MIT |
+| `apps/studio` | 🟢 公开开源 | 单机版 Web 录制工作台（本地 IndexedDB） | Gitea + GitHub | AGPL-3.0 |
+| `tooling/*`, `examples/*` | 🟢 公开开源 | 标杆架构图样例、工程规范 | Gitea + GitHub | MIT |
+| `docs/*` | 🟢 公开开源 | 算法白皮书、快速上手、开发指南 | Gitea + GitHub | CC-BY-4.0 / MIT |
+| `apps/api` | 🔴 商业私有 | 模式 B：NestJS SaaS API、企业鉴权、团队协同 | **仅私有 Gitea** | Proprietary (全商业所有权) |
+| `apps/render-worker` | 🔴 商业私有 | 模式 B：服务端 4K/60fps 无头浏览器视频渲染集群 | **仅私有 Gitea** | Proprietary (全商业所有权) |
+| `packages/database` | 🔴 商业私有 | 模式 B：Prisma 多租户 PostgreSQL 数据模型 | **仅私有 Gitea** | Proprietary (全商业所有权) |
+| `docs-internal/` | 🔴 商业私有 | 商业化定价战略、出海宣发操盘手记、销售方案 | **仅私有 Gitea** | 机密 (Confidential) |
+| `design/` | 🔴 商业私有 | 商业版全套 PRD、竞品剖析、阶段研发复盘报告 | **仅私有 Gitea** | 机密 (Confidential) |
+| `legacy/` | 🔴 内部归档 | Phase 0/1 历史验证归档 | **仅私有 Gitea** | 内部归档 |
 
-# 2. 为 origin 添加 GitHub 组织推流地址
-git remote set-url --add --push origin git@github.com:<your-org>/focusflow.git
+#### 远端配置与一键同步工作流实战
 
-# 3. 为 origin 添加私有 Gitea 推流地址
-git remote set-url --add --push origin git@<your-gitea-host>:<your-user-or-org>/focusflow.git
+1. **日常开发模式**：
+   - 默认远端 `origin` 指向私有 Gitea 主仓：
+     ```bash
+     git remote set-url origin https://git.tumio.site/tumio/focusflow.git
+     ```
+   - 开发者平时所有的 `git commit` 与 `git push origin main` 均只推向内部 Gitea，天然享有物理级商业隔离与防手滑保护。
 
-# 4. 验证配置
-git remote -v
-# 输出示例:
-# origin  git@github.com:<your-org>/focusflow.git (fetch)
-# origin  git@github.com:<your-org>/focusflow.git (push)
-# origin  git@<your-gitea-host>:<your-user-or-org>/focusflow.git (push)
-
-# 5. 后续只需正常推送，Git 会自动同步推送至两个远端！
-git push origin main
-```
+2. **开源发布与同步模式**：
+   - 当准备向 GitHub 开源社区同步最新代码或打 Release 时，执行：
+     ```bash
+     pnpm sync:oss
+     ```
+   - 该命令会自动：
+     1. 读取白名单目录（`packages/*`, `apps/studio`, `tooling/*`, `examples/*`, `docs/*`, `scripts/*` 以及根目录公共配置文件）；
+     2. 自动剔除 `docs-internal/`, `design/`, `legacy/`, `apps/api/`, `packages/database/` 等私有资产；
+     3. 将干净的开源投影推送到 GitHub 的 `main` 分支。
 
 > [!TIP]
-> **商业隔离优势**：当前开源版本（模式 A）双端同步。未来启动**模式 B（全栈云端 SaaS）**时，闭源的后端微服务（`apps/api`、计费系统、企业鉴权）可只提交至私有 Gitea，天然保障核心商业资产绝不泄露至 GitHub 公共空间。
+> **商业隔离优势**：内部全量 Monorepo 保证全栈类型共享（后端直接复用 `@focusflow/dsl`）与极致研发体验；开源投影保证公共 GitHub 永远只存在纯洁的单机版生态，核心商业资产绝不外泄。
 
 ### 2.3 敏感信息与本地绝对路径全面脱敏
 执行自动化排查脚本，确保代码库绝对干净：
