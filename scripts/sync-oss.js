@@ -151,9 +151,11 @@ async function main() {
 
     // 6. Commit changes
     run('git add -A', tempDir);
+    run('git config user.name "xiangc579"', tempDir);
+    run('git config user.email "gf.bahamut@gmail.com"', tempDir);
     const dateStr = new Date().toISOString().slice(0, 10);
     const commitMsg = `chore(sync): update open-source projection from internal monorepo (${dateStr})`;
-    run(`git commit -m "${commitMsg}"`, tempDir);
+    run(`git commit --author="xiangc579 <gf.bahamut@gmail.com>" -m "${commitMsg}"`, tempDir);
 
     // 7. Push to GitHub
     console.log('📤 Pushing clean projection to GitHub (main)...');
