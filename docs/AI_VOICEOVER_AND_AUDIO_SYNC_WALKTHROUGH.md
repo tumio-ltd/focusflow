@@ -29,28 +29,28 @@ FocusFlow Studio Stage 5.6 引入了智能 AI 提词、母带音频轨管理与�
 
 ## 二、代码修改清单
 
-1. [`apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts)
+1. [`apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts`](../apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts)
    - 重构 `adaptSceneDurationToAudio(scene, audioDurationMs, defaultInterval)`，落地“长扩短留白”的自适应计算；
    - 更新 `synthesizeSceneVoiceover` 和 `synthesizeAllScenesVoiceover` 支持传入工程默认分幕间隔。
-2. [`apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts)
+2. [`apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts`](../apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts)
    - **解决中英文离线发音被拉长、复古电音怪声问题**：
      - **全量拉黑复古与玩具音色**（`VINTAGE_NOVELTY_VOICE_REGEX`）：彻底封杀 macOS/Windows 自 1984 年以来的 20+ 个怪异音色（`Albert`, `Fred`, `Eddy`, `Flo`, `Grandma`, `Grandpa`, `Bad News`, `Zarvox` 等）；
      - **英文旗舰母带白名单**（`ENGLISH_BROADCAST_VOICE_REGEX`）：纯英文台词优先且强制调用 **`Samantha`**（macOS 官方现代纯正美音）或 **`Alex`**（带呼吸感的自然男声），Windows 选用 **`Jenny` / `Guy`**；
      - **中文旗舰母带白名单**（`CHINESE_BROADCAST_VOICE_REGEX`）：中文台词优先且强制调用 **`Tingting (婷婷)`**，Windows 选用 **`Xiaoxiao (晓晓)`**；
      - **双向语言嗅探与防跨语言混用**：自动嗅探台词文本语言，防止中文发音人拼读英文导致拖腔，亦防止英文发音人拼读中文导致报错；
      - `speakWebSpeech(text, speed, lang, voiceId)` 全面打通 `voiceId` 绑定与过滤。
-3. [`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx)
+3. [`apps/studio/src/components/layout/BottomTimeline.tsx`](../apps/studio/src/components/layout/BottomTimeline.tsx)
    - 解构 `updateSceneDuration`；
    - 在 `handleBatchAIVoiceover` 中批量将计算后的 `updatedScenes` 时长同步更新到 `useProjectStore`。
-4. [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx)
+4. [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx)
    - 监听播放器 `sceneChange` 事件，在离线演播切幕时自动调用 `speakWebSpeech(text, cfg.speed, undefined, cfg.voice)`；
    - 暂停时（`!isPlaying`）自动调用 `window.speechSynthesis.cancel()` 停止发声；
    - 更新 `onSynthesizeSceneTTS` 单幕试听自适应传参与发音人配置绑定。
-5. [`apps/studio/src/components/layout/RightInspector.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/RightInspector.tsx)
+5. [`apps/studio/src/components/layout/RightInspector.tsx`](../apps/studio/src/components/layout/RightInspector.tsx)
    - 为单幕 TTS 试听按钮追加详细解释的 `title` Tooltip。
-6. [`apps/studio/src/locales/zh/inspector.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/inspector.ts) & [`apps/studio/src/locales/en/inspector.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/inspector.ts)
+6. [`apps/studio/src/locales/zh/inspector.ts`](../apps/studio/src/locales/zh/inspector.ts) & [`apps/studio/src/locales/en/inspector.ts`](../apps/studio/src/locales/en/inspector.ts)
    - 国际化文案更新为精准的“试听 TTS (自适应分幕时长)” / “Preview TTS & Adapt Scene Duration”。
-7. [`apps/studio/e2e/stage5-audio-sync.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-audio-sync.spec.ts)
+7. [`apps/studio/e2e/stage5-audio-sync.spec.ts`](../apps/studio/e2e/stage5-audio-sync.spec.ts)
    - 增加对“短台词长场景保留留白不缩短”的断言测试；
 ### 3. 试听随时打断控制与“先试听、满意再应用”解耦闭环
 - **试听随时停止/重听**：
@@ -72,24 +72,24 @@ FocusFlow Studio Stage 5.6 引入了智能 AI 提词、母带音频轨管理与�
 
 ## 二、代码修改清单
 
-1. [`apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts)
+1. [`apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts`](../apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts)
    - 解决中英文离线发音拉长问题，过滤复古怪异音色，母带播音员置顶与智能语种嗅探；
    - 增加 `onEnded` 播放完成回调通知，并导出 `stopWebSpeech()` 供全局即时打断使用。
-2. [`apps/studio/src/components/layout/RightInspector.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/RightInspector.tsx)
+2. [`apps/studio/src/components/layout/RightInspector.tsx`](../apps/studio/src/components/layout/RightInspector.tsx)
    - 扩展 `TTSPreviewInfo` 接口与试听控制回调属性（`ttsPreview`, `onStopPreviewTTS`, `onPlayPreviewTTS`, `onApplySceneTTS`, `onDismissSceneTTS`）；
    - 在分幕台词输入框下方实现轻量试听控制卡片：
      - `[▶️ 试听 / ⏹️ 停止]` 实时切换控制；
      - `建议分幕 X.Xs` 状态与时长标签；
      - `[✓ 应用]` 高亮应用按钮；
      - `[✕]` 放弃/取消按钮。
-3. [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx)
+3. [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx)
    - 维护 `ttsPreview` 状态与 `previewAudioRef`；
    - 实现 `stopCurrentTtsPreview` 与 `playCurrentTtsPreview`，支持离线 Web Speech 与云端 HTML5 Audio 统一启停；
    - 分离“试听”与“应用”：试听时仅计算建议时长并播放，点击应用时才调用 `updateSceneDuration` 并将音频落盘至 `setAudioTrack`；
    - 监听分幕切换与演播播放状态，切幕或演播时自动打断试听音频并清理预览态。
-4. [`apps/studio/src/locales/zh/inspector.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/inspector.ts) & [`apps/studio/src/locales/en/inspector.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/inspector.ts)
+4. [`apps/studio/src/locales/zh/inspector.ts`](../apps/studio/src/locales/zh/inspector.ts) & [`apps/studio/src/locales/en/inspector.ts`](../apps/studio/src/locales/en/inspector.ts)
    - 补充 `stopPreviewTTS`、`playPreviewTTS`、`ttsPlaying`、`ttsReady`、`suggestedDuration`、`applyTTS`、`applyTTSTip`、`dismissTTS` 等完整多语言支持。
-5. [`apps/studio/e2e/stage5-audio-sync.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-audio-sync.spec.ts)
+5. [`apps/studio/e2e/stage5-audio-sync.spec.ts`](../apps/studio/e2e/stage5-audio-sync.spec.ts)
    - 改造 `verifyVoiceoverScriptAndTtsAdaptation` 和 `verifyEnglishVoiceoverScriptAndTtsAdaptation`，验证试听控制卡片出现、中途打断停止播放、点击应用后时长才生效并落盘的全流程。
 
 ### 4. 音频轨试听 (Audio Track Play Preview) 与演播播放发声深度打通

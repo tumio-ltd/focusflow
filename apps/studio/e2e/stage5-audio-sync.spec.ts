@@ -239,7 +239,7 @@ async function verifyAiVoiceoverSettingsModal(page: Page): Promise<void> {
   await expect(cloudBtn).toBeVisible();
 
   // 截取 Light 主题下离线模式模态框渲染
-  await page.screenshot({ path: '/Users/xt/.gemini/antigravity-cli/brain/39760395-6d6e-42f7-b904-0fdf569233e1/light_tts_modal_offline.png' });
+  await page.screenshot({ path: 'test-results/screenshots/light_tts_modal_offline.png' });
 
   // 切换到云端模式
   await cloudBtn.click();
@@ -252,7 +252,7 @@ async function verifyAiVoiceoverSettingsModal(page: Page): Promise<void> {
   await expect(baseUrlInput).toHaveValue('https://api.siliconflow.cn/v1');
 
   // 截取 Light 主题下云端模式模态框的实际渲染效果供视觉校验
-  await page.screenshot({ path: '/Users/xt/.gemini/antigravity-cli/brain/39760395-6d6e-42f7-b904-0fdf569233e1/light_tts_modal_cloud.png' });
+  await page.screenshot({ path: 'test-results/screenshots/light_tts_modal_cloud.png' });
 
   // 切回离线模式并保存
   await offlineBtn.click();
@@ -332,12 +332,12 @@ async function verifyEnglishAudioLocalization(page: Page) {
   await expect(settingsModal).toContainText('Voice');
 
   // 截取 EN 语言下的设置模态框供视觉验证
-  await page.screenshot({ path: '/Users/xt/.gemini/antigravity-cli/brain/39760395-6d6e-42f7-b904-0fdf569233e1/en_tts_modal_cloud.png' });
+  await page.screenshot({ path: 'test-results/screenshots/en_tts_modal_cloud.png' });
 
   // 切回离线并保存
   const offlineBtn = page.locator('[data-testid="tts-mode-offline-btn"]');
   await offlineBtn.click();
-  await page.screenshot({ path: '/Users/xt/.gemini/antigravity-cli/brain/39760395-6d6e-42f7-b904-0fdf569233e1/en_tts_modal_offline.png' });
+  await page.screenshot({ path: 'test-results/screenshots/en_tts_modal_offline.png' });
 
   const saveSettingsBtn = settingsModal.locator('button', { hasText: 'Save Settings' });
   await saveSettingsBtn.click();

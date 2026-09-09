@@ -108,7 +108,7 @@ sequenceDiagram
 
 ### 5.1 核心录制服务层 (Core Video Recording Service)
 
-#### [MODIFY] [canvasRecorder.ts](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts)
+#### [MODIFY] [canvasRecorder.ts](../apps/studio/src/services/canvasRecorder.ts)
 - 将原有空的 `startDomRecording` 重构升级为 `startTabRecording(options?: TabRecordingOptions): Promise<RecordingSession>`：
   - 内部调用 `getDisplayMedia` 取得当前标签页视轨与音轨；
   - 实例化 `MediaRecorder`，采集 `video/webm;codecs=vp9` 数据分片；
@@ -121,7 +121,7 @@ sequenceDiagram
 
 ### 5.2 受众全屏演播呈现层 (Audience & Recording HUD)
 
-#### [MODIFY] [AudienceModal.tsx](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx)
+#### [MODIFY] [AudienceModal.tsx](../apps/studio/src/components/modals/AudienceModal.tsx)
 - Props 接口扩展：
   ```typescript
   export interface AudienceModalProps {
@@ -144,11 +144,11 @@ sequenceDiagram
 
 ### 5.3 工作区调度与导出中心 (Studio Orchestration & Export)
 
-#### [MODIFY] [ExportModal.tsx](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx)
+#### [MODIFY] [ExportModal.tsx](../apps/studio/src/components/modals/ExportModal.tsx)
 - 将【客户端视频录制】Tab 内的【启动全自动录制】按钮与 `onStartRecording` 事件绑定；
 - 增加用户友好提示说明（即将弹出浏览器标签页共享授权）。
 
-#### [MODIFY] [App.tsx](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx)
+#### [MODIFY] [App.tsx](../apps/studio/src/App.tsx)
 - 维护录制生命周期状态：
   ```typescript
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
@@ -165,7 +165,7 @@ sequenceDiagram
 
 ### 5.4 国际化与双语词典扩展 (i18n)
 
-#### [MODIFY] [zh/export.ts](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/export.ts) & [en/export.ts](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/export.ts)
+#### [MODIFY] [zh/export.ts](../apps/studio/src/locales/zh/export.ts) & [en/export.ts](../apps/studio/src/locales/en/export.ts)
 - 补充中英文词条：
   - `recordingInProgress`: '正在录制 60FPS 演播...' / 'Recording 60FPS Presentation...'
   - `finishAndSave`: '完成并保存视频' / 'Finish & Save Video'
@@ -268,9 +268,9 @@ sequenceDiagram
 
 1. **根因 1：录制混音 `AudioContext` 实例游离泄漏与媒体轨未硬切断**
    - **涉及文件与行号**：
-     - [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx#L440-L457)
-     - [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx#L412-L433)
-     - [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts#L94-L120)
+     - [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx#L440-L457)
+     - [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx#L412-L433)
+     - [`apps/studio/src/services/canvasRecorder.ts`](../apps/studio/src/services/canvasRecorder.ts#L94-L120)
    - **机制解剖**：
      - 在 `App.tsx` 的 `handleStartVideoRecording`（L445-L453）中，为了将时间轴中的工程音轨混入录制视频，执行了 `const ctx = new AudioCtx();` 并创建了 `createMediaStreamDestination()` 节点；
      - **致命疏漏**：这个新创建的 `ctx` 没有保存在任何 `ref` 或生命周期管理器中！在 `handleFinishVideoRecording`（L412-L433）结束录制时，**从未调用 `ctx.close()`**；
@@ -279,9 +279,9 @@ sequenceDiagram
 
 2. **根因 2：TTS 合成与音频解码上下文失控常驻与无空闲休眠机制**
    - **涉及文件与行号**：
-     - [`apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts#L95-L97)
-     - [`apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts#L86-L92)
-     - [`apps/studio/src/services/audio/audioDecoder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/audioDecoder.ts#L6-L17)
+     - [`apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts`](../apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts#L95-L97)
+     - [`apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts`](../apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts#L86-L92)
+     - [`apps/studio/src/services/audio/audioDecoder.ts`](../apps/studio/src/services/audio/audioDecoder.ts#L6-L17)
    - **机制解剖**：
      - 在 `aiTtsSynthesizer.ts`（L96）中，每次执行多幕批量合成都会无条件 `new AudioCtx()`。虽然在函数末尾有 `ctx.close()`，但该函数**缺乏 `try...finally` 安全边界**。一旦循环内 TTS 接口网络失败、分幕解析抛错或解码异常退出，`ctx.close()` 将被完全跳过，造成音频线程永久游离泄漏；
      - 在 `UserKeyOpenAITTSProvider.ts`（L86-L92）中，`ctx.close()` 位于 `try` 块内，若 `ctx.decodeAudioData(arrayBuffer)` 失败跳入 `catch`，`ctx` 同样永远不会被关闭；
@@ -289,8 +289,8 @@ sequenceDiagram
 
 3. **根因 3：高分屏 Retina (3K/4K) 未加分辨率上限约束与 VP9 纯 CPU 软件编码过载**
    - **涉及文件与行号**：
-     - [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts#L40-L50)
-     - [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts#L68-L86)
+     - [`apps/studio/src/services/canvasRecorder.ts`](../apps/studio/src/services/canvasRecorder.ts#L40-L50)
+     - [`apps/studio/src/services/canvasRecorder.ts`](../apps/studio/src/services/canvasRecorder.ts#L68-L86)
    - **机制解剖**：
      - 在 `canvasRecorder.ts`（L40-L49）调用 `navigator.mediaDevices.getDisplayMedia` 时，仅指定了 `frameRate: { ideal: fps, max: fps }`，**完全未约束最大宽高（`width` / `height`）**；
      - 在现代高分屏设备（例如 MacBook Pro 14/16寸 Retina 屏幕，物理分辨率高达 `3024 x 1964` 或 `2880 x 1800`）上全屏录制时，浏览器以全量物理分辨率捕获超高像素流；
@@ -298,9 +298,9 @@ sequenceDiagram
 
 4. **根因 4：画布静态编辑态无限 CSS 关键帧动画与复合滤镜触发重绘风暴 (Repaint & Rasterize Storm)**
    - **涉及文件与行号**：
-     - [`packages/player/src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/packages/player/src/styles/focusflow.css#L165-L174)
-     - [`packages/player/src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/packages/player/src/styles/focusflow.css#L177-L191)
-     - [`packages/player/src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/packages/player/src/styles/focusflow.css#L201-L210)
+     - [`packages/player/src/styles/focusflow.css`](../packages/player/src/styles/focusflow.css#L165-L174)
+     - [`packages/player/src/styles/focusflow.css`](../packages/player/src/styles/focusflow.css#L177-L191)
+     - [`packages/player/src/styles/focusflow.css`](../packages/player/src/styles/focusflow.css#L201-L210)
    - **机制解剖**：
      - 流光动效路径 `.ff-stream` 挂载了 `@keyframes ffStreamMotion 1.5s linear infinite`；
      - 呼吸锚点 `.ff-dot.active` 挂载了 `@keyframes ffDotPulse 1.8s ease-in-out infinite alternate`，并在关键帧中叠加了 `filter: drop-shadow(0 0 8px currentColor)`；
@@ -309,8 +309,8 @@ sequenceDiagram
 
 5. **根因 5：Web Worker 脚本被主模块重导出污染主线程，触发 `window.onmessage` 恶性递归 Ping-Pong 消息风暴**
    - **涉及文件与行号**：
-     - [`apps/studio/src/services/audio/index.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/index.ts#L2)
-     - [`apps/studio/src/services/audio/waveformWorker.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/waveformWorker.ts#L15-L21)
+     - [`apps/studio/src/services/audio/index.ts`](../apps/studio/src/services/audio/index.ts#L2)
+     - [`apps/studio/src/services/audio/waveformWorker.ts`](../apps/studio/src/services/audio/waveformWorker.ts#L15-L21)
    - **机制解剖 (通过 V8 CPU Profiler 与内核采样精确定位)**：
      - 在 `services/audio/index.ts` 中错误编写了 `export * from './waveformWorker';`，使得 Vite 构建器将原本应当作为独立 `DedicatedWorker` 运行的代码，打包进了浏览器**主线程应用 Bundle** 中；
      - 在浏览器主线程运行环境中，**全局对象 `self === window`**！因此 `waveformWorker.ts` 顶层的 `self.onmessage = (e) => { ... self.postMessage({ peaks: ... }); };` 实际上**篡改并劫持了主线程全局对象的 `window.onmessage`**；
@@ -320,7 +320,7 @@ sequenceDiagram
 
 6. **根因 6：时间轴波形组件状态依赖震荡与无防重入机制引发反复重算与 Worker 滥发**
    - **涉及文件与行号**：
-     - [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/timeline/AudioWaveformTrack.tsx#L294-L362)
+     - [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](../apps/studio/src/components/timeline/AudioWaveformTrack.tsx#L294-L362)
    - **机制解剖**：
      - 在 `AudioWaveformTrack.tsx` 的波形解码 `useEffect` 中，依赖项包含了 `[track?.url, scenes, totalDurationMs]`；
      - 当音频文件被拉取解码完成后，函数内部会调用 `setAudioTrack({ ...track, durationMs })` 填充音轨实际时长，这反向触发了外部工程状态的刷新，使得 `totalDurationMs` 产生变化；
@@ -332,7 +332,7 @@ sequenceDiagram
 #### 8 步详细落地治理方案与实施 Checklist
 
 - [x] **步骤 1：录制混音上下文生命周期绑定与全链路硬终止 (Hard Teardown Protocol)**
-  - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 中新增专用上下文引用 `mixingAudioCtxRef = useRef<AudioContext | null>(null)`；
+  - 在 [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx) 中新增专用上下文引用 `mixingAudioCtxRef = useRef<AudioContext | null>(null)`；
   - 在 `handleStartVideoRecording` 创建混流上下文时存入该 ref；
   - 在 `handleFinishVideoRecording` 中通过 `finally` 块强制执行硬终止与彻底置空：
     ```typescript
@@ -346,10 +346,10 @@ sequenceDiagram
       }
     }
     ```
-  - 在 [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts) 的 `stopTracks` 中，确保对 `displayStream.getTracks()` 进行无死角遍历：切断 `track.stop()`、置 `track.enabled = false` 并清空 `track.onended = null`，斩断操作系统级捕获管道。
+  - 在 [`apps/studio/src/services/canvasRecorder.ts`](../apps/studio/src/services/canvasRecorder.ts) 的 `stopTracks` 中，确保对 `displayStream.getTracks()` 进行无死角遍历：切断 `track.stop()`、置 `track.enabled = false` 并清空 `track.onended = null`，斩断操作系统级捕获管道。
 
 - [x] **步骤 2：Web Audio 上下文单例池化、即用即关与空闲休眠看门狗 (Idle Suspend Watchdog)**
-  - 在 [`apps/studio/src/services/audio/audioDecoder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/audioDecoder.ts) 中增加空闲自动挂起定时器：
+  - 在 [`apps/studio/src/services/audio/audioDecoder.ts`](../apps/studio/src/services/audio/audioDecoder.ts) 中增加空闲自动挂起定时器：
     ```typescript
     let idleSuspendTimer: ReturnType<typeof setTimeout> | null = null;
     export function scheduleAudioCtxIdleSuspend(idleDelayMs = 2500) {
@@ -362,10 +362,10 @@ sequenceDiagram
     }
     ```
   - 每次解码完成后自动调用 `scheduleAudioCtxIdleSuspend()`，无音频播放 2.5 秒后自动释放 CoreAudio/WASAPI 系统声卡线程，恢复 0% 音频底噪 CPU；
-  - 在 [`aiTtsSynthesizer.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts) 与 [`UserKeyOpenAITTSProvider.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts) 中，将所有临时 `AudioContext` 的创建与释放严格包裹在 `try ... finally { await ctx.close(); }` 中，杜绝任何异常路径泄漏。
+  - 在 [`aiTtsSynthesizer.ts`](../apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts) 与 [`UserKeyOpenAITTSProvider.ts`](../apps/studio/src/services/audio/tts/UserKeyOpenAITTSProvider.ts) 中，将所有临时 `AudioContext` 的创建与释放严格包裹在 `try ... finally { await ctx.close(); }` 中，杜绝任何异常路径泄漏。
 
 - [x] **步骤 3：录制捕获分辨率上限钳制与动态编码降级防过载 (Resolution Clamping & Codec Fallback)**
-  - 在 [`apps/studio/src/services/canvasRecorder.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/canvasRecorder.ts) 的 `getDisplayMedia` 中为视轨施加最大分辨率封顶约束（1080P 封顶）：
+  - 在 [`apps/studio/src/services/canvasRecorder.ts`](../apps/studio/src/services/canvasRecorder.ts) 的 `getDisplayMedia` 中为视轨施加最大分辨率封顶约束（1080P 封顶）：
     ```typescript
     video: {
       displaySurface: 'browser',
@@ -378,7 +378,7 @@ sequenceDiagram
   - 智能码率动态调优：在 1080p 下将码率设定在适宜的 5Mbps~6Mbps，避免多核纯软解满载（从 400% 降至 60%~100% 舒适区间）。
 
 - [x] **步骤 4：Studio 静态编辑态流光动效按需冻结与 GPU 硬件加速分层 (Idle Animation Pausing)**
-  - 在 [`packages/player/src/styles/focusflow.css`](file:///Users/xt/WebstormProjects/focusflow/packages/player/src/styles/focusflow.css) 中定义编辑态空闲挂起规则：
+  - 在 [`packages/player/src/styles/focusflow.css`](../packages/player/src/styles/focusflow.css) 中定义编辑态空闲挂起规则：
     ```css
     /* 当画布处于静态非播放编辑态时，挂起无限循环流光与呼吸脉冲 */
     .ff-canvas-idle .ff-stream,
@@ -387,12 +387,12 @@ sequenceDiagram
       animation-play-state: paused !important;
     }
     ```
-  - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 主画布容器中，依据当前是否处于全屏演示或播放态（`isPlaying` / `isAudienceModalOpen`），动态赋予 `.ff-canvas-idle` 类名；
+  - 在 [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx) 主画布容器中，依据当前是否处于全屏演示或播放态（`isPlaying` / `isAudienceModalOpen`），动态赋予 `.ff-canvas-idle` 类名；
   - 为带有滤镜的节点添加 `will-change: transform; transform: translateZ(0);` 强制提升为独立 GPU 合成图层，彻底消除 Blink Raster Threads 的高频无用重绘。
 
 - [x] **步骤 5：Web Worker 运行时隔离与主线程 `window.onmessage` 递归死循环风暴根除**
-  - 在 [`apps/studio/src/services/audio/index.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/index.ts) 中彻底删除 `export * from './waveformWorker';` 导出，阻止 Vite 构建打包时将 DedicatedWorker 代码打包入主线程应用入口；
-  - 在 [`apps/studio/src/services/audio/waveformWorker.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/waveformWorker.ts) 中增加严格的作用域物理隔离：
+  - 在 [`apps/studio/src/services/audio/index.ts`](../apps/studio/src/services/audio/index.ts) 中彻底删除 `export * from './waveformWorker';` 导出，阻止 Vite 构建打包时将 DedicatedWorker 代码打包入主线程应用入口；
+  - 在 [`apps/studio/src/services/audio/waveformWorker.ts`](../apps/studio/src/services/audio/waveformWorker.ts) 中增加严格的作用域物理隔离：
     ```typescript
     // 严格限定只在 Web Worker 离屏线程中运行，严禁污染主线程 window.onmessage
     const isWorkerScope = typeof window === 'undefined';
@@ -406,7 +406,7 @@ sequenceDiagram
   - 杜绝 `self.onmessage` 覆盖主线程 `window.onmessage`，彻底消灭 `window.postMessage` 每秒数万次的消息反弹风暴。
 
 - [x] **步骤 6：时间轴波形组件防重入守卫与状态解耦**
-  - 在 [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/timeline/AudioWaveformTrack.tsx) 中引入 `lastDecodedUrlRef` 防重入守卫：
+  - 在 [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](../apps/studio/src/components/timeline/AudioWaveformTrack.tsx) 中引入 `lastDecodedUrlRef` 防重入守卫：
     ```typescript
     const lastDecodedUrlRef = useRef<string | null>(null);
     // 防死循环重入守卫：若当前 URL 已成功解码，严禁重复拉取、解码与派发 Web Worker
@@ -418,7 +418,7 @@ sequenceDiagram
   - 使用 `scenesRef` 与 `totalDurationMsRef` 对高频变动变量进行引用解耦，精简 `useEffect` 依赖项仅保留 `[track?.url, setAudioTrack]`，避免波形解析完成写回 `durationMs` 时引起工程总时长震荡，彻底阻断级联死循环渲染。
 
 - [x] **步骤 7：组件卸载与页面生命周期全局异常兜底钩子 (Unmount & Window Teardown Safe Guard)**
-  - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 挂载全局 `beforeunload` 与 `useEffect` 清理钩子：
+  - 在 [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx) 挂载全局 `beforeunload` 与 `useEffect` 清理钩子：
     ```typescript
     useEffect(() => {
       const handleBeforeUnload = () => {
@@ -439,8 +439,8 @@ sequenceDiagram
   - 确保即使用户强行刷新、误关页面或发生非受控崩溃，底层捕获流与音频上下文也能在微秒级时间内触发操作系统硬释放。
 
 - [x] **步骤 8：基于本地实测工具进行量化验证闭环 (Verification Benchmark Protocol)**
-  - 工具脚本：[`apps/studio/scripts/measure-cpu.mjs`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/scripts/measure-cpu.mjs)；
-  - 详细使用指南：[`apps/studio/scripts/README.md`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/scripts/README.md)；
+  - 工具脚本：[`apps/studio/scripts/measure-cpu.mjs`](../apps/studio/scripts/measure-cpu.mjs)；
+  - 详细使用指南：[`apps/studio/scripts/README.md`](../apps/studio/scripts/README.md)；
   - 运行命令：`pnpm --filter @focusflow/studio test:cpu` 或 `node apps/studio/scripts/measure-cpu.mjs [秒数]`；
   - **实机实测验收数据 (macOS Apple Silicon 实测)**：
     - **静态空闲编辑态**：
@@ -463,7 +463,7 @@ sequenceDiagram
 #### 3 大核心根因深度解剖（精确到文件与代码逻辑）
 
 1. **根因 1：缺乏音频仲裁裁决器（Audio Arbiter Missing）与逻辑误判**
-   - **涉及文件**：[`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx#L66-L83)
+   - **涉及文件**：[`apps/studio/src/components/modals/AudienceModal.tsx`](../apps/studio/src/components/modals/AudienceModal.tsx#L66-L83)
    - **机制解剖**：
      - 在 `AudienceModal.tsx` 的 `playSceneTTS` 中，判断是否发声的逻辑如下：
        ```typescript
@@ -478,15 +478,15 @@ sequenceDiagram
 
 2. **根因 2：数据流类型规范缺失与单轨架构（Single Track Model）约束**
    - **涉及文件**：
-     - [`packages/dsl/src/schema.ts`](file:///Users/xt/WebstormProjects/focusflow/packages/dsl/src/schema.ts#L130-L141)
-     - [`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx#L152-L173)
-     - [`apps/studio/src/stores/useProjectStore.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/stores/useProjectStore.ts#L885-L895)
+     - [`packages/dsl/src/schema.ts`](../packages/dsl/src/schema.ts#L130-L141)
+     - [`apps/studio/src/components/layout/BottomTimeline.tsx`](../apps/studio/src/components/layout/BottomTimeline.tsx#L152-L173)
+     - [`apps/studio/src/stores/useProjectStore.ts`](../apps/studio/src/stores/useProjectStore.ts#L885-L895)
    - **机制解剖**：
      - 用户在 `BottomTimeline.tsx` 上传音频时，创建的 `AudioTrackConfig` 仅设置了 `url` 与 `durationMs`，`type` 字段为 `undefined`，没有区分该音轨是“旁白主音轨 (voiceover)”还是“背景伴奏音乐 (music)”；
      - `useProjectStore` 中的 `setAudioTrack` 强制执行单轨覆盖（`tracks: [track]`），导致数据层无法区分多音频角色的协同关系。
 
 3. **根因 3：双向生成缺少防卫拦截机制（Bi-directional Overwrite Hazard）**
-   - **涉及文件**：[`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx#L175-L202)
+   - **涉及文件**：[`apps/studio/src/components/layout/BottomTimeline.tsx`](../apps/studio/src/components/layout/BottomTimeline.tsx#L175-L202)
    - **机制解剖**：
      - `handleBatchAIVoiceover` 在批量请求完 TTS 或应用台词时长后，直接执行 `setAudioTrack(res.track)`，未检查工程中是否已存在非 AI 生成的自定义音频，直接破坏了用户的工程数据。
 
@@ -536,7 +536,7 @@ flowchart TD
 #### 6 步详细重构落地实施方案与 Checklist
 
 - [x] **步骤 1：规范化 DSL 数据模型与 Track 属性扩展**
-  - 在 [`packages/dsl/src/schema.ts`](file:///Users/xt/WebstormProjects/focusflow/packages/dsl/src/schema.ts) 中明确 `AudioTrackConfig` 的角色类型：
+  - 在 [`packages/dsl/src/schema.ts`](../packages/dsl/src/schema.ts) 中明确 `AudioTrackConfig` 的角色类型：
     ```typescript
     export type AudioTrackRole = 'voiceover' | 'music' | 'offline-tts';
     export interface AudioTrackConfig {
@@ -551,7 +551,7 @@ flowchart TD
       // ...
     }
     ```
-  - 在 [`apps/studio/src/stores/useProjectStore.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/stores/useProjectStore.ts) 中新增类型更新方法：
+  - 在 [`apps/studio/src/stores/useProjectStore.ts`](../apps/studio/src/stores/useProjectStore.ts) 中新增类型更新方法：
     ```typescript
     updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number) => void;
     ```
@@ -572,7 +572,7 @@ flowchart TD
   - 严格同步补齐 `zh/common.ts` 与 `en/common.ts` 国际化字典。
 
 - [x] **步骤 3：`BottomTimeline.tsx` 上传入口接入前置拦截守卫**
-  - 在 [`apps/studio/src/components/layout/BottomTimeline.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/BottomTimeline.tsx) 的 `handleAudioFileChange` 中：
+  - 在 [`apps/studio/src/components/layout/BottomTimeline.tsx`](../apps/studio/src/components/layout/BottomTimeline.tsx) 的 `handleAudioFileChange` 中：
     ```typescript
     const hasVoiceoverScripts = dsl.scenes.some(s => !!s.voiceoverScript?.trim());
     if (hasVoiceoverScripts) {
@@ -595,14 +595,14 @@ flowchart TD
     ```
 
 - [x] **步骤 4：时间轴波形轨头增加模式切换指示器与音量联动**
-  - 在 [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/timeline/AudioWaveformTrack.tsx) 轨头左侧工具区添加模式切换胶囊按钮：
+  - 在 [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](../apps/studio/src/components/timeline/AudioWaveformTrack.tsx) 轨头左侧工具区添加模式切换胶囊按钮：
     - 若 `track.type === 'music'`：展示 `[🎵 背景伴奏 20%]` 绿色徽章；点击可切换为 `[🗣️ 旁白主音轨 100%]`；
     - 切换为伴奏时，自动调用 `setAudioTrack({ ...track, type: 'music', volume: 0.2, isBackgroundBGM: true })`；
     - 切换为旁白时，自动调用 `setAudioTrack({ ...track, type: 'voiceover', volume: 1.0, isBackgroundBGM: false })`；
     - 让创作者无需重新上传即可随时在时间轴上快速调整音频定位。
 
 - [x] **步骤 5：`AudienceModal.tsx` 重构为严格音频仲裁裁决器函数**
-  - 在 [`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx) 中实现仲裁逻辑：
+  - 在 [`apps/studio/src/components/modals/AudienceModal.tsx`](../apps/studio/src/components/modals/AudienceModal.tsx) 中实现仲裁逻辑：
     ```typescript
     const shouldPlayWebSpeech = useCallback((sceneIndex: number) => {
       const activeDsl = dslRef.current;
@@ -622,7 +622,7 @@ flowchart TD
   - 彻底铲除 `cfg.mode === 'offline'` 盲目触发的问题，保证当工程指定了主音频时，分幕提词 100% 静默避让。
 
 - [x] **步骤 6：录制前检中心安全警告与“所见即所得 (WYSIWYG)”保障**
-  - 在 [`apps/studio/src/App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx) 的 `handleStartVideoRecording` 中：
+  - 在 [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx) 的 `handleStartVideoRecording` 中：
     - 若检测到 `mainTrack?.type === 'music'`（用户选了伴奏）且 `cfg.mode === 'offline'`（且工程有分幕台词）：
     - 弹出高可见度提醒确认框：
       `"友情提醒：当前工程启用了【离线系统语音】，因浏览器沙箱限制，导出的视频中将只包含背景音乐，无法内录离线旁白。如需包含旁白出片，建议使用【云端 TTS】生成实体音频或使用麦克风录制。是否继续录制？"`
@@ -633,7 +633,7 @@ flowchart TD
 ### 8.3 [P1 速赢] 导出中心英文语言环境下的中文残留清理与彻底国际化 (Export Center English i18n Cleanup)
 
 - **问题根因排查**：
-  用户在英文语言环境下打开【导出演播工程 (Export Center)】弹窗时，由于 [`apps/studio/src/components/modals/ExportModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx) 存在大量硬编码中文 JSX 节点，导致即使切换为 EN 模式，弹窗内仍大面积显示中文。
+  用户在英文语言环境下打开【导出演播工程 (Export Center)】弹窗时，由于 [`apps/studio/src/components/modals/ExportModal.tsx`](../apps/studio/src/components/modals/ExportModal.tsx) 存在大量硬编码中文 JSX 节点，导致即使切换为 EN 模式，弹窗内仍大面积显示中文。
 
 #### 1. 全量硬编码中文排查与映射对照表 (15 处精准定位)
 
@@ -656,24 +656,24 @@ flowchart TD
 | **ZIP 下载按钮** | L215 | `{isSuccess ? '已成功归档！' : isExporting ? 'ZIP 压缩中...' : '立即下载 .zip 压缩包'}` | `{isSuccess ? t('successArchive') : isExporting ? t('compressing') : t('downloadZip')}` | `Archived successfully!` / `Compressing ZIP...` / `Download .zip Archive` |
 
 #### 2. 多语言字典扩展 Checklist (i18n Dictionaries Delta)
-- [x] 检查并在 [`apps/studio/src/locales/zh/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/zh/export.ts) 补齐状态词条：
+- [x] 检查并在 [`apps/studio/src/locales/zh/export.ts`](../apps/studio/src/locales/zh/export.ts) 补齐状态词条：
   ```typescript
   successArchive: '已成功归档！',
   compressing: 'ZIP 压缩中...',
   ```
-- [x] 检查并在 [`apps/studio/src/locales/en/export.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/locales/en/export.ts) 补齐状态词条：
+- [x] 检查并在 [`apps/studio/src/locales/en/export.ts`](../apps/studio/src/locales/en/export.ts) 补齐状态词条：
   ```typescript
   successArchive: 'Archived successfully!',
   compressing: 'Compressing ZIP...',
   ```
 
 #### 3. 重构实施与代码替换 Checklist
-- [x] 在 [`ExportModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/ExportModal.tsx) 中全面移除 15 处硬编码中文，绑定 `t('key')`；
+- [x] 在 [`ExportModal.tsx`](../apps/studio/src/components/modals/ExportModal.tsx) 中全面移除 15 处硬编码中文，绑定 `t('key')`；
 - [x] 校验各按钮动态三态切换（`isSuccess` / `isExporting` / 初始态）的双语流畅呈现；
 - [x] 执行 `pnpm --filter @focusflow/studio typecheck` 验证 TS 编译通过。
 
 #### 4. E2E 自动化测试覆盖方案 (TC576)
-- [x] 在 [`apps/studio/e2e/stage5-audio-sync.spec.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/e2e/stage5-audio-sync.spec.ts) 中增加独立验证函数 `verifyEnglishExportModalLocalization(page: Page)`：
+- [x] 在 [`apps/studio/e2e/stage5-audio-sync.spec.ts`](../apps/studio/e2e/stage5-audio-sync.spec.ts) 中增加独立验证函数 `verifyEnglishExportModalLocalization(page: Page)`：
   1. 切换至 EN 语言环境；
   2. 点击顶部导航栏 `data-testid="export-btn"` 唤起 `ExportModal`；
   3. 依次点击切换 `tab-html`、`tab-zip`、`tab-video`；

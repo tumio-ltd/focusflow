@@ -445,10 +445,10 @@ npx gitleaks detect --source . -v
   - [x] 在私有 Gitea 创建 `focusflow` 镜像仓库
   - [x] 配置本地 `origin` 双推属性（`git remote set-url --add --push ...`）
   - [x] 测试一次代码提交能够单命令自动同步到两个远端
-- [ ] **1.3 敏感信息脱敏与绝对路径排查**
-  - [ ] 执行敏感路径检测命令（`git grep -n "/Users/"`）并清理
-  - [ ] 执行敏感词安全审计（`npx gitleaks detect --source .`）
-  - [ ] 检查代码中是否残留非公开内网 IP、测试 Token 或私有邮箱
+- [x] **1.3 敏感信息脱敏与绝对路径排查**
+  - [x] 执行敏感路径检测命令（`git grep -n "/Users/"`）并清理（全量转换为相对路径，E2E 截图修复）
+  - [x] 执行敏感词安全审计（`gitleaks detect --source . -v` 全量 289 个 Commit 零泄密通过）
+  - [x] 检查代码中是否残留非公开内网 IP、测试 Token 或私有邮箱（0 泄漏）
 - [x] **1.4 冗余目录精简与构建验证**
   - [x] 清理历史遗留目录（删除根目录旧版 `poc/` 与 `src/`，所有依赖平滑迁移至 `packages/player/src/`）
   - [x] 清理未跟踪的媒体与测试残片（`scratch/`、`.tempmediaStorage/`、`test-results/`）

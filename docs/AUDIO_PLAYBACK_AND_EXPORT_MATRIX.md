@@ -159,7 +159,7 @@ FocusFlow 作为新一代架构演进动态可视化系统，其核心体验是*
 ### 4.7 导出的 0 依赖独立单文件 HTML (Standalone HTML Artifact)
 - **生成方式**：通过【导出中心】➔【立即下载 .html 文件】。
 - **技术路径**：
-  - 由 [`standalonePackager.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/standalonePackager.ts) 将 DSL 结构树、底图 Base64、播放引擎 CSS/JS 打包为纯静态单个 `.html` 文件；
+  - 由 [`standalonePackager.ts`](../apps/studio/src/services/standalonePackager.ts) 将 DSL 结构树、底图 Base64、播放引擎 CSS/JS 打包为纯静态单个 `.html` 文件；
   - **实体音频内联**：所有实体音频（上传/录音/云端 TTS）会被自动转译为内联 Base64 `data:audio/wav;base64,...` 并写入 HTML；
   - **播放行为**：双击该 HTML，轻量内核 `@focusflow/player` 通过内置 `<audio>` 读取 Base64 播放；因轻量脱机内核不包含 Studio 的庞大 TTS 调度器，离线 Web Speech 在该单文件中默认不发声。
 

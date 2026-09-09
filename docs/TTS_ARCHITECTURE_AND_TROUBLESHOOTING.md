@@ -264,7 +264,7 @@ bezier-router.js:25 [FocusFlow] BezierRouter: Box "box-gateway" not found.
 
 ### 4.1 健壮可靠的 WebSpeechTTSProvider 实现
 
-位于 [`apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts)：
+位于 [`apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts`](../apps/studio/src/services/audio/tts/WebSpeechTTSProvider.ts)：
 
 ```typescript
 // 1. 玩具音色与怪异机器音黑名单
@@ -396,7 +396,7 @@ export function speakWebSpeech(
 
 ### 4.2 拓扑自愈 sanitizeDSL 与播放内核纯净性
 
-位于 [`apps/studio/src/stores/useProjectStore.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/stores/useProjectStore.ts)：
+位于 [`apps/studio/src/stores/useProjectStore.ts`](../apps/studio/src/stores/useProjectStore.ts)：
 
 ```typescript
 export function sanitizeDSL(dsl: FocusFlowDSL): FocusFlowDSL {
@@ -446,7 +446,7 @@ export function sanitizeDSL(dsl: FocusFlowDSL): FocusFlowDSL {
 
 ### 4.3 受众全屏演播模式生命周期守护
 
-位于 [`apps/studio/src/components/modals/AudienceModal.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/modals/AudienceModal.tsx)：
+位于 [`apps/studio/src/components/modals/AudienceModal.tsx`](../apps/studio/src/components/modals/AudienceModal.tsx)：
 
 ```typescript
 // 拓扑自愈：过滤掉可能遗留的悬空孤儿路径与失效引用

@@ -85,13 +85,13 @@
 ### 1. 鼠标坐标高频悬停流：`coordinateBus` 模式
 * **病灶剖析**：
   鼠标在画布内移动时，每秒触发数十至上百次 `pointermove` 事件。如果将当前的绝对坐标 `{ x, y }` 直接存入 React 的 `useState` 或 Zustand Store，会导致右侧属性检查器（Inspector）、标定覆盖层等组件以 **60~120Hz 极高频率执行组件重新渲染（Re-render）**。复杂的 React 虚拟 DOM 树比对（Diff）不仅造成 CPU 性能浪费，还会引发微小界面的掉帧与肉眼可见的微弱漂移。
-* **治理方案（[`coordinateBus.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/utils/coordinateBus.ts)）**：
+* **治理方案（[`coordinateBus.ts`](../apps/studio/src/utils/coordinateBus.ts)）**：
   引入轻量级全局发布订阅事件总线（Event Emitter 单例）：
   ```typescript
   // 画布层仅在高频 pointermove 中向外部总线发送离线广播，完全不触发 React 状态变更
   coordinateBus.emit({ x, y });
   ```
-  在 Inspector 的实时坐标小部件 [`LiveCoordinatesHUD`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/RightInspector.tsx#L33-L56) 中，通过原生 DOM Ref 直接赋值纯文本：
+  在 Inspector 的实时坐标小部件 [`LiveCoordinatesHUD`](../apps/studio/src/components/layout/RightInspector.tsx#L33-L56) 中，通过原生 DOM Ref 直接赋值纯文本：
   ```typescript
   useEffect(() => {
     return coordinateBus.subscribe((coords) => {
@@ -108,7 +108,7 @@
 ### 2. 画布平移/缩放矩阵解耦：`canvasTransformRef` 模式
 * **病灶剖析**：
   在触控板双指缩放（Pinch Zoom）或按住空格拖动画布（Pan）时，画布的变换矩阵 `{ scale, x, y }` 在每一帧都在发生连续浮点数变化。若将这个高频变动的矩阵向上冒泡并保存在 `App.tsx` 的 State 中，会导致整台 Studio（包括 TopBar、LeftToolbox、BottomTimeline、Inspector 全体）**在整个手势平移过程中全量重渲染**。
-* **治理方案（[`App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx#L281-L287)）**：
+* **治理方案（[`App.tsx`](../apps/studio/src/App.tsx#L281-L287)）**：
   采用 Ref 引用进行纯内存缓存，矩阵变化仅留在底层的 GPU CSS Transform 层（`translate3d + scale`）：
   ```typescript
   const handleCanvasTransformChange = useCallback(
@@ -137,7 +137,7 @@
 ---
 
 ### 2. 播放器实例单例化与增量热更新（Incremental Hot-Update）
-* **治理方案（[`player.js`](file:///Users/xt/WebstormProjects/focusflow/packages/player/src/core/player.js#L552-L585) & [`App.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/App.tsx#L196-L202)）**：
+* **治理方案（[`player.js`](../packages/player/src/core/player.js#L552-L585) & [`App.tsx`](../apps/studio/src/App.tsx#L196-L202)）**：
   彻底解耦播放器实例与 DSL 数据流。播放器实例在页面挂载时仅初始化一次，后续所有改动全部通过 **增量热同步方法（Incremental Sync API）** 处理：
   ```javascript
   // packages/player/src/core/player.js
@@ -193,7 +193,7 @@
 ---
 
 ### 3. 第三层终极工程化解决方案
-1. **全景 2px 内缩物理避让 + 内发光（[`CameraFrustumFrame.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/canvas/CameraFrustumFrame.tsx)）**：
+1. **全景 2px 内缩物理避让 + 内发光（[`CameraFrustumFrame.tsx`](../apps/studio/src/components/canvas/CameraFrustumFrame.tsx)）**：
    ```tsx
    // 当 zoom <= 1.05 全景总览态时，取景框向内微调 2px 避让，彻底与画布外框在物理像素上分离
    const isFullOverview = camera.zoom <= 1.05 && Math.abs(camera.x || 0) < 1 && Math.abs(camera.y || 0) < 1;
@@ -270,7 +270,7 @@
 ### 3. 第四层终极工程化解决方案
 
 #### 1. 浮点高精亚像素渲染（消除 4~10px 量化阶跃）
-在 [`InfiniteCanvas.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/canvas/InfiniteCanvas.tsx#L70-L80) 中，彻底废除 `Math.round()`，采用保留 2 位小数的高精度浮点数变换：
+在 [`InfiniteCanvas.tsx`](../apps/studio/src/components/canvas/InfiniteCanvas.tsx#L70-L80) 中，彻底废除 `Math.round()`，采用保留 2 位小数的高精度浮点数变换：
 ```tsx
 {/* 核心 GPU 几何变换视口层 - 亚像素高精浮点变换，杜绝整数化量化阶跃抖动 */}
 <div
@@ -302,10 +302,10 @@
 ```
 
 #### 3. 取景框光栅化图层解耦
-移除 [`CameraFrustumFrame.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/canvas/CameraFrustumFrame.tsx#L177) 容器上的冗余 `transform-gpu`，消除极限缩放下的嵌套 Compositing Layer 导致的亚像素边框光栅化撕裂。
+移除 [`CameraFrustumFrame.tsx`](../apps/studio/src/components/canvas/CameraFrustumFrame.tsx#L177) 容器上的冗余 `transform-gpu`，消除极限缩放下的嵌套 Compositing Layer 导致的亚像素边框光栅化撕裂。
 
 #### 4. 右侧检查栏图元层级列表双 Tab 常驻与顶置
-在 [`RightInspector.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/layout/RightInspector.tsx) 中实现 `renderLayerHierarchyList()`：
+在 [`RightInspector.tsx`](../apps/studio/src/components/layout/RightInspector.tsx) 中实现 `renderLayerHierarchyList()`：
 - **【场景运镜 Tab】常驻**：直接呈现在场景面板下方，便于在宏观机位设计时随时查看图元；
 - **【图元属性 Tab】常驻**：
   - 当**未选中图元**时，图元层级列表**直接置顶呈现**在引导框正下方；
@@ -349,10 +349,10 @@
 
 ### 2. FocusFlow 当前代码的 4 大深层诱因剖析
 
-结合对 [`useCanvasGesture.ts`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/hooks/useCanvasGesture.ts) 与 [`InfiniteCanvas.tsx`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/components/canvas/InfiniteCanvas.tsx) 的执行时序排查，该现象之所以在“连续缩小放大”且“比例较小”时再次出现，核心诱因为：
+结合对 [`useCanvasGesture.ts`](../apps/studio/src/hooks/useCanvasGesture.ts) 与 [`InfiniteCanvas.tsx`](../apps/studio/src/components/canvas/InfiniteCanvas.tsx) 的执行时序排查，该现象之所以在“连续缩小放大”且“比例较小”时再次出现，核心诱因为：
 
 1. **分母逆向投影的杠杆放大与生理微颤**：
-   在 [`useCanvasGesture.ts#L197-L203`](file:///Users/xt/WebstormProjects/focusflow/apps/studio/src/hooks/useCanvasGesture.ts#L197-L203) 中，缩放中心点计算为 `ratio = clampedScale / prev.scale`，位移 `x = Px - (Px - prev.x) * ratio`。
+   在 [`useCanvasGesture.ts#L197-L203`](../apps/studio/src/hooks/useCanvasGesture.ts#L197-L203) 中，缩放中心点计算为 `ratio = clampedScale / prev.scale`，位移 `x = Px - (Px - prev.x) * ratio`。
    在 scale = 0.15 时，微小光标变动被放大 6.67 倍；当快速来回缩放时，手指微震被数倍放大，形成高频晃动感。
 2. **React `useState` 响应 120Hz 硬件事件导致的渲染队列积压（Queue Congestion）**：
    `transform` 由 React `useState` 维护。触控板双指缩放触发极高频 `setTransform`，导致 `InfiniteCanvas`、`CanvasOverlay`（取景框、图元层等）全树重渲染。主线程耗尽导致物理光标坐标与异步 state 发生时间相位差，连续来回缩放时形成剧烈的滞后回弹拉扯。
