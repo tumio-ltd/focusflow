@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="./apps/studio/public/logos/logo-horizontal.svg" alt="FocusFlow Logo" width="340" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./apps/studio/public/logos/logo-horizontal-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./apps/studio/public/logos/logo-horizontal-light.svg">
+  <img alt="FocusFlow Logo" src="./apps/studio/public/logos/logo-horizontal-light.svg" width="340">
+</picture>
 
 <p align="center">
   <strong>Turn complex architecture diagrams into 60fps cinematic interactive stories.</strong>
