@@ -324,16 +324,18 @@ async function verifyPathTransformOverlayInteraction(page: Page): Promise<void> 
   await expect(fromHandle).toBeAttached();
   await expect(toHandle).toBeAttached();
 
-  // 6. 验证画布微型快捷工具栏 (展示 Path ID、模式切换与调色)
+  // 6. 验证画布微型快捷工具栏 (展示 Path ID、统一模式切换与调色)
   await expect(pathTransformOverlay).toContainText('path-gateway-order');
   await expect(pathTransformOverlay).toContainText('流光');
-  await expect(pathTransformOverlay).toContainText('脉冲');
-  await expect(pathTransformOverlay).toContainText('描边');
+  await expect(pathTransformOverlay).toContainText('绘制');
+  await expect(pathTransformOverlay).toContainText('律动');
 
-  // 7. 测试在微型工具栏中切换模式为“脉冲”
-  const pulseBtn = pathTransformOverlay.locator('button:has-text("脉冲")');
+  // 7. 测试在微型工具栏中切换模式为“律动”，并验证右侧检查器同步激活对应模式 (P3)
+  const pulseBtn = pathTransformOverlay.locator('button:has-text("律动")');
   await pulseBtn.click();
   await expect(pulseBtn).toHaveClass(/bg-cyan-500/);
+  const inspectorPulseBtn = inspector.locator('button:has-text("呼吸律动")');
+  await expect(inspectorPulseBtn).toHaveClass(/bg-primary/);
 
   // 8. 验证拖拽起点手柄时唤起周围 Box 的 8 向吸附候选锚点
   const fromBox = await fromHandle.boundingBox();
@@ -346,6 +348,31 @@ async function verifyPathTransformOverlayInteraction(page: Page): Promise<void> 
     await expect(candidateAnchors).toBeVisible();
     await page.mouse.up();
   }
+
+  // 8.1 验证终点手柄 (toHandle) 完全裸露在工具栏外，未被遮挡且可直接响应点击交互
+  await expect(toHandle).toBeVisible();
+  const toBox = await toHandle.boundingBox();
+  const toolbarEl = pathTransformOverlay.locator('.bg-slate-900\\/95').first();
+  const toolbarBox = await toolbarEl.boundingBox();
+
+  if (toBox && toolbarBox) {
+    // 验证工具栏与终点手柄之间存在清晰的安全垂直距离，绝不重叠 (AABB 无碰撞)
+    const hasOverlap = !(
+      toBox.x + toBox.width < toolbarBox.x ||
+      toBox.x > toolbarBox.x + toolbarBox.width ||
+      toBox.y + toBox.height < toolbarBox.y ||
+      toBox.y > toolbarBox.y + toolbarBox.height
+    );
+    expect(hasOverlap).toBe(false);
+  }
+
+  // 点击终点手柄验证其指针事件畅通无阻，绝对未被上层任何 DOM 元素拦截
+  await toHandle.click();
+
+  // 截屏归档视觉效果
+  await page.screenshot({
+    path: 'test-results/screenshots/path_toolbar_avoidance.png',
+  });
 
   // 9. 验证工具栏关闭图标按钮存在，点击可取消选中
   const closeBtn = pathTransformOverlay.locator('button[title*="取消选中"]').first();
@@ -402,6 +429,106 @@ async function verifySmartSnapDefaultAndMemoryPersistence(page: Page): Promise<v
 }
 
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
+/**
+ * 11. TC311: 验证在微服务电商中台工程中，连线端点绝对不被浮动快捷属性工具栏遮挡
+ */
+async function verifyMicroservicesPathToolbarAvoidance(page: Page): Promise<void> {
+  // (1) 呼出模板中心并应用「微服务高可用电商中台演进架构」
+  const templatesBtn = page.locator('[data-testid="open-templates-btn"]');
+  await expect(templatesBtn).toBeVisible({ timeout: 5000 });
+  await templatesBtn.click();
+
+  const templatesModal = page.locator('[data-testid="templates-modal"]');
+  await expect(templatesModal).toBeVisible({ timeout: 5000 });
+
+  const templateCard = templatesModal.locator('text=微服务高可用电商中台演进架构').first();
+  await expect(templateCard).toBeVisible({ timeout: 5000 });
+
+  const cardContainer = templateCard.locator('xpath=ancestor::div[contains(@class, "group")]');
+  const applyBtn = cardContainer.getByRole('button', { name: /应用此模板创建工程/ });
+  await applyBtn.click();
+  await expect(templatesModal).not.toBeVisible({ timeout: 5000 });
+
+  // (2) 切换到第 2 幕 (02 边缘接入与 API 网关集群治理)
+  const scene2Card = page.locator('[data-testid="timeline"]').getByText('02 边缘接入与 API 网关集群治理');
+  await expect(scene2Card).toBeVisible({ timeout: 5000 });
+  await scene2Card.click();
+
+  // (3) 在右侧 Inspector 选中 path-gw-order (即用户截图中的连线)
+  const inspector = page.locator('[data-testid="inspector"]');
+  const pathItem = inspector.locator('[data-testid="layer-item-path-gw-order"]');
+  await expect(pathItem).toBeVisible({ timeout: 5000 });
+  await pathItem.click();
+
+  // (4) 验证画布上的 PathTransformOverlay 已激活
+  const pathTransformOverlay = page.locator('[data-testid="path-transform-overlay"]');
+  await expect(pathTransformOverlay).toBeVisible();
+
+  // (5) 核心验证：获取终点手柄 (path-to-handle) 与工具栏的位置，验证两者绝对不相交 (AABB 无重叠)
+  const toHandle = pathTransformOverlay.locator('[data-testid="path-to-handle"]');
+  await expect(toHandle).toBeVisible();
+
+  const toolbarEl = pathTransformOverlay.locator('.bg-slate-900\\/95').first();
+  await expect(toolbarEl).toBeVisible();
+
+  const toBox = await toHandle.boundingBox();
+  const toolbarBox = await toolbarEl.boundingBox();
+
+  expect(toBox).not.toBeNull();
+  expect(toolbarBox).not.toBeNull();
+
+  if (toBox && toolbarBox) {
+    const hasOverlap = !(
+      toBox.x + toBox.width < toolbarBox.x ||
+      toBox.x > toolbarBox.x + toolbarBox.width ||
+      toBox.y + toBox.height < toolbarBox.y ||
+      toBox.y > toolbarBox.y + toolbarBox.height
+    );
+    expect(hasOverlap).toBe(false);
+
+    // 验证工具栏位于手柄上方或下方，有充足安全间距（且适度贴合，不过度外漂）
+    const verticalGap = Math.min(
+      Math.abs(toolbarBox.y + toolbarBox.height - toBox.y),
+      Math.abs(toBox.y + toBox.height - toolbarBox.y)
+    );
+    expect(verticalGap).toBeGreaterThanOrEqual(10);
+  }
+
+  // (6) 验证颜色选择器当前选中态与高光白核清晰可见 (P2)
+  const activeColorBtn = toolbarEl.locator('button.ring-2').first();
+  await expect(activeColorBtn).toBeVisible();
+  const whiteCoreDot = activeColorBtn.locator('span.bg-white');
+  await expect(whiteCoreDot).toBeVisible();
+
+  // (7) 验证 P5 双向联动：在工具条点击切换为绿色后，右侧属性检查器「视觉主题色调」立即同步高亮绿色！
+  const emeraldBtn = toolbarEl.locator('button[title*="#34d399"]');
+  await emeraldBtn.click();
+  await expect(emeraldBtn).toHaveClass(/ring-2/);
+  await expect(emeraldBtn.locator('span.bg-white')).toBeVisible();
+
+  const inspectorEmeraldBtn = inspector.locator('button[title*="#34d399"]').last();
+  await expect(inspectorEmeraldBtn).toHaveClass(/ring-2/);
+
+  // (7.1) 验证反向联动：在右侧属性检查器点击黄色，工具条立即同步激活黄色外环与白核！
+  const inspectorAmberBtn = inspector.locator('button[title*="#fbbf24"]').last();
+  await inspectorAmberBtn.click();
+  const toolbarAmberBtn = toolbarEl.locator('button[title*="#fbbf24"]');
+  await expect(toolbarAmberBtn).toHaveClass(/ring-2/);
+  await expect(toolbarAmberBtn.locator('span.bg-white')).toBeVisible();
+
+  // (8) 验证悬停端点手柄时稳定无抖动 (P4)
+  await toHandle.hover();
+  await page.waitForTimeout(100);
+
+  // 截取视觉效果图（记录选中 path-gw-order 时工具栏优雅避开手柄与颜色指示生效的实景）
+  await page.screenshot({
+    path: 'test-results/screenshots/path_gw_order_toolbar_avoidance.png',
+  });
+
+  // (9) 验证终点手柄畅通可点击，未被工具栏拦截
+  await toHandle.click();
+}
+
 test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -446,6 +573,11 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
   test('TC310: 验证智能边缘吸附默认禁用 (false) 与 LocalStorage 状态记忆恢复特性', async ({ page }) => {
     await verifySmartSnapDefaultAndMemoryPersistence(page);
   });
+
+  test('TC311: 验证微服务工程中连线端点绝对不被浮动快捷属性工具栏遮挡', async ({ page }) => {
+    await verifyMicroservicesPathToolbarAvoidance(page);
+  });
 });
+
 
 

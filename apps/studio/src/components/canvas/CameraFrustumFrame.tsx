@@ -174,7 +174,7 @@ export function CameraFrustumFrame({
   if (!visible) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-30 overflow-hidden">
+    <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
       {/* 1. 安全取景框主体 (边框发光 + 准星，内部透明穿透不阻断画布操作) */}
       <div
         ref={frameRef}

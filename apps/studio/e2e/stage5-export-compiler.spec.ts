@@ -385,6 +385,79 @@ async function verifyRecordingPiPIsolation(page: Page): Promise<void> {
   await expect(audienceModal).not.toBeVisible({ timeout: 5000 });
 }
 
+/**
+ * 8. TC579: 验证微服务高可用架构直接从第2幕起播时无残留气泡，且场景2专属气泡正常激活
+ */
+async function verifyScene2CalloutIsolation(page: Page): Promise<void> {
+  // (1) 呼出架构模板中心并应用「微服务高可用电商中台演进架构」
+  const templatesBtn = page.locator('[data-testid="open-templates-btn"]');
+  await expect(templatesBtn).toBeVisible({ timeout: 5000 });
+  await templatesBtn.click();
+
+  const templatesModal = page.locator('[data-testid="templates-modal"]');
+  await expect(templatesModal).toBeVisible({ timeout: 5000 });
+
+  const templateCard = templatesModal.locator('text=微服务高可用电商中台演进架构').first();
+  await expect(templateCard).toBeVisible({ timeout: 5000 });
+
+  const cardContainer = templateCard.locator('xpath=ancestor::div[contains(@class, "group")]');
+  const applyBtn = cardContainer.getByRole('button', { name: /应用此模板创建工程/ });
+  await applyBtn.click();
+  await expect(templatesModal).not.toBeVisible({ timeout: 5000 });
+
+  // (2) 切换到第 2 幕 (02 边缘接入与 API 网关集群治理)
+  const scene2Card = page.locator('[data-testid="timeline"]').getByText('02 边缘接入与 API 网关集群治理');
+  await expect(scene2Card).toBeVisible({ timeout: 5000 });
+  await scene2Card.click();
+
+  // (3) 点击顶部「受众全屏演播」按钮从第 2 幕直接进入演播
+  const audienceBtn = page.locator('[data-testid="audience-btn"]');
+  await expect(audienceBtn).toBeVisible();
+  await audienceBtn.click();
+
+  const audienceModal = page.locator('[data-testid="audience-modal"]');
+  await expect(audienceModal).toBeVisible({ timeout: 5000 });
+
+  // 等待动画帧与 Double-RAF 完全结算
+  await page.waitForTimeout(300);
+
+  // (4) 核心断言：
+  // 场景 1 专有的气泡 co-ms-overview 绝对不能残留（opacity 为 0 且无 active 类）
+  const coMsOverview = audienceModal.locator('#co-ms-overview');
+  if ((await coMsOverview.count()) > 0) {
+    await expect(coMsOverview).not.toHaveClass(/active/);
+    const opacity = await coMsOverview.evaluate((el) => window.getComputedStyle(el).opacity);
+    expect(Number(opacity)).toBe(0);
+  }
+
+  // 场景 2 专有的气泡 co-gw-sentinel 必须正常激活展示 (Playwright 轮询等待 0.45s 动效延迟与过渡完成)
+  const coGwSentinel = audienceModal.locator('#co-gw-sentinel');
+  await expect(coGwSentinel).toBeVisible();
+  await expect(coGwSentinel).toHaveClass(/active/);
+  await expect(coGwSentinel).toHaveCSS('opacity', '1', { timeout: 4000 });
+
+  // (5) 点击自动演播按钮启动播放，再次验证进入播放态后依然不会错误复活 co-ms-overview
+  const playBtn = audienceModal.locator('[data-testid="audience-play-btn"]');
+  await expect(playBtn).toBeVisible();
+  await playBtn.click();
+  await page.waitForTimeout(400);
+
+  if ((await coMsOverview.count()) > 0) {
+    await expect(coMsOverview).not.toHaveClass(/active/);
+    const opacityDuringPlay = await coMsOverview.evaluate((el) => window.getComputedStyle(el).opacity);
+    expect(Number(opacityDuringPlay)).toBe(0);
+  }
+
+  // 截屏归档验证效果
+  await page.screenshot({
+    path: 'test-results/screenshots/scene2_callout_isolation.png',
+  });
+
+  // 退出全屏演播弹窗
+  await page.keyboard.press('Escape');
+  await expect(audienceModal).not.toBeVisible({ timeout: 5000 });
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -418,5 +491,10 @@ test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
   test('TC578: 录制时无痕出片与独立画中画生命周期验证', async ({ page }) => {
     await verifyRecordingPiPIsolation(page);
   });
+
+  test('TC579: 验证直接从场景2起播时历史场景气泡无残留与专属气泡精准激活', async ({ page }) => {
+    await verifyScene2CalloutIsolation(page);
+  });
 });
+
 

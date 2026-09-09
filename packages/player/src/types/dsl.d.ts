@@ -133,6 +133,7 @@ export interface SceneStep {
 export interface PlayerOptions {
   container: string | HTMLElement;
   dsl: FocusFlowDSL;
+  initialSceneIndex?: number;
   debug?: boolean;
   autoPlayInterval?: number;
   onSceneChange?: (sceneIndex: number, scene: SceneStep) => void;

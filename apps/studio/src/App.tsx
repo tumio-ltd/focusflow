@@ -156,9 +156,11 @@ export default function App() {
     if (!containerRef.current) return;
 
     try {
+      const initialIdx = useEditorStore.getState().activeSceneIndex || 0;
       const player = new FocusFlowPlayer({
         container: containerRef.current,
         dsl,
+        initialSceneIndex: initialIdx,
         debug: false,
         disableCamera: true, // 编辑工作台内底图保持 1:1 绝对空间，运镜由 InfiniteCanvas 与 Frustum 取景框协同展现
         enableKeyboard: false, // 禁用内部全局按键监听，由 Studio 统一调度快捷键与抓手平移
@@ -167,11 +169,6 @@ export default function App() {
           setActiveSceneIndex(index);
         },
       });
-
-      const initialIdx = useEditorStore.getState().activeSceneIndex || 0;
-      if (initialIdx > 0) {
-        player.goToStep(initialIdx, false);
-      }
 
       playerRef.current = player;
       // 预先缓存底图像素到 Sobel 空间分析器，并在底图载入时自动校准画布物理 Viewport (消除黑边与比例失真)

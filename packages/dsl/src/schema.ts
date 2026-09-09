@@ -155,6 +155,7 @@ export interface SceneStep {
   titleI18n?: Record<string, string>;
   duration?: number;  // 场景驻留停留时长 (毫秒，若无则使用 meta.controls.interval)
   voiceoverScript?: string; // AI 提词台词 / 分幕旁白脚本
+  voiceoverScriptI18n?: Record<string, string>; // 多语言配音脚本 { zh: "...", en: "..." }
   camera: {
     zoom: number;       // 缩放倍率 (1.0 ~ 3.0)
     x: number;          // 水平偏移百分比 (-50 ~ 50)
@@ -173,6 +174,7 @@ export interface SceneStep {
 export interface PlayerOptions {
   container: string | HTMLElement;
   dsl: FocusFlowDSL;
+  initialSceneIndex?: number;
   debug?: boolean;
   basePath?: string;
   autoplay?: boolean;

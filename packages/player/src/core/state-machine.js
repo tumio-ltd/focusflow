@@ -6,7 +6,7 @@
 export class StateMachine {
   constructor(scenes, options = {}) {
     this.scenes = scenes || [];
-    this.curIndex = 0;
+    this.curIndex = typeof options.initialIndex === 'number' && options.initialIndex >= 0 ? options.initialIndex : 0;
     this.isPlaying = false;
     this.playTimer = null;
     this.autoPlayInterval = options.autoPlayInterval || 3800;

@@ -221,6 +221,7 @@ export function AudienceModal({
       const player = new FocusFlowPlayer({
         container: containerRef.current,
         dsl: sanitizedDsl,
+        initialSceneIndex,
         debug: false,
         showControls: false,
         enableKeyboard: false, // 由 AudienceModal 统一拦截并调度快捷键，防止与播放内核双重触发
@@ -253,9 +254,6 @@ export function AudienceModal({
       });
 
       playerRef.current = player;
-      if (initialSceneIndex > 0) {
-        player.goToStep(initialSceneIndex);
-      }
     } catch (err) {
       console.warn('Audience player init error:', err);
     }

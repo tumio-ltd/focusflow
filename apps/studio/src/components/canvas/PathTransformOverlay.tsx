@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { ElementBox, ElementPath } from '@focusflow/dsl';
 import { Trash2, X, Activity, Waves, PenTool } from 'lucide-react';
 import { useEditorStore, useProjectStore } from '@/stores';
+import { useCanvasScale } from './InfiniteCanvas';
+import { PATH_FLOW_MODES } from '@/utils/pathModes';
 import { 
   getBoxAnchors, 
   resolvePathAnchors, 
@@ -37,9 +39,11 @@ export function PathTransformOverlay({
 }: PathTransformOverlayProps) {
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const setSelectedElementId = useEditorStore((s) => s.setSelectedElementId);
+  const setActiveDrawingColor = useEditorStore((s) => s.setActiveDrawingColor);
   const updatePathEndpoints = useProjectStore((s) => s.updatePathEndpoints);
   const updateElementStyle = useProjectStore((s) => s.updateElementStyle);
   const deleteElement = useProjectStore((s) => s.deleteElement);
+  const contextScale = useCanvasScale();
 
   const [hoveredPathId, setHoveredPathId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragEndpointState | null>(null);
@@ -155,7 +159,7 @@ export function PathTransformOverlay({
   return (
     <div
       data-testid="path-transform-overlay"
-      className="absolute inset-0 w-full h-full pointer-events-none select-none z-20"
+      className="absolute inset-0 w-full h-full pointer-events-none select-none z-30"
     >
       <svg
         ref={svgRef}
@@ -325,9 +329,19 @@ export function PathTransformOverlay({
                   {/* 2.4 Start Endpoint Handle ('from') */}
                   <g
                     data-testid="path-from-handle"
-                    className="cursor-grab active:cursor-grabbing pointer-events-auto"
+                    className="cursor-grab active:cursor-grabbing pointer-events-auto group"
                     onPointerDown={(e) => handleStartDrag(e, path.id, 'from')}
+                    onClick={(e) => e.stopPropagation()}
                   >
+                    {/* 透明热区圆 (独占捕获指针事件，杜绝内外子元素撕裂) */}
+                    <circle
+                      cx={dynamicFrom.x}
+                      cy={dynamicFrom.y}
+                      r={22}
+                      fill="transparent"
+                      className="cursor-grab active:cursor-grabbing"
+                    />
+                    {/* 外圈视觉圆：采用纯描边加粗与高亮过渡，彻底消除 SVG CSS scale 引起的乒乓抖动 */}
                     <circle
                       cx={dynamicFrom.x}
                       cy={dynamicFrom.y}
@@ -335,22 +349,34 @@ export function PathTransformOverlay({
                       fill="#0f172a"
                       stroke="#38bdf8"
                       strokeWidth={3}
-                      className="hover:scale-125 transition-transform drop-shadow-lg"
+                      className="pointer-events-none group-hover:stroke-[4px] group-hover:stroke-cyan-300 transition-all duration-150 drop-shadow-md"
                     />
+                    {/* 内圈实心圆 */}
                     <circle
                       cx={dynamicFrom.x}
                       cy={dynamicFrom.y}
                       r={5}
                       fill="#38bdf8"
+                      className="pointer-events-none group-hover:fill-cyan-300 transition-colors duration-150"
                     />
                   </g>
 
                   {/* 2.5 End Endpoint Handle ('to') */}
                   <g
                     data-testid="path-to-handle"
-                    className="cursor-grab active:cursor-grabbing pointer-events-auto"
+                    className="cursor-grab active:cursor-grabbing pointer-events-auto group"
                     onPointerDown={(e) => handleStartDrag(e, path.id, 'to')}
+                    onClick={(e) => e.stopPropagation()}
                   >
+                    {/* 透明热区圆 (独占捕获指针事件，杜绝内外子元素撕裂) */}
+                    <circle
+                      cx={dynamicTo.x}
+                      cy={dynamicTo.y}
+                      r={22}
+                      fill="transparent"
+                      className="cursor-grab active:cursor-grabbing"
+                    />
+                    {/* 外圈视觉圆：采用纯描边加粗与高亮过渡，彻底消除 SVG CSS scale 引起的乒乓抖动 */}
                     <circle
                       cx={dynamicTo.x}
                       cy={dynamicTo.y}
@@ -358,13 +384,15 @@ export function PathTransformOverlay({
                       fill="#0f172a"
                       stroke="#34d399"
                       strokeWidth={3}
-                      className="hover:scale-125 transition-transform drop-shadow-lg"
+                      className="pointer-events-none group-hover:stroke-[4px] group-hover:stroke-emerald-300 transition-all duration-150 drop-shadow-md"
                     />
+                    {/* 内圈实心圆 */}
                     <circle
                       cx={dynamicTo.x}
                       cy={dynamicTo.y}
                       r={5}
                       fill="#34d399"
+                      className="pointer-events-none group-hover:fill-emerald-300 transition-colors duration-150"
                     />
                   </g>
                 </>
@@ -374,94 +402,134 @@ export function PathTransformOverlay({
         })}
       </svg>
 
-      {/* 3. Floating Quick Action Toolbar for Selected Path */}
+      {/* 3. Floating Quick Action Toolbar for Selected Path (Scheme A: Safe Bounding Box Anchoring + Scheme C: Compact Layout) */}
       {selectedPath && !dragState && (() => {
         if (!selectedPath.from || !selectedPath.to) return null;
         const { from, to } = resolvePathAnchors(boxes, selectedPath.from, selectedPath.to);
         if (!from || !to) return null;
 
-        const midX = (from.x + to.x) / 2;
-        const midY = (from.y + to.y) / 2;
-        const leftPct = (midX / contentWidth) * 100;
-        const topPct = (midY / contentHeight) * 100;
+        // 计算贝塞尔控制点以获得整个 Path 曲线的最真实外包围盒 (AABB)
+        const normFrom = from.normal || { dx: 1, dy: 0 };
+        const normTo = to.normal || { dx: -1, dy: 0 };
+        const tension = 0.55;
+        const dx = Math.abs(to.x - from.x) * tension;
+        const dy = Math.abs(to.y - from.y) * tension;
+
+        let cp1x = from.x + normFrom.dx * dx;
+        let cp1y = from.y + normFrom.dy * dy;
+        let cp2x = to.x + normTo.dx * dx;
+        let cp2y = to.y + normTo.dy * dy;
+
+        if (normFrom.dx !== 0 && normTo.dx !== 0) {
+          cp1y = from.y;
+          cp2y = to.y;
+        } else if (normFrom.dy !== 0 && normTo.dy !== 0) {
+          cp1x = from.x;
+          cp2x = to.x;
+        }
+
+        // 1. 计算三阶贝塞尔曲线在 t=0.5 处的确切空间坐标与切线中点
+        const midCurveX = 0.125 * from.x + 0.375 * cp1x + 0.375 * cp2x + 0.125 * to.x;
+        const midCurveY = 0.125 * from.y + 0.375 * cp1y + 0.375 * cp2y + 0.125 * to.y;
+
+        // 曲线与两端点的综合垂直边界
+        const topBound = Math.min(from.y, to.y, midCurveY);
+        const bottomBound = Math.max(from.y, to.y, midCurveY);
+
+        // 方案 A 改进版：优雅适度收敛安全间距（屏幕物理间距维持在 ~16px，既亲密贴合又确保手柄畅通无阻）
+        const scale = Math.max(0.05, contextScale ?? 1.0);
+        const invScale = 1 / scale;
+        // 适当收敛：保证屏幕像素距离维持在 14~18px 之间，彻底消除过量 invScale 导致的外漂悬空
+        const safeOffset = Math.max(38, 18 + 14 * invScale);
+        const placeAbove = topBound >= safeOffset + 24;
+        
+        // 横向以曲线物理中点 midCurveX 为基准，保留两端安全内缩防溢出
+        const clampedMidX = Math.max(160, Math.min(contentWidth - 160, midCurveX));
+        const anchorY = placeAbove 
+          ? Math.max(10, topBound - safeOffset) 
+          : Math.min(contentHeight - 10, bottomBound + safeOffset);
+
+        const leftPct = (clampedMidX / contentWidth) * 100;
+        const topPct = (anchorY / contentHeight) * 100;
         const currentMode = selectedPath.style?.mode || 'stream';
+        const currentColor = (selectedPath.style?.stroke || '#38bdf8').trim();
 
         return (
           <div
             style={{
               left: `${leftPct}%`,
               top: `${topPct}%`,
-              transform: 'translate(-50%, -100%) translateY(-24px)',
+              transform: placeAbove ? 'translate(-50%, -100%)' : 'translate(-50%, 0%)',
             }}
             className="absolute pointer-events-auto select-none z-30 animate-in fade-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-1.5 bg-slate-900/95 border border-cyan-500/40 rounded-xl px-2.5 py-1.5 shadow-2xl backdrop-blur-md">
-              {/* Path ID Badge */}
-              <span className="text-[10px] font-mono text-cyan-300 font-bold px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30">
+            <div className="flex items-center gap-1 bg-slate-900/95 border border-cyan-500/40 rounded-xl px-2 py-1 shadow-2xl backdrop-blur-md text-xs">
+              {/* Path ID Badge - 限制最大宽度并截字，支持 hover 查看全称 */}
+              <span
+                className="text-[10px] font-mono text-cyan-300 font-bold px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 max-w-[96px] truncate"
+                title={selectedPath.id}
+              >
                 {selectedPath.id}
               </span>
 
-              <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+              <div className="w-px h-3.5 bg-slate-700 mx-0.5 shrink-0" />
 
-              {/* Mode Switcher */}
-              <div className="flex items-center gap-0.5 bg-slate-800/80 rounded-lg p-0.5 border border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => updateElementStyle(selectedPath.id, { mode: 'stream' })}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition ${
-                    currentMode === 'stream'
-                      ? 'bg-cyan-500 text-slate-950 font-semibold shadow'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                  title="流光粒子 (Stream)"
-                >
-                  <Waves className="w-3 h-3" />
-                  <span>流光</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateElementStyle(selectedPath.id, { mode: 'pulse' })}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition ${
-                    currentMode === 'pulse'
-                      ? 'bg-cyan-500 text-slate-950 font-semibold shadow'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                  title="脉冲闪烁 (Pulse)"
-                >
-                  <Activity className="w-3 h-3" />
-                  <span>脉冲</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateElementStyle(selectedPath.id, { mode: 'draw' })}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition ${
-                    currentMode === 'draw'
-                      ? 'bg-cyan-500 text-slate-950 font-semibold shadow'
-                      : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                  title="静态描边 (Draw)"
-                >
-                  <PenTool className="w-3 h-3" />
-                  <span>描边</span>
-                </button>
+              {/* Mode Switcher - 紧凑型模式切换 (与 RightInspector 严格对齐流光/生长绘制/呼吸律动) */}
+              <div className="flex items-center gap-0.5 bg-slate-800/80 rounded-lg p-0.5 border border-slate-700 shrink-0">
+                {PATH_FLOW_MODES.map((m) => {
+                  const Icon = m.icon;
+                  const isActive = currentMode === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => updateElementStyle(selectedPath.id, { mode: m.id })}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 transition ${
+                        isActive
+                          ? 'bg-cyan-500 text-slate-950 font-semibold shadow'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                      title={m.desc}
+                    >
+                      <Icon className="w-3 h-3" />
+                      <span>{m.shortLabel}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+              <div className="w-px h-3.5 bg-slate-700 mx-0.5 shrink-0" />
 
-              {/* Color Swatches */}
-              {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899'].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  style={{ backgroundColor: c }}
-                  onClick={() => updateElementStyle(selectedPath.id, { stroke: c, fill: c })}
-                  className="w-3.5 h-3.5 rounded-full border border-white/30 hover:scale-125 transition cursor-pointer"
-                  title={`设为颜色 ${c}`}
-                />
-              ))}
+              {/* Color Swatches - 紧凑型色彩选择，高亮当前活跃色彩 (标准 Tailwind ring-2 + 核心白点指示，同步更新全局画笔色) */}
+              <div className="flex items-center gap-1.5 bg-slate-800/80 px-1.5 py-0.5 rounded-lg border border-slate-700/80 shrink-0">
+                {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899'].map((c) => {
+                  const isActive = currentColor.toLowerCase() === c.toLowerCase();
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      style={{ backgroundColor: c }}
+                      onClick={() => {
+                        setActiveDrawingColor(c);
+                        updateElementStyle(selectedPath.id, { stroke: c });
+                      }}
+                      className={`w-3.5 h-3.5 rounded-full transition-all cursor-pointer flex items-center justify-center relative ${
+                        isActive
+                          ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-900 scale-110 shadow-md'
+                          : 'opacity-70 hover:opacity-100 hover:scale-115'
+                      }`}
+                      title={`设为颜色 ${c}`}
+                    >
+                      {isActive && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-white shadow-sm pointer-events-none" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
 
-              <div className="w-px h-3.5 bg-slate-700 mx-0.5" />
+              <div className="w-px h-3.5 bg-slate-700 mx-0.5 shrink-0" />
 
               {/* Delete Button */}
               <button
@@ -470,7 +538,7 @@ export function PathTransformOverlay({
                   deleteElement('paths', selectedPath.id);
                   setSelectedElementId(null);
                 }}
-                className="p-1 rounded text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer"
+                className="p-1 rounded text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer shrink-0"
                 title="删除连线 (Delete / Backspace)"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -480,7 +548,7 @@ export function PathTransformOverlay({
               <button
                 type="button"
                 onClick={() => setSelectedElementId(null)}
-                className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer shrink-0"
                 title="取消选中 (Esc)"
               >
                 <X className="w-3.5 h-3.5" />

@@ -64,6 +64,13 @@ export class FocusFlowPlayer {
     this.elementsMap = new Map(); // id -> Element metadata & DOM reference
     this.calloutsMap = new Map(); // id -> DOM Element
 
+    this.initialSceneIndex = typeof options.initialSceneIndex === 'number' && options.initialSceneIndex >= 0
+      ? options.initialSceneIndex
+      : 0;
+    this._activateRafOuter = null;
+    this._activateRafInner = null;
+    this._sceneTransitionToken = 0;
+
     this.init();
   }
 
@@ -120,6 +127,7 @@ export class FocusFlowPlayer {
 
     // State machine initialization
     this.stateMachine = new StateMachine(this.dsl.scenes, {
+      initialIndex: this.initialSceneIndex,
       autoPlayInterval: this.autoplayInterval,
       onStepChange: (index, scene, animate) => {
         this.applyScene(index, scene, animate);
@@ -177,8 +185,8 @@ export class FocusFlowPlayer {
       this.resizeObserver.observe(this.container);
     }
 
-    // Go to step 0 immediately
-    this.goToStep(0, false);
+    // Go to initial step immediately (respects options.initialSceneIndex)
+    this.goToStep(this.initialSceneIndex, false);
 
     // Auto-calibrate viewport to base image natural dimensions if mismatched
     if (this.imgEl) {
@@ -474,19 +482,45 @@ export class FocusFlowPlayer {
     });
   }
 
+  _cancelPendingActivations() {
+    this._sceneTransitionToken++;
+    if (this._activateRafOuter !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(this._activateRafOuter);
+      this._activateRafOuter = null;
+    }
+    if (this._activateRafInner !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(this._activateRafInner);
+      this._activateRafInner = null;
+    }
+  }
+
   applyScene(index, scene, animate = true) {
+    // 0. Cancel any pending RAF activations from previous scene transitions
+    this._cancelPendingActivations();
+    const currentToken = this._sceneTransitionToken;
+
     // 1. Camera Transition
     this.camera.apply(scene.camera, animate);
 
     // 2. Reset All Animated Elements
     this.animator.resetAll();
 
-    // 3. Double-RAF Staggered Activation
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        this.animator.activate(scene.activeElements);
+    // 3. Double-RAF Staggered Activation with Token & Handle Protection
+    if (typeof requestAnimationFrame !== 'undefined') {
+      this._activateRafOuter = requestAnimationFrame(() => {
+        this._activateRafOuter = null;
+        if (this._sceneTransitionToken !== currentToken) return;
+
+        this._activateRafInner = requestAnimationFrame(() => {
+          this._activateRafInner = null;
+          if (this._sceneTransitionToken !== currentToken) return;
+
+          this.animator.activate(scene.activeElements);
+        });
       });
-    });
+    } else {
+      this.animator.activate(scene.activeElements);
+    }
 
     // 4. Update UI Tab & Progress Bar
     this.updateControlsUI(index);
@@ -697,6 +731,7 @@ export class FocusFlowPlayer {
 
   updateDSL(newDSL) {
     if (!newDSL) return;
+    this._cancelPendingActivations();
     this.dsl = newDSL;
     this.audioTracks = newDSL.audio?.tracks || [];
     this.initAudio();
@@ -713,6 +748,7 @@ export class FocusFlowPlayer {
   }
 
   destroy() {
+    this._cancelPendingActivations();
     if (this.playbackIsland) {
       this.playbackIsland.destroy();
       this.playbackIsland = null;

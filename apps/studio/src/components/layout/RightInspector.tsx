@@ -38,6 +38,7 @@ import {
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
 import { calculateAdaptiveCalloutStyle } from '@/utils/calloutTypography';
+import { PATH_FLOW_MODES } from '@/utils/pathModes';
 import { useEditorStore, useProjectStore } from '@/stores';
 
 function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: number; viewportHeight: number }) {
@@ -831,17 +832,14 @@ function RightInspectorComponent({
                     </span>
                   </label>
                   <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
-                    {[
-                      { id: 'stream', label: t('modeStream', '🌊 流光粒子'), desc: t('modeStreamDesc', '能量粒子沿虚线高速流动') },
-                      { id: 'draw', label: t('modeDraw', '✍️ 生长绘制'), desc: t('modeDrawDesc', '沿路径延时生长画入') },
-                      { id: 'pulse', label: t('modePulse', '💓 呼吸律动'), desc: t('modePulseDesc', '整条连线呼吸发光') },
-                    ].map((m) => {
+                    {PATH_FLOW_MODES.map((m) => {
                       const isActive = (selectedPath.style?.mode || 'draw') === m.id;
+                      const label = m.id === 'stream' ? t('modeStream', m.label) : m.id === 'draw' ? t('modeDraw', m.label) : t('modePulse', m.label);
                       return (
                         <button
                           key={m.id}
                           type="button"
-                          onClick={() => updateElementStyle(selectedPath.id, { mode: m.id as any })}
+                          onClick={() => updateElementStyle(selectedPath.id, { mode: m.id })}
                           className={`text-[10px] py-1 px-1 rounded font-medium transition cursor-pointer text-center truncate ${
                             isActive
                               ? 'bg-primary text-primary-foreground shadow-sm'
@@ -849,7 +847,7 @@ function RightInspectorComponent({
                           }`}
                           title={m.desc}
                         >
-                          {m.label}
+                          {label}
                         </button>
                       );
                     })}
@@ -1570,22 +1568,32 @@ function RightInspectorComponent({
 
             {/* 2.2 调色板渲染函数 (Palette) */}
             {(() => {
-              const renderPalette = () => (
-                <div className="space-y-2 bg-muted/20 border border-border rounded-xl p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                      <Palette className="w-3.5 h-3.5 text-primary" />
-                      <span>{t('themePalette', '视觉主题色调')}</span>
-                    </span>
-                    {selectedElementId && (
-                      <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[100px]">
-                        {selectedElementId}
+              const renderPalette = () => {
+                // 优先读取当前选中图元的实际生效颜色，确保无论是从画布工具条还是右侧面板修改，均精准双向响应
+                const selectedElementColor = (
+                  selectedPath?.style?.stroke ||
+                  selectedBox?.style?.stroke || selectedBox?.style?.fill ||
+                  selectedDot?.style?.fill ||
+                  null
+                );
+                const currentPaletteColor = (selectedElementColor || activeDrawingColor || '#38bdf8').trim().toLowerCase();
+
+                return (
+                  <div className="space-y-2 bg-muted/20 border border-border rounded-xl p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Palette className="w-3.5 h-3.5 text-primary" />
+                        <span>{t('themePalette', '视觉主题色调')}</span>
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 pt-1">
-                    {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
-                      const isCurrentActive = activeDrawingColor === c;
+                      {selectedElementId && (
+                        <span className="text-[10px] font-mono text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 truncate max-w-[100px]">
+                          {selectedElementId}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
+                        const isCurrentActive = currentPaletteColor === c.toLowerCase();
                       return (
                         <button
                           key={c}
@@ -1643,8 +1651,9 @@ function RightInspectorComponent({
                   </div>
                 </div>
               );
+            };
 
-              return !selectedBox && !selectedPath && !selectedDot && !selectedCallout && !selectedImage ? (
+            return !selectedBox && !selectedPath && !selectedDot && !selectedCallout && !selectedImage ? (
                 <>
                   <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
                     <Info className="w-4 h-4 text-muted-foreground mx-auto" />
