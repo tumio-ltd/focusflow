@@ -1,7 +1,0 @@
-{
-  "name": "@focusflow/config-oxlint",
-  "version": "1.0.0",
-  "private": true,
-  "license": "MIT",
-  "files": [".oxlintrc.json"]
-}
