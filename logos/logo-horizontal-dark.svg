@@ -6,8 +6,8 @@
       <stop offset="100%" stop-color="#818cf8" />
     </linearGradient>
     <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#0284c7" />
-      <stop offset="100%" stop-color="#6366f1" />
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
     </linearGradient>
     <filter id="hzGlow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur stdDeviation="1.5" result="blur" />
@@ -15,19 +15,11 @@
     </filter>
   </defs>
 
-  <style>
-    .brand-focus-text { fill: #0f172a; }
-    .viewfinder-box { stroke: #0284c7; }
-    @media (prefers-color-scheme: dark) {
-      .brand-focus-text { fill: #f8fafc; }
-      .viewfinder-box { stroke: #38bdf8; }
-    }
-  </style>
-
-  <!-- 左侧图形 Logo (Icon Mark) -->
+  <!-- 左侧图形 Logo (Icon Mark - Concept A) -->
   <g transform="translate(6, 6) scale(0.28125)">
+    <!-- 128x128 scale down to 36x36 -->
     <!-- Viewfinder Brackets -->
-    <g class="viewfinder-box" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.95">
+    <g stroke="#38bdf8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.9">
       <path d="M 40 24 L 28 24 A 4 4 0 0 0 24 28 L 24 40" />
       <path d="M 88 24 L 100 24 A 4 4 0 0 1 104 28 L 104 40" />
       <path d="M 24 88 L 24 100 A 4 4 0 0 0 28 104 L 40 104" />
@@ -41,17 +33,19 @@
           stroke-linecap="round"
           filter="url(#hzGlow)" />
     <!-- Pulse Center -->
-    <circle cx="100" cy="32" r="7" fill="#38bdf8" filter="url(#hzGlow)" />
+    <circle cx="100" cy="32" r="7" fill="#ffffff" filter="url(#hzGlow)" />
   </g>
 
-  <!-- 右侧字体文字 (Adaptive: #0f172a in Light, #f8fafc in Dark) -->
-  <text class="brand-focus-text" x="56" y="32"
+  <!-- 右侧字体文字 (Typography - Geometric Sans) -->
+  <!-- "Focus" in Pure White Bold (700) -->
+  <text x="56" y="32"
         font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Geist Sans', 'Segoe UI', sans-serif"
         font-size="24"
         font-weight="700"
-        letter-spacing="-0.5px">Focus</text>
+        letter-spacing="-0.5px"
+        fill="#f8fafc">Focus</text>
 
-  <!-- "Flow" in Gradient Cyan-Indigo -->
+  <!-- "Flow" in Gradient Cyan-Indigo Medium (500) -->
   <text x="124" y="32"
         font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Geist Sans', 'Segoe UI', sans-serif"
         font-size="24"
