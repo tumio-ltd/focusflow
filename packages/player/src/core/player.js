@@ -154,6 +154,11 @@ export class FocusFlowPlayer {
       }
     });
 
+    // Mount Native Unified PlaybackIsland only when showControls is explicitly true
+    if (this.showControls) {
+      this._initPlaybackIsland();
+    }
+
     this.events.bind();
 
     // HUD Calibration tool
@@ -271,11 +276,6 @@ export class FocusFlowPlayer {
     if (!this.showProgress) {
       const progressTrack = this.container.querySelector('.focusflow-progress-track');
       if (progressTrack) progressTrack.style.display = 'none';
-    }
-
-    // Mount Native Unified PlaybackIsland only when showControls is explicitly true
-    if (this.showControls) {
-      this._initPlaybackIsland();
     }
   }
 
@@ -576,15 +576,15 @@ export class FocusFlowPlayer {
   }
 
   getCurrentScene() {
-    return this.stateMachine.currentScene;
+    return this.stateMachine ? this.stateMachine.currentScene : null;
   }
 
   getCurrentIndex() {
-    return this.stateMachine.currentIndex;
+    return this.stateMachine ? this.stateMachine.currentIndex : 0;
   }
 
   getSceneCount() {
-    return this.stateMachine.totalScenes;
+    return this.stateMachine ? this.stateMachine.totalScenes : (this.dsl.scenes || []).length;
   }
 
   getSceneDuration(index) {

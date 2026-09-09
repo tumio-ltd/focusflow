@@ -29,7 +29,7 @@ async function verifyExportModalOpenAndTabs(page: Page): Promise<void> {
 }
 
 /**
- * 2. 验证纯前端单文件独立 HTML 编译与下载触发
+ * 2. 验证纯前端单文件独立 HTML 编译与下载触发，并验证脱机 HTML 控制组件与快捷键控制
  */
 async function verifyStandaloneHtmlExportTrigger(page: Page): Promise<void> {
   const exportModal = page.locator('[data-testid="export-modal"]');
@@ -47,6 +47,47 @@ async function verifyStandaloneHtmlExportTrigger(page: Page): Promise<void> {
   const download = await downloadPromise;
   if (download) {
     expect(download.suggestedFilename()).toMatch(/\.html$/);
+
+    // 真正脱机验证：在独立上下文打开下载的 HTML 单文件，验证 PlaybackIsland 控制组件与键盘翻页/播放
+    const fs = await import('fs');
+    const path = await import('path');
+    const tempFilePath = path.join(process.cwd(), `test-export-${Date.now()}.html`);
+    await download.saveAs(tempFilePath);
+
+    const standalonePage = await page.context().newPage();
+    try {
+      await standalonePage.goto(`file://${tempFilePath}`);
+      await standalonePage.waitForTimeout(500);
+
+      const controlsIsland = standalonePage.locator('[data-testid="audience-controls"]');
+      await expect(controlsIsland).toBeVisible();
+
+      const scenePill = standalonePage.locator('[data-testid="audience-scene-pill"]');
+      await expect(scenePill).toBeVisible();
+      await expect(scenePill).toContainText('01 /');
+
+      // 验证键盘方向键 -> 翻至第 2 幕
+      await standalonePage.keyboard.press('ArrowRight');
+      await expect(scenePill).toContainText('02 /');
+
+      // 验证键盘方向键 <- 翻回第 1 幕
+      await standalonePage.keyboard.press('ArrowLeft');
+      await expect(scenePill).toContainText('01 /');
+
+      // 验证空格键播放与暂停控制
+      const sceneTimer = standalonePage.locator('[data-testid="audience-scene-timer"]');
+      await expect(sceneTimer).not.toBeVisible();
+      await standalonePage.keyboard.press(' ');
+      await expect(sceneTimer).toBeVisible();
+
+      await standalonePage.keyboard.press(' ');
+      await expect(sceneTimer).not.toBeVisible();
+    } finally {
+      await standalonePage.close();
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    }
   }
 }
 

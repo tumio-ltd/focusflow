@@ -26,27 +26,42 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
     showProgress: true,
   };
 
-  // 若底图为当前会话临时 blob: URL，自动转为内嵌 Base64 Data URL 确保脱机完全可移植
-  if (exportDSL.asset?.url?.startsWith('blob:')) {
+  // 若底图不是 Base64 Data URL（如 blob: 或本地静态相对路径），自动转为内嵌 Base64 Data URL 确保脱机完全自包含与零 CORS 报错
+  if (exportDSL.asset?.url && !exportDSL.asset.url.startsWith('data:')) {
     try {
       const resp = await fetch(exportDSL.asset.url);
       const blob = await resp.blob();
       exportDSL.asset.url = await blobToDataUrl(blob);
     } catch (e) {
-      console.warn('Failed to embed blob image as base64 in standalone HTML:', e);
+      console.warn('Failed to embed base image as base64 in standalone HTML:', e);
     }
   }
 
-  // 若音频轨为临时 blob: URL，自动转为内嵌 Base64 Data URL
+  // 若存在叠加贴图/图标，统一转为 Base64 Data URL
+  if (exportDSL.elements?.images?.length) {
+    for (const img of exportDSL.elements.images) {
+      if (img.url && !img.url.startsWith('data:')) {
+        try {
+          const resp = await fetch(img.url);
+          const blob = await resp.blob();
+          img.url = await blobToDataUrl(blob);
+        } catch (e) {
+          console.warn('Failed to embed overlay image as base64 in standalone HTML:', e);
+        }
+      }
+    }
+  }
+
+  // 若音频轨不是 Base64 Data URL，自动转为内嵌 Base64 Data URL
   if (exportDSL.audio?.tracks?.length) {
     for (const track of exportDSL.audio.tracks) {
-      if (track.url?.startsWith('blob:')) {
+      if (track.url && !track.url.startsWith('data:')) {
         try {
           const resp = await fetch(track.url);
           const blob = await resp.blob();
           track.url = await blobToDataUrl(blob);
         } catch (e) {
-          console.warn('Failed to embed blob audio track as base64 in standalone HTML:', e);
+          console.warn('Failed to embed audio track as base64 in standalone HTML:', e);
         }
       }
     }

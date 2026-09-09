@@ -35,18 +35,29 @@ export class EventManager {
 
     switch (e.key) {
       case 'ArrowRight':
-      case ' ':
+      case 'PageDown':
         e.preventDefault();
         this.player.next();
         break;
       case 'ArrowLeft':
+      case 'PageUp':
         e.preventDefault();
         this.player.prev();
         break;
+      case ' ':
       case 'p':
       case 'P':
         e.preventDefault();
         this.player.togglePlay();
+        break;
+      case 'h':
+      case 'H':
+        if (this.player.playbackIsland) {
+          e.preventDefault();
+          const curMode = this.player.playbackIsland.state.hudMode || 'full';
+          const nextMode = curMode === 'full' ? 'minimal' : curMode === 'minimal' ? 'zen' : 'full';
+          this.player.playbackIsland.setHudMode(nextMode);
+        }
         break;
       case 'Home':
         e.preventDefault();
