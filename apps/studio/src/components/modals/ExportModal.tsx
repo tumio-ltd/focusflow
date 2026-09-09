@@ -226,10 +226,10 @@ export function ExportModal({
                   <div>
                     <h3 className="font-semibold text-foreground text-sm">{t('videoDescTitle', '本地 60FPS WebM 高清录制')}</h3>
                     <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
-                      {t('videoDescText', '直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清 WebM 格式视频，无水印且无需任何服务端。')}
+                      {t('videoDescText', '直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清 WebM 格式视频，带官方微型品牌角标，无需任何服务端。')}
                     </p>
                     <div className="mt-2.5 p-2.5 bg-primary/10 border border-primary/20 rounded-lg text-xs text-primary leading-relaxed">
-                      {t('videoTip', '💡 提示：点击后请在浏览器分享弹窗中选择【Chrome 标签页】->【当前 FocusFlow 标签页】进行录制。录制过程中鼠标静止 3 秒自动隐藏控制浮岛，出片绝对纯净无痕！')}
+                      {t('videoTip', '💡 提示：点击后请在浏览器分享弹窗中选择【Chrome 标签页】->【当前 FocusFlow 标签页】进行录制。录制过程中鼠标静止 3 秒自动隐藏控制浮岛，右下角优雅展现官方微型角标！')}
                     </div>
 
                     {/* 音频合流状态与提示卡片 */}

@@ -276,10 +276,93 @@ function createTempStandaloneHtml(baseDir, configPath) {
     }
     #focusflow-root { width: 100vw; height: 100vh; position: relative; }
     ${playerCss}
+
+    /* FocusFlow Official Watermark Badge for Video Render */
+    .ff-watermark-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px 4px 5px;
+      border-radius: 9999px;
+      background: rgba(10, 14, 23, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      text-decoration: none;
+      user-select: none;
+    }
+    .ff-watermark-logo-box {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .ff-watermark-icon { width: 14px; height: 14px; display: block; }
+    .ff-watermark-label {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .ff-watermark-prefix {
+      font-size: 10.5px;
+      font-weight: 400;
+      color: rgba(148, 163, 184, 0.9);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .ff-watermark-brand {
+      font-size: 11px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
   </style>
 </head>
 <body>
   <div id="focusflow-root"></div>
+
+  <!-- FocusFlow Official Watermark Badge -->
+  <div class="ff-watermark-badge">
+    <div class="ff-watermark-logo-box">
+      <svg viewBox="0 0 128 128" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" class="ff-watermark-icon">
+        <defs>
+          <linearGradient id="ffRenderWatermarkGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#0284c7" />
+            <stop offset="50%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#818cf8" />
+          </linearGradient>
+          <filter id="ffRenderWatermarkGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        <g stroke="#38bdf8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+          <path d="M 40 24 L 28 24 A 4 4 0 0 0 24 28 L 24 40" />
+          <path d="M 88 24 L 100 24 A 4 4 0 0 1 104 28 L 104 40" />
+          <path d="M 24 88 L 24 100 A 4 4 0 0 0 28 104 L 40 104" />
+          <path d="M 104 88 L 104 100 A 4 4 0 0 1 100 104 L 88 104" />
+        </g>
+        <path d="M 28 96 C 52 96, 56 32, 100 32" stroke="url(#ffRenderWatermarkGrad)" stroke-width="11" stroke-linecap="round" filter="url(#ffRenderWatermarkGlow)" />
+        <circle cx="100" cy="32" r="7" fill="#ffffff" filter="url(#ffRenderWatermarkGlow)" />
+      </svg>
+    </div>
+    <span class="ff-watermark-label">
+      <span class="ff-watermark-prefix">Powered by</span>
+      <span class="ff-watermark-brand">FocusFlow</span>
+    </span>
+  </div>
+
   <script>${playerJs}</script>
   <script>
     window.FocusFlowDSL = ${JSON.stringify(dslObj)};

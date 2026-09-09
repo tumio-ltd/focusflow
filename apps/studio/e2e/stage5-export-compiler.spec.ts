@@ -82,6 +82,17 @@ async function verifyStandaloneHtmlExportTrigger(page: Page): Promise<void> {
 
       await standalonePage.keyboard.press(' ');
       await expect(sceneTimer).not.toBeVisible();
+
+      // 验证开源版官方微型水印角标 (FocusFlow Watermark Badge)
+      const watermark = standalonePage.locator('[data-testid="focusflow-watermark-badge"]');
+      await expect(watermark).toBeVisible();
+      await expect(watermark).toHaveAttribute('href', 'https://tumio-ltd.github.io/focusflow/');
+      await expect(watermark).toHaveAttribute('target', '_blank');
+      await expect(watermark).toContainText('Powered by');
+      await expect(watermark).toContainText('FocusFlow');
+
+      // 截取独立 HTML 运行态截图存证（含水印角标与控制组件）
+      await standalonePage.screenshot({ path: 'test-results/screenshots/standalone_html_with_watermark.png' });
     } finally {
       await standalonePage.close();
       if (fs.existsSync(tempFilePath)) {
@@ -331,6 +342,7 @@ async function verifyRecordingPiPIsolation(page: Page): Promise<void> {
   // 验证受众演播舞台进入录制态（方案 A：只读章节路标微章）：
   // 1. 录制画面中稳定保留分幕与时间信息胶囊，但物理隐藏所有交互操作按钮 (Play/Prev/Next)，杜绝点击假象
   // 2. 彻底隐藏创作者操作按键 (关闭/全屏/Eye模式切换/微缩药丸)
+  // 3. 画面右下角稳定挂载官方微型品牌水印角标 (FocusFlow Watermark Badge)，确保录制出片统一自带品牌水印
   const audienceModal = page.locator('[data-testid="audience-modal"]');
   await expect(audienceModal).toBeVisible();
   await expect(page.locator('[data-testid="audience-controls"]')).toBeVisible();
@@ -341,6 +353,14 @@ async function verifyRecordingPiPIsolation(page: Page): Promise<void> {
   await expect(page.locator('[data-testid="hud-mode-toggle"]')).not.toBeVisible();
   await expect(page.locator('[data-testid="audience-hud-minimal"]')).not.toBeVisible();
   await expect(page.locator('[data-testid="close-audience-btn"]')).not.toBeVisible();
+
+  // 验证视频录制画面中包含官方微型水印角标
+  const videoWatermark = audienceModal.locator('[data-testid="focusflow-watermark-badge"]');
+  await expect(videoWatermark).toBeVisible();
+  await expect(videoWatermark).toContainText('FocusFlow');
+
+  // 截取视频录制态画面存证（含路标胶囊与右下角官方水印角标）
+  await page.screenshot({ path: 'test-results/screenshots/video_recording_with_watermark.png' });
 
   // 验证独立 Document PiP 窗口成功开启
   const pipOpened = await page.evaluate(() => (window as any).__pipOpened);

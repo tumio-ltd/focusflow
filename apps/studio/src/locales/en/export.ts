@@ -13,7 +13,7 @@ export default {
   zipDescText: 'Contains standard config.json DSL, assets/ raw graphics and index.html entry point for secondary development.',
   downloadZip: 'Download .zip Archive',
   videoDescTitle: 'Local 60FPS WebM High-Definition Recording',
-  videoDescText: 'Records smooth canvas camera motion and glow streams directly into WebM video using browser MediaRecorder API.',
+  videoDescText: 'Records smooth canvas camera motion and glow streams directly into WebM video with official watermark badge using browser MediaRecorder API.',
   startRecording: 'Start Auto Recording',
   cancel: 'Cancel',
   successExport: 'Exported successfully!',

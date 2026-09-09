@@ -67,6 +67,28 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
     }
   }
 
+const WATERMARK_SVG_LOGO = `<svg viewBox="0 0 128 128" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" class="ff-watermark-icon">
+  <defs>
+    <linearGradient id="ffWatermarkGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+    <filter id="ffWatermarkGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <g stroke="#38bdf8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+    <path d="M 40 24 L 28 24 A 4 4 0 0 0 24 28 L 24 40" />
+    <path d="M 88 24 L 100 24 A 4 4 0 0 1 104 28 L 104 40" />
+    <path d="M 24 88 L 24 100 A 4 4 0 0 0 28 104 L 40 104" />
+    <path d="M 104 88 L 104 100 A 4 4 0 0 1 100 104 L 88 104" />
+  </g>
+  <path d="M 28 96 C 52 96, 56 32, 100 32" stroke="url(#ffWatermarkGrad)" stroke-width="11" stroke-linecap="round" filter="url(#ffWatermarkGlow)" />
+  <circle cx="100" cy="32" r="7" fill="#ffffff" filter="url(#ffWatermarkGlow)" />
+</svg>`;
+
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -92,10 +114,152 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
       overflow: hidden;
     }
     ${playerCss || ''}
+
+    /* ==========================================================================
+       FocusFlow Official Watermark Badge (开源版官方微型水印角标)
+       ========================================================================== */
+    .ff-watermark-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 10px 4px 5px;
+      border-radius: 9999px;
+      background: rgba(10, 14, 23, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      text-decoration: none;
+      user-select: none;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0.82;
+    }
+
+    .ff-watermark-badge:hover {
+      opacity: 1;
+      background: rgba(13, 20, 36, 0.92);
+      border-color: rgba(56, 189, 248, 0.55);
+      transform: translateY(-1.5px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(56, 189, 248, 0.2);
+    }
+
+    .ff-watermark-badge:active {
+      transform: translateY(0);
+      opacity: 0.95;
+    }
+
+    .ff-watermark-logo-box {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .ff-watermark-badge:hover .ff-watermark-logo-box {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+
+    .ff-watermark-icon {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .ff-watermark-label {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .ff-watermark-prefix {
+      font-size: 10.5px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: rgba(148, 163, 184, 0.85);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .ff-watermark-brand {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* 移动端与窄屏自适应 (避让底部控制栏，精简字样) */
+    @media (max-width: 640px) {
+      .ff-watermark-badge {
+        bottom: 74px;
+        right: 12px;
+        padding: 3px 8px 3px 4px;
+      }
+      .ff-watermark-prefix {
+        display: none;
+      }
+      .ff-watermark-logo-box {
+        width: 18px;
+        height: 18px;
+      }
+      .ff-watermark-icon {
+        width: 12px;
+        height: 12px;
+      }
+      .ff-watermark-brand {
+        font-size: 10px;
+      }
+    }
+
+    /* 全屏演播模式自适应微暗 */
+    :fullscreen .ff-watermark-badge,
+    :-webkit-full-screen .ff-watermark-badge {
+      bottom: 28px;
+      right: 28px;
+      opacity: 0.65;
+    }
+
+    :fullscreen .ff-watermark-badge:hover,
+    :-webkit-full-screen .ff-watermark-badge:hover {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
   <div id="focusflow-root"></div>
+
+  <!-- FocusFlow Official Watermark Badge (开源版官方微型水印角标) -->
+  <a
+    href="https://tumio-ltd.github.io/focusflow/"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="ff-watermark-badge"
+    data-testid="focusflow-watermark-badge"
+    title="FocusFlow · 动效架构演进演示 (点击探索)"
+  >
+    <div class="ff-watermark-logo-box">
+      ${WATERMARK_SVG_LOGO}
+    </div>
+    <span class="ff-watermark-label">
+      <span class="ff-watermark-prefix">Powered by</span>
+      <span class="ff-watermark-brand">FocusFlow</span>
+    </span>
+  </a>
 
   <script>
     ${playerIife || ''}

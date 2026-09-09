@@ -410,6 +410,50 @@ export function AudienceModal({
         onCycleHudMode={cyclePlaybackHudMode}
         onRestoreFull={() => setPlaybackHudMode('full')}
       />
+
+      {/* 4. 开源版官方微型水印角标 (FocusFlow Official Watermark Badge · 录制出片与演播统一挂载) */}
+      <a
+        href="https://tumio-ltd.github.io/focusflow/"
+        target="_blank"
+        rel="noopener noreferrer"
+        data-testid="focusflow-watermark-badge"
+        className={`fixed z-30 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/80 border border-sky-500/22 shadow-lg backdrop-blur-md text-decoration-none select-none transition-all duration-200 hover:bg-slate-900/95 hover:border-sky-400/55 hover:-translate-y-0.5 group ${
+          isRecording
+            ? 'bottom-6 right-6 opacity-85 pointer-events-none'
+            : 'bottom-6 right-6 max-sm:bottom-[74px] max-sm:right-3 opacity-80 hover:opacity-100'
+        }`}
+        title="FocusFlow · 动效架构演进演示 (点击探索)"
+      >
+        <div className="w-5 h-5 rounded-md bg-sky-500/12 border border-sky-500/25 flex items-center justify-center shrink-0 group-hover:bg-sky-500/20 group-hover:border-sky-500/45 transition-colors">
+          <svg viewBox="0 0 128 128" className="w-3.5 h-3.5" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="ffAudienceWatermarkGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#0284c7" />
+                <stop offset="50%" stopColor="#38bdf8" />
+                <stop offset="100%" stopColor="#818cf8" />
+              </linearGradient>
+              <filter id="ffAudienceWatermarkGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+            <g stroke="#38bdf8" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.9">
+              <path d="M 40 24 L 28 24 A 4 4 0 0 0 24 28 L 24 40" />
+              <path d="M 88 24 L 100 24 A 4 4 0 0 1 104 28 L 104 40" />
+              <path d="M 24 88 L 24 100 A 4 4 0 0 0 28 104 L 40 104" />
+              <path d="M 104 88 L 104 100 A 4 4 0 0 1 100 104 L 88 104" />
+            </g>
+            <path d="M 28 96 C 52 96, 56 32, 100 32" stroke="url(#ffAudienceWatermarkGrad)" strokeWidth="11" strokeLinecap="round" filter="url(#ffAudienceWatermarkGlow)" />
+            <circle cx="100" cy="32" r="7" fill="#ffffff" filter="url(#ffAudienceWatermarkGlow)" />
+          </svg>
+        </div>
+        <span className="flex items-baseline gap-1 leading-none whitespace-nowrap">
+          <span className="text-[10.5px] font-normal text-slate-400 max-sm:hidden">Powered by</span>
+          <span className="text-[11px] font-bold bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+            FocusFlow
+          </span>
+        </span>
+      </a>
     </div>
   );
 }
