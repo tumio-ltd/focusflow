@@ -436,9 +436,10 @@ npx gitleaks detect --source . -v
   - [ ] 执行敏感路径检测命令（`git grep -n "/Users/"`）并清理
   - [ ] 执行敏感词安全审计（`npx gitleaks detect --source .`）
   - [ ] 检查代码中是否残留非公开内网 IP、测试 Token 或私有邮箱
-- [ ] **1.4 冗余目录精简与构建验证**
-  - [ ] 清理未跟踪的媒体与测试残片（`scratch/`、`.tempmediaStorage/`、`test-results/`）
-  - [ ] 运行 `pnpm build` 与 `pnpm typecheck` 确认全新克隆下零报错通过
+- [x] **1.4 冗余目录精简与构建验证**
+  - [x] 清理历史遗留目录（删除根目录旧版 `poc/` 与 `src/`，所有依赖平滑迁移至 `packages/player/src/`）
+  - [x] 清理未跟踪的媒体与测试残片（`scratch/`、`.tempmediaStorage/`、`test-results/`）
+  - [x] 运行 `pnpm build`、`pnpm build:standalone` 与 `pnpm typecheck` 确认全新克隆下零报错通过
 
 ---
 

@@ -185,7 +185,7 @@ Examples:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${formattedTitle} - FocusFlow Architecture Showcase</title>
-  <link rel="stylesheet" href="../../src/styles/focusflow.css">
+  <link rel="stylesheet" href="../../packages/player/src/styles/focusflow.css">
   <style>
     body {
       margin: 0;
@@ -208,7 +208,7 @@ Examples:
   <div id="app"></div>
 
   <script type="module">
-    import { FocusFlowPlayer } from '../../src/index.js';
+    import { FocusFlowPlayer } from '../../packages/player/src/index.js';
 
     fetch('./config.json')
       .then(res => res.json())

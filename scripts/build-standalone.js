@@ -179,7 +179,7 @@ ${bundledJs}
 
 // CLI args
 const args = process.argv.slice(2);
-const exampleDir = args[0] || 'examples/overlay-demo';
+const exampleDir = args[0] || 'examples/luxehms';
 const outputFile = args[1];
 
 buildStandalone(exampleDir, outputFile).catch(err => {

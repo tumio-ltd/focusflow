@@ -11,7 +11,7 @@
     "dev:worker": "turbo run dev --filter=@focusflow/render-worker",
     "dev:player": "vite",
     "build": "turbo run build",
-    "build:standalone": "node scripts/build-standalone.js examples/luxehms",
+    "build:standalone": "node scripts/build-standalone.js",
     "create:project": "node scripts/create-project.js",
     "db:migrate": "pnpm --filter=@focusflow/database prisma migrate dev",
     "db:studio": "pnpm --filter=@focusflow/database prisma studio",
