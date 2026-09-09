@@ -427,11 +427,11 @@ npx gitleaks detect --source . -v
   - [x] 根目录确认并创建主 `LICENSE` 文件（MIT 内核 + AGPL-3.0 工作台）
   - [x] `packages/player/package.json` 与 `packages/dsl/package.json` 标注 `"license": "MIT"`
   - [x] `apps/studio/package.json` 标注 `"license": "AGPL-3.0"`
-- [ ] **1.2 仓库双远端（GitHub 组织 + 私有 Gitea）协同配置**
-  - [ ] 在 GitHub 企业组织创建 `focusflow` 公共仓库
-  - [ ] 在私有 Gitea 创建 `focusflow` 镜像仓库
-  - [ ] 配置本地 `origin` 双推属性（`git remote set-url --add --push ...`）
-  - [ ] 测试一次代码提交能够单命令自动同步到两个远端
+- [x] **1.2 仓库双远端（GitHub 组织 + 私有 Gitea）协同配置**
+  - [x] 在 GitHub 企业组织创建 `focusflow` 公共仓库
+  - [x] 在私有 Gitea 创建 `focusflow` 镜像仓库
+  - [x] 配置本地 `origin` 双推属性（`git remote set-url --add --push ...`）
+  - [x] 测试一次代码提交能够单命令自动同步到两个远端
 - [ ] **1.3 敏感信息脱敏与绝对路径排查**
   - [ ] 执行敏感路径检测命令（`git grep -n "/Users/"`）并清理
   - [ ] 执行敏感词安全审计（`npx gitleaks detect --source .`）
