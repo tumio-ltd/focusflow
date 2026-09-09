@@ -76,6 +76,9 @@ export class StateMachine {
 
     if (isEnded) {
       this.onEnded();
+      if (this.isPlaying) {
+        this.pause();
+      }
     }
 
     return { index: targetIdx, localOffset, ended: isEnded };

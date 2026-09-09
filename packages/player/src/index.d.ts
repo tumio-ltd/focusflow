@@ -21,6 +21,8 @@ export class FocusFlowPlayer {
   clearElements(): void;
   updateDSL(dsl: FocusFlowDSL): void;
   destroy(): void;
+  get isPlaying(): boolean;
+  stateMachine?: any;
   getCurrentScene(): SceneStep | null;
   getCurrentIndex(): number;
   getSceneCount(): number;

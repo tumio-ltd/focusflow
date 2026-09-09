@@ -575,6 +575,10 @@ export class FocusFlowPlayer {
     return res;
   }
 
+  get isPlaying() {
+    return this.stateMachine ? this.stateMachine.isPlaying : false;
+  }
+
   getCurrentScene() {
     return this.stateMachine ? this.stateMachine.currentScene : null;
   }

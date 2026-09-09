@@ -62,6 +62,7 @@ export default function App() {
   const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
   const setActiveSceneIndex = useEditorStore((s) => s.setActiveSceneIndex);
   const isPlaying = useEditorStore((s) => s.isPlaying);
+  const setIsPlaying = useEditorStore((s) => s.setIsPlaying);
   const togglePlay = useEditorStore((s) => s.togglePlay);
   const isSmartSnapEnabled = useEditorStore((s) => s.isSmartSnapEnabled);
   const toggleSmartSnap = useEditorStore((s) => s.toggleSmartSnap);
@@ -235,11 +236,13 @@ export default function App() {
       setActiveSceneIndex(newIdx);
 
       const currentlyPlaying = useEditorStore.getState().isPlaying;
+      const isPlayerActive = Boolean(player.stateMachine?.isPlaying);
       const cfg = getStoredTTSConfig();
       const mainTrack = dsl.audio?.tracks?.[0];
 
       // 若工程中无任何音轨、或音轨处于静音/0音量状态，绝对不发声（删除音轨后彻底静音）
-      if (!currentlyPlaying || !mainTrack || mainTrack.muted || (mainTrack.volume ?? 1) <= 0) {
+      // 严格静音保护：只有在播放器确实处于自动演播状态、且音轨有效非静音时，才允许自动发声
+      if (!currentlyPlaying || !isPlayerActive || !mainTrack || mainTrack.muted || (mainTrack.volume ?? 1) <= 0) {
         return;
       }
 
@@ -263,12 +266,14 @@ export default function App() {
     };
 
     const handlePlayStateChange = (playing: boolean) => {
+      useEditorStore.getState().setIsPlaying(playing);
       if (!playing) {
         stopWebSpeech();
       }
     };
 
     const handleEnded = () => {
+      useEditorStore.getState().setIsPlaying(false);
       stopWebSpeech();
     };
 
@@ -321,11 +326,12 @@ export default function App() {
     }
   }, [stopCurrentTtsPreview]);
 
-  // 当非播放状态下切换分幕时，中断检查器单幕试听并重置试听卡片
+  // 当非播放状态下切换分幕时，中断检查器单幕试听并重置试听卡片，确保彻底静音
   useEffect(() => {
     if (!isPlaying) {
       stopCurrentTtsPreview();
       setTtsPreview(null);
+      stopWebSpeech();
     }
   }, [activeSceneIndex, isPlaying, stopCurrentTtsPreview]);
 
@@ -354,8 +360,8 @@ export default function App() {
     const nextPlaying = !isPlaying;
     stopCurrentTtsPreview();
     setTtsPreview(null);
+    setIsPlaying(nextPlaying);
     playerRef.current.togglePlay();
-    togglePlay();
 
     if (nextPlaying) {
       const cfg = getStoredTTSConfig();

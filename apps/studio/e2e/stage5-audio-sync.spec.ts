@@ -697,6 +697,77 @@ async function verifyEnglishExportModalLocalization(page: Page): Promise<void> {
   await expect(exportModal).not.toBeVisible();
 }
 
+/**
+ * 验证非演播状态切换分幕与点击波形轨时严格静音保护 (TC577)
+ */
+async function verifyZeroSpeechLeaksOnSceneSwitchAndTimelineSeek(page: Page): Promise<void> {
+  // 1. 点击批量合成 AI 提词旁白，自动生成离线旁白音轨并展开波形轨
+  const batchBtn = page.locator('[data-testid="ai-tts-batch-btn"]');
+  await expect(batchBtn).toBeVisible();
+  await batchBtn.click();
+
+  const waveformTrack = page.locator('[data-testid="audio-waveform-track"]');
+  await expect(waveformTrack).toBeVisible({ timeout: 10000 });
+  const waveCanvas = waveformTrack.locator('canvas');
+  await expect(waveCanvas).toBeVisible();
+
+  // 3. 安装 window.speechSynthesis.speak 计数器 Spy
+  await page.evaluate(() => {
+    (window as any).__speechSynthesisCalls = 0;
+    if (window.speechSynthesis) {
+      const orig = window.speechSynthesis.speak.bind(window.speechSynthesis);
+      window.speechSynthesis.speak = (u: SpeechSynthesisUtterance) => {
+        (window as any).__speechSynthesisCalls++;
+        return orig(u);
+      };
+    }
+  });
+
+  // 4. 非演播状态下：在底部时间轴卡片上点击切换至 Scene 2
+  const sceneCard2 = page.locator('[data-testid="scene-card-1"]');
+  await expect(sceneCard2).toBeVisible();
+  await sceneCard2.click();
+  await page.waitForTimeout(400);
+
+  // 5. 核心断言：切幕时处于编辑态（非自动演播），必须 100% 保持静音，绝不触发语音朗读
+  let speakCalls = await page.evaluate(() => (window as any).__speechSynthesisCalls || 0);
+  expect(speakCalls).toBe(0);
+
+  // 6. 非演播状态下：在波形画布上直接点击寻道（未按 Alt）
+  const box = await waveCanvas.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + box.width * 0.7, box.y + box.height / 2);
+  }
+  await page.waitForTimeout(400);
+
+  // 7. 核心断言：普通寻道点击仅移动播放头与切幕，保持静默，绝不触发 WebSpeech
+  speakCalls = await page.evaluate(() => (window as any).__speechSynthesisCalls || 0);
+  expect(speakCalls).toBe(0);
+
+  // 8. 演播播放一次并暂停，验证状态机复位后切幕仍然静默
+  const playBtn = page.locator('[data-testid="timeline-play-btn"]');
+  await expect(playBtn).toBeVisible();
+  await playBtn.click(); // 开始演播
+  await page.waitForTimeout(600);
+  await playBtn.click(); // 暂停演播
+  await page.waitForTimeout(300);
+
+  // 清空计数器
+  await page.evaluate(() => {
+    (window as any).__speechSynthesisCalls = 0;
+  });
+
+  // 暂停后再次切换到 Scene 1
+  const sceneCard1 = page.locator('[data-testid="scene-card-0"]');
+  await expect(sceneCard1).toBeVisible();
+  await sceneCard1.click();
+  await page.waitForTimeout(400);
+
+  // 9. 核心断言：演播暂停后 isPlaying 正确回写 false，切幕继续绝对静音
+  speakCalls = await page.evaluate(() => (window as any).__speechSynthesisCalls || 0);
+  expect(speakCalls).toBe(0);
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -765,6 +836,10 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC576: 验证导出中心模态框全英文国际化与零中文残留', async ({ page }) => {
     await verifyEnglishExportModalLocalization(page);
+  });
+
+  test('TC577: 验证非演播状态切换分幕与点击波形轨时严格静音保护', async ({ page }) => {
+    await verifyZeroSpeechLeaksOnSceneSwitchAndTimelineSeek(page);
   });
 });
 

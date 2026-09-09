@@ -189,6 +189,10 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     );
 
     if (isOffline) {
+      if (!track || track.muted || (track.volume ?? 1) <= 0) {
+        setIsPlayingAudio(false);
+        return;
+      }
       stopOfflineTtsPreview();
       const cfg = getStoredTTSConfig();
 
@@ -404,6 +408,11 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   const playScrubGrain = useCallback((timeMs: number, durationSec: number = 2.5) => {
     stopGrainAnim();
     stopOfflineTtsPreview();
+
+    // 严格静音保护：若无音轨、音轨处于静音或音量为0，绝对不发声
+    if (!track || track.muted || (track.volume ?? 1) <= 0) {
+      return;
+    }
 
     const isOffline = Boolean(
       track?.isOfflineTTS ||
@@ -761,7 +770,11 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       scrubHasMovedRef.current = false;
       setPlayheadMs(clickTimeMs);
       onSeek?.(clickTimeMs);
-      playScrubGrain(clickTimeMs, 2.5); // 2.5s clear sentence preview
+      
+      // 仅在显式处于试听播放中 (isPlayingAudio) 或按住 Alt 键显式请求试听时触发发音；普通点击寻道保持静默
+      if (e.altKey || isPlayingAudio) {
+        playScrubGrain(clickTimeMs, 2.5);
+      }
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
       // Auto-switch to the scene under this timestamp
@@ -852,7 +865,9 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         const pixelsPerMs = (rect.width * zoomLevel) / totalDurationMs;
         const finalMs = Math.max(0, Math.min(totalDurationMs, (currentX + scrollLeft) / pixelsPerMs));
         setPlayheadMs(finalMs);
-        playScrubGrain(finalMs, 2.5);
+        if (e.altKey || isPlayingAudio) {
+          playScrubGrain(finalMs, 2.5);
+        }
 
         if (onSelectScene && sceneBoundaries.length > 0) {
           let prevEnd = 0;
