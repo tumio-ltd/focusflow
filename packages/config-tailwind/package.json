@@ -1,0 +1,13 @@
+{
+  "name": "@focusflow/config-tailwind",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "theme.css",
+  "files": ["theme.css", "tailwind.config.js"],
+  "exports": {
+    ".": "./theme.css",
+    "./legacy": "./tailwind.config.js"
+  }
+}
