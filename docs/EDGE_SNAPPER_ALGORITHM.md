@@ -244,7 +244,7 @@ $$K_x = \begin{bmatrix} -1 & 0 & +1 \\ -2 & 0 & +2 \\ -1 & 0 & +1 \end{bmatrix},
 1. **第一阶段：多线投票滤波算法（✅ 已完成）**：
    * 完成了射线阵列与文字隧道穿透状态机的基础搭建；
 2. **第二阶段：Sobel 梯度积分算法升级（✅ 已完成实装）**：
-   * 已在 [`src/hud/edge-snapper.js`](file:///Users/xt/WebstormProjects/focusflow/src/hud/edge-snapper.js) 中实装 $3\times 3$ Sobel 离散微分卷积与 1D 能量投影峰值检测；
+   * 已在 [`src/hud/edge-snapper.js`](../src/hud/edge-snapper.js) 中实装 $3\times 3$ Sobel 离散微分卷积与 1D 能量投影峰值检测；
 3. **第三阶段：粗拉框 + 智能像素贴合（Auto-Refine / Smart Snap on Drag · ✅ 已全面实装上线）**：
-   * 已在 [`src/hud/box-picker.js`](file:///Users/xt/WebstormProjects/focusflow/src/hud/box-picker.js) 的 `mouseup` 阶段深度引入 $\pm 24\text{px}$ 窄带 Sobel 梯度精修算法；
+   * 已在 [`src/hud/box-picker.js`](../src/hud/box-picker.js) 的 `mouseup` 阶段深度引入 $\pm 24\text{px}$ 窄带 Sobel 梯度精修算法；
    * 创作者随手粗略拉框，松手瞬间算法以 $< 1\text{ms}$ 极速自动微调吸附咬合至物理外边框，彻底实现了 100% 零误判、零漏水与极致丝滑的工业级标定体验！

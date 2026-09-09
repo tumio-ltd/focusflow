@@ -58,6 +58,7 @@
   <div class="portal-nav">
     <span style="font-weight:700; color:#38bdf8; padding:4px 6px;">⚡ FocusFlow</span>
     <button class="portal-btn active" id="btn-luxehms">LuxeHMS 拓扑图 (4K实战)</button>
+    <button class="portal-btn" id="btn-sales-fee">💰 销售网络与分佣裂变 (全景5K)</button>
     <button class="portal-btn" id="btn-overlay">✨ 动态多图下钻实战 (5场景)</button>
     <button class="portal-btn" id="btn-simple">极简 2 节点示例</button>
   </div>
@@ -95,10 +96,11 @@
     loadDemo('./examples/luxehms/config.json');
 
     const btnLuxe = document.getElementById('btn-luxehms');
+    const btnSalesFee = document.getElementById('btn-sales-fee');
     const btnOverlay = document.getElementById('btn-overlay');
     const btnSimple = document.getElementById('btn-simple');
 
-    const buttons = [btnLuxe, btnOverlay, btnSimple];
+    const buttons = [btnLuxe, btnSalesFee, btnOverlay, btnSimple];
 
     function setActiveBtn(target) {
       buttons.forEach(b => b.classList.remove('active'));
@@ -108,6 +110,11 @@
     btnLuxe.addEventListener('click', () => {
       setActiveBtn(btnLuxe);
       loadDemo('./examples/luxehms/config.json');
+    });
+
+    btnSalesFee.addEventListener('click', () => {
+      setActiveBtn(btnSalesFee);
+      loadDemo('./examples/sales-fee/config.json');
     });
 
     btnOverlay.addEventListener('click', () => {
