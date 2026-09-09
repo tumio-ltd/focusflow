@@ -56,11 +56,16 @@ const PRIVATE_BLACKLIST = [
   '.env.local'
 ];
 
-const GITHUB_REMOTE = 'git@github.com:tumio-ltd/focusflow.git';
+const TARGET_REMOTE = 'github';
 const TARGET_BRANCH = 'main';
 
 function run(cmd, cwd = projectRoot, options = {}) {
-  return execSync(cmd, { cwd, stdio: options.silent ? 'pipe' : 'inherit', encoding: 'utf-8' });
+  return execSync(cmd, {
+    cwd,
+    stdio: options.silent ? 'pipe' : 'inherit',
+    encoding: 'utf-8',
+    env: { ...process.env, GIT_SSH_COMMAND: 'ssh -o ControlMaster=no -o ConnectTimeout=15' }
+  });
 }
 
 function copyRecursive(src, dest) {
@@ -81,23 +86,36 @@ async function main() {
   console.log('🚀 Starting FocusFlow Open-Source Selective Sync to GitHub...');
   const isForce = process.argv.includes('--force');
 
-  // 1. Create temporary directory
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'focusflow-oss-'));
-  console.log(`📦 Staging directory created: ${tempDir}`);
+  // 1. Create temporary worktree directory
+  const tempDir = path.join(os.tmpdir(), `focusflow-oss-${Date.now()}`);
+  console.log(`📦 Creating local isolated worktree: ${tempDir}`);
+
+  // Ensure target remote branch is tracked locally
+  try {
+    run(`git fetch ${TARGET_REMOTE} ${TARGET_BRANCH}`, projectRoot, { silent: true });
+  } catch {
+    console.warn(`⚠️ Warning: Failed to fetch latest from ${TARGET_REMOTE}/${TARGET_BRANCH}, using local ref.`);
+  }
+
+  // Add worktree rooted at TARGET_REMOTE/TARGET_BRANCH (or local head if remote ref absent)
+  let baseRef = `${TARGET_REMOTE}/${TARGET_BRANCH}`;
+  try {
+    execSync(`git rev-parse --verify ${baseRef}`, { cwd: projectRoot, stdio: 'ignore' });
+  } catch {
+    baseRef = 'HEAD';
+  }
+
+  run(`git worktree add "${tempDir}" -B oss-sync ${baseRef}`);
 
   try {
-    // 2. Clone current GitHub repo
-    console.log(`📥 Fetching latest GitHub repository (${GITHUB_REMOTE})...`);
-    run(`git clone --depth 1 -b ${TARGET_BRANCH} ${GITHUB_REMOTE} ${tempDir}`);
-
-    // 3. Clean all files except .git
-    console.log('🧹 Cleaning existing non-git files in staging tree...');
+    // 2. Clean all non-.git files in the worktree
+    console.log('🧹 Evacuating non-git tracked files from worktree staging...');
     for (const file of fs.readdirSync(tempDir)) {
       if (file === '.git') continue;
       fs.rmSync(path.join(tempDir, file), { recursive: true, force: true });
     }
 
-    // 4. Copy only whitelisted assets
+    // 3. Copy only whitelisted assets
     console.log('📋 Copying whitelisted open-source assets...');
     for (const relPath of OSS_WHITELIST) {
       const srcPath = path.join(projectRoot, relPath);
@@ -109,7 +127,7 @@ async function main() {
       }
     }
 
-    // 5. Strict security verification: ensure NO blacklisted paths exist in staging
+    // 4. Strict security verification: ensure NO blacklisted paths exist in staging
     console.log('🔒 Verifying security blacklist isolation...');
     for (const badPath of PRIVATE_BLACKLIST) {
       const checkPath = path.join(tempDir, badPath);
@@ -118,7 +136,7 @@ async function main() {
       }
     }
 
-    // 6. Check Git status in staging
+    // 5. Check Git status in staging
     const status = run('git status --porcelain', tempDir, { silent: true }).trim();
     if (!status) {
       console.log('✅ GitHub open-source repository is already up to date. No changes to push.');
@@ -131,22 +149,25 @@ async function main() {
       console.log(`... and ${status.split('\n').length - 15} more files.`);
     }
 
-    // 7. Commit changes
+    // 6. Commit changes
     run('git add -A', tempDir);
     const dateStr = new Date().toISOString().slice(0, 10);
     const commitMsg = `chore(sync): update open-source projection from internal monorepo (${dateStr})`;
     run(`git commit -m "${commitMsg}"`, tempDir);
 
-    // 8. Push to GitHub
+    // 7. Push to GitHub
     console.log('📤 Pushing clean projection to GitHub (main)...');
-    const pushCmd = isForce ? `git push --force origin ${TARGET_BRANCH}` : `git push origin ${TARGET_BRANCH}`;
+    const pushCmd = isForce
+      ? `git push --force ${TARGET_REMOTE} oss-sync:${TARGET_BRANCH}`
+      : `git push ${TARGET_REMOTE} oss-sync:${TARGET_BRANCH}`;
     run(pushCmd, tempDir);
 
     console.log('🎉 Successfully synchronized open-source projection to GitHub!');
   } finally {
-    // 9. Clean staging directory
+    // 8. Clean worktree
+    console.log('🧹 Releasing local worktree...');
     try {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+      run(`git worktree remove "${tempDir}" --force`, projectRoot, { silent: true });
     } catch {
       // ignore
     }
