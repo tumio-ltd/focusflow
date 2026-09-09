@@ -11,3 +11,4 @@ export { GeometryCalculator } from './motion/geometry.js';
 export { BezierRouter } from './motion/bezier-router.js';
 export { MotionAnimator } from './motion/animator.js';
 export { HUDManager } from './hud/hud-manager.js';
+export { PlaybackIsland } from './ui/playback-island.js';

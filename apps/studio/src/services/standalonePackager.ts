@@ -14,6 +14,18 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
   // 深拷贝 DSL，避免篡改原对象
   const exportDSL = JSON.parse(JSON.stringify(dsl));
 
+  // 独立单文件 HTML 脱机交付：必须强制启用控制栏（覆盖 Studio 内置的 showControls: false），让受众拥有完整的分幕切换、翻页与自控能力
+  exportDSL.meta = exportDSL.meta || {};
+  exportDSL.meta.controls = {
+    autoplay: false,
+    interval: exportDSL.meta.controls?.interval || 3800,
+    ...exportDSL.meta.controls,
+    showControls: true,
+    showPlayBtn: true,
+    showCounter: true,
+    showProgress: true,
+  };
+
   // 若底图为当前会话临时 blob: URL，自动转为内嵌 Base64 Data URL 确保脱机完全可移植
   if (exportDSL.asset?.url?.startsWith('blob:')) {
     try {
@@ -84,6 +96,7 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
           dsl: dsl,
           autoplay: false,
           debug: false,
+          showControls: true,
         });
       }
     })();

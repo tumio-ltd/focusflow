@@ -522,7 +522,7 @@ export default function App() {
       // 预先让全屏演播舞台就绪（第 1 幕），确保浏览器标签页分享缩略图中清晰呈现演示画面
       setActiveSceneIndex(0);
       setIsAudienceModalOpen(true);
-      setIsRecordingVideo(true);
+      setIsRecordingVideo(false); // 保持静态就绪，绝不提前起播
 
       const session = await startCleanScreenRecording({
         fps: 60,
@@ -544,8 +544,10 @@ export default function App() {
         },
       });
 
+      // 仅在用户授权通过、录制流正式就绪后，才正式激活录制并启动起播
       recordingSessionRef.current = session;
       setRecordingElapsed(0);
+      setIsRecordingVideo(true);
     } catch (err: any) {
       setIsRecordingVideo(false);
       setIsAudienceModalOpen(false);

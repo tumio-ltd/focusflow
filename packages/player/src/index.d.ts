@@ -35,3 +35,46 @@ export class FocusFlowPlayer {
   off(event: string, callback: (...args: any[]) => void): void;
   emit(event: string, data?: any): void;
 }
+
+export type PlaybackHudMode = 'full' | 'minimal' | 'zen';
+
+export interface PlaybackIslandOptions {
+  container?: HTMLElement;
+  hudMode?: PlaybackHudMode;
+  isRecording?: boolean;
+  isPlaying?: boolean;
+  currentSceneIdx?: number;
+  totalScenes?: number;
+  currentSceneTitle?: string;
+  sceneElapsedMs?: number;
+  sceneDurationMs?: number;
+  isUserActive?: boolean;
+  elementCount?: number;
+  enableKeyboard?: boolean;
+  onTogglePlay?: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  onCycleHudMode?: () => void;
+  onRestoreFull?: () => void;
+}
+
+export interface PlaybackIslandState {
+  isPlaying: boolean;
+  currentSceneIdx: number;
+  totalScenes: number;
+  currentSceneTitle: string;
+  sceneElapsedMs: number;
+  sceneDurationMs: number;
+  hudMode: PlaybackHudMode;
+  isRecording: boolean;
+  isUserActive: boolean;
+  elementCount?: number;
+}
+
+export class PlaybackIsland {
+  constructor(options?: PlaybackIslandOptions);
+  mount(container: HTMLElement): void;
+  update(partialState?: Partial<PlaybackIslandState>): void;
+  setHudMode(mode: PlaybackHudMode): void;
+  destroy(): void;
+}

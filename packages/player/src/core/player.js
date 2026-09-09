@@ -10,6 +10,7 @@ import { GeometryCalculator } from '../motion/geometry.js';
 import { BezierRouter } from '../motion/bezier-router.js';
 import { MotionAnimator } from '../motion/animator.js';
 import { HUDManager } from '../hud/hud-manager.js';
+import { PlaybackIsland } from '../ui/playback-island.js';
 
 function normalizeCoord(coord, base) {
   if (coord === undefined || coord === null) return '0%';
@@ -256,17 +257,6 @@ export class FocusFlowPlayer {
           <!-- Layer 2: Callout Text Layer -->
           <div class="focusflow-callout-layer" id="_ff_callouts"></div>
         </div>
-
-        <!-- Floating Bottom Controls -->
-        <div class="focusflow-controls"${this.showControls ? '' : ' style="display:none;"'}>
-          <button class="ff-play-btn" id="_ff_play_btn" title="播放 / 暂停 (快捷键: P)">▶</button>
-          <div class="ff-scene-counter" id="_ff_scene_counter" title="当前场景进度">
-            <span class="ff-counter-cur">01</span>
-            <span class="ff-counter-sep">/</span>
-            <span class="ff-counter-total">01</span>
-          </div>
-          <div class="ff-step-tabs" id="_ff_tabs"></div>
-        </div>
       </div>
     `;
 
@@ -277,65 +267,53 @@ export class FocusFlowPlayer {
     this.svgEl = this.container.querySelector('#_ff_svg');
     this.calloutLayerEl = this.container.querySelector('#_ff_callouts');
     this.progressFillEl = this.container.querySelector('#_ff_progress');
-    this.playBtnEl = this.container.querySelector('#_ff_play_btn');
-    this.sceneCounterEl = this.container.querySelector('#_ff_scene_counter');
-    this.counterCurEl = this.container.querySelector('.ff-counter-cur');
-    this.counterTotalEl = this.container.querySelector('.ff-counter-total');
-    this.tabsContainerEl = this.container.querySelector('#_ff_tabs');
-    this.hudToggleBtnEl = this.container.querySelector('#_ff_hud_toggle_btn');
-
-    // Initialize total count in counter
-    const totalCount = (this.dsl.scenes || []).length;
-    if (this.counterTotalEl) {
-      this.counterTotalEl.textContent = String(totalCount).padStart(2, '0');
-    }
-
-    // Controls visibility switches
-    if (!this.showControls) {
-      const controls = this.container.querySelector('.focusflow-controls');
-      if (controls) controls.style.display = 'none';
-    }
 
     if (!this.showProgress) {
       const progressTrack = this.container.querySelector('.focusflow-progress-track');
       if (progressTrack) progressTrack.style.display = 'none';
     }
 
-    if (!this.showPlayBtn && this.playBtnEl) {
-      this.playBtnEl.style.display = 'none';
+    // Mount Native Unified PlaybackIsland only when showControls is explicitly true
+    if (this.showControls) {
+      this._initPlaybackIsland();
     }
+  }
 
-    if (!this.showCounter && this.sceneCounterEl) {
-      this.sceneCounterEl.style.display = 'none';
-    }
+  _initPlaybackIsland() {
+    if (this.playbackIsland) return;
+    const curIdx = this.getCurrentIndex ? this.getCurrentIndex() : 0;
+    const initialScene = this.dsl.scenes?.[curIdx] || this.dsl.scenes?.[0];
+    const initialDuration = initialScene?.duration
+      ? (initialScene.duration > 100 ? initialScene.duration : initialScene.duration * 1000)
+      : this.autoplayInterval * 1000;
 
-    // Build Tabs
-    this.tabsContainerEl.innerHTML = (this.dsl.scenes || []).map((scene, idx) => `
-      <button class="ff-tab-btn ${idx === 0 ? 'active' : ''}" data-index="${idx}">
-        ${idx + 1}. ${scene.title}
-      </button>
-    `).join('');
-
-    // Tab click delegation
-    this.tabsContainerEl.addEventListener('click', (e) => {
-      const btn = e.target.closest('.ff-tab-btn');
-      if (btn) {
-        const idx = parseInt(btn.getAttribute('data-index'), 10);
-        this.goToStep(idx, true);
-      }
+    this.playbackIsland = new PlaybackIsland({
+      container: this.stageEl,
+      isPlaying: false,
+      currentSceneIdx: curIdx,
+      totalScenes: (this.dsl.scenes || []).length,
+      currentSceneTitle: initialScene?.title || '',
+      sceneElapsedMs: 0,
+      sceneDurationMs: initialDuration,
+      elementCount: (initialScene?.activeElements?.boxes || []).length,
+      onTogglePlay: () => this.togglePlay(),
+      onPrev: () => this.prev(),
+      onNext: () => this.next(),
+      onCycleHudMode: () => {
+        const curMode = this.playbackIsland?.state.hudMode || 'full';
+        const nextMode = curMode === 'full' ? 'minimal' : curMode === 'minimal' ? 'zen' : 'full';
+        this.playbackIsland?.setHudMode(nextMode);
+      },
+      onRestoreFull: () => {
+        this.playbackIsland?.setHudMode('full');
+      },
     });
 
-    // Play button click
-    this.playBtnEl.addEventListener('click', () => {
-      this.togglePlay();
-    });
-
-    // HUD toggle button click
-    if (this.hudToggleBtnEl) {
-      this.hudToggleBtnEl.addEventListener('click', () => {
-        this.toggleDebugMode();
-      });
-    }
+    // Expose DOM references for backward compatibility
+    this.playBtnEl = this.playbackIsland.playBtnEl;
+    this.prevBtnEl = this.playbackIsland.prevBtnEl;
+    this.nextBtnEl = this.playbackIsland.nextBtnEl;
+    this.sceneCounterEl = this.playbackIsland.scenePillEl;
   }
 
   renderElements() {
@@ -525,27 +503,26 @@ export class FocusFlowPlayer {
       this.progressFillEl.style.width = `${progress}%`;
     }
 
-    if (this.counterCurEl) {
-      this.counterCurEl.textContent = String(activeIdx + 1).padStart(2, '0');
+    if (this.playbackIsland) {
+      const activeScene = this.dsl.scenes?.[activeIdx];
+      const dur = activeScene?.duration
+        ? (activeScene.duration > 100 ? activeScene.duration : activeScene.duration * 1000)
+        : this.autoplayInterval * 1000;
+      this.playbackIsland.update({
+        currentSceneIdx: activeIdx,
+        totalScenes: total,
+        currentSceneTitle: activeScene?.title || '',
+        sceneElapsedMs: 0,
+        sceneDurationMs: dur,
+        elementCount: (activeScene?.activeElements?.boxes || []).length,
+      });
     }
-
-    const tabs = this.tabsContainerEl.querySelectorAll('.ff-tab-btn');
-    tabs.forEach((tab, idx) => {
-      if (idx === activeIdx) {
-        tab.classList.add('active');
-        // Smoothly scroll active tab into view when many scenes exist
-        if (typeof tab.scrollIntoView === 'function') {
-          tab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
-      } else {
-        tab.classList.remove('active');
-      }
-    });
   }
 
   updatePlayButton(isPlaying) {
-    this.playBtnEl.textContent = isPlaying ? '⏸' : '▶';
-    this.playBtnEl.title = isPlaying ? '暂停 (P)' : '播放 (P)';
+    if (this.playbackIsland) {
+      this.playbackIsland.update({ isPlaying: !!isPlaying });
+    }
   }
 
   // Event Bus APIs
@@ -646,6 +623,18 @@ export class FocusFlowPlayer {
 
   setShowControls(show) {
     this.showControls = !!show;
+    if (this.showControls) {
+      if (!this.playbackIsland) {
+        this._initPlaybackIsland();
+      }
+      if (this.playbackIsland?.rootEl) {
+        this.playbackIsland.rootEl.style.display = 'block';
+      }
+    } else {
+      if (this.playbackIsland?.rootEl) {
+        this.playbackIsland.rootEl.style.display = 'none';
+      }
+    }
     const controls = this.container.querySelector('.focusflow-controls');
     if (controls) {
       controls.style.display = this.showControls ? 'flex' : 'none';
@@ -720,6 +709,10 @@ export class FocusFlowPlayer {
   }
 
   destroy() {
+    if (this.playbackIsland) {
+      this.playbackIsland.destroy();
+      this.playbackIsland = null;
+    }
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;

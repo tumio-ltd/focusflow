@@ -6,7 +6,7 @@ import { test, expect, Page } from '@playwright/test';
 async function verifyWorkbenchLayoutMounted(page: Page): Promise<void> {
   // 顶部全局控制台
   await expect(page.locator('header')).toBeVisible();
-  await expect(page.locator('header').getByText('FocusFlow Studio')).toBeVisible();
+  await expect(page.locator('header').getByText('FocusFlow')).toBeVisible();
 
   // 左侧 5 大浮动标定工具箱
   const toolbox = page.locator('[data-testid="toolbox"]');

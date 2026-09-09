@@ -287,11 +287,12 @@ async function verifyRecordingPiPIsolation(page: Page): Promise<void> {
   await expect(startRecordBtn).toBeVisible();
   await startRecordBtn.click();
 
-  // 验证受众演播舞台进入录制态，但主标签页视口中 100% 绝对无任何 HUD 元素（无痕出片）
+  // 验证受众演播舞台进入录制态：录制画面中稳定保留 FocusFlow MVP 演示控制胶囊 (分幕+时间)，同时彻底隐藏创作者操作按钮 (关闭/全屏/Eye切换)
   const audienceModal = page.locator('[data-testid="audience-modal"]');
   await expect(audienceModal).toBeVisible();
-  await expect(page.locator('[data-testid="audience-controls"]')).not.toBeVisible();
-  await expect(page.locator('[data-testid="audience-scene-pill"]')).not.toBeVisible();
+  await expect(page.locator('[data-testid="audience-controls"]')).toBeVisible();
+  await expect(page.locator('[data-testid="audience-scene-pill"]')).toBeVisible();
+  await expect(page.locator('[data-testid="hud-mode-toggle"]')).not.toBeVisible();
   await expect(page.locator('[data-testid="audience-hud-minimal"]')).not.toBeVisible();
   await expect(page.locator('[data-testid="close-audience-btn"]')).not.toBeVisible();
 

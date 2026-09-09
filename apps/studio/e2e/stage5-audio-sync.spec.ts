@@ -566,13 +566,14 @@ async function verifyLocalWebmVideoRecording(page: Page): Promise<void> {
   const audienceModal = page.locator('[data-testid="audience-modal"]');
   await expect(audienceModal).toBeVisible({ timeout: 5000 });
 
-  // 6. 核心视觉断言：验证右上角按钮与 REC 标签在录制模式下 100% 隐藏（画面纯净无水印）
+  // 6. 核心视觉断言：录制成片中呈现 FocusFlow MVP 演示控制胶囊 (分幕+时间)，同时彻底隐藏创作者操作按钮 (REC 标签/关闭按钮/模式切换按钮)
   await expect(audienceModal.locator('[data-testid="recording-hud-badge"]')).not.toBeVisible();
   await expect(audienceModal.locator('[data-testid="close-audience-btn"]')).not.toBeVisible();
+  await expect(audienceModal.locator('[data-testid="hud-mode-toggle"]')).not.toBeVisible();
 
-  // 验证无痕录制模式下场景指示微缩胶囊与控制浮岛均 100% 彻底隐藏（无痕出片）
-  await expect(audienceModal.locator('[data-testid="audience-scene-pill"]')).not.toBeVisible();
-  await expect(audienceModal.locator('[data-testid="audience-controls"]')).not.toBeVisible();
+  // 验证受众演播控制胶囊与分幕指示器稳定呈现于录制画面中
+  await expect(audienceModal.locator('[data-testid="audience-controls"]')).toBeVisible();
+  await expect(audienceModal.locator('[data-testid="audience-scene-pill"]')).toBeVisible();
 
   // 7. 验证按 ESC 键可安全终止录制并触发导出保存
   await page.waitForTimeout(500); // 采集分片
