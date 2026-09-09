@@ -1,7 +1,7 @@
 # FocusFlow - 页面与矢量动效核心引擎技术规格说明书
 ## Visual & Motion Graphics Engine Specification (Technical Deep Dive)
 
-> **关联文档**：[PRODUCT_DESIGN.md](file:///Users/xt/WebstormProjects/focusflow/design/PRODUCT_DESIGN.md)  
+> **关联文档**：[PRODUCT_DESIGN.md](file:///Users/xt/WebstormProjects/focusflow/design/PRODUCT_DESIGN.md) · [PARALLAX_AND_SCROLLYTELLING_SPEC.md](file:///Users/xt/WebstormProjects/focusflow/design/PARALLAX_AND_SCROLLYTELLING_SPEC.md)  
 > **适用对象**：前端核心渲染引擎开发、动效算法工程师、图形学开发者  
 > **文档版本**：v1.1.0
 
