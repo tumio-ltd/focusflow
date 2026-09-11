@@ -6,9 +6,11 @@
 import type { SceneStep, AudioMarker, AudioTrackConfig } from '@focusflow/dsl';
 import { WebSpeechTTSProvider } from './WebSpeechTTSProvider';
 import { UserKeyOpenAITTSProvider } from './UserKeyOpenAITTSProvider';
+import { GeminiTTSProvider } from './GeminiTTSProvider';
 import type { ITTSProvider } from './ttsProvider';
 import { decodeAudioFile } from '../audioDecoder';
 import { getStoredTTSConfig, TTS_PRESETS, type TTSStoredConfig } from './ttsConfigStore';
+import { setSceneAudioBlob } from './masterAudioStitcher';
 
 /**
  * Instantiate appropriate TTS Provider according to active configuration
@@ -17,6 +19,15 @@ export function createTTSProviderFromConfig(config?: TTSStoredConfig): ITTSProvi
   const cfg = config || getStoredTTSConfig();
   if (cfg.mode === 'cloud' && cfg.apiKey) {
     const presetDef = TTS_PRESETS[cfg.preset];
+    if (cfg.preset === 'gemini') {
+      return new GeminiTTSProvider({
+        apiKey: cfg.apiKey,
+        baseUrl: cfg.baseUrl,
+        model: cfg.model,
+        name: presetDef?.name || 'Google Gemini TTS (BYOK)',
+        customVoices: presetDef?.voices,
+      });
+    }
     return new UserKeyOpenAITTSProvider({
       apiKey: cfg.apiKey,
       baseUrl: cfg.baseUrl,
@@ -145,10 +156,24 @@ export async function synthesizeAllScenesVoiceover(
     const wavBlob = audioBufferToWavBlob(combinedBuffer);
     const trackUrl = URL.createObjectURL(wavBlob);
 
-    const updatedScenes = scenes.map((scene, idx) => ({
-      ...scene,
-      duration: sceneDurations[idx],
-    }));
+    const updatedScenes = scenes.map((scene, idx) => {
+      const blob = renderedBlobs[idx];
+      const audioUrl = blob ? URL.createObjectURL(blob) : '';
+      if (blob) {
+        setSceneAudioBlob(scene.id, blob);
+      }
+      return {
+        ...scene,
+        duration: sceneDurations[idx],
+        voiceoverAudio: audioUrl ? {
+          url: audioUrl,
+          durationMs: sceneDurations[idx],
+          adaptedDuration: sceneDurations[idx],
+          sampleRate,
+          voiceId: activeVoiceId,
+        } : undefined,
+      };
+    });
 
     const isOffline = activeProvider.name.includes('Web Speech') || activeProvider.name.includes('离线') || cfg.mode === 'offline';
     const track: AudioTrackConfig = {

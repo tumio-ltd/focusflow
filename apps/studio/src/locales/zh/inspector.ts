@@ -7,6 +7,12 @@ export default {
 
   // 场景与运镜
   cameraControls: '场景运镜控制',
+  aspectRatio: '画幅比例',
+  aspectRatioStandard: '成片',
+  aspectRatioMac: 'Mac',
+  aspectRatioPresentation: '演示',
+  aspectRatioVertical: '竖屏',
+  sceneDuration: '分幕驻留时长 (毫秒)',
   sceneTitle: '分幕标题',
   sceneTitlePlaceholder: '请输入分幕标题',
   captureCurrentView: '捕获当前画布视角',
@@ -66,11 +72,11 @@ export default {
   calloutMaxWidth: '气泡最大宽度',
   calloutAutoAdaptStyle: '一键匹配目标框元尺寸与字号',
   calloutAutoAdaptViewport: '按底图分辨率自适应字号',
-  
+
   strokeWidth: '描边粗细',
   cornerRadius: '边框圆角',
   neonGlow: '霓虹外发光滤镜',
-  
+
   flowMode: '动画流动模式',
   modeStream: '🌊 流光粒子',
   modeStreamDesc: '能量粒子沿虚线高速流动',
@@ -100,6 +106,8 @@ export default {
   hiddenInScene: '在当前场景隐藏',
   deleteElement: '删除图元',
   sceneVoiceoverTitle: '分幕旁白与配音',
+  charCount: '{{count}} 字',
+  chars: '字',
   sceneVoiceoverLabel: '分幕旁白台词 (AI 提词)',
   sceneVoiceoverPlaceholder: '请输入当前分镜的配音解说词，用于 AI 语音合成与自适应分幕时长...',
   synthesizeSceneTTS: '🎙️ 试听 TTS (自适应分幕时长)',

@@ -7,7 +7,11 @@ export interface FocusFlowDSL {
   $schema?: string;
   meta: {
     title: string;
-    viewport: { width: number; height: number };
+    viewport: {
+      width: number;
+      height: number;
+      aspectRatio?: '16:9' | '16:10' | '4:3' | '9:16';
+    };
     theme?: {
       mode?: 'dark' | 'light' | 'auto';
       bg?: string;
@@ -19,12 +23,12 @@ export interface FocusFlowDSL {
     };
     controls?: {
       showControls?: boolean; // 是否展示独立播放器悬浮控制栏 (默认 true)
-      autoplay?: boolean;      // 页面加载后是否默认自动循环播放 (默认 false)
-      interval?: number;      // 自动轮播每屏停留时长 (毫秒，默认 3800ms)
-      showPlayBtn?: boolean;  // 是否展示播放/暂停按钮 (默认 true)
-      showCounter?: boolean;  // 是否展示场景序号指示器如 01/05 (默认 true)
+      autoplay?: boolean; // 页面加载后是否默认自动循环播放 (默认 false)
+      interval?: number; // 自动轮播每屏停留时长 (毫秒，默认 3800ms)
+      showPlayBtn?: boolean; // 是否展示播放/暂停按钮 (默认 true)
+      showCounter?: boolean; // 是否展示场景序号指示器如 01/05 (默认 true)
       showProgress?: boolean; // 是否展示顶部进度条 (默认 true)
-      showHUDButton?: boolean;// 是否在控制栏展示标定助手按钮 (默认 true)
+      showHUDButton?: boolean; // 是否在控制栏展示标定助手按钮 (默认 true)
     };
   };
   asset: {
@@ -64,8 +68,8 @@ export interface ElementBox {
 export interface ElementPath {
   id: string;
   from?: string; // 格式: "boxId.anchorName", 例如 "box-folio.right"
-  to?: string;   // 格式: "boxId.anchorName", 例如 "box-postgres.left-top"
-  d?: string;    // 手动指定的 SVG 路径 (若省略则由引擎自动推导三次贝塞尔)
+  to?: string; // 格式: "boxId.anchorName", 例如 "box-postgres.left-top"
+  d?: string; // 手动指定的 SVG 路径 (若省略则由引擎自动推导三次贝塞尔)
   style?: {
     stroke?: string;
     strokeWidth?: number;
@@ -90,17 +94,17 @@ export interface ElementDot {
 
 export interface ElementImage {
   id: string;
-  url: string;        // 覆盖图片相对路径、绝对路径或 Base64
-  x: number;          // 在画布绝对逻辑坐标系下的 X
-  y: number;          // 在画布绝对逻辑坐标系下的 Y
-  width: number;      // 宽度
-  height: number;     // 高度
+  url: string; // 覆盖图片相对路径、绝对路径或 Base64
+  x: number; // 在画布绝对逻辑坐标系下的 X
+  y: number; // 在画布绝对逻辑坐标系下的 Y
+  width: number; // 宽度
+  height: number; // 高度
   style?: {
     borderRadius?: number; // 圆角大小 (像素)
-    boxShadow?: boolean | string;   // 是否启用悬浮立体投影或自定义投影
+    boxShadow?: boolean | string; // 是否启用悬浮立体投影或自定义投影
     animation?: 'fade' | 'zoom-fade' | 'slide-up'; // 出现动效
-    border?: string;      // 发光边框
-    opacity?: number;     // 目标不透明度 (默认 1.0)
+    border?: string; // 发光边框
+    opacity?: number; // 目标不透明度 (默认 1.0)
   };
 }
 
@@ -114,9 +118,9 @@ export interface CalloutItem {
   titleI18n?: Record<string, string>; // 双语国际化: { zh: "鉴权中心", en: "Auth Center" }
   descI18n?: Record<string, string>;
   style?: {
-    fontSize?: number;        // 正文字体大小 (px，默认 12)
-    titleFontSize?: number;   // 标题徽章字体大小 (px，默认 11)
-    maxWidth?: number;        // 气泡最大宽度 (px，默认 320)
+    fontSize?: number; // 正文字体大小 (px，默认 12)
+    titleFontSize?: number; // 标题徽章字体大小 (px，默认 11)
+    maxWidth?: number; // 气泡最大宽度 (px，默认 320)
   };
 }
 
@@ -149,24 +153,34 @@ export interface AudioMixerSettings {
   duckingDb?: number; // 衰减分贝，默认 -12dB
 }
 
+export interface SceneVoiceoverAudio {
+  url: string; // 音频资源 (Blob URL / Data URI / 相对路径)
+  durationMs: number; // 该分幕物理音频的实际时长 (毫秒)
+  sampleRate?: number; // 采样率 (如 24000 或 44100)
+  voiceId?: string; // 合成发音人标识 (如 Puck, Fenrir)
+  model?: string; // 合成模型 (如 gemini-3.1-flash-tts-preview)
+  adaptedDuration?: number; // 该分幕自适应推荐时长 (含呼吸留白)
+}
+
 export interface SceneStep {
   id: string;
   title: string;
   titleI18n?: Record<string, string>;
-  duration?: number;  // 场景驻留停留时长 (毫秒，若无则使用 meta.controls.interval)
+  duration?: number; // 场景驻留停留时长 (毫秒，若无则使用 meta.controls.interval)
   voiceoverScript?: string; // AI 提词台词 / 分幕旁白脚本
   voiceoverScriptI18n?: Record<string, string>; // 多语言配音脚本 { zh: "...", en: "..." }
+  voiceoverAudio?: SceneVoiceoverAudio; // 专属物理音频实体
   camera: {
-    zoom: number;       // 缩放倍率 (1.0 ~ 3.0)
-    x: number;          // 水平偏移百分比 (-50 ~ 50)
-    y: number;          // 垂直偏移百分比 (-50 ~ 50)
-    duration?: number;  // 运镜过渡时长 (秒，默认 1.2s)
+    zoom: number; // 缩放倍率 (1.0 ~ 3.0)
+    x: number; // 水平偏移百分比 (-50 ~ 50)
+    y: number; // 垂直偏移百分比 (-50 ~ 50)
+    duration?: number; // 运镜过渡时长 (秒，默认 1.2s)
   };
   activeElements: {
     boxes?: string[];
     paths?: string[];
     dots?: string[];
-    images?: string[];  // 当前场景激活的覆盖图片 ID 列表
+    images?: string[]; // 当前场景激活的覆盖图片 ID 列表
     callouts?: CalloutItem[];
   };
 }
@@ -191,4 +205,3 @@ export interface PlayerOptions {
   onPlayStateChange?: (isPlaying: boolean) => void;
   onEnded?: () => void;
 }
-

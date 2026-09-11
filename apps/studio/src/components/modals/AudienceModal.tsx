@@ -159,9 +159,7 @@ export function AudienceModal({
 
     const isOfflineVoice = Boolean(
       mainTrack.isOfflineTTS ||
-      mainTrack.type === 'offline-tts' ||
-      mainTrack.id?.startsWith('track-ai-') ||
-      mainTrack.id?.startsWith('tts-')
+      mainTrack.type === 'offline-tts'
     );
     const isBgmWithVoiceover = Boolean(
       mainTrack.type === 'music' || mainTrack.isBackgroundBGM

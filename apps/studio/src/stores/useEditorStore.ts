@@ -38,9 +38,15 @@ export interface EditorState {
   isCrosshairEnabled: boolean;
   activeDrawingColor: string;
   cursorCoords: { x: number; y: number } | null;
-  
+  canvasScale: number;
+  focusCameraVersion: number;
+  isStageMatchActive: boolean;
+
   // Actions
   setActiveTool: (tool: ToolType) => void;
+  setCanvasScale: (scale: number) => void;
+  triggerFocusCamera: () => void;
+  setStageMatchActive: (isStageMatchActive: boolean) => void;
   setSelectedElementId: (id: string | null) => void;
   setActiveDrawingColor: (color: string) => void;
   setActiveSceneIndex: (index: number) => void;
@@ -66,8 +72,18 @@ export const useEditorStore = create<EditorState>((set) => ({
   isSmartSnapEnabled: getInitialSmartSnap(),
   isCrosshairEnabled: false,
   cursorCoords: null,
+  canvasScale: 1,
+  focusCameraVersion: 0,
+  isStageMatchActive: false,
 
-  setActiveTool: (activeTool) => set({ activeTool }),
+  setActiveTool: (activeTool) => set({ activeTool, isStageMatchActive: false }),
+  setCanvasScale: (canvasScale) => set({ canvasScale }),
+  triggerFocusCamera: () =>
+    set((state) => ({
+      focusCameraVersion: state.focusCameraVersion + 1,
+      isStageMatchActive: true,
+    })),
+  setStageMatchActive: (isStageMatchActive) => set({ isStageMatchActive }),
   setSelectedElementId: (selectedElementId) => set({ selectedElementId }),
   setActiveDrawingColor: (activeDrawingColor) => set({ activeDrawingColor }),
   setActiveSceneIndex: (activeSceneIndex) => set({ activeSceneIndex }),

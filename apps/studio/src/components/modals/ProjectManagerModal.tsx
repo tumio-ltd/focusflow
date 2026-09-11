@@ -96,52 +96,52 @@ export function ProjectManagerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-md animate-in fade-in duration-150 ease-spring">
       <div 
         data-testid="project-manager-modal"
-        className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-card-foreground transition-colors duration-200"
+        className="relative w-full max-w-2xl bg-card border border-white/[0.08] rounded-2xl shadow-elevation-modal overflow-hidden flex flex-col max-h-[85vh] text-card-foreground transition-all duration-200 animate-in fade-in zoom-in-95 ease-spring"
       >
         {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center text-primary">
-              <FolderGit2 className="w-4 h-4" />
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-border/40">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center text-primary shadow-keycap">
+              <FolderGit2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground">{t('managerTitle')}</h3>
-              <span className="text-[11px] text-muted-foreground">
+              <h3 className="text-base font-semibold text-foreground">{t('managerTitle')}</h3>
+              <span className="text-xs text-muted-foreground">
                 {projectList.length} {t('projectCount')}
               </span>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition p-1 rounded-lg hover:bg-muted"
+            className="text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg hover:bg-muted"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4.5 h-4.5" />
           </button>
         </div>
 
         {/* 搜索与新建控制栏 */}
-        <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-muted/40">
+        <div className="flex items-center gap-3 px-6 py-3.5 border-b border-border/60 bg-muted/20">
           <div className="relative flex-1">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="w-full bg-background border border-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+              className="w-full bg-background/50 border border-border/40 rounded-lg pl-9 pr-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60"
             />
           </div>
-          <Button size="sm" variant="cyan" onClick={() => { onNewProject(); onClose(); }} className="gap-1.5">
-            <Plus className="w-3.5 h-3.5" />
+          <Button size="sm" variant="cyan" onClick={() => { onNewProject(); onClose(); }} className="gap-1.5 font-medium">
+            <Plus className="w-4 h-4" />
             <span>{t('createNew')}</span>
           </Button>
         </div>
 
         {/* 工程卡片列表 */}
-        <div className="p-6 overflow-y-auto space-y-2.5 flex-1 min-h-[250px]">
+        <div className="p-6 overflow-y-auto space-y-3 flex-1 min-h-[250px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-48 gap-2 text-xs text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -160,15 +160,15 @@ export function ProjectManagerModal({
               return (
                 <div
                   key={p.id}
-                  className={`group relative flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                  className={`group relative flex items-center justify-between p-4 rounded-xl border transition-all ${
                     isCurrent
-                      ? 'border-primary bg-primary/10 text-foreground shadow-md ring-1 ring-primary/30'
-                      : 'border-border bg-card text-muted-foreground hover:border-border hover:bg-muted/40 hover:text-foreground'
+                      ? 'border-primary/40 bg-primary/10 text-foreground shadow-md ring-1 ring-primary/20'
+                      : 'border-border/40 bg-card/60 text-muted-foreground hover:border-border/80 hover:bg-muted/40 hover:text-foreground'
                   }`}
                 >
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                    <div className="w-9 h-9 rounded-lg bg-muted border border-border flex items-center justify-center text-muted-foreground shrink-0 font-mono text-xs">
-                      {isCurrent ? <span className="text-primary font-bold">●</span> : <Layers className="w-4 h-4" />}
+                    <div className="w-10 h-10 rounded-xl bg-muted/60 border border-border/40 flex items-center justify-center text-muted-foreground shrink-0 font-mono text-sm">
+                      {isCurrent ? <span className="text-primary font-bold">●</span> : <Layers className="w-5 h-5" />}
                     </div>
 
                     <div className="flex flex-col min-w-0 flex-1 pr-2">
@@ -181,10 +181,10 @@ export function ProjectManagerModal({
                             onBlur={() => handleSaveRename(p.id)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSaveRename(p.id)}
                             autoFocus
-                            className="bg-background border border-primary rounded px-2 py-0.5 text-xs text-foreground focus:outline-none"
+                            className="bg-background border border-primary rounded px-2.5 py-1 text-sm text-foreground focus:outline-none font-medium"
                           />
-                          <Button size="sm" variant="ghost" onClick={() => handleSaveRename(p.id)} className="h-6 w-6 p-0">
-                            <Check className="w-3.5 h-3.5 text-primary" />
+                          <Button size="sm" variant="ghost" onClick={() => handleSaveRename(p.id)} className="h-7 w-7 p-0">
+                            <Check className="w-4 h-4 text-primary" />
                           </Button>
                         </div>
                       ) : (
@@ -196,28 +196,28 @@ export function ProjectManagerModal({
                                 onClose();
                               }
                             }}
-                            className="text-xs font-semibold truncate hover:text-primary cursor-pointer transition text-foreground"
+                            className="text-sm font-semibold truncate hover:text-primary cursor-pointer transition text-foreground"
                           >
                             {p.title}
                           </span>
                           {isCurrent && <Badge variant="cyan">{t('currentBadge')}</Badge>}
                           <button
                             onClick={() => handleStartRename(p.id, p.title)}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition"
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition p-0.5"
                             title={t('rename')}
                           >
-                            <Edit3 className="w-3 h-3" />
+                            <Edit3 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       )}
 
-                      <div className="flex items-center gap-3 text-[11px] text-muted-foreground font-mono mt-1">
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground font-mono mt-1">
                         <span className="flex items-center gap-1">
-                          <Layers className="w-3 h-3 text-primary/70" />
+                          <Layers className="w-3.5 h-3.5 text-primary/70" />
                           <span>{p.sceneCount} {t('scenesCount')}</span>
                         </span>
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                          <Clock className="w-3.5 h-3.5" />
                           <span>{formatTimeAgo(p.updatedAt)}</span>
                         </span>
                       </div>
@@ -234,9 +234,9 @@ export function ProjectManagerModal({
                           onSelectProject(p.id);
                           onClose();
                         }}
-                        className="h-7 text-xs gap-1"
+                        className="h-8 text-xs gap-1 font-medium"
                       >
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-3.5 h-3.5" />
                         <span>{t('openProject')}</span>
                       </Button>
                     )}
@@ -245,20 +245,20 @@ export function ProjectManagerModal({
                       size="icon"
                       variant="ghost"
                       onClick={() => duplicateProject(p.id)}
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
                       title={t('duplicate')}
                     >
-                      <Copy className="w-3.5 h-3.5" />
+                      <Copy className="w-4 h-4" />
                     </Button>
 
                     <Button
                       size="icon"
                       variant="ghost"
                       onClick={() => handleExportJson(p.id, p.title)}
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
                       title={t('exportJson')}
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-4 h-4" />
                     </Button>
 
                     <Button
@@ -269,10 +269,10 @@ export function ProjectManagerModal({
                           deleteProject(p.id);
                         }
                       }}
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       title={t('delete')}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>

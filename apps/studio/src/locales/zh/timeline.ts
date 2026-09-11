@@ -8,6 +8,7 @@ export default {
   deleteScene: '删除场景',
   renameScene: '重命名场景',
   totalDuration: '总时长',
+  totalDurationTip: '项目视频总时长',
   recordVoiceover: '录音',
   recordVoiceoverTip: '同屏演播麦克风录音 (实时 VU 与分幕打点)',
   importAudio: '导入音频',

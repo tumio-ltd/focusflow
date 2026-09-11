@@ -24,8 +24,8 @@
     --accent: var(--ff-accent);
     --accent-hover: var(--ff-accent-hover);
     --accent-foreground: var(--ff-text-primary);
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
+    --destructive: var(--ff-destructive);
+    --destructive-foreground: var(--ff-destructive-foreground);
     --border: var(--ff-border);
     --border-subtle: var(--ff-border-subtle);
     --input: var(--ff-border);
@@ -51,8 +51,8 @@
     --accent: var(--ff-accent);
     --accent-hover: var(--ff-accent-hover);
     --accent-foreground: var(--ff-text-primary);
-    --destructive: #7f1d1d;
-    --destructive-foreground: #f8fafc;
+    --destructive: var(--ff-destructive);
+    --destructive-foreground: var(--ff-destructive-foreground);
     --border: var(--ff-border);
     --border-subtle: var(--ff-border-subtle);
     --input: var(--ff-border);
@@ -80,6 +80,7 @@ html, body {
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
 }
 
 /* 强制面板和固定容器常驻独立 GPU 合成图层，彻底禁止 hover 时动态升降图层导致的光栅化边缘闪烁 */
@@ -149,6 +150,232 @@ header, aside, footer, main {
   }
   .ff-btn-secondary:active:not(:disabled) {
     transform: translateY(0.5px) scale(0.985);
+  }
+
+  /* --- FocusFlow Sonner Toast Optimization (Solid Background & Precision Button Row) --- */
+  [data-sonner-toaster] {
+    --width: 440px !important;
+    font-family: inherit !important;
+  }
+
+  [data-sonner-toast].focusflow-toast {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    width: var(--width, 440px) !important;
+    max-width: calc(100vw - 32px) !important;
+    padding: 14px 16px !important;
+    border-radius: 12px !important;
+    background-color: var(--ff-bg-card, #111827) !important;
+    color: var(--ff-text-primary, #f8fafc) !important;
+    border: 1px solid var(--ff-border, #1e293b) !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+  }
+
+  :root:not(.dark) [data-sonner-toast].focusflow-toast {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .dark [data-sonner-toast].focusflow-toast {
+    background-color: #0d131f !important;
+    color: #f8fafc !important;
+    border: 1px solid #1e293b !important;
+    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07) !important;
+  }
+
+  /* Status Type Accents */
+  [data-sonner-toast].focusflow-toast[data-type="error"] {
+    border-left: 4px solid #f43f5e !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="error"] {
+    background-color: #fffafb !important;
+    border-color: #fecdd3 !important;
+    border-left: 4px solid #e11d48 !important;
+  }
+  .dark [data-sonner-toast].focusflow-toast[data-type="error"] {
+    background-color: #111420 !important;
+    border-color: rgba(244, 63, 94, 0.35) !important;
+    border-left: 4px solid #f43f5e !important;
+  }
+
+  [data-sonner-toast].focusflow-toast[data-type="success"] {
+    border-left: 4px solid #10b981 !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="success"] {
+    background-color: #f0fdf4 !important;
+    border-color: #bbf7d0 !important;
+    border-left: 4px solid #059669 !important;
+  }
+  .dark [data-sonner-toast].focusflow-toast[data-type="success"] {
+    background-color: #0b1713 !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+    border-left: 4px solid #10b981 !important;
+  }
+
+  [data-sonner-toast].focusflow-toast[data-type="info"] {
+    border-left: 4px solid #0284c7 !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="info"] {
+    background-color: #f0f9ff !important;
+    border-color: #bae6fd !important;
+    border-left: 4px solid #0284c7 !important;
+  }
+  .dark [data-sonner-toast].focusflow-toast[data-type="info"] {
+    background-color: #0c1524 !important;
+    border-color: rgba(2, 132, 199, 0.35) !important;
+    border-left: 4px solid #0284c7 !important;
+  }
+
+  /* Icon */
+  [data-sonner-toast].focusflow-toast [data-icon] {
+    flex-shrink: 0 !important;
+    margin-top: 2px !important;
+    margin-right: 10px !important;
+    margin-left: 0 !important;
+    width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  [data-sonner-toast].focusflow-toast[data-type="error"] [data-icon] {
+    color: #f43f5e !important;
+  }
+  [data-sonner-toast].focusflow-toast[data-type="success"] [data-icon] {
+    color: #10b981 !important;
+  }
+  [data-sonner-toast].focusflow-toast[data-type="info"] [data-icon] {
+    color: #0284c7 !important;
+  }
+
+  /* Content (Title & Description take full width on Row 1) */
+  [data-sonner-toast].focusflow-toast [data-content] {
+    flex: 1 1 calc(100% - 32px) !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    padding-right: 22px !important;
+  }
+
+  [data-sonner-toast].focusflow-toast [data-title] {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: inherit !important;
+  }
+  [data-sonner-toast].focusflow-toast[data-type="error"] [data-title] {
+    color: #fda4af !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="error"] [data-title] {
+    color: #be123c !important;
+  }
+
+  [data-sonner-toast].focusflow-toast [data-description] {
+    font-size: 12px !important;
+    line-height: 1.55 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+    color: #cbd5e1 !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-description] {
+    color: #475569 !important;
+  }
+
+  /* Close button in top-right */
+  [data-sonner-toast].focusflow-toast [data-close-button] {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    left: unset !important;
+    transform: none !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+  [data-sonner-toast].focusflow-toast [data-close-button]:hover {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #f8fafc !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-close-button]:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Action Buttons (Row 2 - 独立换行靠右排布) */
+  [data-sonner-toast].focusflow-toast [data-button] {
+    margin-top: 10px !important;
+    margin-bottom: 0 !important;
+    margin-right: 0 !important;
+    height: 28px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 按钮组自动靠右排列 */
+  [data-sonner-toast].focusflow-toast [data-button]:first-of-type {
+    margin-left: auto !important;
+  }
+  [data-sonner-toast].focusflow-toast [data-button] + [data-button] {
+    margin-left: 8px !important;
+  }
+
+  /* 次要取消/配置按钮 (data-cancel) */
+  [data-sonner-toast].focusflow-toast [data-cancel] {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #334155 !important;
+  }
+  [data-sonner-toast].focusflow-toast [data-cancel]:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-cancel] {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+  }
+  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-cancel]:hover {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* 主要操作按钮 (data-action / [⚡ 转为离线]) */
+  [data-sonner-toast].focusflow-toast [data-action],
+  [data-sonner-toast].focusflow-toast [data-button]:not([data-cancel]) {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+  }
+  [data-sonner-toast].focusflow-toast [data-action]:hover,
+  [data-sonner-toast].focusflow-toast [data-button]:not([data-cancel]):hover {
+    background: #0369a1 !important;
+    filter: brightness(1.08) !important;
   }
 }
 

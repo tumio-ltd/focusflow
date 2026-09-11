@@ -76,7 +76,7 @@ export function ExportModal({
       data-testid="export-modal"
       className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150 select-none"
     >
-      <div className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col text-card-foreground transition-colors duration-200">
+      <div className="bg-card border border-border/40 rounded-2xl w-full max-w-xl shadow-elevation-modal overflow-hidden flex flex-col text-card-foreground transition-colors duration-200">
         {/* 顶部标题栏 */}
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2.5">

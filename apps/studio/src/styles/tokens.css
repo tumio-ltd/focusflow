@@ -39,6 +39,20 @@
     --ff-btn-cta-glow: 0 3px 12px -2px rgba(238, 79, 39, 0.28);
     --ff-btn-cta-glow-hover: 0 6px 20px -2px rgba(238, 79, 39, 0.45);
 
+    /* --- Linear Minimalist Monochrome CTA (Light Mode) --- */
+    --ff-cta-bg: #0f172a;
+    --ff-cta-hover: #1e293b;
+    --ff-cta-text: #ffffff;
+    --ff-cta-border: #0f172a;
+
+    /* --- AI & Audio Voiceover Domain Tokens (Light Mode: Warm High-Contrast Amber) --- */
+    --ff-ai-bg: rgba(245, 158, 11, 0.12);
+    --ff-ai-bg-hover: rgba(245, 158, 11, 0.20);
+    --ff-ai-text: #92400e;
+    --ff-ai-text-muted: #b45309;
+    --ff-ai-border: rgba(217, 119, 6, 0.35);
+    --ff-ai-border-hover: rgba(217, 119, 6, 0.55);
+
     /* Secondary / Default (Bevel Glass Surface) */
     --ff-btn-secondary-bg: #ffffff;
     --ff-btn-secondary-hover: #f8fafc;
@@ -88,6 +102,20 @@
     --ff-btn-cta-bevel: inset 0 1px 0 rgba(255, 255, 255, 0.3);
     --ff-btn-cta-glow: 0 4px 18px -2px rgba(238, 79, 39, 0.35);
     --ff-btn-cta-glow-hover: 0 8px 28px -2px rgba(238, 79, 39, 0.55);
+
+    /* --- Linear Minimalist Monochrome CTA (Dark Mode) --- */
+    --ff-cta-bg: #ffffff;
+    --ff-cta-hover: #f5f5f5;
+    --ff-cta-text: #0a0a0a;
+    --ff-cta-border: #ffffff;
+
+    /* --- AI & Audio Voiceover Domain Tokens (Dark Mode: Luminous Warm Gold) --- */
+    --ff-ai-bg: rgba(245, 158, 11, 0.15);
+    --ff-ai-bg-hover: rgba(245, 158, 11, 0.25);
+    --ff-ai-text: #fcd34d;
+    --ff-ai-text-muted: #f59e0b;
+    --ff-ai-border: rgba(245, 158, 11, 0.30);
+    --ff-ai-border-hover: rgba(251, 191, 36, 0.50);
 
     /* Secondary / Default (Dark Translucent Glass + Bevel) */
     --ff-btn-secondary-bg: rgba(255, 255, 255, 0.05);

@@ -23,7 +23,7 @@ FocusFlow Studio Stage 5.6 引入了智能 AI 提词、母带音频轨管理与�
 - **时间轴批量 AI 提词自适应全分幕**：
   点击时间轴 `[🤖 AI 提词]` 时，离线模式下遍历所有分幕执行智能自适应计算，将各分幕最新时长（含留白与延展）一次性同步持久化到工程 DSL 与时间轴卡片。
 - **高保真独立母带音轨（云端模式）**：
-  若用户需要生成独立母带音频文件（WAV/MP3）与高保真波形轨，可无缝切换至云端模式（OpenAI / 硅基流动等，输入 Key），批量合成高保真真人音频并导出母带文件。
+  若用户需要生成独立母带音频文件（WAV/MP3）与高保真波形轨，可无缝切换至云端模式（Google Gemini 官方 TTS、OpenAI、硅基流动等，输入 Key），支持 Gemini 专用 TTS 模型（如 `gemini-3.1-flash-tts-preview`）与 30+ 专属人声音色，批量合成高保真真人音频并导出母带文件。底层音频封装与波形排障细节详见 [`TTS_ARCHITECTURE_AND_TROUBLESHOOTING.md`](./TTS_ARCHITECTURE_AND_TROUBLESHOOTING.md)。
 
 ---
 
@@ -42,16 +42,26 @@ FocusFlow Studio Stage 5.6 引入了智能 AI 提词、母带音频轨管理与�
 3. [`apps/studio/src/components/layout/BottomTimeline.tsx`](../apps/studio/src/components/layout/BottomTimeline.tsx)
    - 解构 `updateSceneDuration`；
    - 在 `handleBatchAIVoiceover` 中批量将计算后的 `updatedScenes` 时长同步更新到 `useProjectStore`。
-4. [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx)
-   - 监听播放器 `sceneChange` 事件，在离线演播切幕时自动调用 `speakWebSpeech(text, cfg.speed, undefined, cfg.voice)`；
-   - 暂停时（`!isPlaying`）自动调用 `window.speechSynthesis.cancel()` 停止发声；
-   - 更新 `onSynthesizeSceneTTS` 单幕试听自适应传参与发音人配置绑定。
-5. [`apps/studio/src/components/layout/RightInspector.tsx`](../apps/studio/src/components/layout/RightInspector.tsx)
-   - 为单幕 TTS 试听按钮追加详细解释的 `title` Tooltip。
-6. [`apps/studio/src/locales/zh/inspector.ts`](../apps/studio/src/locales/zh/inspector.ts) & [`apps/studio/src/locales/en/inspector.ts`](../apps/studio/src/locales/en/inspector.ts)
+4. [`apps/studio/src/services/audio/tts/GeminiTTSProvider.ts`](../apps/studio/src/services/audio/tts/GeminiTTSProvider.ts)
+   - 实现 Google Gemini 官方 TTS 适配器，接入专用 TTS 模型 `gemini-3.1-flash-tts-preview` 与 30+ 专属人声音色；
+   - 解决 Gemini API 返回无头裸 PCM 导致浏览器 Demuxer 崩溃报错问题，自动为其拼装标准 44 字节 RIFF WAV 容器头并保证偶数字节对齐。
+5. [`apps/studio/src/components/timeline/AudioWaveformTrack.tsx`](../apps/studio/src/components/timeline/AudioWaveformTrack.tsx)
+   - 消除误判离线的 `id.startsWith('tts-')` 逻辑，确保实体音频优先呈现 Web Audio 真实提取的物理波形；
+   - 修复 `generateSpeechPeaks` 模拟算法中的毫秒单位换算溢出 Bug，并对称生成 `[-val, val]` 峰值对以适配 Canvas 渲染。
+6. [`packages/player/src/core/player.js`](../../packages/player/src/core/player.js)
+   - 在 `getAssetUrl` 中补全对 `blob:` 协议原生 URL 的前缀白名单豁免，打通 Blob 母带音频在播放内核中的直通加载。
+7. [`apps/studio/src/App.tsx`](../apps/studio/src/App.tsx) & [`apps/studio/src/components/modals/AudienceModal.tsx`](../apps/studio/src/components/modals/AudienceModal.tsx)
+   - 彻底重构 `isOfflineVoice` 判定逻辑，消除脆弱的前缀字符串推断，严格依据 `isOfflineTTS` 与 `type === 'offline-tts'`；
+   - 彻底根治云端生成的男声在点击时间轴或进入受众演播模式时被误降级回退到系统离线女声（Ting-Ting）的缺陷；
+   - 单幕应用时生成规范语义化 ID：`track-voiceover-...`。
+8. [`apps/studio/src/components/layout/RightInspector.tsx`](../apps/studio/src/components/layout/RightInspector.tsx)
+   - 为单幕 TTS 试听按钮追加详细解释的 `title` Tooltip 与试听状态生命周期绑定。
+9. [`apps/studio/src/locales/zh/inspector.ts`](../apps/studio/src/locales/zh/inspector.ts) & [`apps/studio/src/locales/en/inspector.ts`](../apps/studio/src/locales/en/inspector.ts)
    - 国际化文案更新为精准的“试听 TTS (自适应分幕时长)” / “Preview TTS & Adapt Scene Duration”。
-7. [`apps/studio/e2e/stage5-audio-sync.spec.ts`](../apps/studio/e2e/stage5-audio-sync.spec.ts)
+10. [`apps/studio/e2e/stage5-audio-sync.spec.ts`](../apps/studio/e2e/stage5-audio-sync.spec.ts)
    - 增加对“短台词长场景保留留白不缩短”的断言测试；
+   - 新增 `TC580: 验证 Google Gemini 官方 TTS 预设切换、音色加载与本地持久化`；
+   - 新增 `TC581: 验证分幕检查器中使用 Gemini 专用 TTS 合成并流畅试听播放`，全链路覆盖生成、试听、应用、波形展开与时间轴演播。
 ### 3. 试听随时打断控制与“先试听、满意再应用”解耦闭环
 - **试听随时停止/重听**：
   - 在试听发音过程中，控制条提供实时的 `[⏹️ 停止]` 按钮；

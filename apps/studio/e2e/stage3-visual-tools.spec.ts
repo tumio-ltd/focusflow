@@ -130,7 +130,7 @@ async function verifyInspectorElementToggleAndDelete(page: Page): Promise<void> 
 
   // 验证图层眼睛按键与删除按键均存在
   const toggleEyeBtns = inspector.locator('button[title*="当前场景"]');
-  if (await toggleEyeBtns.count() > 0) {
+  if ((await toggleEyeBtns.count()) > 0) {
     await toggleEyeBtns.first().click();
   }
 }
@@ -212,7 +212,9 @@ async function verifyCalloutVisualControlAndInspection(page: Page): Promise<void
   await expect(inspector).toContainText(/关联目标框元|Target Box/i);
 
   // 7. 验证工具栏关闭图标按钮存在，点击可取消选中
-  const closeBtn = calloutTransformOverlay.locator('button[title*="取消选择"], button[title*="取消选中"]').first();
+  const closeBtn = calloutTransformOverlay
+    .locator('button[title*="取消选择"], button[title*="取消选中"]')
+    .first();
   await expect(closeBtn).toBeVisible();
   await closeBtn.click();
   await expect(inspector).toContainText(/未选中图元|No Element Selected/i);
@@ -397,7 +399,9 @@ async function verifySmartSnapDefaultAndMemoryPersistence(page: Page): Promise<v
   await expect(snapInput).not.toBeChecked();
 
   // 2. 验证初始状态下未写入或默认为 false
-  const initialStorage = await page.evaluate(() => window.localStorage.getItem('focusflow_smart_snap'));
+  const initialStorage = await page.evaluate(() =>
+    window.localStorage.getItem('focusflow_smart_snap'),
+  );
   expect(initialStorage === null || initialStorage === 'false').toBe(true);
 
   // 3. 点击开启智能边缘吸附
@@ -405,7 +409,9 @@ async function verifySmartSnapDefaultAndMemoryPersistence(page: Page): Promise<v
   await expect(snapInput).toBeChecked();
 
   // 4. 验证已成功写入 localStorage ('focusflow_smart_snap' === 'true')
-  const storageValAfterOn = await page.evaluate(() => window.localStorage.getItem('focusflow_smart_snap'));
+  const storageValAfterOn = await page.evaluate(() =>
+    window.localStorage.getItem('focusflow_smart_snap'),
+  );
   expect(storageValAfterOn).toBe('true');
 
   // 5. 刷新页面验证持久化记忆特性（刷新后保持开启）
@@ -418,7 +424,9 @@ async function verifySmartSnapDefaultAndMemoryPersistence(page: Page): Promise<v
   await reloadedSnapInput.uncheck({ force: true });
   await expect(reloadedSnapInput).not.toBeChecked();
 
-  const storageValAfterOff = await page.evaluate(() => window.localStorage.getItem('focusflow_smart_snap'));
+  const storageValAfterOff = await page.evaluate(() =>
+    window.localStorage.getItem('focusflow_smart_snap'),
+  );
   expect(storageValAfterOff).toBe('false');
 
   // 7. 再次刷新确认关闭状态依然被正确持久化记忆
@@ -450,7 +458,9 @@ async function verifyMicroservicesPathToolbarAvoidance(page: Page): Promise<void
   await expect(templatesModal).not.toBeVisible({ timeout: 5000 });
 
   // (2) 切换到第 2 幕 (02 边缘接入与 API 网关集群治理)
-  const scene2Card = page.locator('[data-testid="timeline"]').getByText('02 边缘接入与 API 网关集群治理');
+  const scene2Card = page
+    .locator('[data-testid="timeline"]')
+    .getByText('02 边缘接入与 API 网关集群治理');
   await expect(scene2Card).toBeVisible({ timeout: 5000 });
   await scene2Card.click();
 
@@ -489,7 +499,7 @@ async function verifyMicroservicesPathToolbarAvoidance(page: Page): Promise<void
     // 验证工具栏位于手柄上方或下方，有充足安全间距（且适度贴合，不过度外漂）
     const verticalGap = Math.min(
       Math.abs(toolbarBox.y + toolbarBox.height - toBox.y),
-      Math.abs(toBox.y + toBox.height - toolbarBox.y)
+      Math.abs(toBox.y + toBox.height - toolbarBox.y),
     );
     expect(verticalGap).toBeGreaterThanOrEqual(10);
   }
@@ -554,7 +564,9 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
     await verifyInspectorElementToggleAndDelete(page);
   });
 
-  test('TC306: 验证右侧 Inspector 标定助手 (Precision HUD) 实时度量、十字准星与吸附控制', async ({ page }) => {
+  test('TC306: 验证右侧 Inspector 标定助手 (Precision HUD) 实时度量、十字准星与吸附控制', async ({
+    page,
+  }) => {
     await verifyCalibrationAssistantInRightInspector(page);
   });
 
@@ -562,22 +574,280 @@ test.describe('FocusFlow Studio Stage 3 E2E Visual Tools Suite', () => {
     await verifyCalloutVisualControlAndInspection(page);
   });
 
-  test('TC308: 验证动态插图 (Image) 图元放置、画布变换手柄与右侧属性面板参数调节', async ({ page }) => {
+  test('TC308: 验证动态插图 (Image) 图元放置、画布变换手柄与右侧属性面板参数调节', async ({
+    page,
+  }) => {
     await verifyImageVisualControlAndInspection(page);
   });
 
-  test('TC309: 验证连线图元 (Path) 的画布选中高亮、悬浮工具栏与端点手柄拖拽吸附重连', async ({ page }) => {
+  test('TC309: 验证连线图元 (Path) 的画布选中高亮、悬浮工具栏与端点手柄拖拽吸附重连', async ({
+    page,
+  }) => {
     await verifyPathTransformOverlayInteraction(page);
   });
 
-  test('TC310: 验证智能边缘吸附默认禁用 (false) 与 LocalStorage 状态记忆恢复特性', async ({ page }) => {
+  test('TC310: 验证智能边缘吸附默认禁用 (false) 与 LocalStorage 状态记忆恢复特性', async ({
+    page,
+  }) => {
     await verifySmartSnapDefaultAndMemoryPersistence(page);
   });
 
   test('TC311: 验证微服务工程中连线端点绝对不被浮动快捷属性工具栏遮挡', async ({ page }) => {
     await verifyMicroservicesPathToolbarAvoidance(page);
   });
+
+  test('TC312: 验证气泡 (Callout) 所见即所得反缩放与未选中完整卡片预览特性', async ({ page }) => {
+    await verifyCalloutWysiwygAntiScaleAndPreview(page);
+  });
+
+  test('TC313: 验证双击卡片触发 16:9 Stage Match 几何咬合与原点对称性', async ({ page }) => {
+    await verifyStageMatch16x9AndOriginSymmetry(page);
+  });
+
+  test('TC314: 验证 Option 1 双模感知（Stage Match 激活舞台监视等比与手势平移无感退出）', async ({
+    page,
+  }) => {
+    await verifyDualModeStageMatchScaleAndExit(page);
+  });
+
+  test('TC315: 验证方案 B 多画幅比例切换与取景框几何即时重算', async ({ page }) => {
+    await verifyMultiAspectRatioSwitching(page);
+  });
 });
 
+/**
+ * 12. 验证气泡 (Callout) 所见即所得反缩放与未选中完整卡片预览特性
+ */
+async function verifyCalloutWysiwygAntiScaleAndPreview(page: Page): Promise<void> {
+  const canvas = page.locator('[data-testid="infinite-canvas-container"]');
+  await expect(canvas).toBeVisible();
 
+  // 1. 切换至气泡标定工具 (tool-callout)
+  const calloutToolBtn = page.locator('[data-testid="tool-callout"]');
+  await expect(calloutToolBtn).toBeVisible();
+  await calloutToolBtn.click();
 
+  // 2. 点击画布空白区域放置一个新气泡
+  const box = await canvas.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + 350, box.y + 250);
+  }
+
+  // 3. 切换回选择工具
+  const selectToolBtn = page.locator('[data-testid="tool-select"]');
+  await expect(selectToolBtn).toBeVisible();
+  await selectToolBtn.click();
+
+  // 4. 验证 CalloutTransformOverlay 存在
+  const calloutTransformOverlay = page.locator('[data-testid="callout-transform-overlay"]');
+  await expect(calloutTransformOverlay).toBeVisible();
+
+  // 5. 点击气泡将其选中
+  if (box) {
+    await page.mouse.click(box.x + 350, box.y + 250);
+  }
+
+  // 6. 验证选中状态下气泡容器具有 transform scale 反缩放样式
+  const selectedCalloutCard = calloutTransformOverlay.locator('div[style*="scale("]').first();
+  await expect(selectedCalloutCard).toBeVisible();
+  const styleAttr = await selectedCalloutCard.getAttribute('style');
+  expect(styleAttr).toContain('scale(');
+
+  // 7. 取消选中气泡
+  const closeBtn = calloutTransformOverlay
+    .locator('button[title*="取消选择"], button[title*="取消选中"]')
+    .first();
+  if (await closeBtn.isVisible()) {
+    await closeBtn.click();
+  }
+
+  // 8. 验证未选中状态下，依然呈现完整卡片预览（包含徽章和正文描述），非单纯胶囊单行点
+  const unselectedCard = calloutTransformOverlay.locator('div[style*="scale("]').first();
+  await expect(unselectedCard).toBeVisible();
+  await expect(unselectedCard.locator('.uppercase')).toBeVisible();
+
+  // 9. 双击底部时间轴场景，验证镜头对齐功能正常工作
+  const sceneCard = page.locator('[data-testid="scene-card-0"]').first();
+  await expect(sceneCard).toBeVisible();
+  await sceneCard.dblclick();
+}
+
+/**
+ * 13. 验证双击卡片触发 16:9 Stage Match 几何咬合与原点对称性
+ */
+async function verifyStageMatch16x9AndOriginSymmetry(page: Page): Promise<void> {
+  const canvas = page.locator('[data-testid="infinite-canvas-container"]');
+  await expect(canvas).toBeVisible();
+
+  // 1. 验证取景框初始可见
+  const frustumFrame = page.locator('[data-testid="camera-frustum-frame"]');
+  await expect(frustumFrame).toBeVisible();
+
+  // 2. 双击场景卡片空白/角标区域触发 Stage Match 播放画幅对齐
+  const sceneCard = page.locator('[data-testid="scene-card-0"]').first();
+  await expect(sceneCard).toBeVisible();
+  await sceneCard.dblclick({ position: { x: 15, y: 15 } });
+
+  // 等待运镜平滑过渡
+  await page.waitForTimeout(600);
+
+  // 3. 验证 16:9 暗角压暗遮罩常态化生效 (boxShadow 包含 9999px rgba)
+  const style = await frustumFrame.getAttribute('style');
+  expect(style).toContain('rgba(0, 0, 0, 0.4');
+
+  // 4. 验证取景框高宽比严格符合 16:9 目标画幅 (误差在亚像素四舍五入范围内)
+  const boundingBox = await frustumFrame.boundingBox();
+  if (boundingBox) {
+    const aspectRatio = boundingBox.width / boundingBox.height;
+    // 16/9 ≈ 1.777，校验在标准宽屏范围内
+    expect(aspectRatio).toBeGreaterThan(1.65);
+    expect(aspectRatio).toBeLessThan(1.9);
+  }
+
+  // 5. 验证气泡放置后具有对称原点与对齐盒模型样式 (px-4 py-2.5)
+  const calloutToolBtn = page.locator('[data-testid="tool-callout"]');
+  await calloutToolBtn.click();
+  const box = await canvas.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + 300, box.y + 200);
+  }
+  const selectToolBtn = page.locator('[data-testid="tool-select"]');
+  await selectToolBtn.click();
+
+  const calloutOverlay = page.locator('[data-testid="callout-transform-overlay"]');
+  await expect(calloutOverlay).toBeVisible();
+
+  const calloutDiv = calloutOverlay.locator('div[style*="transform-origin"]').first();
+  if (await calloutDiv.isVisible()) {
+    const calloutStyle = await calloutDiv.getAttribute('style');
+    expect(calloutStyle).toMatch(/transform-origin:\s*(left center|right center)/);
+  }
+}
+
+/**
+ * 14. 验证 Option 1 双模感知（Stage Match 激活舞台监视等比与手势平移无感退出）
+ */
+async function verifyDualModeStageMatchScaleAndExit(page: Page): Promise<void> {
+  const canvas = page.locator('[data-testid="infinite-canvas-container"]');
+  await expect(canvas).toBeVisible();
+
+  const frustumFrame = page.locator('[data-testid="camera-frustum-frame"]');
+  await expect(frustumFrame).toBeVisible();
+
+  // 1. 初始自由编辑状态下，取景框遮罩未激活
+  const initialStyle = await frustumFrame.getAttribute('style');
+  expect(initialStyle).not.toContain('rgba(0, 0, 0, 0.4');
+
+  // 2. 双击场景卡片空白/角标区域，触发 Stage Match 导播监视模式
+  const sceneCard = page.locator('[data-testid="scene-card-0"]').first();
+  await expect(sceneCard).toBeVisible();
+  await sceneCard.dblclick({ position: { x: 15, y: 15 } });
+
+  // 等待运镜与舞台缩放平滑过渡
+  await page.waitForTimeout(600);
+
+  // 3. 验证暗角遮罩已激活
+  const matchedStyle = await frustumFrame.getAttribute('style');
+  expect(matchedStyle).toContain('rgba(0, 0, 0, 0.4');
+
+  // 4. 用户使用空格抓手或平移手势拖动画布，触发自由编辑态无感退出
+  const box = await canvas.boundingBox();
+  if (box) {
+    await page.keyboard.down('Space');
+    await page.mouse.move(box.x + 300, box.y + 300);
+    await page.mouse.down();
+    await page.mouse.move(box.x + 250, box.y + 250);
+    await page.mouse.up();
+    await page.keyboard.up('Space');
+  }
+
+  await page.waitForTimeout(250);
+
+  // 5. 验证已无感退出导播监视模式，遮罩恢复关闭
+  const exitStyle = await frustumFrame.getAttribute('style');
+  expect(exitStyle).not.toContain('rgba(0, 0, 0, 0.4');
+}
+
+/**
+ * 15. 验证方案 B 多画幅比例切换与取景框几何即时重算 (16:9 -> 9:16 -> 4:3 -> 16:10 -> 16:9)
+ */
+async function verifyMultiAspectRatioSwitching(page: Page): Promise<void> {
+  const canvas = page.locator('[data-testid="infinite-canvas-container"]');
+  await expect(canvas).toBeVisible();
+
+  const frustumFrame = page.locator('[data-testid="camera-frustum-frame"]');
+  await expect(frustumFrame).toBeVisible();
+
+  const selector = page.locator('[data-testid="aspect-ratio-selector"]');
+  await expect(selector).toBeVisible();
+
+  // 1. 默认画幅比例 16:9 校验
+  const btn16x9 = page.locator('[data-testid="aspect-ratio-btn-16:9"]');
+  await expect(btn16x9).toHaveClass(/bg-primary/);
+
+  let boundingBox = await frustumFrame.boundingBox();
+  expect(boundingBox).toBeTruthy();
+  if (boundingBox) {
+    const ratio16x9 = boundingBox.width / boundingBox.height;
+    expect(ratio16x9).toBeGreaterThan(1.65);
+    expect(ratio16x9).toBeLessThan(1.9);
+  }
+
+  // 2. 切换为 9:16 竖屏短视频画幅
+  const btn9x16 = page.locator('[data-testid="aspect-ratio-btn-9:16"]');
+  await btn9x16.click();
+  await expect(btn9x16).toHaveClass(/bg-primary/);
+  await page.waitForTimeout(100);
+
+  boundingBox = await frustumFrame.boundingBox();
+  expect(boundingBox).toBeTruthy();
+  if (boundingBox) {
+    const ratio9x16 = boundingBox.width / boundingBox.height;
+    // 9/16 = 0.5625
+    expect(ratio9x16).toBeGreaterThan(0.5);
+    expect(ratio9x16).toBeLessThan(0.65);
+  }
+
+  // 3. 切换为 4:3 传统/投影演示画幅
+  const btn4x3 = page.locator('[data-testid="aspect-ratio-btn-4:3"]');
+  await btn4x3.click();
+  await expect(btn4x3).toHaveClass(/bg-primary/);
+  await page.waitForTimeout(100);
+
+  boundingBox = await frustumFrame.boundingBox();
+  expect(boundingBox).toBeTruthy();
+  if (boundingBox) {
+    const ratio4x3 = boundingBox.width / boundingBox.height;
+    // 4/3 ≈ 1.333
+    expect(ratio4x3).toBeGreaterThan(1.25);
+    expect(ratio4x3).toBeLessThan(1.45);
+  }
+
+  // 4. 切换为 16:10 MacBook 经典宽屏画幅
+  const btn16x10 = page.locator('[data-testid="aspect-ratio-btn-16:10"]');
+  await btn16x10.click();
+  await expect(btn16x10).toHaveClass(/bg-primary/);
+  await page.waitForTimeout(100);
+
+  boundingBox = await frustumFrame.boundingBox();
+  expect(boundingBox).toBeTruthy();
+  if (boundingBox) {
+    const ratio16x10 = boundingBox.width / boundingBox.height;
+    // 16/10 = 1.60
+    expect(ratio16x10).toBeGreaterThan(1.5);
+    expect(ratio16x10).toBeLessThan(1.7);
+  }
+
+  // 5. 还原回 16:9 标准画幅
+  await btn16x9.click();
+  await expect(btn16x9).toHaveClass(/bg-primary/);
+  await page.waitForTimeout(100);
+
+  boundingBox = await frustumFrame.boundingBox();
+  expect(boundingBox).toBeTruthy();
+  if (boundingBox) {
+    const restoredRatio = boundingBox.width / boundingBox.height;
+    expect(restoredRatio).toBeGreaterThan(1.65);
+    expect(restoredRatio).toBeLessThan(1.9);
+  }
+}

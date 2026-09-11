@@ -40,7 +40,7 @@ export default {
   modeOfflineDesc: 'Native OS voices read aloud with zero buzzing drones',
   modeCloudTitle: 'Cloud HD AI Voice',
   modeCloudBadge: 'BYOK (Bring Your Own Key)',
-  modeCloudDesc: 'OpenAI / SiliconFlow / Broadcast-grade Master Audio',
+  modeCloudDesc: 'OpenAI / Gemini / SiliconFlow / Broadcast-grade Master Audio',
 
   offlineEnabledTitle: 'Offline Native Speech Mode Enabled',
   offlineBullet1Title: 'Natural Voice Narration',
@@ -58,6 +58,7 @@ export default {
   presetLabel: 'Provider Preset',
   presetOpenAI: 'Official OpenAI (api.openai.com)',
   presetSiliconFlow: 'SiliconFlow (api.siliconflow.cn · High Speed)',
+  presetGemini: 'Google Gemini (Official generativelanguage.googleapis.com)',
   presetCustom: 'Custom Compatible Endpoint (OneAPI / LocalAI / Relay)',
 
   apiEndpointLabel: 'API Endpoint / Base URL',
@@ -107,4 +108,41 @@ export default {
 
   // Recording WYSIWYG Warning
   offlineBgmRecordWarning: 'Notice: Offline native speech cannot be captured into recorded videos due to browser sandbox limits. The exported video will contain BGM only without speech. To record voiceover, please use Cloud TTS or microphone recording. Continue recording?',
+
+  // Audio Error Modal
+  errorModalTitle: 'Voiceover Synthesis Issue',
+  errorModalSubtitle: 'AI Voiceover service request failed to complete',
+  errorDiagnoseResult: 'Diagnosis & Root Cause',
+  suggestedFix: 'Suggested Actions',
+  errorDiagnoseGeneralBadge: 'Service Issue',
+  errorDiagnoseGeneralSuggestion: 'Please verify your network and provider settings, or switch to Offline Web Speech.',
+  errorDiagnoseHighDemandBadge: 'Temporary High Demand (503)',
+  errorDiagnoseHighDemandDesc: 'Google Gemini service is temporarily experiencing high concurrent demand spikes. This is usually transient.',
+  errorDiagnoseHighDemandSuggest: 'Please try again in a moment, or switch to offline Web Speech for smooth rehearsal.',
+  errorDiagnoseModelUnsupportedBadge: 'Model Incompatible (No TTS)',
+  errorDiagnoseModelUnsupportedDesc: 'The selected Gemini model is a general text model without speech generation capability.',
+  errorDiagnoseModelUnsupportedSuggest: 'Please open Voiceover Settings below and select a dedicated audio model (e.g. gemini-2.0-flash or gemini-2.5-flash-preview-tts).',
+  errorDiagnoseQuotaBadge: 'Rate Limit / Quota (429)',
+  errorDiagnoseQuotaDesc: 'API quota exhausted or concurrent requests exceeded provider rate limits.',
+  errorDiagnoseQuotaSuggest: 'Please wait a while or provide a new API Key with active quota in Voiceover Settings.',
+  errorDiagnoseAuthBadge: 'Invalid API Key',
+  errorDiagnoseAuthDesc: 'The provider rejected this request due to an invalid or unauthenticated API Key.',
+  errorDiagnoseAuthSuggest: 'Please open Voiceover Settings and check your API Key.',
+  errorDiagnoseNetworkBadge: 'Network Connection Failed',
+  errorDiagnoseNetworkDesc: 'Could not connect to the voice provider API. The request may be blocked by network or proxy.',
+  errorDiagnoseNetworkSuggest: 'Please check your internet connection or proxy, or switch to offline mode.',
+  errorTechnicalDetails: 'Technical Error Stack & Logs',
+  copyErrorDetails: 'Copy Error Log',
+  copied: 'Copied',
+  errorActionOpenSettings: 'Voiceover Settings',
+  errorActionSwitchOffline: 'Switch to Offline Speech',
+  errorActionRetry: 'Retry',
+  errorActionClose: 'Dismiss',
+
+  // Audio Toast
+  toastAudioErrorTitle: 'Voiceover Synthesis Notice',
+  toastSwitchToOffline: '⚡ Switch to Offline',
+  toastSwitchedToOfflineSuccess: 'Switched to Offline Web Speech',
+  toastSwitchedToOfflineDesc: 'No external API key needed. You can continue presentation immediately.',
+  toastOpenSettings: 'Voice Settings',
 } as const;

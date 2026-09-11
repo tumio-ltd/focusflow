@@ -10,6 +10,7 @@ import {
   ProjectMetaIndex, 
   ProjectRecord 
 } from '@/services/storage';
+import { setSceneAudioBlob, getSceneAudioBlob } from '@/services/audio';
 
 export interface StorageState {
   currentProjectId: string | null;
@@ -58,6 +59,25 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       } catch {}
     }
 
+    const resolvedSceneAudioBlobs: Record<string, Blob> = {};
+    for (const scene of dsl.scenes) {
+      if (scene.voiceoverAudio?.url) {
+        const inMemoryBlob = getSceneAudioBlob(scene.id);
+        if (inMemoryBlob) {
+          resolvedSceneAudioBlobs[scene.id] = inMemoryBlob;
+        } else if (scene.voiceoverAudio.url.startsWith('blob:')) {
+          try {
+            const resp = await fetch(scene.voiceoverAudio.url);
+            if (resp.ok) {
+              const b = await resp.blob();
+              resolvedSceneAudioBlobs[scene.id] = b;
+              setSceneAudioBlob(scene.id, b);
+            }
+          } catch {}
+        }
+      }
+    }
+
     const record: ProjectRecord = {
       id,
       title,
@@ -67,6 +87,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       dsl,
       imageBlob,
       audioBlob: resolvedAudioBlob,
+      sceneAudioBlobs: resolvedSceneAudioBlobs,
     };
 
     await saveProjectRecord(record);
@@ -88,7 +109,33 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       if (record.audioBlob && record.dsl?.audio?.tracks?.[0]) {
         const freshAudioUrl = URL.createObjectURL(record.audioBlob);
         record.dsl.audio.tracks[0].url = freshAudioUrl;
+      } else if (!record.audioBlob && record.dsl?.audio?.tracks?.[0]?.url?.startsWith('blob:')) {
+        record.dsl.audio.tracks[0].url = '';
       }
+
+      // 🌟 关键会话保鲜机制：分幕独立专属音频 (sceneAudioBlobs) 深度重现
+      if (record.dsl?.scenes) {
+        for (const scene of record.dsl.scenes) {
+          const sceneBlob = record.sceneAudioBlobs?.[scene.id];
+          if (sceneBlob) {
+            const freshSceneUrl = URL.createObjectURL(sceneBlob);
+            if (scene.voiceoverAudio) {
+              scene.voiceoverAudio.url = freshSceneUrl;
+            } else {
+              scene.voiceoverAudio = {
+                url: freshSceneUrl,
+                durationMs: scene.duration || 3800,
+              };
+            }
+            setSceneAudioBlob(scene.id, sceneBlob);
+          } else if (scene.voiceoverAudio?.url?.startsWith('blob:')) {
+            // 安全防卫：如果历史工程中遗留了前次会话未持久化的死亡 blob: URL，安全置空防止抛出 ERR_FILE_NOT_FOUND
+            console.warn(`[Storage] Expired session blob URL detected for scene "${scene.title}" without binary payload, resetting dead audio URL.`);
+            scene.voiceoverAudio = undefined;
+          }
+        }
+      }
+
       await setCurrentProjectId(id);
       set({ currentProjectId: id });
     }
@@ -101,7 +148,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       const existing = await getProjectRecord(id);
       const now = Date.now();
 
-      // 智能提取待持久化的 audioBlob
+      // 智能提取待持久化的主音轨 audioBlob
       let resolvedAudioBlob = audioBlob || existing?.audioBlob;
       const mainAudioUrl = dsl.audio?.tracks?.[0]?.url;
       if (mainAudioUrl) {
@@ -120,6 +167,45 @@ export const useStorageStore = create<StorageState>((set, get) => ({
         resolvedAudioBlob = undefined;
       }
 
+      // 🌟 智能提取各分幕专属待持久化的 sceneAudioBlobs
+      const resolvedSceneAudioBlobs: Record<string, Blob> = {
+        ...(existing?.sceneAudioBlobs || {}),
+      };
+
+      const currentSceneIds = new Set(dsl.scenes.map((s) => s.id));
+      for (const sceneId of Object.keys(resolvedSceneAudioBlobs)) {
+        if (!currentSceneIds.has(sceneId)) {
+          delete resolvedSceneAudioBlobs[sceneId];
+        }
+      }
+
+      for (const scene of dsl.scenes) {
+        const audioUrl = scene.voiceoverAudio?.url;
+        if (!audioUrl) {
+          delete resolvedSceneAudioBlobs[scene.id];
+          continue;
+        }
+
+        const cachedBlob = getSceneAudioBlob(scene.id);
+        if (cachedBlob) {
+          resolvedSceneAudioBlobs[scene.id] = cachedBlob;
+          continue;
+        }
+
+        if (audioUrl.startsWith('blob:')) {
+          try {
+            const resp = await fetch(audioUrl);
+            if (resp.ok) {
+              const b = await resp.blob();
+              resolvedSceneAudioBlobs[scene.id] = b;
+              setSceneAudioBlob(scene.id, b);
+            }
+          } catch {
+            // 保留已存在的旧 blob
+          }
+        }
+      }
+
       const record: ProjectRecord = {
         id,
         title: dsl.meta.title || existing?.title || '未命名工程',
@@ -129,6 +215,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
         dsl,
         imageBlob: imageBlob || existing?.imageBlob,
         audioBlob: resolvedAudioBlob,
+        sceneAudioBlobs: resolvedSceneAudioBlobs,
         thumbnail: existing?.thumbnail,
       };
 
@@ -166,10 +253,23 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       createdAt: now,
       updatedAt: now,
       imageBlob: target.imageBlob,
+      audioBlob: target.audioBlob,
+      sceneAudioBlobs: target.sceneAudioBlobs ? { ...target.sceneAudioBlobs } : undefined,
     };
     newRecord.dsl.meta.title = newRecord.title;
     if (newRecord.imageBlob && newRecord.dsl?.asset) {
       newRecord.dsl.asset.url = URL.createObjectURL(newRecord.imageBlob);
+    }
+    if (newRecord.audioBlob && newRecord.dsl?.audio?.tracks?.[0]) {
+      newRecord.dsl.audio.tracks[0].url = URL.createObjectURL(newRecord.audioBlob);
+    }
+    if (newRecord.sceneAudioBlobs && newRecord.dsl?.scenes) {
+      for (const s of newRecord.dsl.scenes) {
+        const b = newRecord.sceneAudioBlobs[s.id];
+        if (b && s.voiceoverAudio) {
+          s.voiceoverAudio.url = URL.createObjectURL(b);
+        }
+      }
     }
 
     await saveProjectRecord(newRecord);
@@ -189,3 +289,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
     set({ projectList: list, currentProjectId: nextCurrentId });
   },
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).__STORAGE_STORE__ = useStorageStore;
+}

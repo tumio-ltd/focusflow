@@ -40,7 +40,7 @@ export default {
   modeOfflineDesc: '系统原生播音员真实朗读，无蜂鸣电子音',
   modeCloudTitle: '云端高清 AI 语音',
   modeCloudBadge: 'BYOK 自备 Key',
-  modeCloudDesc: 'OpenAI / 硅基流动 / 广播级真人母带',
+  modeCloudDesc: 'OpenAI / Gemini / 硅基流动 / 广播级真人母带',
 
   offlineEnabledTitle: '已启用离线原生语音合成模式',
   offlineBullet1Title: '真实语音朗读',
@@ -58,6 +58,7 @@ export default {
   presetLabel: '主流服务商预设 (Preset)',
   presetOpenAI: 'OpenAI 官方 (api.openai.com)',
   presetSiliconFlow: '硅基流动 SiliconFlow (api.siliconflow.cn · 国内极速)',
+  presetGemini: 'Google Gemini 官方 (generativelanguage.googleapis.com)',
   presetCustom: '自定义兼容接口 (OneAPI / LocalAI / 私有中转)',
 
   apiEndpointLabel: 'API Endpoint / Base URL',
@@ -107,4 +108,41 @@ export default {
 
   // Recording WYSIWYG Warning
   offlineBgmRecordWarning: '友情提醒：当前工程启用了【离线系统语音】，因浏览器沙箱限制，导出的视频中将只包含背景音乐，无法内录离线旁白。如需包含旁白出片，建议使用【云端 TTS】生成实体音频或使用麦克风录制。是否继续录制？',
+
+  // Audio Error Modal
+  errorModalTitle: '语音合成遇到问题',
+  errorModalSubtitle: 'AI 语音服务调用未成功完成',
+  errorDiagnoseResult: '故障诊断与分析',
+  suggestedFix: '解决建议',
+  errorDiagnoseGeneralBadge: '服务异常',
+  errorDiagnoseGeneralSuggestion: '建议检查网络与服务商配置，或切换至离线语音朗读。',
+  errorDiagnoseHighDemandBadge: '服务商临时繁忙 (503)',
+  errorDiagnoseHighDemandDesc: 'Google Gemini 官方语音服务当前正遭遇临时并发高峰（Spikes in demand）。这通常是短期的服务商侧波动。',
+  errorDiagnoseHighDemandSuggest: '建议您稍候重试，或一键切换至免 Key 的系统离线语音进行彩排演播。',
+  errorDiagnoseModelUnsupportedBadge: '模型功能不符 (不支持 TTS)',
+  errorDiagnoseModelUnsupportedDesc: '当前所选模型仅支持文本生成，不支持音频模态输出。',
+  errorDiagnoseModelUnsupportedSuggest: '请点击下方按钮打开配音设置，切换为专门支持音频输出的模型（如 gemini-2.0-flash 或 gemini-2.5-flash-preview-tts）。',
+  errorDiagnoseQuotaBadge: '请求超频或额度不足 (429)',
+  errorDiagnoseQuotaDesc: 'API 额度已耗尽或单位时间请求并发超出服务商阈值限制。',
+  errorDiagnoseQuotaSuggest: '请稍候再试，或在设置中更换具备充足额度的 API Key。',
+  errorDiagnoseAuthBadge: 'API Key 无效或未授权',
+  errorDiagnoseAuthDesc: '服务商拒绝了本次请求，API 密钥可能已过期、填写有误或未开启相应权限。',
+  errorDiagnoseAuthSuggest: '请前往配音设置重新核对并输入正确的 API 密钥。',
+  errorDiagnoseNetworkBadge: '网络连接异常',
+  errorDiagnoseNetworkDesc: '未能连接到语音服务商服务器，请求被网络断开或代理拦截。',
+  errorDiagnoseNetworkSuggest: '请检查您的网络连接、VPN 代理配置，或切换为离线免网络模式。',
+  errorTechnicalDetails: '技术错误堆栈日志',
+  copyErrorDetails: '复制错误日志',
+  copied: '已复制',
+  errorActionOpenSettings: '配音设置',
+  errorActionSwitchOffline: '一键切换至离线朗读',
+  errorActionRetry: '重试',
+  errorActionClose: '我知道了',
+
+  // Audio Toast
+  toastAudioErrorTitle: '语音合成遇到问题',
+  toastSwitchToOffline: '⚡ 转为离线',
+  toastSwitchedToOfflineSuccess: '已切换为离线语音朗读 (Web Speech)',
+  toastSwitchedToOfflineDesc: '无需外部 API Key，可直接在时间轴与检查器中继续演播。',
+  toastOpenSettings: '配音设置',
 } as const;

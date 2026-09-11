@@ -63,7 +63,7 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
   return (
     <aside 
       data-testid="toolbox" 
-      className="w-14 border-r border-border bg-panel flex flex-col items-center py-4 gap-3 select-none z-20 shrink-0"
+      className="w-14 border-r border-border bg-panel/80 backdrop-blur-md flex flex-col items-center py-3 gap-2 select-none z-20 shrink-0 transition-colors duration-200"
     >
       {tools.map((tool) => {
         const Icon = tool.icon;
@@ -74,13 +74,13 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
             <button
               data-testid={`tool-${tool.id}`}
               onClick={() => onToolChange(tool.id)}
-              className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ${
+              className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150 ease-spring ${
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/40 font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted active:bg-muted/80'
+                  ? 'bg-primary text-primary-foreground shadow-keycap-cyan ring-1 ring-primary/40 font-semibold active:scale-95'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 active:bg-muted active:scale-95'
               }`}
             >
-              <Icon className="w-4.5 h-4.5" />
+              <Icon className="w-5 h-5" />
             </button>
           </Tooltip>
         );
@@ -90,8 +90,8 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
 
       {/* 底部 AI 辅助标定图标 */}
       <Tooltip content={t('aiExtraction')} position="right">
-        <div className="w-9 h-9 rounded-lg border border-dashed border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary transition cursor-help">
-          <Sparkles className="w-4 h-4" />
+        <div className="w-10 h-10 rounded-xl bg-muted/20 border border-dashed border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/10 transition-all duration-150 ease-spring cursor-help active:scale-95">
+          <Sparkles className="w-4.5 h-4.5" />
         </div>
       </Tooltip>
     </aside>

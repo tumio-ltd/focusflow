@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Play, 
-  Pause, 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
-  Copy, 
-  Trash2, 
+import {
+  Play,
+  Pause,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Copy,
+  Trash2,
   Film,
   Layers,
   Edit3,
@@ -16,10 +16,12 @@ import {
   Upload,
   Sparkles,
   Activity,
-  Settings
+  Settings,
 } from 'lucide-react';
 import { Button, Tooltip } from '@/components/ui';
 import { useProjectStore } from '@/stores/useProjectStore';
+import { useStorageStore } from '@/stores/useStorageStore';
+import { useEditorStore } from '@/stores/useEditorStore';
 import { AudioWaveformTrack } from '../timeline/AudioWaveformTrack';
 import { VoiceoverPreflightModal } from '../timeline/VoiceoverPreflightModal';
 import { AIVoiceoverSettingsModal } from '../timeline/AIVoiceoverSettingsModal';
@@ -27,6 +29,7 @@ import { AudioConflictModal } from '../modals/AudioConflictModal';
 import { decodeAudioFile } from '@/services/audio/audioDecoder';
 import { synthesizeAllScenesVoiceover } from '@/services/audio/tts/aiTtsSynthesizer';
 import { getStoredTTSConfig } from '@/services/audio/tts/ttsConfigStore';
+import { showAudioErrorToast } from '@/services/audio';
 import type { AudioTrackConfig, AudioTrackRole } from '@focusflow/dsl';
 
 export interface SceneCardItem {
@@ -72,7 +75,7 @@ function BottomTimelineComponent({
   onSeek,
 }: BottomTimelineProps) {
   const { t } = useTranslation(['timeline', 'audio']);
-  const { dsl, setAudioTrack, updateSceneDuration } = useProjectStore();
+  const { dsl, setAudioTrack, batchSetScenes } = useProjectStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
@@ -98,7 +101,7 @@ function BottomTimelineComponent({
     let sum = 0;
     for (let i = 0; i < activeSceneIndex && i < dsl.scenes.length; i++) {
       const s = dsl.scenes[i];
-      sum += (s.duration || dsl.meta.controls?.interval || 3800);
+      sum += s.duration || dsl.meta.controls?.interval || 3800;
     }
     return sum;
   }, [activeSceneIndex, dsl.scenes, dsl.meta.controls?.interval]);
@@ -118,7 +121,7 @@ function BottomTimelineComponent({
 
     let animId: number;
     const currentScene = dsl.scenes[activeSceneIndex];
-    const sDurMs = (currentScene?.duration || dsl.meta.controls?.interval || 3800);
+    const sDurMs = currentScene?.duration || dsl.meta.controls?.interval || 3800;
     const startT = performance.now();
 
     const loop = () => {
@@ -136,18 +139,21 @@ function BottomTimelineComponent({
     };
   }, [isPlaying, activeSceneIndex, activeSceneStartMs, dsl.scenes, dsl.meta.controls?.interval]);
 
-  const handleTimelineSeek = useCallback((timeMs: number) => {
-    onSeek?.(timeMs);
-    let accum = 0;
-    for (let i = 0; i < dsl.scenes.length; i++) {
-      const dur = (dsl.scenes[i].duration || dsl.meta.controls?.interval || 3800);
-      if (timeMs >= accum && (timeMs < accum + dur || i === dsl.scenes.length - 1)) {
-        onSelectScene(i);
-        break;
+  const handleTimelineSeek = useCallback(
+    (timeMs: number) => {
+      onSeek?.(timeMs);
+      let accum = 0;
+      for (let i = 0; i < dsl.scenes.length; i++) {
+        const dur = dsl.scenes[i].duration || dsl.meta.controls?.interval || 3800;
+        if (timeMs >= accum && (timeMs < accum + dur || i === dsl.scenes.length - 1)) {
+          onSelectScene(i);
+          break;
+        }
+        accum += dur;
       }
-      accum += dur;
-    }
-  }, [dsl.scenes, dsl.meta.controls?.interval, onSeek, onSelectScene]);
+    },
+    [dsl.scenes, dsl.meta.controls?.interval, onSeek, onSelectScene],
+  );
 
   const handleImportAudioClick = () => {
     fileInputRef.current?.click();
@@ -210,9 +216,17 @@ function BottomTimelineComponent({
 
     // 双向防覆盖拦截守卫：若当前工程中已存在用户自行上传的音频，二次确认
     const currentTrack = dsl.audio?.tracks?.[0];
-    const isUserUploaded = currentTrack?.url && !currentTrack.id.startsWith('track-ai-') && !currentTrack.id.startsWith('tts-');
+    const isUserUploaded =
+      currentTrack?.url &&
+      !currentTrack.id.startsWith('track-ai-') &&
+      !currentTrack.id.startsWith('tts-') &&
+      !currentTrack.id.startsWith('track-voiceover-') &&
+      !currentTrack.id.startsWith('track-offline-');
     if (isUserUploaded) {
-      const confirmMsg = t('audio:confirmOverwriteCustomAudio', '工程中已有您上传的音频文件，生成 AI 旁白将替换该音频，是否继续？');
+      const confirmMsg = t(
+        'audio:confirmOverwriteCustomAudio',
+        '工程中已有您上传的音频文件，生成 AI 旁白将替换该音频，是否继续？',
+      );
       if (!window.confirm(confirmMsg)) {
         return;
       }
@@ -221,20 +235,45 @@ function BottomTimelineComponent({
     try {
       setIsSynthesizingTTS(true);
       const defaultInterval = dsl.meta.controls?.interval || 3800;
-      const res = await synthesizeAllScenesVoiceover(dsl.scenes, undefined, undefined, cfg.speed, defaultInterval);
+      const res = await synthesizeAllScenesVoiceover(
+        dsl.scenes,
+        undefined,
+        undefined,
+        cfg.speed,
+        defaultInterval,
+      );
 
-      // 批量将自适应后的分幕时长（长则扩充、短则留白）同步更新到工程中
-      res.updatedScenes.forEach((scene, idx) => {
-        const nextDur = scene.duration || defaultInterval;
-        if (nextDur !== dsl.scenes[idx]?.duration) {
-          updateSceneDuration(idx, nextDur);
-        }
-      });
+      // 批量将自适应后的分幕时长与专属物理音频同步更新到工程中
+      batchSetScenes(res.updatedScenes);
 
       setAudioTrack(res.track);
       setIsWaveformExpanded(true);
-    } catch (err) {
+
+      const storageState = useStorageStore.getState();
+      if (storageState.currentProjectId) {
+        storageState
+          .saveProject(storageState.currentProjectId, {
+            ...dsl,
+            scenes: res.updatedScenes,
+            audio: {
+              ...dsl.audio,
+              tracks: [res.track],
+            },
+          })
+          .catch((err) => console.warn('[Timeline] Failed to save batch voiceover:', err));
+      }
+    } catch (err: any) {
       console.error('Failed to synthesize batch voiceover:', err);
+      const cfg = getStoredTTSConfig();
+      showAudioErrorToast({
+        title: t('audio:errorModalTitle', '批量配音合成失败'),
+        message: err?.message || String(err),
+        details: err?.stack || String(err),
+        provider: cfg.preset,
+        model: cfg.model,
+        onOpenSettings: () => setIsAIVoiceoverSettingsOpen(true),
+        onRetry: () => handleBatchAIVoiceover(),
+      });
     } finally {
       setIsSynthesizingTTS(false);
     }
@@ -299,7 +338,7 @@ function BottomTimelineComponent({
       {/* 1. 主场景时间轴卡片栏 */}
       <div className="h-20 px-4 flex items-center gap-4">
         {/* 左侧播放控制组 */}
-        <div className="flex items-center gap-1.5 bg-background p-1.5 rounded-xl border border-border shrink-0">
+        <div className="flex items-center gap-1.5 bg-muted/40 p-1.5 rounded-xl border border-border/40 shrink-0">
           <Tooltip content={t('prevScene')} shortcut="←">
             <Button
               size="icon"
@@ -320,7 +359,11 @@ function BottomTimelineComponent({
               onClick={onTogglePlay}
               className="h-8 w-8 rounded-lg"
             >
-              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current" />}
+              {isPlaying ? (
+                <Pause className="w-4 h-4 fill-current" />
+              ) : (
+                <Play className="w-4 h-4 fill-current" />
+              )}
             </Button>
           </Tooltip>
 
@@ -339,7 +382,8 @@ function BottomTimelineComponent({
           <div className="h-4 w-px bg-border mx-1" />
 
           <span className="text-xs font-mono text-muted-foreground px-1">
-            {String(activeSceneIndex + 1).padStart(2, '0')} / {String(scenes.length).padStart(2, '0')}
+            {String(activeSceneIndex + 1).padStart(2, '0')} /{' '}
+            {String(scenes.length).padStart(2, '0')}
           </span>
         </div>
 
@@ -361,14 +405,16 @@ function BottomTimelineComponent({
                 onDrop={(e) => handleDrop(idx, e)}
                 onDragEnd={handleDragEnd}
                 onClick={() => onSelectScene(idx)}
-                className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-colors duration-150 shrink-0 min-w-[180px] ${
+                onDoubleClick={() => {
+                  onSelectScene(idx);
+                  useEditorStore.getState().triggerFocusCamera();
+                }}
+                className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all duration-150 ease-spring shrink-0 min-w-[180px] ${
                   isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
-                } ${
-                  isOver ? 'ring-2 ring-primary scale-105' : ''
-                } ${
+                } ${isOver ? 'ring-2 ring-primary scale-105' : ''} ${
                   isActive
-                    ? 'border-primary bg-primary/10 text-foreground shadow-md ring-1 ring-primary/30 font-medium'
-                    : 'border-border bg-card text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground'
+                    ? 'border-primary/50 bg-primary/15 text-foreground ring-1 ring-primary/40 font-medium shadow-keycap-hover'
+                    : 'border-border/40 bg-card/60 text-muted-foreground hover:border-border hover:bg-muted/70 hover:text-foreground shadow-keycap hover:shadow-keycap-hover'
                 }`}
               >
                 {/* 场景微缩标志指示 */}
@@ -521,23 +567,25 @@ function BottomTimelineComponent({
             <Tooltip content={t('aiTeleprompterTip')}>
               <Button
                 size="sm"
-                variant="outline"
+                variant="ai"
                 data-testid="ai-tts-batch-btn"
                 onClick={handleBatchAIVoiceover}
                 disabled={isSynthesizingTTS}
-                className="gap-1 text-xs h-7 text-amber-500 border-amber-500/30 hover:bg-amber-500/10 rounded-r-none border-r-0"
+                className="gap-1 text-xs h-7 rounded-r-none border-r-0"
               >
                 <Sparkles className={`w-3 h-3 ${isSynthesizingTTS ? 'animate-spin' : ''}`} />
-                <span>{isSynthesizingTTS ? t('aiTeleprompterSynthesizing') : t('aiTeleprompter')}</span>
+                <span>
+                  {isSynthesizingTTS ? t('aiTeleprompterSynthesizing') : t('aiTeleprompter')}
+                </span>
               </Button>
             </Tooltip>
             <Tooltip content={t('aiSettingsTip')}>
               <Button
                 size="icon"
-                variant="outline"
+                variant="ai"
                 data-testid="ai-tts-settings-btn"
                 onClick={() => setIsAIVoiceoverSettingsOpen(true)}
-                className="h-7 w-6 px-0 text-amber-500/80 border-amber-500/30 hover:bg-amber-500/10 rounded-l-none"
+                className="h-7 w-6 px-0 rounded-l-none"
               >
                 <Settings className="w-3 h-3" />
               </Button>
@@ -560,9 +608,14 @@ function BottomTimelineComponent({
           <div className="h-4 w-px bg-border mx-0.5" />
 
           {/* 总时长统计 */}
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
+          <div
+            className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono"
+            title={t('totalDurationTip', '项目视频总时长 (Total Duration)')}
+          >
             <Film className="w-3.5 h-3.5 text-primary" />
-            <span>{t('totalDuration')}: {scenes.reduce((acc, s) => acc + s.duration, 0).toFixed(1)}s</span>
+            <span>
+              {t('totalDuration')}: {scenes.reduce((acc, s) => acc + s.duration, 0).toFixed(1)}s
+            </span>
           </div>
         </div>
       </div>

@@ -1,7 +1,13 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Camera, Move } from 'lucide-react';
-import { cameraToFrustumRect, clampCameraBounds, CameraConfig } from '@/utils/cameraMath';
+import {
+  cameraToFrustumRect,
+  clampCameraBounds,
+  parseAspectRatio,
+  CameraConfig,
+} from '@/utils/cameraMath';
 import type { ToolType } from '@/components/layout';
+import { useEditorStore, useProjectStore } from '@/stores';
 import { useCanvasScale } from './InfiniteCanvas';
 
 export interface CameraFrustumFrameProps {
@@ -28,15 +34,22 @@ export function CameraFrustumFrame({
   const [isSelected, setIsSelected] = useState(false);
   const frameRef = useRef<HTMLDivElement>(null);
 
+  const dsl = useProjectStore((s) => s.dsl);
+  const targetAspect = parseAspectRatio(dsl.meta?.viewport?.aspectRatio);
+
+  const isStageMatchActive = useEditorStore((s) => s.isStageMatchActive);
+  const showStageMask = isSelected || isDragging || isResizing || isStageMatchActive;
+
   const contextScale = useCanvasScale();
   const scale = Math.max(0.05, canvasScale ?? contextScale ?? 1.0);
   const invScale = 1 / scale;
 
-  const rect = cameraToFrustumRect(camera, naturalWidth, naturalHeight);
+  const rect = cameraToFrustumRect(camera, naturalWidth, naturalHeight, targetAspect);
   const isInteractive = activeTool === 'select' && !!onCameraChange;
 
   // 当取景框处于全景状态 (例如 zoom <= 1.05) 时，边框向内安全内缩屏幕 20px 物理安全间距，杜绝与底图外边框在同一个亚像素栅格上重叠冲突
-  const isFullOverview = camera.zoom <= 1.05 && Math.abs(camera.x || 0) < 1 && Math.abs(camera.y || 0) < 1;
+  const isFullOverview =
+    camera.zoom <= 1.05 && Math.abs(camera.x || 0) < 1 && Math.abs(camera.y || 0) < 1;
   const insetWorldPx = isFullOverview ? Math.min(rect.width * 0.1, 20 * invScale) : 0;
   const frameX = rect.x + insetWorldPx;
   const frameY = rect.y + insetWorldPx;
@@ -168,7 +181,7 @@ export function CameraFrustumFrame({
         setIsSelected(false);
       }
     },
-    [isInteractive, isSelected, camera, onCameraChange]
+    [isInteractive, isSelected, camera, onCameraChange],
   );
 
   if (!visible) return null;
@@ -187,6 +200,7 @@ export function CameraFrustumFrame({
           top: `${frameY}px`,
           width: `${frameWidth}px`,
           height: `${frameHeight}px`,
+          boxShadow: showStageMask ? '0 0 0 9999px rgba(0, 0, 0, 0.40)' : undefined,
         }}
       >
         {/* 矢量非缩放工业级精准捕镜框 (Non-Scaling Stroke) - 直角无曲率退化，彻底根除缩放颤动 */}
@@ -220,27 +234,86 @@ export function CameraFrustumFrame({
           {(() => {
             const caliperLen = 16 * invScale;
             return (
-              <g stroke={isSelected || isDragging || isResizing ? '#67e8f9' : '#22d3ee'} strokeWidth="2.5" fill="none" vectorEffect="non-scaling-stroke">
+              <g
+                stroke={isSelected || isDragging || isResizing ? '#67e8f9' : '#22d3ee'}
+                strokeWidth="2.5"
+                fill="none"
+                vectorEffect="non-scaling-stroke"
+              >
                 {/* NW */}
                 <path d={`M 0,${caliperLen} L 0,0 L ${caliperLen},0`} />
                 {/* NE */}
-                <path d={`M ${frameWidth - caliperLen},0 L ${frameWidth},0 L ${frameWidth},${caliperLen}`} />
+                <path
+                  d={`M ${frameWidth - caliperLen},0 L ${frameWidth},0 L ${frameWidth},${caliperLen}`}
+                />
                 {/* SW */}
-                <path d={`M 0,${frameHeight - caliperLen} L 0,${frameHeight} L ${caliperLen},${frameHeight}`} />
+                <path
+                  d={`M 0,${frameHeight - caliperLen} L 0,${frameHeight} L ${caliperLen},${frameHeight}`}
+                />
                 {/* SE */}
-                <path d={`M ${frameWidth - caliperLen},${frameHeight} L ${frameWidth},${frameHeight} L ${frameWidth},${frameHeight - caliperLen}`} />
+                <path
+                  d={`M ${frameWidth - caliperLen},${frameHeight} L ${frameWidth},${frameHeight} L ${frameWidth},${frameHeight - caliperLen}`}
+                />
               </g>
             );
           })()}
 
           {/* 视口中心精准标定准星 (恒定屏幕像素尺寸，防坍塌) */}
           <g transform={`translate(${frameWidth / 2}, ${frameHeight / 2}) scale(${invScale})`}>
-            <circle cx="0" cy="0" r="14" fill="none" stroke="rgba(8, 51, 68, 0.6)" strokeWidth="3" vectorEffect="non-scaling-stroke" />
-            <circle cx="0" cy="0" r="14" fill="none" stroke="rgba(34, 211, 238, 0.65)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            <line x1="-20" y1="0" x2="-6" y2="0" stroke="#22d3ee" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            <line x1="6" y1="0" x2="20" y2="0" stroke="#22d3ee" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            <line x1="0" y1="-20" x2="0" y2="-6" stroke="#22d3ee" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-            <line x1="0" y1="6" x2="0" y2="20" stroke="#22d3ee" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+            <circle
+              cx="0"
+              cy="0"
+              r="14"
+              fill="none"
+              stroke="rgba(8, 51, 68, 0.6)"
+              strokeWidth="3"
+              vectorEffect="non-scaling-stroke"
+            />
+            <circle
+              cx="0"
+              cy="0"
+              r="14"
+              fill="none"
+              stroke="rgba(34, 211, 238, 0.65)"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
+            <line
+              x1="-20"
+              y1="0"
+              x2="-6"
+              y2="0"
+              stroke="#22d3ee"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
+            <line
+              x1="6"
+              y1="0"
+              x2="20"
+              y2="0"
+              stroke="#22d3ee"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
+            <line
+              x1="0"
+              y1="-20"
+              x2="0"
+              y2="-6"
+              stroke="#22d3ee"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
+            <line
+              x1="0"
+              y1="6"
+              x2="0"
+              y2="20"
+              stroke="#22d3ee"
+              strokeWidth="1.5"
+              vectorEffect="non-scaling-stroke"
+            />
             <circle cx="0" cy="0" r="1.5" fill="#22d3ee" />
           </g>
         </svg>
@@ -260,7 +333,9 @@ export function CameraFrustumFrame({
             data-testid="camera-frustum-badge"
             onPointerDown={handlePointerDownMove}
             className={`flex items-center gap-1.5 bg-cyan-950/95 border border-cyan-500/40 px-2.5 py-1 rounded-md text-[11px] font-mono text-cyan-300 shadow-xl select-none ${
-              isInteractive ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/95 hover:border-cyan-400' : 'pointer-events-none'
+              isInteractive
+                ? 'pointer-events-auto cursor-grab active:cursor-grabbing hover:bg-cyan-900/95 hover:border-cyan-400'
+                : 'pointer-events-none'
             }`}
           >
             <Camera className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
@@ -406,4 +481,3 @@ export function CameraFrustumFrame({
     </div>
   );
 }
-

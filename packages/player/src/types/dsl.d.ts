@@ -7,7 +7,11 @@ export interface FocusFlowDSL {
   $schema?: string;
   meta: {
     title: string;
-    viewport: { width: number; height: number };
+    viewport: {
+      width: number;
+      height: number;
+      aspectRatio?: '16:9' | '16:10' | '4:3' | '9:16';
+    };
     theme?: {
       bg?: string;
       accent?: string;
@@ -17,12 +21,12 @@ export interface FocusFlowDSL {
       [key: string]: string | undefined;
     };
     controls?: {
-      autoplay?: boolean;      // 页面加载后是否默认自动循环播放 (默认 false)
-      interval?: number;      // 自动轮播每屏停留时长 (毫秒，默认 3800ms)
-      showPlayBtn?: boolean;  // 是否展示播放/暂停按钮 (默认 true)
-      showCounter?: boolean;  // 是否展示场景序号指示器如 01/05 (默认 true)
+      autoplay?: boolean; // 页面加载后是否默认自动循环播放 (默认 false)
+      interval?: number; // 自动轮播每屏停留时长 (毫秒，默认 3800ms)
+      showPlayBtn?: boolean; // 是否展示播放/暂停按钮 (默认 true)
+      showCounter?: boolean; // 是否展示场景序号指示器如 01/05 (默认 true)
       showProgress?: boolean; // 是否展示顶部进度条 (默认 true)
-      showHUDButton?: boolean;// 是否在控制栏展示标定助手按钮 (默认 true)
+      showHUDButton?: boolean; // 是否在控制栏展示标定助手按钮 (默认 true)
     };
   };
   asset: {
@@ -58,8 +62,8 @@ export interface ElementBox {
 export interface ElementPath {
   id: string;
   from?: string; // 格式: "boxId.anchorName", 例如 "box-folio.right"
-  to?: string;   // 格式: "boxId.anchorName", 例如 "box-postgres.left-top"
-  d?: string;    // 手动指定的 SVG 路径 (若省略则由引擎自动推导三次贝塞尔)
+  to?: string; // 格式: "boxId.anchorName", 例如 "box-postgres.left-top"
+  d?: string; // 手动指定的 SVG 路径 (若省略则由引擎自动推导三次贝塞尔)
   style?: {
     stroke?: string;
     strokeWidth?: number;
@@ -84,17 +88,17 @@ export interface ElementDot {
 
 export interface ElementImage {
   id: string;
-  url: string;        // 覆盖图片相对路径、绝对路径或 Base64
-  x: number;          // 在画布绝对逻辑坐标系下的 X
-  y: number;          // 在画布绝对逻辑坐标系下的 Y
-  width: number;      // 宽度
-  height: number;     // 高度
+  url: string; // 覆盖图片相对路径、绝对路径或 Base64
+  x: number; // 在画布绝对逻辑坐标系下的 X
+  y: number; // 在画布绝对逻辑坐标系下的 Y
+  width: number; // 宽度
+  height: number; // 高度
   style?: {
     borderRadius?: number; // 圆角大小 (像素)
-    boxShadow?: boolean | string;   // 是否启用悬浮立体投影或自定义投影
+    boxShadow?: boolean | string; // 是否启用悬浮立体投影或自定义投影
     animation?: 'fade' | 'zoom-fade' | 'slide-up'; // 出现动效
-    border?: string;      // 发光边框
-    opacity?: number;     // 目标不透明度 (默认 1.0)
+    border?: string; // 发光边框
+    opacity?: number; // 目标不透明度 (默认 1.0)
   };
 }
 
@@ -116,16 +120,16 @@ export interface SceneStep {
   id: string;
   title: string;
   camera: {
-    zoom: number;       // 缩放倍率 (1.0 ~ 3.0)
-    x: number;          // 水平偏移百分比 (-50 ~ 50)
-    y: number;          // 垂直偏移百分比 (-50 ~ 50)
-    duration?: number;  // 运镜过渡时长 (秒，默认 1.2s)
+    zoom: number; // 缩放倍率 (1.0 ~ 3.0)
+    x: number; // 水平偏移百分比 (-50 ~ 50)
+    y: number; // 垂直偏移百分比 (-50 ~ 50)
+    duration?: number; // 运镜过渡时长 (秒，默认 1.2s)
   };
   activeElements: {
     boxes?: string[];
     paths?: string[];
     dots?: string[];
-    images?: string[];  // 当前场景激活的覆盖图片 ID 列表
+    images?: string[]; // 当前场景激活的覆盖图片 ID 列表
     callouts?: CalloutItem[];
   };
 }

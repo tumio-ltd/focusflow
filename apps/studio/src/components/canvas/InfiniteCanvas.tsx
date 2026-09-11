@@ -3,15 +3,24 @@ import { Hand, Compass } from 'lucide-react';
 import { useCanvasGesture } from '@/hooks/useCanvasGesture';
 import { ZoomControls } from './ZoomControls';
 import { LaserCrosshairOverlay } from './LaserCrosshairOverlay';
-import { cameraToFrustumRect, type CameraConfig } from '@/utils/cameraMath';
+import { cameraToFrustumRect, parseAspectRatio, type CameraConfig } from '@/utils/cameraMath';
+import { useEditorStore, useProjectStore } from '@/stores';
 
 export interface CanvasContextValue {
   scale: number;
   x: number;
   y: number;
+  containerWidth?: number;
+  containerHeight?: number;
 }
 
-export const CanvasContext = createContext<CanvasContextValue>({ scale: 1.0, x: 0, y: 0 });
+export const CanvasContext = createContext<CanvasContextValue>({
+  scale: 1.0,
+  x: 0,
+  y: 0,
+  containerWidth: 1920,
+  containerHeight: 1080,
+});
 export const useCanvasTransform = () => useContext(CanvasContext);
 export const useCanvasScale = () => useContext(CanvasContext).scale;
 
@@ -22,7 +31,10 @@ export interface InfiniteCanvasProps {
   className?: string;
   camera?: CameraConfig;
   isPlaying?: boolean;
-  onTransformChange?: (transform: { scale: number; x: number; y: number }, containerRect: { width: number; height: number }) => void;
+  onTransformChange?: (
+    transform: { scale: number; x: number; y: number },
+    containerRect: { width: number; height: number },
+  ) => void;
 }
 
 export function InfiniteCanvas({
@@ -65,6 +77,8 @@ export function InfiniteCanvas({
     return () => ro.disconnect();
   }, []);
 
+  const focusCameraVersion = useEditorStore((s) => s.focusCameraVersion);
+
   // 当处于播放态时，随着场景切换自动协同平滑运镜飞向当前场景摄像机
   useEffect(() => {
     if (isPlaying && camera) {
@@ -72,13 +86,23 @@ export function InfiniteCanvas({
     }
   }, [isPlaying, camera?.zoom, camera?.x, camera?.y, camera?.duration, flyToCamera]);
 
+  // 当外部双击场景或触发“镜头对齐”命令时，平滑运镜飞向当前场景摄像机
+  useEffect(() => {
+    if (focusCameraVersion > 0 && camera) {
+      flyToCamera(camera);
+    }
+  }, [focusCameraVersion, camera, flyToCamera]);
+
+  const dsl = useProjectStore((s) => s.dsl);
+  const targetAspect = parseAspectRatio(dsl.meta?.viewport?.aspectRatio);
+
   // 视口边缘吸附雷达几何运算：检测取景框是否脱离当前屏幕视口窗口
   const radarInfo = React.useMemo(() => {
     if (!camera || isPlaying || containerSize.width <= 0 || containerSize.height <= 0) {
       return null;
     }
 
-    const rect = cameraToFrustumRect(camera, contentWidth, contentHeight);
+    const rect = cameraToFrustumRect(camera, contentWidth, contentHeight, targetAspect);
     const sLeft = transform.x + rect.x * transform.scale;
     const sTop = transform.y + rect.y * transform.scale;
     const sWidth = rect.width * transform.scale;
@@ -122,8 +146,14 @@ export function InfiniteCanvas({
     const scaleY = Math.abs(dy) > 0.001 ? halfH / Math.abs(dy) : 10000;
     const rayScale = Math.min(scaleX, scaleY);
 
-    const radarX = Math.max(marginX, Math.min(containerSize.width - marginX, vpCenterX + dx * rayScale));
-    const radarY = Math.max(marginY, Math.min(containerSize.height - marginY, vpCenterY + dy * rayScale));
+    const radarX = Math.max(
+      marginX,
+      Math.min(containerSize.width - marginX, vpCenterX + dx * rayScale),
+    );
+    const radarY = Math.max(
+      marginY,
+      Math.min(containerSize.height - marginY, vpCenterY + dy * rayScale),
+    );
 
     return {
       x: radarX,
@@ -131,10 +161,16 @@ export function InfiniteCanvas({
       angleDeg,
       zoom: camera.zoom,
     };
-  }, [camera, isPlaying, containerSize, contentWidth, contentHeight, transform]);
+  }, [camera, isPlaying, containerSize, contentWidth, contentHeight, transform, targetAspect]);
 
   return (
-    <CanvasContext.Provider value={transform}>
+    <CanvasContext.Provider
+      value={{
+        ...transform,
+        containerWidth: containerSize.width,
+        containerHeight: containerSize.height,
+      }}
+    >
       <div
         ref={containerRef}
         data-testid="infinite-canvas-container"
@@ -144,7 +180,7 @@ export function InfiniteCanvas({
         {...pointerHandlers}
       >
         {/* 1. 科技点阵背景网格 (Grid Matrix) */}
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none opacity-25"
           style={{
             backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 1px)',

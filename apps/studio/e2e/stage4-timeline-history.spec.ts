@@ -113,7 +113,7 @@ async function verifyTimelinePlaybackControls(page: Page): Promise<void> {
 
   // 验证时间轴总时长标签展示
   const timeline = page.locator('[data-testid="timeline"]');
-  await expect(timeline).toContainText(/总时长|Total Duration/i);
+  await expect(timeline).toContainText(/总时长|Tot\.?\s*Dur\.?|Total\s*Dur(ation)?/i);
 }
 
 /**

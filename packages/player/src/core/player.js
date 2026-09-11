@@ -76,7 +76,7 @@ export class FocusFlowPlayer {
 
   getAssetUrl(customUrl) {
     const rawUrl = customUrl || this.dsl.asset?.url || '';
-    if (!rawUrl || rawUrl.startsWith('data:') || rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('/')) {
+    if (!rawUrl || rawUrl.startsWith('blob:') || rawUrl.startsWith('data:') || rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('/')) {
       return rawUrl;
     }
     if (this.basePath) {

@@ -167,7 +167,7 @@ async function verifyBatchAiVoiceoverGeneration(page: Page): Promise<void> {
   // 验证音频波形轨自动展开并展示合成音轨标题
   const waveformTrack = page.locator('[data-testid="audio-waveform-track"]');
   await expect(waveformTrack).toBeVisible({ timeout: 10000 });
-  await expect(waveformTrack).toContainText(/AI 智能配音合流/);
+  await expect(waveformTrack).toContainText(/(AI 智能配音合流|全局分幕智能合流母带)/);
 
   // 验证缩放按钮交互
   const zoomInBtn = waveformTrack.locator('button[title="放大波形视口"]');
@@ -974,6 +974,626 @@ async function verifyCameraFrustumVisibilityAndOffscreenRadar(page: Page) {
   await page.screenshot({ path: 'test-results/screenshots/camera_frustum_visibility.png' });
 }
 
+/**
+ * 验证 Google Gemini 官方 TTS 预设切换、音色加载、本地持久化与端点合成 (TC580)
+ */
+async function verifyGeminiTTSPresetConfigurationAndPersistence(page: Page): Promise<void> {
+  // 1. 打开 AI 语音合成配置模态框
+  const settingsBtn = page.locator('[data-testid="ai-tts-settings-btn"]');
+  await expect(settingsBtn).toBeVisible();
+  await settingsBtn.click();
+
+  const modal = page.locator('[data-testid="ai-voiceover-settings-modal"]');
+  await expect(modal).toBeVisible();
+
+  // 2. 切换到云端模式
+  const cloudBtn = page.locator('[data-testid="tts-mode-cloud-btn"]');
+  await cloudBtn.click();
+
+  // 3. 切换服务商预设至 Google Gemini 官方
+  const presetSelect = page.locator('[data-testid="tts-preset-select"]');
+  await expect(presetSelect).toBeVisible();
+  await presetSelect.selectOption('gemini');
+
+  // 4. 验证 Base URL 自动联动为 Google Gemini 官方端点
+  const baseUrlInput = page.locator('[data-testid="tts-base-url-input"]');
+  await expect(baseUrlInput).toHaveValue('https://generativelanguage.googleapis.com/v1beta');
+
+  // 4.1 验证默认模型联动为官方音频专用模型 gemini-2.0-flash，且候选仅包含真实音频模型
+  const modelInput = modal.locator('input[list="tts-model-suggestions"]');
+  await expect(modelInput).toHaveValue('gemini-2.0-flash');
+  const suggestions = modal.locator('#tts-model-suggestions');
+  await expect(suggestions.locator('option[value="gemini-2.0-flash"]')).toBeAttached();
+  await expect(suggestions.locator('option[value="gemini-2.5-flash-preview-tts"]')).toBeAttached();
+  await expect(suggestions.locator('option[value="gemini-2.5-pro-preview-tts"]')).toBeAttached();
+
+  // 5. 验证音色选择器已自动载入 Gemini 预置音色列表 (Puck, Charon, Kore, Fenrir, Aoede)
+  const voiceSelect = modal.locator('select').nth(1);
+  await expect(voiceSelect).toContainText(/Puck/);
+  await expect(voiceSelect).toContainText(/Charon/);
+  await expect(voiceSelect).toContainText(/Kore/);
+  await expect(voiceSelect).toContainText(/Fenrir/);
+  await expect(voiceSelect).toContainText(/Aoede/);
+
+  // 选中 Kore 音色
+  await voiceSelect.selectOption('Kore');
+
+  // 6. 输入测试 API Key
+  const apiKeyInput = page.locator('[data-testid="tts-api-key-input"]');
+  await apiKeyInput.fill('AIzaSyTestGeminiKey123456');
+
+  // 7. 拦截 Gemini API 请求进行合成联调测试
+  let interceptedRequest = false;
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    interceptedRequest = true;
+    const req = route.request();
+    const headers = req.headers();
+    expect(headers['x-goog-api-key'] || req.url().includes('AIzaSyTestGeminiKey123456')).toBeTruthy();
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'audio/x-wav',
+                    data: 'AAAA'.repeat(6000), // Raw PCM (no RIFF header)
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+  });
+
+  // 点击单句试听按钮
+  const testPreviewBtn = page.locator('[data-testid="tts-test-preview-btn"]');
+  await testPreviewBtn.click();
+
+  // 验证连通性试听成功
+  await expect(modal).toContainText(/试听合成成功|Synthesized successfully/, { timeout: 8000 });
+  expect(interceptedRequest).toBe(true);
+
+  // 8. 点击保存配置并验证持久化到 localStorage
+  const saveBtn = modal.locator('button', { hasText: /(保存配置|Save Settings)/ });
+  await saveBtn.click();
+  await expect(modal).not.toBeVisible();
+
+  // 9. 重新打开模态框，验证所有 Gemini 设置均被安全持久化
+  await settingsBtn.click();
+  await expect(modal).toBeVisible();
+  await expect(presetSelect).toHaveValue('gemini');
+  await expect(baseUrlInput).toHaveValue('https://generativelanguage.googleapis.com/v1beta');
+  await expect(voiceSelect).toHaveValue('Kore');
+  await expect(apiKeyInput).toHaveValue('AIzaSyTestGeminiKey123456');
+
+  // 关闭模态框并清理
+  await page.unroute('**/generativelanguage.googleapis.com/**');
+  const closeBtn = modal.locator('button', { hasText: /(取消|Cancel)/ }).first();
+  await closeBtn.click();
+  await expect(modal).not.toBeVisible();
+}
+
+/**
+ * 验证分幕检查器中使用 Gemini 专用 TTS 合成并流畅试听播放 (TC581)
+ */
+async function verifySceneGeminiTTSPreviewAndPlayback(page: Page): Promise<void> {
+  // 1. 设置 Gemini 云端 TTS 配置到 localStorage
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'focusflow_tts_settings',
+      JSON.stringify({
+        mode: 'cloud',
+        preset: 'gemini',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+        apiKey: 'AIzaSyTestKeyScenePreview123',
+        model: 'gemini-2.0-flash',
+        voice: 'Kore',
+        speed: 1.0,
+      })
+    );
+  });
+  await page.reload();
+
+  // 2. 模拟 Gemini 接口返回纯裸 PCM 音频（非 RIFF 头，无 WAV 外壳）
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    // 构造 24kHz 16-bit 单声道 1 秒 PCM 静音数据 (48000 字节)
+    const pcmBase64 = 'AAAA'.repeat(12000);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'audio/x-wav',
+                    data: pcmBase64,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+  });
+
+  // 3. 点击选中第 1 个分幕卡片
+  const sceneCard0 = page.locator('[data-testid="scene-card-0"]');
+  await expect(sceneCard0).toBeVisible();
+  await sceneCard0.click();
+
+  // 4. 点击分幕检查器中的「试听 TTS (自适应分幕时长)」
+  const ttsBtn = page.locator('[data-testid="synthesize-scene-tts-btn"]');
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+
+  // 5. 验证成功生成且展开试听控制器卡片
+  const controller = page.locator('[data-testid="tts-preview-controller"]');
+  await expect(controller).toBeVisible({ timeout: 10000 });
+  await expect(controller).toContainText(/建议分幕|Suggested/);
+
+  // 6. 点击试听控制器中的播放/停止切换按钮
+  const toggleBtn = page.locator('[data-testid="tts-preview-toggle-btn"]');
+  await expect(toggleBtn).toBeVisible();
+
+  // 验证控制器进入正常播放状态，绝不发生立即崩溃或静默中断
+  await page.waitForTimeout(300);
+
+  // 点击停止播放
+  await toggleBtn.click();
+  await page.waitForTimeout(200);
+
+  // 7. 验证点击「应用」将音频应用至时间轴与分幕时长
+  const applyBtn = page.locator('[data-testid="tts-apply-btn"]');
+  await expect(applyBtn).toBeVisible();
+  await applyBtn.click();
+  await expect(controller).not.toBeVisible();
+
+  // 8. 验证应用后时间轴音频波形轨自动展开并正常渲染 Canvas
+  const waveformTrack = page.locator('[data-testid="audio-waveform-track"]');
+  await expect(waveformTrack).toBeVisible({ timeout: 5000 });
+  const waveformCanvas = waveformTrack.locator('canvas');
+  await expect(waveformCanvas).toBeVisible();
+
+  // 9. 验证时间轴播放演播联动，实体母带音频正常播放无崩溃
+  const playBtn = page.locator('[data-testid="timeline-play-btn"]');
+  await expect(playBtn).toBeVisible();
+  await playBtn.click();
+  await page.waitForTimeout(600);
+  await playBtn.click(); // 暂停演播
+
+  await page.unroute('**/generativelanguage.googleapis.com/**');
+}
+
+/**
+ * 22. 验证分幕音频增量智能缝合与多场景母带无缝共存 (TC582)
+ */
+async function verifySceneAudioIncrementalStitchingAndCoexistence(page: Page): Promise<void> {
+  // 1. 设置 Gemini 官方 TTS 预设与有效 API 密钥
+  await page.evaluate(() => {
+    const cfg = {
+      mode: 'cloud',
+      preset: 'gemini',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      model: 'gemini-2.0-flash',
+      voice: 'Puck',
+      speed: 1.0,
+      apiKey: 'AIzaSyFakeKeyForStitchingVerificationTC582',
+    };
+    localStorage.setItem('focusflow_tts_settings', JSON.stringify(cfg));
+    localStorage.setItem('focusflow_tts_config', JSON.stringify(cfg));
+  });
+  await page.reload();
+
+  // 2. 模拟 Gemini 接口返回合法 PCM 音频 (24kHz 16-bit 单声道 1 秒 PCM 静音数据)
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    const pcmBase64 = 'AAAA'.repeat(12000);
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'audio/x-wav',
+                    data: pcmBase64,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    });
+  });
+
+  // 3. 选中场景 1 (scene-card-0)，生成并应用 TTS
+  const sceneCard0 = page.locator('[data-testid="scene-card-0"]');
+  await expect(sceneCard0).toBeVisible();
+  await sceneCard0.click();
+
+  const ttsBtn = page.locator('[data-testid="synthesize-scene-tts-btn"]');
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+
+  const controller = page.locator('[data-testid="tts-preview-controller"]');
+  await expect(controller).toBeVisible({ timeout: 10000 });
+
+  const applyBtn = page.locator('[data-testid="tts-apply-btn"]');
+  await expect(applyBtn).toBeVisible();
+  await applyBtn.click();
+  await expect(controller).not.toBeVisible();
+
+  // 验证场景 1 应用后时间轴波形轨自动展开并正常渲染
+  const waveformTrack = page.locator('[data-testid="audio-waveform-track"]');
+  await expect(waveformTrack).toBeVisible({ timeout: 5000 });
+
+  // 4. 切换至场景 2 (scene-card-1)，生成并应用 TTS
+  const sceneCard1 = page.locator('[data-testid="scene-card-1"]');
+  await expect(sceneCard1).toBeVisible();
+  await sceneCard1.click();
+
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+
+  await expect(controller).toBeVisible({ timeout: 10000 });
+  await expect(applyBtn).toBeVisible();
+  await applyBtn.click();
+  await expect(controller).not.toBeVisible();
+
+  // 等待增量合流执行
+  await page.waitForTimeout(500);
+
+  // 5. 核心断言：增量智能合流机制与分幕物理音频隔离验证
+  const storeData = await page.evaluate(() => {
+    const store = (window as any).__PROJECT_STORE__?.getState();
+    if (!store) return null;
+    const s0 = store.dsl.scenes[0];
+    const s1 = store.dsl.scenes[1];
+    const tracks = store.dsl.audio?.tracks || [];
+    return {
+      scene0Audio: s0?.voiceoverAudio,
+      scene1Audio: s1?.voiceoverAudio,
+      scene0Duration: s0?.duration,
+      scene1Duration: s1?.duration,
+      tracksCount: tracks.length,
+      masterTrack: tracks[0] ? {
+        id: tracks[0].id,
+        name: tracks[0].name,
+        durationMs: tracks[0].durationMs,
+        markers: tracks[0].markers,
+      } : null,
+    };
+  });
+
+  expect(storeData).not.toBeNull();
+  // 断言场景 1 的专属音频未被覆盖，且具备独立的 Blob URL
+  expect(storeData?.scene0Audio).toBeDefined();
+  expect(storeData?.scene0Audio?.url).toBeTruthy();
+  expect(storeData?.scene0Audio?.durationMs).toBeGreaterThan(0);
+
+  // 断言场景 2 拥有自己的独立专属音频
+  expect(storeData?.scene1Audio).toBeDefined();
+  expect(storeData?.scene1Audio?.url).toBeTruthy();
+  expect(storeData?.scene1Audio?.durationMs).toBeGreaterThan(0);
+  // 两幕的音频 URL 绝不相同（各自独立生成）
+  expect(storeData?.scene0Audio?.url).not.toEqual(storeData?.scene1Audio?.url);
+
+  // 断言母带合流轨存在且包含两个分幕的起始时间锚点 markers
+  expect(storeData?.tracksCount).toBe(1);
+  expect(storeData?.masterTrack).toBeDefined();
+  expect(storeData?.masterTrack?.markers?.length).toBeGreaterThanOrEqual(2);
+
+  // 场景 0 锚点在 0ms
+  expect(storeData?.masterTrack?.markers?.[0]?.timeMs).toBe(0);
+  // 场景 1 锚点在场景 0 结束时间处（非 0ms，严格时序拼接对齐）
+  expect(storeData?.masterTrack?.markers?.[1]?.timeMs).toBe(storeData?.scene0Duration);
+
+  // 6. 验证启动演播推进，播放器无崩溃且平滑运行
+  const playBtn = page.locator('[data-testid="timeline-play-btn"]');
+  await expect(playBtn).toBeVisible();
+  await playBtn.click();
+  await page.waitForTimeout(600);
+  await playBtn.click(); // 暂停演播
+
+  await page.unroute('**/generativelanguage.googleapis.com/**');
+}
+
+/**
+ * 23. 验证 Gemini 非音频模型自动识别拦截与服务商异常 Sonner Toast 告警与一键兜底恢复 (TC583)
+ */
+async function verifyAudioToastOnProviderFailure(page: Page): Promise<void> {
+  // 1. 模拟场景 A：服务商临时高峰 503 (This model is currently experiencing high demand)
+  await page.evaluate(() => {
+    const cfg = {
+      mode: 'cloud',
+      preset: 'gemini',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      apiKey: 'AIzaSyTestKeyForErrorHandling503',
+      model: 'gemini-2.0-flash',
+      voice: 'Puck',
+      speed: 1.0,
+    };
+    localStorage.setItem('focusflow_tts_settings', JSON.stringify(cfg));
+  });
+  await page.reload();
+
+  // 拦截 Gemini 接口并返回 503 临时负载过高报错
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        error: {
+          code: 503,
+          message: 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.',
+          status: 'UNAVAILABLE',
+        },
+      }),
+    });
+  });
+
+  const sceneCard0 = page.locator('[data-testid="scene-card-0"]');
+  await expect(sceneCard0).toBeVisible();
+  await sceneCard0.click();
+
+  const ttsBtn = page.locator('[data-testid="synthesize-scene-tts-btn"]');
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+
+  // 验证弹出优雅错误提示 Sonner Toast
+  const errorToast = page.locator('[data-sonner-toast]').first();
+  await expect(errorToast).toBeVisible({ timeout: 8000 });
+  await expect(errorToast).toContainText(/服务商临时繁忙|503/);
+  await expect(errorToast).toContainText(/Google Gemini 官方语音服务当前正遭遇临时并发高峰|Spikes in demand/);
+
+  // 验证 Toast 提供一键切换离线模式动作按钮
+  const switchOfflineBtn = errorToast.locator('button', { hasText: /(转为离线|Switch to Offline)/ });
+  await expect(switchOfflineBtn).toBeVisible();
+
+  // 点击一键切换至离线朗读
+  await switchOfflineBtn.click();
+
+  // 验证 localStorage 配置已被自动设置为 offline
+  const currentMode = await page.evaluate(() => {
+    const raw = localStorage.getItem('focusflow_tts_settings');
+    return raw ? JSON.parse(raw).mode : null;
+  });
+  expect(currentMode).toBe('offline');
+
+  await page.unroute('**/generativelanguage.googleapis.com/**');
+
+  // 2. 模拟场景 B：用户配置了普通文本 Flash 模型，未返回音频数据 (STOP / 仅返回文本)
+  await page.evaluate(() => {
+    const cfg = {
+      mode: 'cloud',
+      preset: 'gemini',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      apiKey: 'AIzaSyTestKeyForNonAudioModel',
+      model: 'gemini-1.5-flash',
+      voice: 'Puck',
+      speed: 1.0,
+    };
+    localStorage.setItem('focusflow_tts_settings', JSON.stringify(cfg));
+  });
+  await page.reload();
+
+  // 拦截 Gemini 返回 200 但只有 text，无 inlineData
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: '这是一段普通的文本回复，普通 Flash 模型不支持音频输出。',
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+      }),
+    });
+  });
+
+  await sceneCard0.click();
+  await ttsBtn.click();
+
+  // 验证弹出 Sonner Toast，并精准识别模型功能不符
+  const errorToastB = page.locator('[data-sonner-toast]').first();
+  await expect(errorToastB).toBeVisible({ timeout: 8000 });
+  await expect(errorToastB).toContainText(/模型功能不符|不支持 TTS/);
+  await expect(errorToastB).toContainText(/仅支持文本生成，不支持音频模态输出/);
+
+  // 验证提供打开配音设置快捷入口
+  const openSettingsBtn = errorToastB.locator('button', { hasText: /(配音设置|Voiceover Settings)/ });
+  await expect(openSettingsBtn).toBeVisible();
+  await openSettingsBtn.click();
+
+  // 验证成功打开配音设置模态框
+  const settingsModal = page.locator('[data-testid="ai-voiceover-settings-modal"]');
+  await expect(settingsModal).toBeVisible();
+
+  await page.unroute('**/generativelanguage.googleapis.com/**');
+}
+
+/**
+ * 24. 验证分幕独立音频在浏览器刷新 (Reload) 后的会话保鲜与母带无缝合流，彻底杜绝 ERR_FILE_NOT_FOUND (TC584)
+ */
+async function verifySceneAudioPersistenceAcrossReload(page: Page): Promise<void> {
+  // 1. 设置 Gemini 云端 TTS 拦截 mock
+  await page.evaluate(() => {
+    const cfg = {
+      preset: 'gemini',
+      mode: 'cloud',
+      apiKey: 'AIzaSyTestKey_GeminiPersistence_TC584',
+      baseUrl: 'https://generativelanguage.googleapis.com',
+      model: 'gemini-2.0-flash',
+      voice: 'Puck',
+      speed: 1.0,
+    };
+    localStorage.setItem('focusflow_tts_settings', JSON.stringify(cfg));
+  });
+
+  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    const sampleRate = 24000;
+    const numSamples = Math.floor(sampleRate * 1.5);
+    const pcmBytes = new Uint8Array(numSamples * 2);
+    for (let i = 0; i < numSamples; i++) {
+      const sample = Math.floor(Math.sin((2 * Math.PI * 440 * i) / sampleRate) * 16000);
+      pcmBytes[i * 2] = sample & 0xff;
+      pcmBytes[i * 2 + 1] = (sample >> 8) & 0xff;
+    }
+    const binaryStr = Array.from(pcmBytes).map((b) => String.fromCharCode(b)).join('');
+    const base64Audio = btoa(binaryStr);
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'audio/pcm;rate=24000',
+                    data: base64Audio,
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+      }),
+    });
+  });
+
+  // 2. 选中场景 1 (scene-card-0)，生成并应用 TTS
+  const sceneCard0 = page.locator('[data-testid="scene-card-0"]');
+  await expect(sceneCard0).toBeVisible();
+  await sceneCard0.click();
+
+  const scriptInput = page.locator('[data-testid="scene-voiceover-script-input"]');
+  await expect(scriptInput).toBeVisible();
+  await scriptInput.fill('场景一微服务架构入口旁白');
+
+  const ttsBtn = page.locator('[data-testid="synthesize-scene-tts-btn"]');
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+  const controller = page.locator('[data-testid="tts-preview-controller"]');
+  await expect(controller).toBeVisible({ timeout: 10000 });
+  const applyBtn = page.locator('[data-testid="tts-apply-btn"]');
+  await applyBtn.click();
+  await expect(controller).not.toBeVisible();
+
+  // 3. 为场景 2 应用语音
+  const sceneCard1 = page.locator('[data-testid="scene-card-1"]');
+  await expect(sceneCard1).toBeVisible();
+  await sceneCard1.click();
+  await scriptInput.fill('场景二订单中台服务旁白');
+  await expect(ttsBtn).toBeVisible();
+  await ttsBtn.click();
+  await expect(controller).toBeVisible({ timeout: 10000 });
+  await applyBtn.click();
+  await expect(controller).not.toBeVisible();
+
+  // 等待增量合流与存盘完成
+  await page.waitForTimeout(600);
+
+  // 检查刷新前状态
+  const beforeReload = await page.evaluate(async () => {
+    const store = (window as any).__PROJECT_STORE__?.getState();
+    const s0Audio = store?.dsl?.scenes[0]?.voiceoverAudio?.url;
+    const s1Audio = store?.dsl?.scenes[1]?.voiceoverAudio?.url;
+    return {
+      s0Audio,
+      s1Audio,
+      s0Ok: s0Audio ? (await fetch(s0Audio).then((r: Response) => r.ok).catch(() => false)) : false,
+      s1Ok: s1Audio ? (await fetch(s1Audio).then((r: Response) => r.ok).catch(() => false)) : false,
+    };
+  });
+  expect(beforeReload.s0Ok).toBe(true);
+  expect(beforeReload.s1Ok).toBe(true);
+
+  // 4. 监听网络和控制台：严禁出现 ERR_FILE_NOT_FOUND 或 Failed to decode audio
+  const consoleErrors: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error' || msg.text().includes('ERR_FILE_NOT_FOUND') || msg.text().includes('Failed to decode audio')) {
+      consoleErrors.push(msg.text());
+    }
+  });
+
+  // 5. 模拟创作者刷新页面 (Reload)
+  await page.reload();
+
+  // 等待页面挂载、IndexedDB 加载工程并执行会话保鲜重合流
+  await page.waitForTimeout(1000);
+
+  // 6. 核心断言：刷新后的分幕音频已被自动会话保鲜，生成新的有效 Blob URL 并可正常 fetch 与解码
+  const afterReload = await page.evaluate(async () => {
+    const store = (window as any).__PROJECT_STORE__?.getState();
+    const s0 = store?.dsl?.scenes[0];
+    const s1 = store?.dsl?.scenes[1];
+    const masterTrack = store?.dsl?.audio?.tracks?.[0];
+
+    const s0Url = s0?.voiceoverAudio?.url;
+    const s1Url = s1?.voiceoverAudio?.url;
+    const masterUrl = masterTrack?.url;
+
+    // 测试 URL 是否为有效可访问的 Blob
+    const s0FetchOk = s0Url ? await fetch(s0Url).then((r: Response) => r.ok).catch(() => false) : false;
+    const s1FetchOk = s1Url ? await fetch(s1Url).then((r: Response) => r.ok).catch(() => false) : false;
+    const masterFetchOk = masterUrl ? await fetch(masterUrl).then((r: Response) => r.ok).catch(() => false) : false;
+
+    return {
+      s0Url,
+      s1Url,
+      masterUrl,
+      s0FetchOk,
+      s1FetchOk,
+      masterFetchOk,
+      markersCount: masterTrack?.markers?.length || 0,
+    };
+  });
+
+  expect(afterReload.s0FetchOk).toBe(true);
+  expect(afterReload.s1FetchOk).toBe(true);
+  expect(afterReload.masterFetchOk).toBe(true);
+  expect(afterReload.markersCount).toBeGreaterThanOrEqual(2);
+
+  // 断言未发生任何 ERR_FILE_NOT_FOUND 或解码失败报错
+  const failedToDecodeErrors = consoleErrors.filter((e) => e.includes('ERR_FILE_NOT_FOUND') || e.includes('Failed to decode audio'));
+  expect(failedToDecodeErrors).toHaveLength(0);
+
+  // 7. 点击播放，验证刷新后演播平滑发声无崩溃
+  const playBtn = page.locator('[data-testid="timeline-play-btn"]');
+  await expect(playBtn).toBeVisible();
+  await playBtn.click();
+  await page.waitForTimeout(600);
+  await playBtn.click();
+
+  await page.unroute('**/generativelanguage.googleapis.com/**');
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -1054,6 +1674,26 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC579: 验证 5K 画布下取景框全景安全内缩、手柄防缩放及离屏雷达导引', async ({ page }) => {
     await verifyCameraFrustumVisibilityAndOffscreenRadar(page);
+  });
+
+  test('TC580: 验证 Google Gemini 官方 TTS 预设切换、音色加载与本地持久化', async ({ page }) => {
+    await verifyGeminiTTSPresetConfigurationAndPersistence(page);
+  });
+
+  test('TC581: 验证分幕检查器中使用 Gemini 专用 TTS 合成并流畅试听播放', async ({ page }) => {
+    await verifySceneGeminiTTSPreviewAndPlayback(page);
+  });
+
+  test('TC582: 验证分幕音频增量智能缝合与多场景母带无缝共存', async ({ page }) => {
+    await verifySceneAudioIncrementalStitchingAndCoexistence(page);
+  });
+
+  test('TC583: 验证 Gemini 非音频模型自动识别拦截与服务商异常 Sonner Toast 告警与一键兜底恢复', async ({ page }) => {
+    await verifyAudioToastOnProviderFailure(page);
+  });
+
+  test('TC584: 验证分幕独立音频在浏览器刷新 (Reload) 后的会话保鲜与母带无缝合流，彻底杜绝 ERR_FILE_NOT_FOUND', async ({ page }) => {
+    await verifySceneAudioPersistenceAcrossReload(page);
   });
 });
 

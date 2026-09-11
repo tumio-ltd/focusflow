@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/cn';
+import { Kbd } from './Kbd';
 
 export interface TooltipProps {
   content: ReactNode;
@@ -112,9 +113,9 @@ export function Tooltip({
         <div
           className={cn(
             'fixed z-[9999] px-2.5 py-1.5 text-xs font-medium whitespace-nowrap pointer-events-none select-none flex items-center gap-2',
-            'bg-slate-900 text-slate-100 dark:bg-[#111722] dark:text-slate-100',
-            'border border-slate-700 dark:border-white/20',
-            'rounded-lg shadow-xl'
+            'bg-slate-900/95 text-slate-100 dark:bg-[#111722]/95 dark:text-slate-100',
+            'border border-slate-700/60 dark:border-white/15',
+            'backdrop-blur-md rounded-lg shadow-elevation-dropdown animate-in fade-in zoom-in-95 duration-100 ease-spring'
           )}
           style={{
             left: `${Math.round(coords.x)}px`,
@@ -124,9 +125,11 @@ export function Tooltip({
         >
           <span>{content}</span>
           {shortcut && (
-            <kbd className="px-1.5 py-0.5 bg-white/10 dark:bg-white/10 border border-white/15 rounded text-[10px] font-mono text-cyan-400 font-semibold">
-              {shortcut}
-            </kbd>
+            <div className="flex items-center gap-1">
+              {shortcut.split(' ').map((keyPart, i) => (
+                <Kbd key={i}>{keyPart}</Kbd>
+              ))}
+            </div>
           )}
         </div>,
         document.body

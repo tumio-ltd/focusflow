@@ -98,14 +98,14 @@ function TopBarComponent({
   };
 
   return (
-    <header className="h-14 border-b border-border bg-panel px-4 flex items-center justify-between select-none z-30 shrink-0">
+    <header className="h-14 border-b border-border bg-panel/90 backdrop-blur-md px-4 flex items-center justify-between select-none z-30 shrink-0 transition-colors duration-200">
       {/* 1. 左侧：Logo + 项目标题编辑 + 模式 Badge */}
       <div className="flex items-center gap-3 min-w-0 max-w-[42%] shrink">
         <BrandLogo size="md" className="shrink-0" />
 
         <Badge variant="cyan" className="shrink-0">{t('modeOffline')}</Badge>
 
-        <div className="h-4 w-px bg-border mx-0.5 shrink-0" />
+        <div className="h-4 w-px bg-border/40 mx-0.5 shrink-0" />
 
         {/* 项目标题内联编辑 */}
         {isEditingTitle ? (
@@ -117,16 +117,16 @@ function TopBarComponent({
               onBlur={handleTitleSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
               autoFocus
-              className="bg-background border border-primary rounded px-2 py-0.5 text-xs text-foreground focus:outline-none w-36 sm:w-48"
+              className="bg-background border border-primary/50 rounded-lg px-2.5 py-1 text-xs font-medium text-foreground focus:outline-none w-36 sm:w-48"
             />
-            <Button size="sm" variant="ghost" onClick={handleTitleSubmit} className="h-6 w-6 p-0 shrink-0">
+            <Button size="icon" variant="ghost" onClick={handleTitleSubmit} className="h-7 w-7 shrink-0">
               <Check className="w-3.5 h-3.5 text-primary" />
             </Button>
           </div>
         ) : (
           <div
             onClick={() => setIsEditingTitle(true)}
-            className="group flex items-center gap-1.5 px-2 py-1 rounded hover:bg-muted cursor-pointer transition min-w-0 max-w-[130px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-[300px]"
+            className="group flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-muted/60 cursor-pointer transition min-w-0 max-w-[130px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-[300px]"
             title={t('editTitleTip')}
           >
             <span className="text-xs font-medium text-foreground truncate">{currentTitle}</span>
@@ -140,7 +140,7 @@ function TopBarComponent({
       </div>
 
       {/* 2. 中间：撤销 / 重做 */}
-      <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border shrink-0">
+      <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl shrink-0">
         <Tooltip content={t('undo')} shortcut="⌘Z" position="bottom">
           <Button
             size="icon"
@@ -194,16 +194,16 @@ function TopBarComponent({
             className="h-8 w-8 text-foreground hover:text-primary"
           >
             {theme === 'light' ? (
-              <Sun className="w-3.5 h-3.5 text-amber-500" />
+              <Sun className="w-4 h-4 text-amber-500" />
             ) : theme === 'system' ? (
-              <Laptop className="w-3.5 h-3.5 text-sky-500" />
+              <Laptop className="w-4 h-4 text-sky-500" />
             ) : (
-              <Moon className="w-3.5 h-3.5 text-primary" />
+              <Moon className="w-4 h-4 text-primary" />
             )}
           </Button>
         </Tooltip>
 
-        <div className="h-4 w-px bg-border mx-0.5" />
+        <div className="h-4 w-px bg-border/40 mx-0.5" />
 
         {/* 模板中心 */}
         <Tooltip content={t('templatesTip')} position="bottom" align="end">
@@ -254,9 +254,9 @@ function TopBarComponent({
             variant="outline"
             data-testid="audience-btn"
             onClick={onOpenAudience}
-            className="gap-1.5 h-8 border-primary/40 text-primary hover:bg-primary/10 px-2.5"
+            className="gap-1.5 h-8 border-primary/30 text-primary hover:bg-primary/10 px-2 sm:px-2.5"
           >
-            <Play className="w-3.5 h-3.5 fill-current" />
+            <Play className="w-3.5 h-3.5 text-primary fill-primary" />
             <span>{t('present')}</span>
           </Button>
         </Tooltip>
@@ -305,7 +305,7 @@ function TopBarComponent({
         <Tooltip content={t('exportHtmlTip')} shortcut="⌘E" position="bottom" align="end">
           <Button 
             size="sm" 
-            variant="cyan" 
+            variant="cta" 
             data-testid="export-btn"
             onClick={onExport} 
             className="gap-1.5 h-8 px-3"

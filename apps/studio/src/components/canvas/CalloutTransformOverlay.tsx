@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import type { ElementBox, CalloutItem } from '@focusflow/dsl';
 import { Trash2, X, Move, MessageSquare, Link as LinkIcon } from 'lucide-react';
 import { useEditorStore, useProjectStore } from '@/stores';
+import { useCanvasTransform } from './InfiniteCanvas';
 
 export interface CalloutTransformOverlayProps {
   contentWidth: number;
@@ -10,7 +11,10 @@ export interface CalloutTransformOverlayProps {
   boxes?: ElementBox[];
 }
 
-const THEME_COLORS: Record<string, { border: string; glow: string; text: string; bg: string; dot: string }> = {
+const THEME_COLORS: Record<
+  string,
+  { border: string; glow: string; text: string; bg: string; dot: string }
+> = {
   blue: {
     border: 'border-sky-400',
     glow: 'shadow-[0_0_20px_rgba(56,189,248,0.7)]',
@@ -73,6 +77,21 @@ export function CalloutTransformOverlay({
   const selectedElementId = useEditorStore((s) => s.selectedElementId);
   const setSelectedElementId = useEditorStore((s) => s.setSelectedElementId);
   const activeSceneIndex = useEditorStore((s) => s.activeSceneIndex);
+  const { scale: contextScale, containerWidth } = useCanvasTransform();
+  const canvasScale = useEditorStore((s) => s.canvasScale) || contextScale || 1;
+  const isStageMatchActive = useEditorStore((s) => s.isStageMatchActive);
+
+  // 基础反缩放比例
+  const baseAntiScale = Math.max(0.6, Math.min(4.0, 1 / (canvasScale || 1)));
+
+  // Option 1 落地：双击 Stage Match 激活真实舞台监视比例（以 1080P/1920 物理画幅为锚定标尺）
+  // 兼顾人机工学安全保底（最低不低于 0.72x，确保小屏下字号不低于 9.5px）
+  const stageScaleFactor = isStageMatchActive
+    ? Math.min(1.0, Math.max(0.72, (containerWidth || 1150) / 1920))
+    : 1.0;
+
+  const effectiveAntiScale = baseAntiScale * stageScaleFactor;
+  const [hoveredCalloutId, setHoveredCalloutId] = useState<string | null>(null);
   const dsl = useProjectStore((s) => s.dsl);
   const updateCallout = useProjectStore((s) => s.updateCallout);
   const deleteElement = useProjectStore((s) => s.deleteElement);
@@ -105,7 +124,7 @@ export function CalloutTransformOverlay({
       deleteElement('callouts', selectedCallout.id);
       setSelectedElementId(null);
     },
-    [selectedCallout, deleteElement, setSelectedElementId]
+    [selectedCallout, deleteElement, setSelectedElementId],
   );
 
   const handleClose = useCallback(
@@ -114,7 +133,7 @@ export function CalloutTransformOverlay({
       e?.preventDefault();
       setSelectedElementId(null);
     },
-    [setSelectedElementId]
+    [setSelectedElementId],
   );
 
   const [dragState, setDragState] = useState<{
@@ -141,7 +160,7 @@ export function CalloutTransformOverlay({
         y: Math.max(0, Math.min(y, contentHeight)),
       };
     },
-    [contentWidth, contentHeight]
+    [contentWidth, contentHeight],
   );
 
   // Keyboard Delete / Escape shortcuts
@@ -204,7 +223,7 @@ export function CalloutTransformOverlay({
             currentCalloutX: Math.round(nextX),
             currentCalloutY: Math.round(nextY),
           }
-        : null
+        : null,
     );
   };
 
@@ -235,7 +254,9 @@ export function CalloutTransformOverlay({
       ? parseCoord(selectedCallout.position.top, contentHeight)
       : 0;
 
-  const currentTheme = selectedCallout ? (THEME_COLORS[selectedCallout.theme || 'blue'] || THEME_COLORS.blue) : THEME_COLORS.blue;
+  const currentTheme = selectedCallout
+    ? THEME_COLORS[selectedCallout.theme || 'blue'] || THEME_COLORS.blue
+    : THEME_COLORS.blue;
 
   // 检查是否有绑定的目标框元
   const targetBox = selectedCallout?.targetBoxId
@@ -257,17 +278,26 @@ export function CalloutTransformOverlay({
               <stop offset="100%" stopColor={currentTheme.dot} stopOpacity="0.3" />
             </linearGradient>
           </defs>
-          {/* 连接线：从框元中心连向气泡左上卡片 */}
-          <line
-            x1={targetBox.x + targetBox.width / 2}
-            y1={targetBox.y + targetBox.height / 2}
-            x2={currentX + 16}
-            y2={currentY + 16}
-            stroke="url(#callout-leader-grad)"
-            strokeWidth="2"
-            strokeDasharray="4 4"
-            className="animate-pulse"
-          />
+          {/* 连接线：从框元中心连向气泡卡片侧边中心 */}
+          {(() => {
+            const selectedLeftPercent = (currentX / contentWidth) * 100;
+            const isNearRightEdge = selectedLeftPercent > 70;
+            const anchorX = isNearRightEdge ? currentX + 280 * effectiveAntiScale : currentX;
+            const anchorY = currentY + 32 * effectiveAntiScale;
+
+            return (
+              <line
+                x1={targetBox.x + targetBox.width / 2}
+                y1={targetBox.y + targetBox.height / 2}
+                x2={anchorX}
+                y2={anchorY}
+                stroke="url(#callout-leader-grad)"
+                strokeWidth="2"
+                strokeDasharray="4 4"
+                className="animate-pulse"
+              />
+            );
+          })()}
           {/* 框元中心锚定圆环 */}
           <circle
             cx={targetBox.x + targetBox.width / 2}
@@ -286,7 +316,7 @@ export function CalloutTransformOverlay({
         </svg>
       )}
 
-      {/* 2. 当前场景未被选中的 Callout：可悬停点击选中热区 */}
+      {/* 2. 当前场景未被选中的 Callout：可悬停点击选中热区，WYSIWYG 完整卡片预览 */}
       {activeCallouts.map((c) => {
         const isSelected = c.id === selectedElementId;
         if (isSelected) return null;
@@ -296,176 +326,229 @@ export function CalloutTransformOverlay({
         const theme = THEME_COLORS[c.theme || 'blue'] || THEME_COLORS.blue;
 
         const customMaxWidth = c.style?.maxWidth ? `${c.style.maxWidth}px` : '320px';
+        const isHovered = hoveredCalloutId === c.id;
+        // 智能折叠策略：极小缩放 (scale < 0.15) 且未悬停时展示轻量胶囊，缩放适中或悬停时展示完整卡片
+        const isCompact = canvasScale < 0.15 && !isHovered;
+
+        // 与 Player 播放动效内核保持 100% 对称一致的原点规则
+        const leftPercent = (leftPx / contentWidth) * 100;
+        const calloutOrigin = leftPercent > 70 ? 'right center' : 'left center';
 
         return (
           <div
             key={c.id}
             style={{
-              left: `${(leftPx / contentWidth) * 100}%`,
+              left: `${leftPercent}%`,
               top: `${(topPx / contentHeight) * 100}%`,
-              minWidth: '200px',
-              maxWidth: customMaxWidth,
+              transform: `scale(${effectiveAntiScale})`,
+              transformOrigin: calloutOrigin,
+              minWidth: isCompact ? 'auto' : '200px',
+              maxWidth: isCompact ? '240px' : customMaxWidth,
               width: 'max-content',
+              transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
             }}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedElementId(c.id);
+              useEditorStore.getState().setStageMatchActive(false);
             }}
-            className="absolute rounded-xl border border-dashed border-white/25 hover:border-sky-400/90 hover:bg-sky-400/10 transition-all duration-150 p-2.5 cursor-pointer pointer-events-auto select-none group bg-slate-900/60"
+            onMouseEnter={() => setHoveredCalloutId(c.id)}
+            onMouseLeave={() => setHoveredCalloutId(null)}
+            className="absolute cursor-pointer pointer-events-auto select-none transition-transform duration-100 z-10"
             title={`点击选中并调节解说气泡: ${c.title || c.id}`}
           >
-            <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition">
-              <span
-                className="w-2 h-2 rounded-full shrink-0"
-                style={{ backgroundColor: theme.dot }}
-              />
-              <span
-                style={{
-                  fontSize: c.style?.titleFontSize ? `${c.style.titleFontSize}px` : undefined,
-                }}
-                className="text-[10px] font-mono text-white/80 font-bold truncate"
+            {isCompact ? (
+              <div className="flex items-center gap-1.5 py-1 px-2.5 bg-slate-900/85 backdrop-blur-md rounded-full border border-white/20 hover:border-sky-400/90 hover:bg-sky-400/15 transition-all shadow-md">
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: theme.dot }}
+                />
+                <span
+                  style={{
+                    fontSize: c.style?.titleFontSize ? `${c.style.titleFontSize}px` : undefined,
+                  }}
+                  className="text-[10px] font-mono text-white/90 font-bold truncate"
+                >
+                  {c.title || c.id}
+                </span>
+              </div>
+            ) : (
+              <div
+                className={`relative rounded-xl border border-white/20 hover:border-opacity-100 hover:${theme.border} ${theme.glow} bg-slate-900/88 backdrop-blur-md px-4 py-2.5 transition-all duration-150 shadow-xl group`}
               >
-                {c.title || c.id}
-              </span>
-            </div>
+                {/* 徽章标题 */}
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <span
+                    style={{
+                      fontSize: c.style?.titleFontSize ? `${c.style.titleFontSize}px` : undefined,
+                    }}
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${theme.bg} ${theme.text} border border-current`}
+                  >
+                    {c.title || c.id}
+                  </span>
+                </div>
+
+                {/* 正文描述预览 (无人工截断，严格对齐 Player 真实渲染高度) */}
+                <div
+                  style={{
+                    fontSize: c.style?.fontSize ? `${c.style.fontSize}px` : undefined,
+                  }}
+                  className="text-[12px] text-slate-300 leading-[1.45]"
+                >
+                  {c.desc || '（暂无描述，点击编辑）'}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
 
       {/* 3. 选中的 Callout：发光边框、移动手柄与悬浮操作栏 */}
-      {selectedCallout && (() => {
-        const selectedMaxWidth = selectedCallout.style?.maxWidth
-          ? `${selectedCallout.style.maxWidth}px`
-          : '340px';
+      {selectedCallout &&
+        (() => {
+          const selectedLeftPercent = (currentX / contentWidth) * 100;
+          const selectedOrigin = selectedLeftPercent > 70 ? 'right center' : 'left center';
+          const selectedMaxWidth = selectedCallout.style?.maxWidth
+            ? `${selectedCallout.style.maxWidth}px`
+            : '320px';
 
-        return (
-          <div
-            style={{
-              left: `${(currentX / contentWidth) * 100}%`,
-              top: `${(currentY / contentHeight) * 100}%`,
-              minWidth: '200px',
-              maxWidth: selectedMaxWidth,
-              width: 'max-content',
-            }}
-            className="absolute pointer-events-auto select-none"
-          >
-          {/* 顶部微型悬浮工具栏 */}
-          <div
-            className="absolute -top-10 left-0 flex items-center gap-1.5 bg-slate-900/95 border border-slate-700/80 rounded-lg px-2 py-1 shadow-2xl backdrop-blur-md pointer-events-auto z-30 animate-in fade-in duration-100 select-none"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-1 pr-1 border-r border-slate-700">
-              <MessageSquare className="w-3 h-3 text-sky-400" />
-              <span className="text-[10px] font-mono text-sky-300 font-bold">
-                {selectedCallout.id}
-              </span>
-            </div>
-
-            {/* 快速调色 */}
-            <div className="flex items-center gap-1 px-1">
-              {THEME_OPTIONS.map((opt) => {
-                const isActive = (selectedCallout.theme || 'blue') === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    style={{ backgroundColor: opt.color }}
-                    onClick={() => updateCallout(selectedCallout.id, { theme: opt.id })}
-                    className={`w-3.5 h-3.5 rounded-full border transition cursor-pointer ${
-                      isActive
-                        ? 'ring-2 ring-white scale-125 border-white'
-                        : 'border-white/30 hover:scale-125'
-                    }`}
-                    title={`切换配色: ${opt.name}`}
-                  />
-                );
-              })}
-            </div>
-
-            {targetBox && (
-              <div
-                className="flex items-center gap-0.5 px-1 bg-slate-800 rounded text-[9px] text-sky-300 font-mono border border-slate-700/60"
-                title={`已关联框元: ${targetBox.id}`}
-              >
-                <LinkIcon className="w-2.5 h-2.5" />
-                <span className="truncate max-w-[60px]">{targetBox.id}</span>
-              </div>
-            )}
-
-            <div className="w-px h-3 bg-slate-700 mx-0.5" />
-
-            {/* 快捷删除 */}
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="p-1 rounded text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer"
-              title="删除气泡 (Delete)"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-
-            {/* 取消选中 / 关闭 */}
-            <button
-              type="button"
-              onClick={handleClose}
-              className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
-              title="取消选择 (Esc)"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-
-          {/* 气泡卡片主体 (支持拖拽移动) */}
-          <div
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            style={{
-              maxWidth: selectedCallout.style?.maxWidth ? `${selectedCallout.style.maxWidth}px` : undefined,
-            }}
-            className={`relative rounded-xl border-2 ${currentTheme.border} ${currentTheme.glow} bg-slate-900/95 p-3.5 cursor-move active:cursor-grabbing group hover:border-opacity-100 transition shadow-2xl`}
-            title="按住拖拽移动解说气泡位置"
-          >
-            {/* 拖拽指示器角标与快捷关闭按钮 */}
-            <div className="absolute top-2 right-2 flex items-center gap-1.5 text-slate-400 group-hover:text-white transition">
-              <button
-                type="button"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={handleClose}
-                className="p-0.5 hover:bg-white/20 text-slate-400 hover:text-white rounded transition cursor-pointer"
-                title="取消选中 / 关闭 (Esc)"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-              <Move className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
-            </div>
-
-            {/* 徽章标题 */}
-            <div className="mb-1.5 flex items-center gap-1.5">
-              <span
-                style={{
-                  fontSize: selectedCallout.style?.titleFontSize ? `${selectedCallout.style.titleFontSize}px` : undefined,
-                }}
-                className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${currentTheme.bg} ${currentTheme.text} border border-current`}
-              >
-                {selectedCallout.title || '解说气泡'}
-              </span>
-            </div>
-
-            {/* 正文描述预览 */}
+          return (
             <div
               style={{
-                fontSize: selectedCallout.style?.fontSize ? `${selectedCallout.style.fontSize}px` : undefined,
+                left: `${selectedLeftPercent}%`,
+                top: `${(currentY / contentHeight) * 100}%`,
+                transform: `scale(${effectiveAntiScale})`,
+                transformOrigin: selectedOrigin,
+                minWidth: '200px',
+                maxWidth: selectedMaxWidth,
+                width: 'max-content',
+                transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
               }}
-              className="text-[12px] text-slate-300 line-clamp-3 leading-relaxed"
+              className="absolute pointer-events-auto select-none z-30"
             >
-              {selectedCallout.desc || '（暂无描述，可在右侧属性面板编辑）'}
+              {/* 顶部微型悬浮工具栏 */}
+              <div
+                className="absolute -top-10 left-0 flex items-center gap-1.5 bg-slate-900/95 border border-slate-700/80 rounded-lg px-2 py-1 shadow-2xl backdrop-blur-md pointer-events-auto z-30 animate-in fade-in duration-100 select-none"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-1 pr-1 border-r border-slate-700">
+                  <MessageSquare className="w-3 h-3 text-sky-400" />
+                  <span className="text-[10px] font-mono text-sky-300 font-bold">
+                    {selectedCallout.id}
+                  </span>
+                </div>
+
+                {/* 快速调色 */}
+                <div className="flex items-center gap-1 px-1">
+                  {THEME_OPTIONS.map((opt) => {
+                    const isActive = (selectedCallout.theme || 'blue') === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        style={{ backgroundColor: opt.color }}
+                        onClick={() => updateCallout(selectedCallout.id, { theme: opt.id })}
+                        className={`w-3.5 h-3.5 rounded-full border transition cursor-pointer ${
+                          isActive
+                            ? 'ring-2 ring-white scale-125 border-white'
+                            : 'border-white/30 hover:scale-125'
+                        }`}
+                        title={`切换配色: ${opt.name}`}
+                      />
+                    );
+                  })}
+                </div>
+
+                {targetBox && (
+                  <div
+                    className="flex items-center gap-0.5 px-1 bg-slate-800 rounded text-[9px] text-sky-300 font-mono border border-slate-700/60"
+                    title={`已关联框元: ${targetBox.id}`}
+                  >
+                    <LinkIcon className="w-2.5 h-2.5" />
+                    <span className="truncate max-w-[60px]">{targetBox.id}</span>
+                  </div>
+                )}
+
+                <div className="w-px h-3 bg-slate-700 mx-0.5" />
+
+                {/* 快捷删除 */}
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="p-1 rounded text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 transition cursor-pointer"
+                  title="删除气泡 (Delete)"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+
+                {/* 取消选中 / 关闭 */}
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                  title="取消选择 (Esc)"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* 气泡卡片主体 (支持拖拽移动) */}
+              <div
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                style={{
+                  maxWidth: selectedCallout.style?.maxWidth
+                    ? `${selectedCallout.style.maxWidth}px`
+                    : undefined,
+                }}
+                className={`relative rounded-xl border-2 ${currentTheme.border} ${currentTheme.glow} bg-slate-900/95 px-4 py-2.5 cursor-move active:cursor-grabbing group hover:border-opacity-100 transition shadow-2xl`}
+                title="按住拖拽移动解说气泡位置"
+              >
+                {/* 拖拽指示器角标与快捷关闭按钮 */}
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 text-slate-400 group-hover:text-white transition">
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={handleClose}
+                    className="p-0.5 hover:bg-white/20 text-slate-400 hover:text-white rounded transition cursor-pointer"
+                    title="取消选中 / 关闭 (Esc)"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                  <Move className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                </div>
+
+                {/* 徽章标题 */}
+                <div className="mb-1.5 flex items-center gap-1.5">
+                  <span
+                    style={{
+                      fontSize: selectedCallout.style?.titleFontSize
+                        ? `${selectedCallout.style.titleFontSize}px`
+                        : undefined,
+                    }}
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${currentTheme.bg} ${currentTheme.text} border border-current`}
+                  >
+                    {selectedCallout.title || '解说气泡'}
+                  </span>
+                </div>
+
+                {/* 正文描述预览 (自然撑开，严格对齐 Player 真实渲染高度) */}
+                <div
+                  style={{
+                    fontSize: selectedCallout.style?.fontSize
+                      ? `${selectedCallout.style.fontSize}px`
+                      : undefined,
+                  }}
+                  className="text-[12px] text-slate-300 leading-[1.45]"
+                >
+                  {selectedCallout.desc || '（暂无描述，可在右侧属性面板编辑）'}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      );
-    })()}
+          );
+        })()}
     </div>
   );
 }

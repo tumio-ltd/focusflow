@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { FocusFlowPlayer } from '@focusflow/player';
-import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem } from '@focusflow/dsl';
+import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem, SceneVoiceoverAudio } from '@focusflow/dsl';
 import { 
   WorkbenchLayout, 
   TopBar, 
@@ -20,15 +20,25 @@ import {
   TemplatesModal,
   AudienceModal,
   ExportModal,
-  DslEditorModal
+  DslEditorModal,
 } from '@/components/modals';
+import { Toaster, toast } from '@/components/ui';
+import { AIVoiceoverSettingsModal } from '@/components/timeline/AIVoiceoverSettingsModal';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import { type ImageMeta, parseImageUrl } from '@/utils/imageDecoder';
 import type { ArchitectureTemplate } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
-import { synthesizeSceneVoiceover, speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
+import { 
+  synthesizeSceneVoiceover, 
+  speakWebSpeech, 
+  stopWebSpeech, 
+  getStoredTTSConfig, 
+  composeMasterAudioFromScenes, 
+  setSceneAudioBlob,
+  showAudioErrorToast
+} from '@/services/audio';
 import { startCleanScreenRecording, downloadVideoBlob, type RecordingSession } from '@/services/screenRecorder';
 import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
@@ -43,6 +53,7 @@ export default function App() {
   const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
+  const [isAIVoiceoverSettingsOpen, setIsAIVoiceoverSettingsOpen] = useState(false);
   const [isSingleTtsLoading, setIsSingleTtsLoading] = useState(false);
   const [ttsPreview, setTtsPreview] = useState<TTSPreviewInfo | null>(null);
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
@@ -50,6 +61,7 @@ export default function App() {
   const recordingSessionRef = useRef<RecordingSession | null>(null);
   const mixingAudioCtxRef = useRef<AudioContext | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previousMasterUrlRef = useRef<string | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 视口变换与容器尺寸跟踪 (使用 useRef 隔离高频手势平移，避免触发根组件与侧边栏 Re-render)
@@ -99,6 +111,8 @@ export default function App() {
     calibrateViewport,
     toggleShowPlayerControls,
     setAudioTrack,
+    removeAudioTrack,
+    updateSceneVoiceoverAudio,
     markSaved,
   } = useProjectStore();
 
@@ -150,6 +164,56 @@ export default function App() {
       }
     };
   }, [dsl, isDirty, currentProjectId, saveProject, markSaved]);
+
+  // 2.1 监听分幕时序拓扑变化，自动响应式重合流母带 (分幕增删、时长调整、顺序重排、台词语音变更)
+  const audioTopologyKey = useMemo(() => {
+    return dsl.scenes.map((s) => `${s.id}:${s.duration || 3800}:${s.voiceoverAudio?.url || ''}`).join('|');
+  }, [dsl.scenes]);
+
+  const lastProcessedKeyRef = useRef<string>(audioTopologyKey);
+
+  useEffect(() => {
+    if (audioTopologyKey === lastProcessedKeyRef.current) {
+      return;
+    }
+
+    const hasAnyAudio = dsl.scenes.some((s) => Boolean(s.voiceoverAudio?.url));
+    if (!hasAnyAudio) {
+      const currentTrack = dsl.audio?.tracks?.[0];
+      if (currentTrack?.name?.includes('智能合流母带')) {
+        if (previousMasterUrlRef.current && previousMasterUrlRef.current.startsWith('blob:')) {
+          try { URL.revokeObjectURL(previousMasterUrlRef.current); } catch {}
+          previousMasterUrlRef.current = null;
+        }
+        removeAudioTrack(currentTrack.id);
+      }
+      lastProcessedKeyRef.current = audioTopologyKey;
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const defaultInterval = dsl.meta.controls?.interval || 3800;
+        const { masterTrack } = await composeMasterAudioFromScenes(dsl.scenes, {
+          defaultInterval,
+          trackName: `🎙️ 全局分幕智能合流母带`,
+        });
+
+        if (masterTrack) {
+          if (previousMasterUrlRef.current && previousMasterUrlRef.current.startsWith('blob:')) {
+            try { URL.revokeObjectURL(previousMasterUrlRef.current); } catch {}
+          }
+          previousMasterUrlRef.current = masterTrack.url;
+          setAudioTrack(masterTrack);
+        }
+        lastProcessedKeyRef.current = audioTopologyKey;
+      } catch (err) {
+        console.warn('[App] Failed to auto-sync stitched master audio track:', err);
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [audioTopologyKey, dsl.scenes, dsl.meta.controls?.interval, setAudioTrack, removeAudioTrack, dsl.audio?.tracks]);
 
   // 3. Initialize FocusFlow Player
   useEffect(() => {
@@ -245,9 +309,7 @@ export default function App() {
 
       const isOfflineVoice = Boolean(
         mainTrack.isOfflineTTS ||
-        mainTrack.type === 'offline-tts' ||
-        mainTrack.id?.startsWith('track-ai-') ||
-        mainTrack.id?.startsWith('tts-')
+        mainTrack.type === 'offline-tts'
       );
       const isBgmWithVoiceover = Boolean(
         mainTrack.type === 'music' || mainTrack.isBackgroundBGM
@@ -301,21 +363,35 @@ export default function App() {
     const cfg = getStoredTTSConfig();
     setTtsPreview({ ...preview, isPlaying: true });
 
-    if (cfg.mode === 'cloud' && preview.audioBlob) {
+    if (preview.audioBlob) {
       const url = URL.createObjectURL(preview.audioBlob);
       const audio = new Audio(url);
       previewAudioRef.current = audio;
+
       audio.onended = () => {
         URL.revokeObjectURL(url);
-        previewAudioRef.current = null;
+        if (previewAudioRef.current === audio) {
+          previewAudioRef.current = null;
+        }
         setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
       };
-      audio.onerror = () => {
+
+      audio.onerror = (e) => {
+        console.error('TTS audio preview error:', audio.error, e);
         URL.revokeObjectURL(url);
-        previewAudioRef.current = null;
+        if (previewAudioRef.current === audio) {
+          previewAudioRef.current = null;
+        }
         setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
       };
-      audio.play().catch(() => {});
+
+      audio.play().catch((err) => {
+        console.error('TTS audio.play() rejected:', err);
+        if (previewAudioRef.current === audio) {
+          previewAudioRef.current = null;
+        }
+        setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
+      });
     } else {
       speakWebSpeech(text, cfg.speed, undefined, cfg.voice, () => {
         setTtsPreview((prev) => (prev ? { ...prev, isPlaying: false } : null));
@@ -368,9 +444,7 @@ export default function App() {
       if (mainTrack && !mainTrack.muted && (mainTrack.volume ?? 1) > 0) {
         const isOfflineVoice = Boolean(
           mainTrack.isOfflineTTS ||
-          mainTrack.type === 'offline-tts' ||
-          mainTrack.id?.startsWith('track-ai-') ||
-          mainTrack.id?.startsWith('tts-')
+          mainTrack.type === 'offline-tts'
         );
         const isBgmWithVoiceover = Boolean(
           mainTrack.type === 'music' || mainTrack.isBackgroundBGM
@@ -405,7 +479,7 @@ export default function App() {
     if (currentProjectId) {
       await saveProject(currentProjectId, dsl);
       markSaved();
-      alert('🎉 工程已实时存入本地 IndexedDB！');
+      toast.success(t('projectSaved', '🎉 工程已实时存入本地 IndexedDB！'));
     }
   };
 
@@ -603,6 +677,9 @@ export default function App() {
     (transform: { scale: number; x: number; y: number }, rect: { width: number; height: number }) => {
       canvasTransformRef.current = transform;
       containerRectRef.current = rect;
+      if (useEditorStore.getState().canvasScale !== transform.scale) {
+        useEditorStore.getState().setCanvasScale(transform.scale);
+      }
     },
     []
   );
@@ -844,12 +921,26 @@ export default function App() {
                   audioBlob: res.audioBlob,
                 };
                 playCurrentTtsPreview(previewInfo, text);
-              } catch (e) {
+              } catch (e: any) {
                 console.error('Failed to preview single scene voiceover:', e);
+                const cfg = getStoredTTSConfig();
+                showAudioErrorToast({
+                  title: t('audio:errorModalTitle', '语音合成遇到问题'),
+                  message: e?.message || String(e),
+                  details: e?.stack || String(e),
+                  provider: cfg.preset,
+                  model: cfg.model,
+                  onOpenSettings: () => setIsAIVoiceoverSettingsOpen(true),
+                  onRetry: () => {
+                    const btn = document.querySelector('[data-testid="synthesize-scene-tts-btn"]') as HTMLButtonElement | null;
+                    if (btn) btn.click();
+                  },
+                });
               } finally {
                 setIsSingleTtsLoading(false);
               }
             }}
+            onOpenVoiceoverSettings={() => setIsAIVoiceoverSettingsOpen(true)}
             isSingleTtsLoading={isSingleTtsLoading}
             ttsPreview={ttsPreview}
             onStopPreviewTTS={stopCurrentTtsPreview}
@@ -858,22 +949,70 @@ export default function App() {
               const text = activeScene.voiceoverScript?.trim() || activeScene.title;
               playCurrentTtsPreview(ttsPreview, text);
             }}
-            onApplySceneTTS={() => {
+            onApplySceneTTS={async () => {
               if (!ttsPreview || !activeScene) return;
-              updateSceneDuration(activeSceneIndex, ttsPreview.adaptedDuration);
+              const cfg = getStoredTTSConfig();
+              const isOffline = cfg.mode === 'offline';
+              const audioUrl = ttsPreview.audioBlob ? URL.createObjectURL(ttsPreview.audioBlob) : '';
+
               if (ttsPreview.audioBlob) {
-                const cfg = getStoredTTSConfig();
-                const isOffline = cfg.mode === 'offline';
-                setAudioTrack({
-                  id: `tts-${activeScene.id}-${Date.now()}`,
-                  url: URL.createObjectURL(ttsPreview.audioBlob),
-                  name: `🎙️ ${activeScene.title}`,
-                  durationMs: ttsPreview.adaptedDuration,
-                  volume: 1.0,
-                  isOfflineTTS: isOffline,
-                  type: isOffline ? 'offline-tts' : 'voiceover',
-                });
+                setSceneAudioBlob(activeScene.id, ttsPreview.audioBlob);
               }
+
+              const voiceoverAudio: SceneVoiceoverAudio | undefined = audioUrl ? {
+                url: audioUrl,
+                durationMs: ttsPreview.audioDurationMs,
+                voiceId: cfg.voice,
+                model: isOffline ? 'web-speech' : cfg.model,
+                adaptedDuration: ttsPreview.adaptedDuration,
+              } : undefined;
+
+              const updatedScenes = dsl.scenes.map((s, idx) => {
+                if (idx === activeSceneIndex) {
+                  return {
+                    ...s,
+                    duration: ttsPreview.adaptedDuration,
+                    voiceoverAudio,
+                  };
+                }
+                return s;
+              });
+
+              updateSceneVoiceoverAudio(activeSceneIndex, voiceoverAudio, ttsPreview.adaptedDuration);
+
+              // 立即执行增量合流，实现实时无缝生效与零延迟渲染
+              let nextMasterTrack: any = null;
+              try {
+                const defaultInterval = dsl.meta.controls?.interval || 3800;
+                const { masterTrack } = await composeMasterAudioFromScenes(updatedScenes, {
+                  defaultInterval,
+                  trackName: `🎙️ 全局分幕智能合流母带`,
+                });
+
+                if (masterTrack) {
+                  nextMasterTrack = masterTrack;
+                  if (previousMasterUrlRef.current && previousMasterUrlRef.current.startsWith('blob:')) {
+                    try { URL.revokeObjectURL(previousMasterUrlRef.current); } catch {}
+                  }
+                  previousMasterUrlRef.current = masterTrack.url;
+                  setAudioTrack(masterTrack);
+                }
+                lastProcessedKeyRef.current = updatedScenes
+                  .map((s) => `${s.id}:${s.duration || 3800}:${s.voiceoverAudio?.url || ''}`)
+                  .join('|');
+              } catch (err) {
+                console.warn('[App] Failed to compose master audio track on apply:', err);
+              }
+
+              // 🌟 立即持久化存盘到 IndexedDB，彻底避免用户立即刷新导致时差丢失
+              if (currentProjectId) {
+                saveProject(currentProjectId, {
+                  ...dsl,
+                  scenes: updatedScenes,
+                  audio: nextMasterTrack ? { ...dsl.audio, tracks: [nextMasterTrack] } : dsl.audio,
+                }).catch((err) => console.warn('[App] Failed to immediately save on apply:', err));
+              }
+
               stopCurrentTtsPreview();
               setTtsPreview(null);
             }}
@@ -968,6 +1107,13 @@ export default function App() {
         onClose={() => setIsDslModalOpen(false)}
         dsl={dsl}
         onApplyDSL={setDSL}
+      />
+
+      <Toaster />
+
+      <AIVoiceoverSettingsModal
+        isOpen={isAIVoiceoverSettingsOpen}
+        onClose={() => setIsAIVoiceoverSettingsOpen(false)}
       />
     </>
   );

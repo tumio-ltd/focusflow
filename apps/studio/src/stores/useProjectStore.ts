@@ -1,30 +1,31 @@
 import { create } from 'zustand';
-import type { 
-  FocusFlowDSL, 
-  SceneStep, 
-  ElementBox, 
-  ElementPath, 
-  ElementDot, 
+import type {
+  FocusFlowDSL,
+  SceneStep,
+  ElementBox,
+  ElementPath,
+  ElementDot,
   ElementImage,
   CalloutItem,
   AudioTrackConfig,
   AudioMarker,
-  AudioTrackRole
+  AudioTrackRole,
+  SceneVoiceoverAudio,
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
-import { stopWebSpeech } from '@/services/audio';
+import { stopWebSpeech, clearAudioDecodeCache, removeSceneAudioBlob } from '@/services/audio';
 
 const MAX_HISTORY = 50;
 
 const defaultInitialDSL: FocusFlowDSL = {
   meta: {
     title: '微服务电商架构演进演示',
-    viewport: { width: 5120, height: 2880 },
+    viewport: { width: 5120, height: 2880, aspectRatio: '16:9' },
     theme: { mode: 'dark' },
-    controls: { showHUDButton: true, autoplay: false, interval: 3800, showControls: false }
+    controls: { showHUDButton: true, autoplay: false, interval: 3800, showControls: false },
   },
   asset: {
-    url: '/01-system_architecture_dark.png'
+    url: '/01-system_architecture_dark.png',
   },
   elements: {
     boxes: [
@@ -37,7 +38,7 @@ const defaultInitialDSL: FocusFlowDSL = {
         height: 200,
         rx: 12,
         ry: 12,
-        style: { stroke: '#38bdf8', strokeWidth: 3, glow: true }
+        style: { stroke: '#38bdf8', strokeWidth: 3, glow: true },
       },
       {
         id: 'box-order',
@@ -48,19 +49,19 @@ const defaultInitialDSL: FocusFlowDSL = {
         height: 200,
         rx: 12,
         ry: 12,
-        style: { stroke: '#34d399', strokeWidth: 3, glow: true }
-      }
+        style: { stroke: '#34d399', strokeWidth: 3, glow: true },
+      },
     ],
     paths: [
       {
         id: 'path-gateway-order',
         from: 'box-gateway.right',
         to: 'box-order.left',
-        style: { stroke: '#38bdf8', strokeWidth: 3, mode: 'stream', flowSpeed: 1.5 }
-      }
+        style: { stroke: '#38bdf8', strokeWidth: 3, mode: 'stream', flowSpeed: 1.5 },
+      },
     ],
     dots: [],
-    images: []
+    images: [],
   },
   scenes: [
     {
@@ -77,10 +78,10 @@ const defaultInitialDSL: FocusFlowDSL = {
             position: { left: '380px', top: '210px' },
             theme: 'blue',
             title: '微服务网关集群',
-            desc: '负责全站流量路由、动态鉴权、限流熔断与灰度分流'
-          }
-        ]
-      }
+            desc: '负责全站流量路由、动态鉴权、限流熔断与灰度分流',
+          },
+        ],
+      },
     },
     {
       id: 'scene-1',
@@ -96,12 +97,12 @@ const defaultInitialDSL: FocusFlowDSL = {
             position: { left: '980px', top: '210px' },
             theme: 'green',
             title: '订单处理引擎',
-            desc: '基于 Seata AT 模式保障高并发下单分布式事务最终一致性'
-          }
-        ]
-      }
-    }
-  ]
+            desc: '基于 Seata AT 模式保障高并发下单分布式事务最终一致性',
+          },
+        ],
+      },
+    },
+  ],
 };
 
 /**
@@ -166,9 +167,9 @@ export interface ProjectState {
   duplicateScene: (index: number) => void;
   deleteScene: (index: number) => void;
   toggleElementInScene: (
-    sceneIndex: number, 
-    elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', 
-    elementId: string
+    sceneIndex: number,
+    elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts',
+    elementId: string,
   ) => void;
   inheritPreviousSceneElements: (targetSceneIndex: number) => void;
   addBox: (box: ElementBox, activeInSceneIndex?: number) => void;
@@ -176,21 +177,58 @@ export interface ProjectState {
   addDot: (dot: ElementDot, activeInSceneIndex?: number) => void;
   addCallout: (callout: CalloutItem, activeInSceneIndex?: number) => void;
   addImage: (image: ElementImage, activeInSceneIndex?: number) => void;
-  deleteElement: (elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts', elementId: string) => void;
-  updateBoxBounds: (boxId: string, bounds: { x: number; y: number; width: number; height: number }) => void;
+  deleteElement: (
+    elementType: 'boxes' | 'paths' | 'dots' | 'images' | 'callouts',
+    elementId: string,
+  ) => void;
+  updateBoxBounds: (
+    boxId: string,
+    bounds: { x: number; y: number; width: number; height: number },
+  ) => void;
   updateDotPosition: (dotId: string, position: { cx: number; cy: number }) => void;
   updateCallout: (calloutId: string, updates: Partial<CalloutItem>) => void;
   updateImage: (imageId: string, updates: Partial<ElementImage>) => void;
   updatePathEndpoints: (pathId: string, endpoints: { from?: string; to?: string }) => void;
-  updateElementStyle: (elementId: string, style: { stroke?: string; fill?: string; strokeWidth?: number; glow?: boolean; mode?: 'draw' | 'stream' | 'pulse'; speed?: number; flowSpeed?: number; rx?: number; r?: number; pulse?: boolean; borderRadius?: number; boxShadow?: boolean | string; border?: string; animation?: 'fade' | 'zoom-fade' | 'slide-up'; opacity?: number }) => void;
+  updateElementStyle: (
+    elementId: string,
+    style: {
+      stroke?: string;
+      fill?: string;
+      strokeWidth?: number;
+      glow?: boolean;
+      mode?: 'draw' | 'stream' | 'pulse';
+      speed?: number;
+      flowSpeed?: number;
+      rx?: number;
+      r?: number;
+      pulse?: boolean;
+      borderRadius?: number;
+      boxShadow?: boolean | string;
+      border?: string;
+      animation?: 'fade' | 'zoom-fade' | 'slide-up';
+      opacity?: number;
+    },
+  ) => void;
   calibrateViewport: (viewport: { width: number; height: number }) => void;
+  setAspectRatio: (aspectRatio: '16:9' | '16:10' | '4:3' | '9:16') => void;
   toggleShowPlayerControls: () => void;
   updateSceneDuration: (sceneIndex: number, duration: number) => void;
   updateSceneVoiceoverScript: (sceneIndex: number, script: string) => void;
+  updateSceneVoiceoverAudio: (
+    sceneIndex: number,
+    audio: SceneVoiceoverAudio | undefined,
+    adaptedDuration?: number,
+  ) => void;
+  batchSetScenes: (scenes: SceneStep[]) => void;
   setAudioTrack: (track: AudioTrackConfig) => void;
   removeAudioTrack: (trackId: string) => void;
   updateAudioTrackVolume: (volume: number) => void;
-  updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number, isBackgroundBGM?: boolean) => void;
+  updateAudioTrackType: (
+    trackId: string,
+    type: AudioTrackRole,
+    volume?: number,
+    isBackgroundBGM?: boolean,
+  ) => void;
   addAudioMarker: (marker: AudioMarker) => void;
   batchUpdateScenesDuration: (durations: number[]) => void;
   undo: () => void;
@@ -215,8 +253,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
   past: [],
   future: [],
 
-  setDSL: (dsl) =>
-    set((state) => pushHistory(state, sanitizeDSL(dsl))),
+  setDSL: (dsl) => set((state) => pushHistory(state, sanitizeDSL(dsl))),
 
   calibrateViewport: (viewport) =>
     set((state) => {
@@ -233,10 +270,29 @@ export const useProjectStore = create<ProjectState>((set) => ({
           ...state.dsl,
           meta: {
             ...state.dsl.meta,
-            viewport: { width, height },
+            viewport: {
+              ...state.dsl.meta.viewport,
+              width,
+              height,
+            },
           },
         },
       };
+    }),
+
+  setAspectRatio: (aspectRatio) =>
+    set((state) => {
+      const nextDSL: FocusFlowDSL = {
+        ...state.dsl,
+        meta: {
+          ...state.dsl.meta,
+          viewport: {
+            ...state.dsl.meta.viewport,
+            aspectRatio,
+          },
+        },
+      };
+      return pushHistory(state, nextDSL);
     }),
 
   ingestNewAsset: (meta) =>
@@ -400,6 +456,20 @@ export const useProjectStore = create<ProjectState>((set) => ({
   deleteScene: (index) =>
     set((state) => {
       if (state.dsl.scenes.length <= 1) return state; // 至少保留 1 个场景
+      const targetScene = state.dsl.scenes[index];
+      if (targetScene) {
+        removeSceneAudioBlob(targetScene.id);
+        if (targetScene.voiceoverAudio?.url) {
+          clearAudioDecodeCache(targetScene.voiceoverAudio.url);
+          if (targetScene.voiceoverAudio.url.startsWith('blob:')) {
+            try {
+              URL.revokeObjectURL(targetScene.voiceoverAudio.url);
+            } catch {
+              // ignore
+            }
+          }
+        }
+      }
       const scenes = state.dsl.scenes.filter((_, idx) => idx !== index);
       const nextDSL = { ...state.dsl, scenes };
       return pushHistory(state, nextDSL);
@@ -617,15 +687,16 @@ export const useProjectStore = create<ProjectState>((set) => ({
       if (elementType === 'boxes') {
         elements.boxes = elements.boxes?.filter((b: ElementBox) => b.id !== elementId) || [];
         // 自动级联清理依赖该 box 的悬空孤儿路径，彻底根除 BezierRouter 找不到端点警告
-        elements.paths = elements.paths?.filter((p: ElementPath) => {
-          const fromBox = p.from?.split('.')[0];
-          const toBox = p.to?.split('.')[0];
-          const isConnected = fromBox === elementId || toBox === elementId;
-          if (isConnected) {
-            affectedPathIds.push(p.id);
-          }
-          return !isConnected;
-        }) || [];
+        elements.paths =
+          elements.paths?.filter((p: ElementPath) => {
+            const fromBox = p.from?.split('.')[0];
+            const toBox = p.to?.split('.')[0];
+            const isConnected = fromBox === elementId || toBox === elementId;
+            if (isConnected) {
+              affectedPathIds.push(p.id);
+            }
+            return !isConnected;
+          }) || [];
       } else if (elementType === 'paths') {
         elements.paths = elements.paths?.filter((p: ElementPath) => p.id !== elementId) || [];
       } else if (elementType === 'dots') {
@@ -651,7 +722,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
             [elementType]: s.activeElements[elementType]?.filter((id) => id !== elementId) || [],
             ...(affectedPathIds.length > 0
               ? {
-                  paths: s.activeElements.paths?.filter((id) => !affectedPathIds.includes(id)) || [],
+                  paths:
+                    s.activeElements.paths?.filter((id) => !affectedPathIds.includes(id)) || [],
                 }
               : {}),
           },
@@ -664,17 +736,18 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
   updateBoxBounds: (boxId, bounds) =>
     set((state) => {
-      const boxes = state.dsl.elements.boxes?.map((b: ElementBox) =>
-        b.id === boxId
-          ? {
-              ...b,
-              x: Math.round(bounds.x),
-              y: Math.round(bounds.y),
-              width: Math.round(bounds.width),
-              height: Math.round(bounds.height),
-            }
-          : b
-      ) || [];
+      const boxes =
+        state.dsl.elements.boxes?.map((b: ElementBox) =>
+          b.id === boxId
+            ? {
+                ...b,
+                x: Math.round(bounds.x),
+                y: Math.round(bounds.y),
+                width: Math.round(bounds.width),
+                height: Math.round(bounds.height),
+              }
+            : b,
+        ) || [];
       const nextDSL = {
         ...state.dsl,
         elements: {
@@ -687,15 +760,16 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
   updateDotPosition: (dotId, position) =>
     set((state) => {
-      const dots = state.dsl.elements.dots?.map((d: ElementDot) =>
-        d.id === dotId
-          ? {
-              ...d,
-              cx: Math.round(position.cx),
-              cy: Math.round(position.cy),
-            }
-          : d
-      ) || [];
+      const dots =
+        state.dsl.elements.dots?.map((d: ElementDot) =>
+          d.id === dotId
+            ? {
+                ...d,
+                cx: Math.round(position.cx),
+                cy: Math.round(position.cy),
+              }
+            : d,
+        ) || [];
       const nextDSL = {
         ...state.dsl,
         elements: {
@@ -726,11 +800,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
                     position: updates.position
                       ? { ...c.position, ...updates.position }
                       : c.position,
-                    style: updates.style
-                      ? { ...(c.style || {}), ...updates.style }
-                      : c.style,
+                    style: updates.style ? { ...(c.style || {}), ...updates.style } : c.style,
                   }
-                : c
+                : c,
             ),
           },
         };
@@ -753,11 +825,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
                 y: updates.y !== undefined ? Math.round(updates.y) : img.y,
                 width: updates.width !== undefined ? Math.round(updates.width) : img.width,
                 height: updates.height !== undefined ? Math.round(updates.height) : img.height,
-                style: updates.style
-                  ? { ...(img.style || {}), ...updates.style }
-                  : img.style,
+                style: updates.style ? { ...(img.style || {}), ...updates.style } : img.style,
               }
-            : img
+            : img,
         ) || [];
 
       const nextDSL = {
@@ -781,7 +851,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
               from: from !== undefined ? from : p.from,
               to: to !== undefined ? to : p.to,
             }
-          : p
+          : p,
       );
       const nextDSL = {
         ...state.dsl,
@@ -799,33 +869,37 @@ export const useProjectStore = create<ProjectState>((set) => ({
       // 1. Check boxes
       if (elements.boxes?.some((b: ElementBox) => b.id === elementId)) {
         elements.boxes = elements.boxes.map((b: ElementBox) =>
-          b.id === elementId ? { 
-            ...b, 
-            rx: style.rx !== undefined ? style.rx : b.rx,
-            style: { ...(b.style || {}), ...style } 
-          } : b
+          b.id === elementId
+            ? {
+                ...b,
+                rx: style.rx !== undefined ? style.rx : b.rx,
+                style: { ...(b.style || {}), ...style },
+              }
+            : b,
         );
       }
       // 2. Check paths
       if (elements.paths?.some((p: ElementPath) => p.id === elementId)) {
         elements.paths = elements.paths.map((p: ElementPath) =>
-          p.id === elementId ? { ...p, style: { ...(p.style || {}), ...style } } : p
+          p.id === elementId ? { ...p, style: { ...(p.style || {}), ...style } } : p,
         );
       }
       // 3. Check dots
       if (elements.dots?.some((d: ElementDot) => d.id === elementId)) {
         elements.dots = elements.dots.map((d: ElementDot) =>
-          d.id === elementId ? { 
-            ...d, 
-            r: style.r !== undefined ? style.r : d.r,
-            style: { ...(d.style || {}), ...style } 
-          } : d
+          d.id === elementId
+            ? {
+                ...d,
+                r: style.r !== undefined ? style.r : d.r,
+                style: { ...(d.style || {}), ...style },
+              }
+            : d,
         );
       }
       // 4. Check images
       if (elements.images?.some((img: ElementImage) => img.id === elementId)) {
         elements.images = elements.images.map((img: ElementImage) =>
-          img.id === elementId ? { ...img, style: { ...(img.style || {}), ...style } } : img
+          img.id === elementId ? { ...img, style: { ...(img.style || {}), ...style } } : img,
         );
       }
 
@@ -847,7 +921,12 @@ export const useProjectStore = create<ProjectState>((set) => ({
                   if (color.includes('38bdf8')) theme = 'blue';
                   else if (color.includes('34d399')) theme = 'green';
                   else if (color.includes('fbbf24')) theme = 'amber';
-                  else if (color.includes('f472b6') || color.includes('f43f5e') || color.includes('ec4899')) theme = 'pink';
+                  else if (
+                    color.includes('f472b6') ||
+                    color.includes('f43f5e') ||
+                    color.includes('ec4899')
+                  )
+                    theme = 'pink';
                   else if (color.includes('a855f7')) theme = 'purple';
                   else theme = color;
                 }
@@ -884,6 +963,41 @@ export const useProjectStore = create<ProjectState>((set) => ({
       };
       return pushHistory(state, { ...state.dsl, scenes });
     }),
+
+  updateSceneVoiceoverAudio: (
+    sceneIndex: number,
+    audio: SceneVoiceoverAudio | undefined,
+    adaptedDuration?: number,
+  ) =>
+    set((state) => {
+      if (sceneIndex < 0 || sceneIndex >= state.dsl.scenes.length) return state;
+      const scenes = [...state.dsl.scenes];
+      const prevAudio = scenes[sceneIndex].voiceoverAudio;
+      if (!audio) {
+        removeSceneAudioBlob(scenes[sceneIndex].id);
+      }
+      if (prevAudio?.url && prevAudio.url !== audio?.url) {
+        clearAudioDecodeCache(prevAudio.url);
+        if (prevAudio.url.startsWith('blob:')) {
+          try {
+            URL.revokeObjectURL(prevAudio.url);
+          } catch {
+            // ignore
+          }
+        }
+      }
+      scenes[sceneIndex] = {
+        ...scenes[sceneIndex],
+        voiceoverAudio: audio,
+        ...(adaptedDuration !== undefined
+          ? { duration: Math.max(500, Math.round(adaptedDuration)) }
+          : {}),
+      };
+      return pushHistory(state, { ...state.dsl, scenes });
+    }),
+
+  batchSetScenes: (scenes: SceneStep[]) =>
+    set((state) => pushHistory(state, { ...state.dsl, scenes })),
 
   setAudioTrack: (track: AudioTrackConfig) =>
     set((state) => {
@@ -925,15 +1039,21 @@ export const useProjectStore = create<ProjectState>((set) => ({
       });
     }),
 
-  updateAudioTrackType: (trackId: string, type: AudioTrackRole, volume?: number, isBackgroundBGM?: boolean) =>
+  updateAudioTrackType: (
+    trackId: string,
+    type: AudioTrackRole,
+    volume?: number,
+    isBackgroundBGM?: boolean,
+  ) =>
     set((state) => {
       const tracks = (state.dsl.audio?.tracks || []).map((t) => {
         if (t.id !== trackId) return t;
-        const nextVol = volume !== undefined ? Math.max(0, Math.min(1, volume)) : (type === 'music' ? 0.2 : 1.0);
+        const nextVol =
+          volume !== undefined ? Math.max(0, Math.min(1, volume)) : type === 'music' ? 0.2 : 1.0;
         return {
           ...t,
           type,
-          isBackgroundBGM: isBackgroundBGM !== undefined ? isBackgroundBGM : (type === 'music'),
+          isBackgroundBGM: isBackgroundBGM !== undefined ? isBackgroundBGM : type === 'music',
           volume: nextVol,
         };
       });
@@ -964,7 +1084,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set((state) => {
       const scenes = state.dsl.scenes.map((s, idx) => ({
         ...s,
-        duration: durations[idx] !== undefined ? Math.max(500, Math.round(durations[idx])) : s.duration,
+        duration:
+          durations[idx] !== undefined ? Math.max(500, Math.round(durations[idx])) : s.duration,
       }));
       return pushHistory(state, { ...state.dsl, scenes });
     }),
@@ -999,3 +1120,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
   markSaved: () => set({ isDirty: false }),
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).__PROJECT_STORE__ = useProjectStore;
+}

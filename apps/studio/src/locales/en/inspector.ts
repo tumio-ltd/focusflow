@@ -7,6 +7,12 @@ export default {
 
   // Scene & Camera
   cameraControls: 'Scene Camera Controls',
+  aspectRatio: 'Aspect Ratio',
+  aspectRatioStandard: 'Video',
+  aspectRatioMac: 'Mac',
+  aspectRatioPresentation: 'Slides',
+  aspectRatioVertical: 'Portrait',
+  sceneDuration: 'Scene Duration (ms)',
   sceneTitle: 'Scene Title',
   sceneTitlePlaceholder: 'Enter scene title',
   captureCurrentView: 'Capture Current Viewport',
@@ -66,11 +72,11 @@ export default {
   calloutMaxWidth: 'Card Max Width',
   calloutAutoAdaptStyle: 'Auto-match Target Box Typography',
   calloutAutoAdaptViewport: 'Auto-adapt to Viewport Resolution',
-  
+
   strokeWidth: 'Stroke Width',
   cornerRadius: 'Corner Radius',
   neonGlow: 'Neon Glow Filter',
-  
+
   flowMode: 'Animation Flow Mode',
   modeStream: '🌊 Stream Particles',
   modeStreamDesc: 'Energy particles flow along the line',
@@ -100,10 +106,16 @@ export default {
   hiddenInScene: 'Hidden in current scene',
   deleteElement: 'Delete Element',
   sceneVoiceoverTitle: 'Scene Voiceover & Audio',
+  charCount: '{{count}} chars',
+  charCount_one: '{{count}} char',
+  charCount_other: '{{count}} chars',
+  chars: 'chars',
   sceneVoiceoverLabel: 'Scene Voiceover Script (AI Teleprompter)',
-  sceneVoiceoverPlaceholder: 'Enter voiceover script for this scene to synthesize AI speech and adapt scene duration...',
+  sceneVoiceoverPlaceholder:
+    'Enter voiceover script for this scene to synthesize AI speech and adapt scene duration...',
   synthesizeSceneTTS: '🎙️ Preview TTS & Adapt Scene Duration',
-  synthesizeSceneTTSTip: 'Preview script at natural speed; extends scene if speech is longer, preserves blank space if shorter',
+  synthesizeSceneTTSTip:
+    'Preview script at natural speed; extends scene if speech is longer, preserves blank space if shorter',
   synthesizingSceneTTS: 'Synthesizing Audio...',
   stopPreviewTTS: 'Stop Preview',
   playPreviewTTS: 'Resume Preview',

@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { clampCameraBounds } from '@/utils/cameraMath';
+import { useEditorStore } from '@/stores';
 
 export interface CanvasTransform {
   x: number;
@@ -12,7 +14,10 @@ export interface UseCanvasGestureOptions {
   initialScale?: number;
   contentWidth?: number;
   contentHeight?: number;
-  onTransformChange?: (transform: CanvasTransform, containerRect: { width: number; height: number }) => void;
+  onTransformChange?: (
+    transform: CanvasTransform,
+    containerRect: { width: number; height: number },
+  ) => void;
 }
 
 export function useCanvasGesture({
@@ -39,13 +44,17 @@ export function useCanvasGesture({
   });
 
   // 铁律 8 落地：视口容器尺寸缓存化，彻底杜绝高频 wheel 中的 getBoundingClientRect 强制同步回流
-  const cachedRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
+  const cachedRectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(
+    null,
+  );
 
   // 铁律 8 落地：rAF 帧级聚合调度器，保证单帧最多执行 1 次 React 状态分发
   const wheelRafIdRef = useRef<number | null>(null);
 
   // 铁律 9 落地：极小缩放比 (< 0.25) 逆向投影杠杆阻尼与微颤滤波追踪器
-  const activeFocalPointRef = useRef<{ worldX: number; worldY: number; lastTime: number } | null>(null);
+  const activeFocalPointRef = useRef<{ worldX: number; worldY: number; lastTime: number } | null>(
+    null,
+  );
   const lastWheelTimeRef = useRef<number>(0);
 
   // 变换手势活跃状态追踪器（用于动态挂载 will-change: transform 硬件加速与 CSS contain）
@@ -54,6 +63,9 @@ export function useCanvasGesture({
 
   const markGestureActive = useCallback(() => {
     setIsGesturing(true);
+    if (useEditorStore.getState().isStageMatchActive) {
+      useEditorStore.getState().setStageMatchActive(false);
+    }
     if (gestureTimerRef.current) {
       clearTimeout(gestureTimerRef.current);
     }
@@ -138,30 +150,33 @@ export function useCanvasGesture({
       currentTransformRef.current = nextTransform;
       setTransform(nextTransform);
     },
-    [minScale, maxScale, markGestureActive]
+    [minScale, maxScale, markGestureActive],
   );
 
   // 2. 平移画布 (硬件物理像素对齐，杜绝浮点亚像素在物理液晶栅格移动时的插值呼吸微颤)
-  const panBy = useCallback((dx: number, dy: number) => {
-    markGestureActive();
+  const panBy = useCallback(
+    (dx: number, dy: number) => {
+      markGestureActive();
 
-    const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-    const rawX = currentTransformRef.current.x + dx;
-    const rawY = currentTransformRef.current.y + dy;
-    const nextTransform: CanvasTransform = {
-      ...currentTransformRef.current,
-      x: Math.round(rawX * dpr) / dpr,
-      y: Math.round(rawY * dpr) / dpr,
-    };
-    currentTransformRef.current = nextTransform;
+      const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+      const rawX = currentTransformRef.current.x + dx;
+      const rawY = currentTransformRef.current.y + dy;
+      const nextTransform: CanvasTransform = {
+        ...currentTransformRef.current,
+        x: Math.round(rawX * dpr) / dpr,
+        y: Math.round(rawY * dpr) / dpr,
+      };
+      currentTransformRef.current = nextTransform;
 
-    if (wheelRafIdRef.current === null) {
-      wheelRafIdRef.current = requestAnimationFrame(() => {
-        wheelRafIdRef.current = null;
-        setTransform(currentTransformRef.current);
-      });
-    }
-  }, [markGestureActive]);
+      if (wheelRafIdRef.current === null) {
+        wheelRafIdRef.current = requestAnimationFrame(() => {
+          wheelRafIdRef.current = null;
+          setTransform(currentTransformRef.current);
+        });
+      }
+    },
+    [markGestureActive],
+  );
 
   // 3. 视口自适应居中算法 (Fit-to-Screen / Shift + 1)
   const fitToScreen = useCallback(
@@ -193,7 +208,7 @@ export function useCanvasGesture({
       currentTransformRef.current = nextTransform;
       setTransform(nextTransform);
     },
-    [contentWidth, contentHeight, minScale, maxScale]
+    [contentWidth, contentHeight, minScale, maxScale],
   );
 
   // 初始化挂载与底图尺寸变更时，自动执行视口自适应居中对齐
@@ -234,8 +249,10 @@ export function useCanvasGesture({
       const zoom = Math.max(camera.zoom || 1.0, 1.0);
       const targetScale = Math.min(Math.max(baseScale * zoom, minScale), maxScale);
 
-      const centerX = (natW / 2) + ((camera.x || 0) / 100) * natW;
-      const centerY = (natH / 2) + ((camera.y || 0) / 100) * natH;
+      // 与 Player 内核保持 100% 对称一致的安全视口边界钳位
+      const clamped = clampCameraBounds(zoom, camera.x || 0, camera.y || 0);
+      const centerX = natW / 2 + (clamped.x / 100) * natW;
+      const centerY = natH / 2 + (clamped.y / 100) * natH;
 
       const targetX = rect.width / 2 - centerX * targetScale;
       const targetY = rect.height / 2 - centerY * targetScale;
@@ -248,7 +265,7 @@ export function useCanvasGesture({
       currentTransformRef.current = nextTransform;
       setTransform(nextTransform);
     },
-    [contentWidth, contentHeight, minScale, maxScale]
+    [contentWidth, contentHeight, minScale, maxScale],
   );
 
   // 5. 监听滚轮事件 (Wheel)
@@ -269,7 +286,8 @@ export function useCanvasGesture({
       const isShift = e.shiftKey && !isPinch;
 
       // 2. 意图分流 A：触控板双指水平平移 (具备明确水平滑动分量 deltaX !== 0 且无修饰键)
-      const isHorizontalTrackpadPan = Math.abs(e.deltaX) > 0 && !isPinch && !e.metaKey && !e.altKey && !isShift;
+      const isHorizontalTrackpadPan =
+        Math.abs(e.deltaX) > 0 && !isPinch && !e.metaKey && !e.altKey && !isShift;
       if (isHorizontalTrackpadPan) {
         panBy(-e.deltaX, -e.deltaY);
         return;
@@ -300,12 +318,10 @@ export function useCanvasGesture({
 
       // 尺度自适应缩放补偿方程：在超大底图全景小尺度 (< 0.8) 下动态提升变焦动力
       const prev = currentTransformRef.current;
-      const scaleBoost = prev.scale < 0.8
-        ? 1 + 1.5 * Math.max(0, (0.8 - prev.scale) / 0.8)
-        : 1.0;
+      const scaleBoost = prev.scale < 0.8 ? 1 + 1.5 * Math.max(0, (0.8 - prev.scale) / 0.8) : 1.0;
 
       // 设备类型基础步长校准：Pinch (触控板双指捏合) 取 0.009，传统滚轮行模式取 0.04，像素模式取 0.0025
-      const baseSensitivity = isPinch ? 0.009 : (e.deltaMode === 1 ? 0.04 : 0.0025);
+      const baseSensitivity = isPinch ? 0.009 : e.deltaMode === 1 ? 0.04 : 0.0025;
       const sensitivity = baseSensitivity * scaleBoost;
       const zoomFactor = Math.exp(-e.deltaY * sensitivity);
       // 限制单次事件变焦倍率，防止离散阶跃突变
@@ -319,7 +335,8 @@ export function useCanvasGesture({
       const rawPy = e.clientY - rect.top;
 
       // 连续手势世界坐标锁定方程：缩放手势期间保持锚定世界坐标系点连续，杜绝死区阈值跳跃抖动
-      const isOngoingGesture = activeFocalPointRef.current && (now - activeFocalPointRef.current.lastTime < 180);
+      const isOngoingGesture =
+        activeFocalPointRef.current && now - activeFocalPointRef.current.lastTime < 180;
       let worldX: number;
       let worldY: number;
 
@@ -365,7 +382,11 @@ export function useCanvasGesture({
   // 6. 监听空格键按压 (Space) 与键盘缩放快捷键
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
+      if (
+        e.code === 'Space' &&
+        !e.repeat &&
+        !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
+      ) {
         setIsSpacePressed(true);
       }
       if (e.shiftKey && e.code === 'Digit1') {
@@ -411,11 +432,14 @@ export function useCanvasGesture({
       if (e.button === 1 || (e.button === 0 && isSpacePressed)) {
         e.preventDefault();
         setIsPanning(true);
+        if (useEditorStore.getState().isStageMatchActive) {
+          useEditorStore.getState().setStageMatchActive(false);
+        }
         lastMousePos.current = { x: e.clientX, y: e.clientY };
         (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
       }
     },
-    [isSpacePressed]
+    [isSpacePressed],
   );
 
   const onPointerMove = useCallback(
@@ -426,7 +450,7 @@ export function useCanvasGesture({
       lastMousePos.current = { x: e.clientX, y: e.clientY };
       panBy(dx, dy);
     },
-    [isPanning, panBy]
+    [isPanning, panBy],
   );
 
   const onPointerUp = useCallback(
@@ -436,7 +460,7 @@ export function useCanvasGesture({
         (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
       }
     },
-    [isPanning]
+    [isPanning],
   );
 
   return {

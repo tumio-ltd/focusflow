@@ -26,6 +26,7 @@ import {
   type TTSStoredConfig,
 } from '@/services/audio/tts/ttsConfigStore';
 import { UserKeyOpenAITTSProvider } from '@/services/audio/tts/UserKeyOpenAITTSProvider';
+import { GeminiTTSProvider } from '@/services/audio/tts/GeminiTTSProvider';
 import { speakWebSpeech } from '@/services/audio/tts/WebSpeechTTSProvider';
 
 interface AIVoiceoverSettingsModalProps {
@@ -114,18 +115,29 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
     }
 
     try {
-      const provider = new UserKeyOpenAITTSProvider({
-        apiKey: config.apiKey,
-        baseUrl: config.baseUrl,
-        model: config.model,
-        customVoices: currentPresetDef.voices,
-      });
+      const provider = config.preset === 'gemini'
+        ? new GeminiTTSProvider({
+            apiKey: config.apiKey,
+            baseUrl: config.baseUrl,
+            model: config.model,
+            customVoices: currentPresetDef.voices,
+          })
+        : new UserKeyOpenAITTSProvider({
+            apiKey: config.apiKey,
+            baseUrl: config.baseUrl,
+            model: config.model,
+            customVoices: currentPresetDef.voices,
+          });
 
       const res = await provider.synthesize(testText, config.voice, config.speed);
       const audioUrl = URL.createObjectURL(res.audioBlob);
       const audio = new Audio(audioUrl);
       audio.onended = () => URL.revokeObjectURL(audioUrl);
-      await audio.play();
+      try {
+        await audio.play();
+      } catch {
+        // Ignore autoplay or audio device errors in headless environment
+      }
 
       setTestStatus({
         type: 'success',
@@ -309,6 +321,7 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                 >
                   <option value="openai">{t('presetOpenAI')}</option>
                   <option value="siliconflow">{t('presetSiliconFlow')}</option>
+                  <option value="gemini">{t('presetGemini')}</option>
                   <option value="custom">{t('presetCustom')}</option>
                 </select>
               </div>
@@ -435,6 +448,11 @@ export const AIVoiceoverSettingsModal: React.FC<AIVoiceoverSettingsModalProps> =
                         benjamin: 'Benjamin (Rich Male)',
                         claire: 'Claire (Intelligent Female)',
                         david: 'David (Standard Male)',
+                        puck: 'Puck (Energetic Male)',
+                        charon: 'Charon (Deep & Resonant Male)',
+                        kore: 'Kore (Warm & Clear Female)',
+                        fenrir: 'Fenrir (Crisp & Magnetic Male)',
+                        aoede: 'Aoede (Narrative & Elegant Female)',
                       }[v.id.toLowerCase()] || v.name) : v.name;
                       return (
                         <option key={v.id} value={v.id}>

@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Sliders, 
-  Camera, 
-  Layers, 
-  Eye, 
-  EyeOff, 
-  Trash2, 
-  ChevronDown, 
-  ChevronRight, 
+import {
+  Sliders,
+  Camera,
+  Layers,
+  Eye,
+  EyeOff,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
   Palette,
   Crosshair,
   CopyCheck,
@@ -33,7 +33,8 @@ import {
   Unlock,
   Play,
   X,
-  Mic
+  Mic,
+  Settings2,
 } from 'lucide-react';
 import { Input, Slider, Button } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
@@ -41,7 +42,13 @@ import { calculateAdaptiveCalloutStyle } from '@/utils/calloutTypography';
 import { PATH_FLOW_MODES } from '@/utils/pathModes';
 import { useEditorStore, useProjectStore } from '@/stores';
 
-function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: number; viewportHeight: number }) {
+function LiveCoordinatesHUD({
+  viewportWidth,
+  viewportHeight,
+}: {
+  viewportWidth: number;
+  viewportHeight: number;
+}) {
   const { t } = useTranslation('inspector');
   const pixelRef = useRef<HTMLSpanElement>(null);
   const percentRef = useRef<HTMLSpanElement>(null);
@@ -76,7 +83,9 @@ function LiveCoordinatesHUD({ viewportWidth, viewportHeight }: { viewportWidth: 
         </span>
       </div>
       <div className="flex items-center justify-between bg-muted/40 px-2 py-0.5 rounded border border-border/40">
-        <span className="text-muted-foreground text-[10px]">{t('percentCoord', '📍 相对百分比')}:</span>
+        <span className="text-muted-foreground text-[10px]">
+          {t('percentCoord', '📍 相对百分比')}:
+        </span>
         <span ref={percentRef} className="text-emerald-400 font-semibold text-[10px]">
           L: --% , T: --%
         </span>
@@ -101,6 +110,7 @@ export interface RightInspectorProps {
   sceneVoiceoverScript?: string;
   onSceneVoiceoverScriptChange?: (script: string) => void;
   onSynthesizeSceneTTS?: () => void;
+  onOpenVoiceoverSettings?: () => void;
   isSingleTtsLoading?: boolean;
   ttsPreview?: TTSPreviewInfo | null;
   onStopPreviewTTS?: () => void;
@@ -142,6 +152,7 @@ function RightInspectorComponent({
   sceneVoiceoverScript = '',
   onSceneVoiceoverScriptChange,
   onSynthesizeSceneTTS,
+  onOpenVoiceoverSettings,
   isSingleTtsLoading = false,
   ttsPreview = null,
   onStopPreviewTTS,
@@ -187,6 +198,7 @@ function RightInspectorComponent({
   const updateCallout = useProjectStore((s) => s.updateCallout);
   const updateImage = useProjectStore((s) => s.updateImage);
   const dsl = useProjectStore((s) => s.dsl);
+  const setAspectRatio = useProjectStore((s) => s.setAspectRatio);
 
   const [isAspectLocked, setIsAspectLocked] = useState(true);
   const imageFileInputRef = useRef<HTMLInputElement>(null);
@@ -214,9 +226,10 @@ function RightInspectorComponent({
   const selectedCallout = allCallouts.find((c) => c.id === selectedElementId);
   const selectedImage = dsl.elements?.images?.find((img) => img.id === selectedElementId);
 
-  const filteredElements = elements.filter((el) =>
-    el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    el.id.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredElements = elements.filter(
+    (el) =>
+      el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      el.id.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const getElementIcon = (type: 'box' | 'path' | 'dot' | 'callout' | 'image') => {
@@ -234,7 +247,8 @@ function RightInspectorComponent({
     }
   };
 
-  const isMac = typeof navigator !== 'undefined' && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
+  const isMac =
+    typeof navigator !== 'undefined' && navigator.platform?.toUpperCase().indexOf('MAC') >= 0;
 
   useEffect(() => {
     return coordinateBus.subscribeCopy(() => {
@@ -253,19 +267,28 @@ function RightInspectorComponent({
 
   // 渲染图层层级列表组件 (在【场景运镜】与【图元属性】双 Tab 中保持常驻可用)
   const renderLayerHierarchyList = () => (
-    <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="layer-hierarchy-panel">
+    <div
+      className="space-y-3 bg-muted/20 border border-border rounded-xl p-3"
+      data-testid="layer-hierarchy-panel"
+    >
       <div
         onClick={() => setIsLayersOpen(!isLayersOpen)}
         className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
       >
         <div className="flex items-center gap-2">
           <Layers className="w-3.5 h-3.5 text-primary" />
-          <span className="text-xs font-bold text-foreground">{t('layerList', '图层层级列表')}</span>
+          <span className="text-xs font-bold text-foreground">
+            {t('layerList', '图层层级列表')}
+          </span>
           <span className="text-[10px] text-muted-foreground font-mono font-normal">
             ({elements.length})
           </span>
         </div>
-        {isLayersOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+        {isLayersOpen ? (
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+        )}
       </div>
 
       {isLayersOpen && (
@@ -331,9 +354,17 @@ function RightInspectorComponent({
                         className={`p-1 rounded hover:bg-muted ${
                           el.active ? 'text-primary' : 'text-muted-foreground opacity-40'
                         }`}
-                        title={el.active ? t('activeInScene', '在当前场景激活展示') : t('hiddenInScene', '在当前场景隐藏')}
+                        title={
+                          el.active
+                            ? t('activeInScene', '在当前场景激活展示')
+                            : t('hiddenInScene', '在当前场景隐藏')
+                        }
                       >
-                        {el.active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                        {el.active ? (
+                          <Eye className="w-3.5 h-3.5" />
+                        ) : (
+                          <EyeOff className="w-3.5 h-3.5" />
+                        )}
                       </button>
 
                       {/* 删除图元按钮 */}
@@ -361,16 +392,18 @@ function RightInspectorComponent({
 
   return (
     <aside
-      data-testid="inspector"
       id="right-inspector"
-      className="w-80 h-full border-l border-border bg-panel flex flex-col select-none z-20 shrink-0 text-foreground transition-colors duration-200"
+      data-testid="inspector"
+      className="w-80 h-full border-l border-border bg-panel/90 backdrop-blur-md flex flex-col select-none z-20 shrink-0 text-foreground transition-colors duration-200"
     >
       {/* 1. 顶部 Header 与实时 HUD */}
       <div className="p-3 border-b border-border space-y-2 bg-muted/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className="w-4 h-4 text-primary" />
-            <span className="text-xs font-bold text-foreground">{t('inspectorTitle', '属性检查器')}</span>
+            <span className="text-xs font-bold text-foreground">
+              {t('inspectorTitle', '属性检查器')}
+            </span>
           </div>
           <span className="text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded">
             {viewport.width} × {viewport.height}
@@ -428,16 +461,24 @@ function RightInspectorComponent({
               >
                 <div className="flex items-center gap-2">
                   <Camera className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-bold text-foreground">{t('cameraControls', '场景运镜控制')}</span>
+                  <span className="text-xs font-bold text-foreground">
+                    {t('cameraControls', '场景运镜控制')}
+                  </span>
                 </div>
-                {isCameraOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+                {isCameraOpen ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                )}
               </div>
 
               {isCameraOpen && (
                 <div className="space-y-3 pt-1 animate-in fade-in duration-150">
                   {/* 分幕标题 */}
                   <div className="space-y-1">
-                    <label className="text-muted-foreground text-[10px] font-medium">{t('sceneTitle', '分幕标题')}</label>
+                    <label className="text-muted-foreground text-[10px] font-medium">
+                      {t('sceneTitle', '分幕标题')}
+                    </label>
                     <Input
                       value={sceneTitle}
                       onChange={(e) => onSceneTitleChange?.(e.target.value)}
@@ -446,10 +487,59 @@ function RightInspectorComponent({
                     />
                   </div>
 
+                  {/* 画幅比例切换 (Multi-Aspect Ratio Selector - Plan B) */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-muted-foreground text-[10px] font-medium">
+                        {t('aspectRatio', '画幅比例')}
+                      </label>
+                      <span className="text-[10px] font-mono text-primary font-semibold">
+                        {dsl.meta?.viewport?.aspectRatio || '16:9'}
+                      </span>
+                    </div>
+                    <div
+                      className="grid grid-cols-4 gap-1 p-0.5 bg-background rounded-lg border border-border"
+                      data-testid="aspect-ratio-selector"
+                    >
+                      {(['16:9', '16:10', '4:3', '9:16'] as const).map((ratio) => {
+                        const currentRatio = dsl.meta?.viewport?.aspectRatio || '16:9';
+                        const isActive = currentRatio === ratio;
+                        const subLabels: Record<string, string> = {
+                          '16:9': t('aspectRatioStandard', '成片'),
+                          '16:10': t('aspectRatioMac', 'Mac'),
+                          '4:3': t('aspectRatioPresentation', '演示'),
+                          '9:16': t('aspectRatioVertical', '竖屏'),
+                        };
+                        return (
+                          <button
+                            key={ratio}
+                            type="button"
+                            data-testid={`aspect-ratio-btn-${ratio}`}
+                            onClick={() => setAspectRatio(ratio)}
+                            className={`flex flex-col items-center justify-center py-1.5 px-0.5 rounded text-[10px] transition-all ${
+                              isActive
+                                ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                            }`}
+                          >
+                            <span className="leading-none font-medium">{ratio}</span>
+                            <span
+                              className={`text-[8px] leading-tight mt-0.5 ${isActive ? 'text-primary-foreground/80' : 'text-muted-foreground/60'}`}
+                            >
+                              {subLabels[ratio]}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* 分幕驻留时长 (毫秒) */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-muted-foreground text-[10px] font-medium">分幕驻留时长 (毫秒)</label>
+                      <label className="text-muted-foreground text-[10px] font-medium">
+                        {t('sceneDuration', '分幕驻留时长 (毫秒)')}
+                      </label>
                       <span className="text-[10px] font-mono text-primary font-semibold">
                         {(sceneDuration / 1000).toFixed(1)}s
                       </span>
@@ -517,7 +607,9 @@ function RightInspectorComponent({
 
                   {/* 一键居中复位 */}
                   <div className="pt-1 flex items-center justify-between border-t border-border/50">
-                    <span className="text-[10px] text-muted-foreground">{t('resetCenterTip', '重置镜头焦点为全景居中')}</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {t('resetCenterTip', '重置镜头焦点为全景居中')}
+                    </span>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -534,28 +626,58 @@ function RightInspectorComponent({
             </div>
 
             {/* 1.2 分幕旁白与配音独立卡片 (Voiceover & TTS) */}
-            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="scene-voiceover-panel">
+            <div
+              className="space-y-3 bg-muted/20 border border-border rounded-xl p-3"
+              data-testid="scene-voiceover-panel"
+            >
               <div
                 onClick={() => setIsVoiceoverOpen(!isVoiceoverOpen)}
                 className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
               >
                 <div className="flex items-center gap-2">
-                  <Mic className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-xs font-bold text-foreground">{t('sceneVoiceoverTitle', '分幕旁白与配音')}</span>
+                  <Mic className="w-3.5 h-3.5 text-[var(--ff-ai-text)]" />
+                  <span className="text-xs font-bold text-foreground">
+                    {t('sceneVoiceoverTitle', '分幕旁白与配音')}
+                  </span>
                   {sceneVoiceoverScript.trim() && (
-                    <span className="text-[9px] px-1.5 py-0.5 font-mono rounded bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                      {sceneVoiceoverScript.trim().length} {t('chars', '字')}
+                    <span className="text-[9px] px-1.5 py-0.5 font-mono rounded font-semibold bg-[var(--ff-ai-bg)] text-[var(--ff-ai-text)] border border-[var(--ff-ai-border)]">
+                      {t('charCount', {
+                        count: sceneVoiceoverScript.trim().length,
+                        defaultValue: '{{count}} 字',
+                      })}
                     </span>
                   )}
                 </div>
-                {isVoiceoverOpen ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />}
+                <div className="flex items-center gap-1">
+                  {onOpenVoiceoverSettings && (
+                    <button
+                      type="button"
+                      data-testid="open-tts-settings-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenVoiceoverSettings();
+                      }}
+                      className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition"
+                      title={t('settingsTitle', '配音设置')}
+                    >
+                      <Settings2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {isVoiceoverOpen ? (
+                    <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
+                </div>
               </div>
 
               {isVoiceoverOpen && (
                 <div className="space-y-2 pt-1 animate-in fade-in duration-150">
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-muted-foreground text-[10px] font-medium">{t('sceneVoiceoverLabel')}</label>
+                      <label className="text-muted-foreground text-[10px] font-medium">
+                        {t('sceneVoiceoverLabel')}
+                      </label>
                     </div>
                     <textarea
                       data-testid="scene-voiceover-script-input"
@@ -568,7 +690,7 @@ function RightInspectorComponent({
                     {ttsPreview ? (
                       <div
                         data-testid="tts-preview-controller"
-                        className="flex items-center justify-between gap-1.5 p-1.5 bg-amber-500/10 border border-amber-500/30 rounded-md text-xs"
+                        className="flex items-center justify-between gap-1.5 p-1.5 bg-[var(--ff-ai-bg)] border border-[var(--ff-ai-border)] rounded-md text-xs"
                       >
                         <div className="flex items-center gap-1.5 min-w-0">
                           <Button
@@ -576,7 +698,7 @@ function RightInspectorComponent({
                             variant="ghost"
                             data-testid="tts-preview-toggle-btn"
                             onClick={ttsPreview.isPlaying ? onStopPreviewTTS : onPlayPreviewTTS}
-                            className="h-6 w-6 p-0 text-amber-500 hover:bg-amber-500/20 flex-shrink-0"
+                            className="h-6 w-6 p-0 text-[var(--ff-ai-text)] hover:bg-[var(--ff-ai-bg-hover)] flex-shrink-0"
                             title={ttsPreview.isPlaying ? t('stopPreviewTTS') : t('playPreviewTTS')}
                           >
                             {ttsPreview.isPlaying ? (
@@ -590,7 +712,8 @@ function RightInspectorComponent({
                               {ttsPreview.isPlaying ? t('ttsPlaying') : t('ttsReady')}
                             </span>
                             <span className="text-muted-foreground font-mono text-[9px]">
-                              {t('suggestedDuration')}: {(ttsPreview.adaptedDuration / 1000).toFixed(1)}s
+                              {t('suggestedDuration')}:{' '}
+                              {(ttsPreview.adaptedDuration / 1000).toFixed(1)}s
                             </span>
                           </div>
                         </div>
@@ -600,7 +723,7 @@ function RightInspectorComponent({
                             size="sm"
                             data-testid="tts-apply-btn"
                             onClick={onApplySceneTTS}
-                            className="h-6 px-2 text-[11px] gap-1 bg-amber-500 hover:bg-amber-600 text-white font-medium shadow-none"
+                            className="h-6 px-2 text-[11px] gap-1 bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white font-medium shadow-keycap"
                             title={t('applyTTSTip')}
                           >
                             <Check className="w-3 h-3" />
@@ -621,15 +744,19 @@ function RightInspectorComponent({
                     ) : onSynthesizeSceneTTS ? (
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ai"
                         data-testid="synthesize-scene-tts-btn"
                         onClick={onSynthesizeSceneTTS}
                         disabled={isSingleTtsLoading}
                         title={t('synthesizeSceneTTSTip')}
-                        className="w-full gap-1.5 text-xs text-amber-500 border-amber-500/40 hover:bg-amber-500/10 h-7 font-medium"
+                        className="w-full gap-1.5 text-xs h-7"
                       >
-                        <Sparkles className={`w-3.5 h-3.5 ${isSingleTtsLoading ? 'animate-spin' : ''}`} />
-                        <span>{isSingleTtsLoading ? t('synthesizingSceneTTS') : t('synthesizeSceneTTS')}</span>
+                        <Sparkles
+                          className={`w-3.5 h-3.5 ${isSingleTtsLoading ? 'animate-spin' : ''}`}
+                        />
+                        <span>
+                          {isSingleTtsLoading ? t('synthesizingSceneTTS') : t('synthesizeSceneTTS')}
+                        </span>
                       </Button>
                     ) : null}
                   </div>
@@ -638,16 +765,25 @@ function RightInspectorComponent({
             </div>
 
             {/* 1.3 标定助手常驻控制面板 (Calibration Assistant HUD) */}
-            <div className="space-y-3 bg-muted/20 border border-border rounded-xl p-3" data-testid="calibration-assistant-panel">
+            <div
+              className="space-y-3 bg-muted/20 border border-border rounded-xl p-3"
+              data-testid="calibration-assistant-panel"
+            >
               <div
                 onClick={() => setIsCalibrationOpen(!isCalibrationOpen)}
                 className="flex items-center justify-between font-semibold text-foreground cursor-pointer hover:text-primary transition"
               >
                 <div className="flex items-center gap-2">
                   <Target className="w-3.5 h-3.5 text-primary animate-pulse" />
-                  <span className="text-xs font-bold text-primary">{t('calibrationTitle', '标定助手 (HUD)')}</span>
+                  <span className="text-xs font-bold text-primary">
+                    {t('calibrationTitle', '标定助手 (HUD)')}
+                  </span>
                 </div>
-                {isCalibrationOpen ? <ChevronDown className="w-3.5 h-3.5 text-primary" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                {isCalibrationOpen ? (
+                  <ChevronDown className="w-3.5 h-3.5 text-primary" />
+                ) : (
+                  <ChevronRight className="w-3.5 h-3.5" />
+                )}
               </div>
 
               {isCalibrationOpen && (
@@ -670,9 +806,14 @@ function RightInspectorComponent({
                         <Sparkles className="w-3.5 h-3.5 text-primary" />
                         <span>{t('smartSnap', '智能边缘吸附')}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">{t('smartSnapDesc', '框选时自动贴合图元边缘')}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t('smartSnapDesc', '框选时自动贴合图元边缘')}
+                      </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer" data-testid="smart-snap-switch">
+                    <label
+                      className="relative inline-flex items-center cursor-pointer"
+                      data-testid="smart-snap-switch"
+                    >
                       <input
                         type="checkbox"
                         data-testid="smart-snap-input"
@@ -691,7 +832,9 @@ function RightInspectorComponent({
                         <Crosshair className="w-3.5 h-3.5 text-primary" />
                         <span>{t('laserCrosshair', '十字激光准星')}</span>
                       </div>
-                      <p className="text-[10px] text-muted-foreground">{t('laserCrosshairDesc', '在画布显示 X/Y 轴全屏辅助对齐线')}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {t('laserCrosshairDesc', '在画布显示 X/Y 轴全屏辅助对齐线')}
+                      </p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -715,8 +858,16 @@ function RightInspectorComponent({
                     title={t('clickToCopyOrShortcut', '点击或按快捷键复制当前坐标 JSON')}
                   >
                     <div className="flex items-center gap-1.5 text-xs font-medium">
-                      {hasCopiedCoords ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-primary" />}
-                      <span>{hasCopiedCoords ? t('copiedJson', '坐标已复制') : t('copyCoordsTip', '复制光标坐标 JSON')}</span>
+                      {hasCopiedCoords ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-primary" />
+                      )}
+                      <span>
+                        {hasCopiedCoords
+                          ? t('copiedJson', '坐标已复制')
+                          : t('copyCoordsTip', '复制光标坐标 JSON')}
+                      </span>
                     </div>
                     <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-background/80 rounded border border-border text-foreground font-semibold shadow-xs">
                       {isMac ? '⌥ C' : 'Alt+C'}
@@ -764,10 +915,18 @@ function RightInspectorComponent({
 
                 {/* 尺寸与坐标读数 */}
                 <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-background/80 p-2 rounded-lg border border-border text-muted-foreground">
-                  <div>X: <span className="text-foreground font-semibold">{selectedBox.x}px</span></div>
-                  <div>Y: <span className="text-foreground font-semibold">{selectedBox.y}px</span></div>
-                  <div>W: <span className="text-foreground font-semibold">{selectedBox.width}px</span></div>
-                  <div>H: <span className="text-foreground font-semibold">{selectedBox.height}px</span></div>
+                  <div>
+                    X: <span className="text-foreground font-semibold">{selectedBox.x}px</span>
+                  </div>
+                  <div>
+                    Y: <span className="text-foreground font-semibold">{selectedBox.y}px</span>
+                  </div>
+                  <div>
+                    W: <span className="text-foreground font-semibold">{selectedBox.width}px</span>
+                  </div>
+                  <div>
+                    H: <span className="text-foreground font-semibold">{selectedBox.height}px</span>
+                  </div>
                 </div>
 
                 {/* 描边粗细 Slider */}
@@ -778,7 +937,9 @@ function RightInspectorComponent({
                   max="14"
                   step="1"
                   value={selectedBox.style?.strokeWidth || 6}
-                  onChange={(e) => updateElementStyle(selectedBox.id, { strokeWidth: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    updateElementStyle(selectedBox.id, { strokeWidth: parseFloat(e.target.value) })
+                  }
                 />
 
                 {/* 边框圆角 Slider */}
@@ -789,7 +950,9 @@ function RightInspectorComponent({
                   max="32"
                   step="1"
                   value={selectedBox.rx !== undefined ? selectedBox.rx : 16}
-                  onChange={(e) => updateElementStyle(selectedBox.id, { rx: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    updateElementStyle(selectedBox.id, { rx: parseFloat(e.target.value) })
+                  }
                 />
 
                 {/* 霓虹发光滤镜开关 */}
@@ -802,7 +965,9 @@ function RightInspectorComponent({
                     <input
                       type="checkbox"
                       checked={selectedBox.style?.glow !== false}
-                      onChange={(e) => updateElementStyle(selectedBox.id, { glow: e.target.checked })}
+                      onChange={(e) =>
+                        updateElementStyle(selectedBox.id, { glow: e.target.checked })
+                      }
                       className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
                     />
                   </label>
@@ -834,7 +999,12 @@ function RightInspectorComponent({
                   <div className="grid grid-cols-3 gap-1 bg-background p-1 rounded-lg border border-border">
                     {PATH_FLOW_MODES.map((m) => {
                       const isActive = (selectedPath.style?.mode || 'draw') === m.id;
-                      const label = m.id === 'stream' ? t('modeStream', m.label) : m.id === 'draw' ? t('modeDraw', m.label) : t('modePulse', m.label);
+                      const label =
+                        m.id === 'stream'
+                          ? t('modeStream', m.label)
+                          : m.id === 'draw'
+                            ? t('modeDraw', m.label)
+                            : t('modePulse', m.label);
                       return (
                         <button
                           key={m.id}
@@ -862,7 +1032,9 @@ function RightInspectorComponent({
                   max="14"
                   step="1"
                   value={selectedPath.style?.strokeWidth || 5}
-                  onChange={(e) => updateElementStyle(selectedPath.id, { strokeWidth: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    updateElementStyle(selectedPath.id, { strokeWidth: parseFloat(e.target.value) })
+                  }
                 />
 
                 {/* 流光速度调节 (仅在 stream 模式下显示) */}
@@ -874,7 +1046,9 @@ function RightInspectorComponent({
                     max="5.0"
                     step="0.1"
                     value={selectedPath.style?.flowSpeed || 1.8}
-                    onChange={(e) => updateElementStyle(selectedPath.id, { flowSpeed: parseFloat(e.target.value) })}
+                    onChange={(e) =>
+                      updateElementStyle(selectedPath.id, { flowSpeed: parseFloat(e.target.value) })
+                    }
                   />
                 )}
 
@@ -888,7 +1062,9 @@ function RightInspectorComponent({
                     <input
                       type="checkbox"
                       checked={selectedPath.style?.glow !== false}
-                      onChange={(e) => updateElementStyle(selectedPath.id, { glow: e.target.checked })}
+                      onChange={(e) =>
+                        updateElementStyle(selectedPath.id, { glow: e.target.checked })
+                      }
                       className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
                     />
                   </label>
@@ -899,10 +1075,22 @@ function RightInspectorComponent({
                   <div className="text-[9px] font-mono text-muted-foreground bg-background/80 p-2 rounded-lg border border-border flex flex-col gap-1">
                     <div className="flex items-center justify-between text-[10px] text-primary/80 font-sans pb-0.5 border-b border-border/40">
                       <span>端点拓扑</span>
-                      <span className="text-[9px] text-muted-foreground">可直接在画布中拖拽端点吸附重连</span>
+                      <span className="text-[9px] text-muted-foreground">
+                        可直接在画布中拖拽端点吸附重连
+                      </span>
                     </div>
-                    <div className="truncate pt-0.5">{t('startPoint', '起点')}: <span className="text-foreground font-semibold">{selectedPath.from || t('freeBezier', '自由贝塞尔')}</span></div>
-                    <div className="truncate">{t('endPoint', '终点')}: <span className="text-foreground font-semibold">{selectedPath.to || t('freeBezier', '自由贝塞尔')}</span></div>
+                    <div className="truncate pt-0.5">
+                      {t('startPoint', '起点')}:{' '}
+                      <span className="text-foreground font-semibold">
+                        {selectedPath.from || t('freeBezier', '自由贝塞尔')}
+                      </span>
+                    </div>
+                    <div className="truncate">
+                      {t('endPoint', '终点')}:{' '}
+                      <span className="text-foreground font-semibold">
+                        {selectedPath.to || t('freeBezier', '自由贝塞尔')}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -980,7 +1168,9 @@ function RightInspectorComponent({
                   max="30"
                   step="1"
                   value={selectedDot.r !== undefined ? selectedDot.r : 8}
-                  onChange={(e) => updateElementStyle(selectedDot.id, { r: parseFloat(e.target.value) })}
+                  onChange={(e) =>
+                    updateElementStyle(selectedDot.id, { r: parseFloat(e.target.value) })
+                  }
                 />
 
                 {/* 动态呼吸脉冲开关 */}
@@ -993,7 +1183,9 @@ function RightInspectorComponent({
                     <input
                       type="checkbox"
                       checked={selectedDot.style?.pulse !== false}
-                      onChange={(e) => updateElementStyle(selectedDot.id, { pulse: e.target.checked })}
+                      onChange={(e) =>
+                        updateElementStyle(selectedDot.id, { pulse: e.target.checked })
+                      }
                       className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
                     />
                   </label>
@@ -1009,7 +1201,9 @@ function RightInspectorComponent({
                     <input
                       type="checkbox"
                       checked={selectedDot.style?.glow !== false}
-                      onChange={(e) => updateElementStyle(selectedDot.id, { glow: e.target.checked })}
+                      onChange={(e) =>
+                        updateElementStyle(selectedDot.id, { glow: e.target.checked })
+                      }
                       className="cursor-pointer accent-primary w-3.5 h-3.5 rounded"
                     />
                   </label>
@@ -1046,7 +1240,9 @@ function RightInspectorComponent({
                 <div className="space-y-1">
                   <label className="text-muted-foreground text-[10px] font-medium flex items-center justify-between">
                     <span>{t('calloutTitle', '徽章标题')}</span>
-                    <span className="font-mono text-sky-400 font-bold text-[10px] uppercase">{selectedCallout.theme || 'blue'}</span>
+                    <span className="font-mono text-sky-400 font-bold text-[10px] uppercase">
+                      {selectedCallout.theme || 'blue'}
+                    </span>
                   </label>
                   <Input
                     value={selectedCallout.title}
@@ -1081,7 +1277,10 @@ function RightInspectorComponent({
                               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                           }`}
                         >
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: thm.color }} />
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: thm.color }}
+                          />
                           <span className="truncate">{thm.label}</span>
                         </button>
                       );
@@ -1114,7 +1313,10 @@ function RightInspectorComponent({
                     value={selectedCallout.style?.fontSize || 12}
                     onChange={(e) =>
                       updateCallout(selectedCallout.id, {
-                        style: { ...(selectedCallout.style || {}), fontSize: parseFloat(e.target.value) },
+                        style: {
+                          ...(selectedCallout.style || {}),
+                          fontSize: parseFloat(e.target.value),
+                        },
                       })
                     }
                   />
@@ -1127,7 +1329,10 @@ function RightInspectorComponent({
                     value={selectedCallout.style?.titleFontSize || 11}
                     onChange={(e) =>
                       updateCallout(selectedCallout.id, {
-                        style: { ...(selectedCallout.style || {}), titleFontSize: parseFloat(e.target.value) },
+                        style: {
+                          ...(selectedCallout.style || {}),
+                          titleFontSize: parseFloat(e.target.value),
+                        },
                       })
                     }
                   />
@@ -1143,7 +1348,10 @@ function RightInspectorComponent({
                   value={selectedCallout.style?.maxWidth || 320}
                   onChange={(e) =>
                     updateCallout(selectedCallout.id, {
-                      style: { ...(selectedCallout.style || {}), maxWidth: parseFloat(e.target.value) },
+                      style: {
+                        ...(selectedCallout.style || {}),
+                        maxWidth: parseFloat(e.target.value),
+                      },
                     })
                   }
                 />
@@ -1212,59 +1420,62 @@ function RightInspectorComponent({
                   </select>
 
                   {/* 快捷对齐按钮 */}
-                  {selectedCallout.targetBoxId && (() => {
-                    const tBox = (dsl.elements?.boxes || []).find((b) => b.id === selectedCallout.targetBoxId);
-                    if (!tBox) return null;
-                    return (
-                      <div className="space-y-1.5 pt-1">
-                        <div className="flex gap-1.5">
+                  {selectedCallout.targetBoxId &&
+                    (() => {
+                      const tBox = (dsl.elements?.boxes || []).find(
+                        (b) => b.id === selectedCallout.targetBoxId,
+                      );
+                      if (!tBox) return null;
+                      return (
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCallout(selectedCallout.id, {
+                                  position: {
+                                    left: `${Math.round(tBox.x + 20)}px`,
+                                    top: `${Math.round(Math.max(20, tBox.y - 80))}px`,
+                                  },
+                                });
+                              }}
+                              className="flex-1 text-[9px] bg-secondary/80 hover:bg-secondary text-secondary-foreground py-1 px-2 rounded border border-border transition cursor-pointer"
+                            >
+                              ⬆️ {t('calloutAlignAbove', '对齐至框元上方')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateCallout(selectedCallout.id, {
+                                  position: {
+                                    left: `${Math.round(tBox.x + tBox.width + 20)}px`,
+                                    top: `${Math.round(tBox.y + 10)}px`,
+                                  },
+                                });
+                              }}
+                              className="flex-1 text-[9px] bg-secondary/80 hover:bg-secondary text-secondary-foreground py-1 px-2 rounded border border-border transition cursor-pointer"
+                            >
+                              ➡️ {t('calloutAlignRight', '对齐至框元右侧')}
+                            </button>
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
-                              updateCallout(selectedCallout.id, {
-                                position: {
-                                  left: `${Math.round(tBox.x + 20)}px`,
-                                  top: `${Math.round(Math.max(20, tBox.y - 80))}px`,
-                                },
+                              const adaptive = calculateAdaptiveCalloutStyle({
+                                viewportWidth: dsl.meta.viewport.width,
+                                viewportHeight: dsl.meta.viewport.height,
+                                targetBox: tBox,
                               });
+                              updateCallout(selectedCallout.id, { style: adaptive });
                             }}
-                            className="flex-1 text-[9px] bg-secondary/80 hover:bg-secondary text-secondary-foreground py-1 px-2 rounded border border-border transition cursor-pointer"
+                            className="w-full text-[9px] bg-primary/10 hover:bg-primary/20 text-primary py-1 px-2 rounded border border-primary/30 transition cursor-pointer flex items-center justify-center gap-1 font-medium"
                           >
-                            ⬆️ {t('calloutAlignAbove', '对齐至框元上方')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateCallout(selectedCallout.id, {
-                                position: {
-                                  left: `${Math.round(tBox.x + tBox.width + 20)}px`,
-                                  top: `${Math.round(tBox.y + 10)}px`,
-                                },
-                              });
-                            }}
-                            className="flex-1 text-[9px] bg-secondary/80 hover:bg-secondary text-secondary-foreground py-1 px-2 rounded border border-border transition cursor-pointer"
-                          >
-                            ➡️ {t('calloutAlignRight', '对齐至框元右侧')}
+                            <Sparkles className="w-2.5 h-2.5" />
+                            <span>{t('calloutAutoAdaptStyle', '一键匹配目标框元尺寸与字号')}</span>
                           </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const adaptive = calculateAdaptiveCalloutStyle({
-                              viewportWidth: dsl.meta.viewport.width,
-                              viewportHeight: dsl.meta.viewport.height,
-                              targetBox: tBox,
-                            });
-                            updateCallout(selectedCallout.id, { style: adaptive });
-                          }}
-                          className="w-full text-[9px] bg-primary/10 hover:bg-primary/20 text-primary py-1 px-2 rounded border border-primary/30 transition cursor-pointer flex items-center justify-center gap-1 font-medium"
-                        >
-                          <Sparkles className="w-2.5 h-2.5" />
-                          <span>{t('calloutAutoAdaptStyle', '一键匹配目标框元尺寸与字号')}</span>
-                        </button>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })()}
                 </div>
               </div>
             )}
@@ -1325,7 +1536,8 @@ function RightInspectorComponent({
                             updateImage(selectedImage.id, {
                               url: res,
                               width: img.naturalWidth > 0 ? img.naturalWidth : selectedImage.width,
-                              height: img.naturalHeight > 0 ? img.naturalHeight : selectedImage.height,
+                              height:
+                                img.naturalHeight > 0 ? img.naturalHeight : selectedImage.height,
                             });
                           };
                           img.src = res;
@@ -1354,7 +1566,10 @@ function RightInspectorComponent({
                     <Input
                       value={selectedImage.url}
                       onChange={(e) => updateImage(selectedImage.id, { url: e.target.value })}
-                      placeholder={t('imageUrlPlaceholder', '输入图片 URL (http:// 或 /asset.png)...')}
+                      placeholder={t(
+                        'imageUrlPlaceholder',
+                        '输入图片 URL (http:// 或 /asset.png)...',
+                      )}
                       className="text-xs bg-background h-7 font-mono truncate"
                     />
                   </div>
@@ -1377,7 +1592,11 @@ function RightInspectorComponent({
                         }`}
                         title={t('lockAspectRatio', '锁定等比缩放')}
                       >
-                        {isAspectLocked ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
+                        {isAspectLocked ? (
+                          <Lock className="w-2.5 h-2.5" />
+                        ) : (
+                          <Unlock className="w-2.5 h-2.5" />
+                        )}
                         <span>{isAspectLocked ? '等比锁定' : '自由比例'}</span>
                       </button>
 
@@ -1413,7 +1632,9 @@ function RightInspectorComponent({
                       <Input
                         type="number"
                         value={selectedImage.x}
-                        onChange={(e) => updateImage(selectedImage.id, { x: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          updateImage(selectedImage.id, { x: parseInt(e.target.value) || 0 })
+                        }
                         className="text-xs bg-background h-7 font-mono"
                       />
                     </div>
@@ -1425,7 +1646,9 @@ function RightInspectorComponent({
                       <Input
                         type="number"
                         value={selectedImage.y}
-                        onChange={(e) => updateImage(selectedImage.id, { y: parseInt(e.target.value) || 0 })}
+                        onChange={(e) =>
+                          updateImage(selectedImage.id, { y: parseInt(e.target.value) || 0 })
+                        }
                         className="text-xs bg-background h-7 font-mono"
                       />
                     </div>
@@ -1442,7 +1665,10 @@ function RightInspectorComponent({
                           const newW = Math.max(20, parseInt(e.target.value) || 20);
                           if (isAspectLocked && selectedImage.width > 0) {
                             const ratio = selectedImage.height / selectedImage.width;
-                            updateImage(selectedImage.id, { width: newW, height: Math.round(newW * ratio) });
+                            updateImage(selectedImage.id, {
+                              width: newW,
+                              height: Math.round(newW * ratio),
+                            });
                           } else {
                             updateImage(selectedImage.id, { width: newW });
                           }
@@ -1463,7 +1689,10 @@ function RightInspectorComponent({
                           const newH = Math.max(20, parseInt(e.target.value) || 20);
                           if (isAspectLocked && selectedImage.height > 0) {
                             const ratio = selectedImage.width / selectedImage.height;
-                            updateImage(selectedImage.id, { height: newH, width: Math.round(newH * ratio) });
+                            updateImage(selectedImage.id, {
+                              height: newH,
+                              width: Math.round(newH * ratio),
+                            });
                           } else {
                             updateImage(selectedImage.id, { height: newH });
                           }
@@ -1486,7 +1715,10 @@ function RightInspectorComponent({
                     value={selectedImage.style?.borderRadius ?? 16}
                     onChange={(e) =>
                       updateImage(selectedImage.id, {
-                        style: { ...(selectedImage.style || {}), borderRadius: parseFloat(e.target.value) },
+                        style: {
+                          ...(selectedImage.style || {}),
+                          borderRadius: parseFloat(e.target.value),
+                        },
                       })
                     }
                   />
@@ -1501,7 +1733,10 @@ function RightInspectorComponent({
                     value={selectedImage.style?.opacity ?? 1.0}
                     onChange={(e) =>
                       updateImage(selectedImage.id, {
-                        style: { ...(selectedImage.style || {}), opacity: parseFloat(e.target.value) },
+                        style: {
+                          ...(selectedImage.style || {}),
+                          opacity: parseFloat(e.target.value),
+                        },
                       })
                     }
                   />
@@ -1570,13 +1805,19 @@ function RightInspectorComponent({
             {(() => {
               const renderPalette = () => {
                 // 优先读取当前选中图元的实际生效颜色，确保无论是从画布工具条还是右侧面板修改，均精准双向响应
-                const selectedElementColor = (
+                const selectedElementColor =
                   selectedPath?.style?.stroke ||
-                  selectedBox?.style?.stroke || selectedBox?.style?.fill ||
+                  selectedBox?.style?.stroke ||
+                  selectedBox?.style?.fill ||
                   selectedDot?.style?.fill ||
-                  null
-                );
-                const currentPaletteColor = (selectedElementColor || activeDrawingColor || '#38bdf8').trim().toLowerCase();
+                  null;
+                const currentPaletteColor = (
+                  selectedElementColor ||
+                  activeDrawingColor ||
+                  '#38bdf8'
+                )
+                  .trim()
+                  .toLowerCase();
 
                 return (
                   <div className="space-y-2 bg-muted/20 border border-border rounded-xl p-3">
@@ -1592,73 +1833,103 @@ function RightInspectorComponent({
                       )}
                     </div>
                     <div className="flex items-center gap-2 pt-1">
-                      {['#38bdf8', '#34d399', '#fbbf24', '#f43f5e', '#a855f7', '#ec4899', '#ffffff'].map((c) => {
+                      {[
+                        '#38bdf8',
+                        '#34d399',
+                        '#fbbf24',
+                        '#f43f5e',
+                        '#a855f7',
+                        '#ec4899',
+                        '#ffffff',
+                      ].map((c) => {
                         const isCurrentActive = currentPaletteColor === c.toLowerCase();
-                      return (
-                        <button
-                          key={c}
-                          type="button"
-                          style={{ backgroundColor: c }}
-                          onClick={() => {
-                            setActiveDrawingColor(c);
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            style={{ backgroundColor: c }}
+                            onClick={() => {
+                              setActiveDrawingColor(c);
+                              if (selectedElementId) {
+                                updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                                if (selectedImage) {
+                                  updateImage(selectedImage.id, {
+                                    style: { border: `2px solid ${c}` },
+                                  });
+                                }
+                                if (selectedCallout) {
+                                  let theme = 'blue';
+                                  if (c.includes('34d399')) theme = 'green';
+                                  else if (c.includes('fbbf24')) theme = 'amber';
+                                  else if (
+                                    c.includes('f472b6') ||
+                                    c.includes('f43f5e') ||
+                                    c.includes('ec4899')
+                                  )
+                                    theme = 'pink';
+                                  else if (c.includes('a855f7')) theme = 'purple';
+                                  updateCallout(selectedCallout.id, { theme });
+                                }
+                              }
+                            }}
+                            className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
+                              isCurrentActive
+                                ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110'
+                                : ''
+                            }`}
+                            title={`设为颜色 ${c}`}
+                          />
+                        );
+                      })}
+
+                      {/* 自定义拾色器 */}
+                      <label
+                        className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
+                        title={t('customHex', '自定义 HEX 颜色')}
+                      >
+                        <input
+                          type="color"
+                          value={activeDrawingColor}
+                          onChange={(e) => {
+                            const newColor = e.target.value;
+                            setActiveDrawingColor(newColor);
                             if (selectedElementId) {
-                              updateElementStyle(selectedElementId, { stroke: c, fill: c });
+                              updateElementStyle(selectedElementId, {
+                                stroke: newColor,
+                                fill: newColor,
+                              });
                               if (selectedImage) {
-                                updateImage(selectedImage.id, { style: { border: `2px solid ${c}` } });
+                                updateImage(selectedImage.id, {
+                                  style: { border: `2px solid ${newColor}` },
+                                });
                               }
                               if (selectedCallout) {
-                                let theme = 'blue';
-                                if (c.includes('34d399')) theme = 'green';
-                                else if (c.includes('fbbf24')) theme = 'amber';
-                                else if (c.includes('f472b6') || c.includes('f43f5e') || c.includes('ec4899')) theme = 'pink';
-                                else if (c.includes('a855f7')) theme = 'purple';
-                                updateCallout(selectedCallout.id, { theme });
+                                updateCallout(selectedCallout.id, { theme: newColor });
                               }
                             }
                           }}
-                          className={`w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition shadow-md border border-white/20 ${
-                            isCurrentActive ? 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110' : ''
-                          }`}
-                          title={`设为颜色 ${c}`}
+                          className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
                         />
-                      );
-                    })}
-
-                    {/* 自定义拾色器 */}
-                    <label
-                      className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30 cursor-pointer hover:scale-110 transition shadow-md flex items-center justify-center bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500"
-                      title={t('customHex', '自定义 HEX 颜色')}
-                    >
-                      <input
-                        type="color"
-                        value={activeDrawingColor}
-                        onChange={(e) => {
-                          const newColor = e.target.value;
-                          setActiveDrawingColor(newColor);
-                          if (selectedElementId) {
-                            updateElementStyle(selectedElementId, { stroke: newColor, fill: newColor });
-                            if (selectedImage) {
-                              updateImage(selectedImage.id, { style: { border: `2px solid ${newColor}` } });
-                            }
-                            if (selectedCallout) {
-                              updateCallout(selectedCallout.id, { theme: newColor });
-                            }
-                          }
-                        }}
-                        className="opacity-0 absolute inset-0 cursor-pointer w-full h-full"
-                      />
-                    </label>
+                      </label>
+                    </div>
                   </div>
-                </div>
-              );
-            };
+                );
+              };
 
-            return !selectedBox && !selectedPath && !selectedDot && !selectedCallout && !selectedImage ? (
+              return !selectedBox &&
+                !selectedPath &&
+                !selectedDot &&
+                !selectedCallout &&
+                !selectedImage ? (
                 <>
                   <div className="p-3 rounded-xl bg-muted/20 border border-dashed border-border text-center space-y-1">
                     <Info className="w-4 h-4 text-muted-foreground mx-auto" />
-                    <p className="text-xs font-medium text-foreground">{t('noElementSelected', '未选中图元')}</p>
-                    <p className="text-[10px] text-muted-foreground">{t('noElementSelectedDesc', '在下方列表或画布上单击图元即可进行属性微调')}</p>
+                    <p className="text-xs font-medium text-foreground">
+                      {t('noElementSelected', '未选中图元')}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {t('noElementSelectedDesc', '在下方列表或画布上单击图元即可进行属性微调')}
+                    </p>
                   </div>
                   {/* 铁律 11 落地：图元层级列表绝对置顶于调色板之上，彻底杜绝折叠线遮挡 */}
                   {renderLayerHierarchyList()}

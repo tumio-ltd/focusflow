@@ -11,10 +11,10 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {(label || valueDisplay !== undefined) && (
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
             {label && <span>{label}</span>}
             {valueDisplay !== undefined && (
-              <span className="font-mono text-primary bg-muted px-1.5 py-0.5 rounded border border-border">
+              <span className="font-mono text-primary bg-muted px-2 py-0.5 rounded border border-border font-semibold text-xs">
                 {valueDisplay}
               </span>
             )}

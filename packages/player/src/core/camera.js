@@ -10,6 +10,9 @@ export class CameraKinematics {
     this.baseHeight = baseHeight;
     this.disabled = !!options?.disabled;
     this.currentCamera = { zoom: 1.0, x: 0, y: 0, duration: 1.2 };
+    if (this.wrap?.style) {
+      this.wrap.style.setProperty('--ff-camera-zoom', '1');
+    }
   }
 
   /**
@@ -20,6 +23,7 @@ export class CameraKinematics {
   apply(camera, animate = true) {
     if (this.disabled) {
       this.wrap.style.transform = 'none';
+      this.wrap.style.setProperty('--ff-camera-zoom', '1');
       return;
     }
     const zoom = Math.max(1.0, Math.min(3.5, camera.zoom || 1.0));
@@ -37,6 +41,7 @@ export class CameraKinematics {
     }
 
     this.wrap.style.transform = `scale(${zoom}) translate(${-clamped.x}%, ${-clamped.y}%)`;
+    this.wrap.style.setProperty('--ff-camera-zoom', zoom.toFixed(3));
   }
 
   /**

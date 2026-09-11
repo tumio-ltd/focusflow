@@ -9,28 +9,33 @@ import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause, Download } from
 import { useTranslation } from 'react-i18next';
 
 function generateSpeechPeaks(totalDurationMs: number, scenes: SceneStep[], sampleCount: number = 800): Float32Array {
-  const peaks = new Float32Array(sampleCount);
+  const peaks = new Float32Array(sampleCount * 2);
   let accumMs = 0;
   for (let sIdx = 0; sIdx < scenes.length; sIdx++) {
     const scene = scenes[sIdx];
-    const durMs = (scene.duration || 3.8) * 1000;
+    const durMs = typeof scene.duration === 'number' && scene.duration > 0
+      ? (scene.duration > 100 ? scene.duration : scene.duration * 1000)
+      : 3800;
     const sceneStartRatio = accumMs / Math.max(1, totalDurationMs);
     const sceneEndRatio = (accumMs + durMs) / Math.max(1, totalDurationMs);
     const startSample = Math.floor(sceneStartRatio * sampleCount);
     const endSample = Math.min(sampleCount, Math.floor(sceneEndRatio * sampleCount));
 
-    const sceneSampleCount = endSample - startSample;
+    const sceneSampleCount = Math.max(1, endSample - startSample);
     for (let i = startSample; i < endSample; i++) {
       const relIdx = i - startSample;
-      const progress = relIdx / Math.max(1, sceneSampleCount);
+      const progress = relIdx / sceneSampleCount;
+      let val = 0.05;
       if (progress < 0.05 || progress > 0.85) {
-        peaks[i] = 0.02 + Math.abs(Math.sin(i * 0.5)) * 0.03;
+        val = 0.02 + Math.abs(Math.sin(i * 0.5)) * 0.03;
       } else {
         const envelope = Math.sin(progress * Math.PI);
         const cadence = Math.sin(i * 0.4) * Math.cos(i * 0.15) * 0.35 + 0.45;
         const jitter = Math.sin(i * 1.8) * 0.15;
-        peaks[i] = Math.min(1.0, Math.max(0.06, (cadence + jitter) * envelope));
+        val = Math.min(1.0, Math.max(0.06, (cadence + jitter) * envelope));
       }
+      peaks[i * 2] = -val;
+      peaks[i * 2 + 1] = val;
     }
     accumMs += durMs;
   }
@@ -149,9 +154,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     let animId: number;
     const isOffline = Boolean(
       track?.isOfflineTTS ||
-      track?.type === 'offline-tts' ||
-      track?.id?.startsWith('track-ai-') ||
-      track?.id?.startsWith('tts-')
+      track?.type === 'offline-tts'
     );
     if (isPlayingAudio && !isOffline) {
       stopGrainAnim();
@@ -183,9 +186,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
 
     const isOffline = Boolean(
       track.isOfflineTTS ||
-      track.type === 'offline-tts' ||
-      track.id.startsWith('track-ai-') ||
-      track.id.startsWith('tts-')
+      track.type === 'offline-tts'
     );
 
     if (isOffline) {
@@ -362,9 +363,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
 
         const isOffline = Boolean(
           track.isOfflineTTS ||
-          track.type === 'offline-tts' ||
-          track.id.startsWith('track-ai-') ||
-          track.id.startsWith('tts-')
+          track.type === 'offline-tts'
         );
 
         let maxPeak = 0;
@@ -372,7 +371,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
           if (extracted[i] > maxPeak) maxPeak = extracted[i];
         }
 
-        if (isOffline || maxPeak < 0.01) {
+        if (isOffline) {
           const speechPeaks = generateSpeechPeaks(track.durationMs || totalDurationMsRef.current, scenesRef.current, 1200);
           setPeaks(speechPeaks);
         } else {
@@ -416,9 +415,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
 
     const isOffline = Boolean(
       track?.isOfflineTTS ||
-      track?.type === 'offline-tts' ||
-      track?.id.startsWith('track-ai-') ||
-      track?.id.startsWith('tts-')
+      track?.type === 'offline-tts'
     );
 
     if (isOffline) {
@@ -426,7 +423,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       let targetIdx = 0;
       let targetStartMs = 0;
       for (let i = 0; i < scenes.length; i++) {
-        const durMs = (scenes[i].duration || dsl.meta.controls?.interval || 3800);
+        const rawDur = scenes[i].duration || dsl.meta.controls?.interval || 3800;
+        const durMs = rawDur > 100 ? rawDur : rawDur * 1000;
         if (timeMs < accum + durMs) {
           targetIdx = i;
           targetStartMs = accum;
