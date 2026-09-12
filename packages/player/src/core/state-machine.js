@@ -14,6 +14,10 @@ export class StateMachine {
     this.onStepChange = options.onStepChange || (() => {});
     this.onPlayStateChange = options.onPlayStateChange || (() => {});
     this.onEnded = options.onEnded || (() => {});
+    this.onTick = options.onTick || (() => {});
+    this.sceneStartTime = 0;
+    this.pausedOffset = 0;
+    this.tickTimer = null;
   }
 
   get currentScene() {
@@ -43,9 +47,14 @@ export class StateMachine {
   goTo(index, animate = true) {
     if (index < 0 || index >= this.scenes.length) return;
     this.curIndex = index;
+    this.pausedOffset = 0;
+    this.sceneStartTime = 0;
     this.onStepChange(this.curIndex, this.scenes[this.curIndex], animate);
     if (this.isPlaying) {
       this.startPlayTimer();
+    } else {
+      const duration = this.getSceneDuration(this.curIndex);
+      this.onTick(0, duration);
     }
   }
 
@@ -141,19 +150,48 @@ export class StateMachine {
     this.stopPlayTimer();
     if (this.scenes.length === 0) return;
     const duration = this.getSceneDuration(this.curIndex);
-    this.playTimer = setTimeout(() => {
-      this.next();
-    }, duration);
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    this.sceneStartTime = now - this.pausedOffset;
+
+    const tick = () => {
+      if (!this.isPlaying) return;
+      const currentNow = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const elapsed = Math.min(duration, Math.max(0, currentNow - this.sceneStartTime));
+      this.onTick(elapsed, duration);
+
+      if (elapsed >= duration) {
+        this.pausedOffset = 0;
+        this.sceneStartTime = 0;
+        this.next();
+      } else {
+        this.tickTimer = setTimeout(tick, 50);
+      }
+    };
+
+    // Immediate tick update
+    this.onTick(this.pausedOffset, duration);
+    this.tickTimer = setTimeout(tick, 50);
   }
 
   stopPlayTimer() {
+    if (this.tickTimer) {
+      clearTimeout(this.tickTimer);
+      this.tickTimer = null;
+    }
     if (this.playTimer) {
       clearTimeout(this.playTimer);
       this.playTimer = null;
+    }
+    if (this.sceneStartTime > 0) {
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      const duration = this.getSceneDuration(this.curIndex);
+      this.pausedOffset = Math.min(duration, Math.max(0, now - this.sceneStartTime));
     }
   }
 
   destroy() {
     this.stopPlayTimer();
+    this.pausedOffset = 0;
+    this.sceneStartTime = 0;
   }
 }

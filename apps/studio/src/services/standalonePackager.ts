@@ -67,6 +67,22 @@ export async function compileStandaloneHtml(dsl: FocusFlowDSL): Promise<string> 
     }
   }
 
+  // 若分幕配音 (voiceoverAudio) 不是 Base64 Data URL，自动转为内嵌 Base64 Data URL (杜绝泄漏 blob:http://localhost:5174 死链)
+  if (exportDSL.scenes?.length) {
+    for (const scene of exportDSL.scenes) {
+      if (scene.voiceoverAudio?.url && !scene.voiceoverAudio.url.startsWith('data:')) {
+        try {
+          const resp = await fetch(scene.voiceoverAudio.url);
+          const blob = await resp.blob();
+          scene.voiceoverAudio.url = await blobToDataUrl(blob);
+        } catch (e) {
+          console.warn(`Failed to embed scene voiceover as base64 in standalone HTML (${scene.id}):`, e);
+          delete scene.voiceoverAudio.url;
+        }
+      }
+    }
+  }
+
 const WATERMARK_SVG_LOGO = `<svg viewBox="0 0 128 128" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" class="ff-watermark-icon">
   <defs>
     <linearGradient id="ffWatermarkGrad" x1="0%" y1="100%" x2="100%" y2="0%">
@@ -93,23 +109,27 @@ const WATERMARK_SVG_LOGO = `<svg viewBox="0 0 128 128" width="14" height="14" fi
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>${title}</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      min-height: -webkit-fill-available;
       overflow: hidden;
       background-color: #0a0e17;
       color: #f1f5f9;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     #focusflow-root {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
+      min-height: -webkit-fill-available;
       position: relative;
       overflow: hidden;
     }
@@ -226,6 +246,41 @@ const WATERMARK_SVG_LOGO = `<svg viewBox="0 0 128 128" width="14" height="14" fi
       }
     }
 
+    /* 移动端竖屏横屏指引与自适应 */
+    @media (max-width: 768px) and (orientation: portrait) {
+      .ff-mobile-rotate-hint {
+        position: fixed;
+        top: 14px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 60;
+        background: rgba(15, 23, 42, 0.88);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        color: #38bdf8;
+        padding: 5px 14px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 500;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        animation: ffPulseHint 2.4s infinite ease-in-out;
+      }
+    }
+    @media (orientation: landscape) or (min-width: 769px) {
+      .ff-mobile-rotate-hint {
+        display: none !important;
+      }
+    }
+    @keyframes ffPulseHint {
+      0%, 100% { opacity: 0.82; transform: translateX(-50%) translateY(0); }
+      50% { opacity: 1; transform: translateX(-50%) translateY(-2px); }
+    }
+
     /* 全屏演播模式自适应微暗 */
     :fullscreen .ff-watermark-badge,
     :-webkit-full-screen .ff-watermark-badge {
@@ -242,6 +297,12 @@ const WATERMARK_SVG_LOGO = `<svg viewBox="0 0 128 128" width="14" height="14" fi
 </head>
 <body>
   <div id="focusflow-root"></div>
+
+  <!-- 移动端竖屏浏览指引徽章 -->
+  <div class="ff-mobile-rotate-hint">
+    <span>🔄</span>
+    <span>建议旋转至横屏浏览全景</span>
+  </div>
 
   <!-- FocusFlow Official Watermark Badge (开源版官方微型水印角标) -->
   <a
@@ -267,16 +328,37 @@ const WATERMARK_SVG_LOGO = `<svg viewBox="0 0 128 128" width="14" height="14" fi
 
   <script>
     (function() {
-      const dsl = ${JSON.stringify(exportDSL, null, 2)};
-      const container = document.getElementById('focusflow-root');
-      if (container && window.FocusFlow && window.FocusFlow.FocusFlowPlayer) {
-        const player = new window.FocusFlow.FocusFlowPlayer({
+      try {
+        const dsl = ${JSON.stringify(exportDSL, null, 2)};
+        const container = document.getElementById('focusflow-root');
+        const PlayerClass = window.FocusFlow?.FocusFlowPlayer || window.FocusFlowPlayer;
+        if (!PlayerClass) {
+          throw new Error('FocusFlow Player 核心引擎未能在当前浏览器环境中完成装载');
+        }
+        if (!container) {
+          throw new Error('找不到播放容器 #focusflow-root');
+        }
+        const player = new PlayerClass({
           container: container,
           dsl: dsl,
           autoplay: false,
           debug: false,
           showControls: true,
         });
+        window.player = player;
+      } catch (err) {
+        console.error('[FocusFlow Standalone Crash Guard]', err);
+        const root = document.getElementById('focusflow-root');
+        if (root && (!root.children || root.children.length === 0)) {
+          root.innerHTML = \`
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;color:#94a3b8;font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px;text-align:center;box-sizing:border-box;">
+              <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+              <div style="font-size:16px;color:#f1f5f9;font-weight:600;margin-bottom:8px;">FocusFlow 演示加载提示</div>
+              <div style="font-size:13px;max-width:320px;line-height:1.5;color:#94a3b8;margin-bottom:16px;">\${err && err.message ? err.message : '浏览器环境受限，请尝试切换横屏或使用现代浏览器打开'}</div>
+              <button onclick="location.reload()" style="background:#38bdf8;color:#0a0e17;border:none;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;">重新加载</button>
+            </div>
+          \`;
+        }
       }
     })();
   </script>

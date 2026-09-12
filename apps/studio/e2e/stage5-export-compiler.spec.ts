@@ -80,8 +80,17 @@ async function verifyStandaloneHtmlExportTrigger(page: Page): Promise<void> {
       await standalonePage.keyboard.press(' ');
       await expect(sceneTimer).toBeVisible();
 
+      // 验证播放时钟心跳正常流转：时间读数动态递增，绝非 00:00 静态假死
+      await standalonePage.waitForTimeout(1100);
+      const timerText = await sceneTimer.innerText();
+      expect(timerText).toMatch(/00:0[1-9] \//);
+
       await standalonePage.keyboard.press(' ');
       await expect(sceneTimer).not.toBeVisible();
+
+      // 验证移动端竖屏横屏指引与自适应元标记存在
+      const rotateHint = standalonePage.locator('.ff-mobile-rotate-hint');
+      await expect(rotateHint).toBeAttached();
 
       // 验证开源版官方微型水印角标 (FocusFlow Watermark Badge)
       const watermark = standalonePage.locator('[data-testid="focusflow-watermark-badge"]');
@@ -492,8 +501,118 @@ test.describe('FocusFlow Studio Stage 5 E2E Export & Packaging Suite', () => {
     await verifyRecordingPiPIsolation(page);
   });
 
+/**
+ * 9. TC580: 验证「微服务高可用电商中台演进架构」导出单文件 HTML，图元精确定位对齐与移动端竖屏横屏指引
+ */
+async function verifyMicroservicesExportAndMobileView(page: Page): Promise<void> {
+  // (1) 呼出架构模板中心并应用「微服务高可用电商中台演进架构」
+  const templatesBtn = page.locator('[data-testid="open-templates-btn"]');
+  await expect(templatesBtn).toBeVisible({ timeout: 5000 });
+  await templatesBtn.click();
+
+  const templatesModal = page.locator('[data-testid="templates-modal"]');
+  await expect(templatesModal).toBeVisible({ timeout: 5000 });
+
+  const templateCard = templatesModal.locator('text=微服务高可用电商中台演进架构').first();
+  await expect(templateCard).toBeVisible({ timeout: 5000 });
+
+  const cardContainer = templateCard.locator('xpath=ancestor::div[contains(@class, "group")]');
+  const applyBtn = cardContainer.getByRole('button', { name: /应用此模板创建工程/ });
+  await applyBtn.click();
+  await expect(templatesModal).not.toBeVisible({ timeout: 5000 });
+
+  // (2) 触发单文件 HTML 导出
+  const exportBtn = page.locator('[data-testid="export-btn"]');
+  await expect(exportBtn).toBeVisible();
+  await exportBtn.click();
+
+  const exportModal = page.locator('[data-testid="export-modal"]');
+  await expect(exportModal).toBeVisible();
+
+  const exportHtmlBtn = page.locator('[data-testid="export-html-btn"]');
+  await expect(exportHtmlBtn).toBeVisible();
+
+  const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+  await exportHtmlBtn.click();
+  const download = await downloadPromise;
+
+  const fs = await import('fs');
+  const path = await import('path');
+  const tempFilePath = path.join(process.cwd(), `test-microservices-export-${Date.now()}.html`);
+  await download.saveAs(tempFilePath);
+
+  // (3) 打开独立页面验证桌面宽屏下图元完全对齐
+  const standalonePage = await page.context().newPage();
+  try {
+    await standalonePage.setViewportSize({ width: 1920, height: 900 });
+    await standalonePage.goto(`file://${tempFilePath}`);
+    await standalonePage.waitForTimeout(600);
+
+    // 验证 Redis 和 ShardingSphere 图元存在且无错位
+    const redisBox = standalonePage.locator('#box-redis-cluster');
+    await expect(redisBox).toBeAttached();
+
+    const shardingBox = standalonePage.locator('#box-db-sharding');
+    await expect(shardingBox).toBeAttached();
+
+    // 验证播放时间正常走动
+    await standalonePage.keyboard.press(' ');
+    const sceneTimer = standalonePage.locator('[data-testid="audience-scene-timer"]');
+    await expect(sceneTimer).toBeVisible();
+    await standalonePage.waitForTimeout(1100);
+    const timerText = await sceneTimer.innerText();
+    expect(timerText).toMatch(/00:0[1-9] \//);
+
+    // (4) 仿真移动端 iPhone 14 竖屏视口 (390 x 844)
+    await standalonePage.setViewportSize({ width: 390, height: 844 });
+    await standalonePage.waitForTimeout(400);
+
+    // 验证在手机竖屏下横屏引导提示正常浮现
+    const rotateHint = standalonePage.locator('.ff-mobile-rotate-hint');
+    await expect(rotateHint).toBeVisible();
+
+    // 验证画布容器绝非空白纯黑屏
+    const playerWrap = standalonePage.locator('#_ff_wrap');
+    await expect(playerWrap).toBeVisible();
+    const bounds = await playerWrap.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.width).toBeGreaterThan(0);
+    expect(bounds!.height).toBeGreaterThan(0);
+
+    // 截屏存证竖屏
+    await standalonePage.screenshot({ path: 'test-results/screenshots/microservices_standalone_mobile_portrait.png' });
+
+    // (5) 仿真移动端 iPhone 14 横屏视口 (844 x 390) 验证旋转后画布正常重绘与自适应
+    await standalonePage.setViewportSize({ width: 844, height: 390 });
+    await standalonePage.waitForTimeout(400);
+
+    // 验证横屏下旋转提示自动隐藏
+    await expect(rotateHint).not.toBeVisible();
+
+    // 验证 16:9 画幅硬锁视口裁切层与内容层正常排版与可见
+    const viewportEl = standalonePage.locator('#_ff_viewport');
+    await expect(viewportEl).toBeVisible();
+    const landscapeBounds = await viewportEl.boundingBox();
+    expect(landscapeBounds).not.toBeNull();
+    expect(landscapeBounds!.width).toBeGreaterThan(0);
+    expect(landscapeBounds!.height).toBeGreaterThan(0);
+
+    // 截屏存证横屏
+    await standalonePage.screenshot({ path: 'test-results/screenshots/microservices_standalone_mobile_landscape.png' });
+  } finally {
+    await standalonePage.close();
+    if (fs.existsSync(tempFilePath)) {
+      fs.unlinkSync(tempFilePath);
+    }
+  }
+}
+
   test('TC579: 验证直接从场景2起播时历史场景气泡无残留与专属气泡精准激活', async ({ page }) => {
     await verifyScene2CalloutIsolation(page);
+  });
+
+  test('TC580: 验证微服务高可用电商架构导出单文件 HTML 图元对齐、时间心跳流转与移动端横屏指引', async ({ page }) => {
+    await verifyMicroservicesExportAndMobileView(page);
   });
 });
 

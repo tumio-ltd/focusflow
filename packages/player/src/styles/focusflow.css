@@ -42,9 +42,24 @@
   overflow: hidden;
 }
 
-/* Base Fit Wrapper (Handles Scale & Pan Transform) */
+/* 1.1 Viewport Container (Hard-locks aspect ratio to 16:9 / target ratio) */
+.focusflow-viewport {
+  position: absolute;
+  overflow: hidden;
+  background: #000000;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Base Fit Wrapper (Handles Scale & Pan Transform inside locked Viewport) */
 .focusflow-wrap {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   transform-origin: center center;
   transition: transform 1.2s cubic-bezier(0.4, 0.0, 0.2, 1.0);
   will-change: transform;
@@ -120,8 +135,14 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  overflow: visible;
+  overflow: hidden;
   z-index: 3;
+  /* WebKit/Safari Compositing Layer Isolation: prevents subregion scaling distortion */
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  isolation: isolate;
 }
 
 /* Layer 2: Callout Text Floating Overlay */
@@ -139,6 +160,8 @@
   fill: transparent;
   stroke-linecap: round;
   stroke-linejoin: round;
+  shape-rendering: geometricPrecision;
+  vector-effect: non-scaling-stroke;
   opacity: 0;
   transition: stroke-dashoffset 1.3s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.4s ease;

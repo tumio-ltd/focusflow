@@ -59,7 +59,10 @@ export class CameraKinematics {
     const clampedX = Math.max(-safeLimit, Math.min(safeLimit, x));
     const clampedY = Math.max(-safeLimit, Math.min(safeLimit, y));
 
-    return { x: clampedX, y: clampedY };
+    return {
+      x: Math.round(clampedX * 10) / 10,
+      y: Math.round(clampedY * 10) / 10,
+    };
   }
 
   getCurrentCamera() {

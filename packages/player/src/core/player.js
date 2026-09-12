@@ -100,12 +100,35 @@ export class FocusFlowPlayer {
       }
       if (mainTrack && mainTrack.url) {
         try {
+          let srcUrl = this.getAssetUrl(mainTrack.url);
+          // On mobile, convert large data:audio/ Base64 to Blob URL to prevent Mobile WebKit memory / data URL length crashes
+          if (srcUrl.startsWith('data:audio/') && typeof Blob !== 'undefined' && typeof URL !== 'undefined' && URL.createObjectURL) {
+            try {
+              const parts = srcUrl.split(',');
+              const mimeMatch = parts[0].match(/:(.*?);/);
+              const mime = mimeMatch ? mimeMatch[1] : 'audio/wav';
+              const binaryStr = atob(parts[1]);
+              const len = binaryStr.length;
+              const bytes = new Uint8Array(len);
+              for (let i = 0; i < len; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+              }
+              const blob = new Blob([bytes], { type: mime });
+              srcUrl = URL.createObjectURL(blob);
+            } catch (blobErr) {
+              console.warn('[FocusFlow] Audio Blob conversion fallback to data URL:', blobErr);
+            }
+          }
           this.audioEl = new Audio();
-          this.audioEl.src = this.getAssetUrl(mainTrack.url);
+          this.audioEl.src = srcUrl;
           this.audioEl.volume = mainTrack.volume !== undefined ? mainTrack.volume : 1.0;
           this.audioEl.muted = !!mainTrack.muted;
+          this.audioEl.addEventListener('error', (err) => {
+            console.warn('[FocusFlow] Audio playback element error (continuing visual mode):', err);
+          }, { once: true });
         } catch (e) {
-          console.warn('[FocusFlow] Failed to initialize audio track:', e);
+          console.warn('[FocusFlow] Failed to initialize audio track (safely continuing visual mode):', e);
+          this.audioEl = null;
         }
       }
     }
@@ -114,6 +137,9 @@ export class FocusFlowPlayer {
   init() {
     this.buildDOM();
     this.initAudio();
+
+    // Auto-compute stage layout fitting exact base aspect ratio immediately upon DOM creation
+    this.updateStageLayout();
     
     // Initialize sub-engines
     this.camera = new CameraKinematics(this.wrapEl, this.viewportWidth, this.viewportHeight, { disabled: this.disableCamera });
@@ -134,6 +160,15 @@ export class FocusFlowPlayer {
         const duration = this.stateMachine ? this.stateMachine.getSceneDuration(index) : this.autoplayInterval;
         this.emit('sceneChange', { sceneIndex: index, scene, duration });
       },
+      onTick: (elapsedMs, durationMs) => {
+        if (this.playbackIsland && this.stateMachine.isPlaying) {
+          this.playbackIsland.update({
+            sceneElapsedMs: elapsedMs,
+            sceneDurationMs: durationMs,
+          });
+        }
+        this._updateMicroProgress(elapsedMs, durationMs);
+      },
       onPlayStateChange: (isPlaying) => {
         this.updatePlayButton(isPlaying);
         if (this.audioEl) {
@@ -153,7 +188,7 @@ export class FocusFlowPlayer {
           this.audioEl.pause();
           try {
             this.audioEl.currentTime = 0;
-          } catch (e) {}
+          } catch {}
         }
         if (this.options.onEnded) {
           this.options.onEnded();
@@ -178,37 +213,62 @@ export class FocusFlowPlayer {
     // Auto-compute stage layout fitting exact base aspect ratio
     this.updateStageLayout();
 
-    if (typeof window !== 'undefined' && window.ResizeObserver && this.container) {
-      this.resizeObserver = new ResizeObserver(() => {
+    if (typeof window !== 'undefined') {
+      this._onWindowResize = () => {
         this.updateStageLayout();
-      });
-      this.resizeObserver.observe(this.container);
+      };
+      window.addEventListener('resize', this._onWindowResize);
+      window.addEventListener('orientationchange', this._onWindowResize);
+
+      if (window.ResizeObserver && this.container) {
+        this.resizeObserver = new ResizeObserver(() => {
+          this.updateStageLayout();
+        });
+        this.resizeObserver.observe(this.container);
+      }
     }
 
     // Go to initial step immediately (respects options.initialSceneIndex)
     this.goToStep(this.initialSceneIndex, false);
 
     // Auto-calibrate viewport to base image natural dimensions if mismatched
+    // 铁律：若 DSL 已经显式声明了 meta.viewport.width 与 height，以 DSL 为唯一真理源（Single Source of Truth），
+    // 绝对禁止运行时受 Safari/WebKit 异步上报的失真 naturalWidth 干扰篡改 viewBox 与设计坐标系！
+    const hasExplicitViewport = Boolean(
+      this.dsl.meta?.viewport?.width &&
+      this.dsl.meta?.viewport?.height &&
+      Number(this.dsl.meta.viewport.width) > 0 &&
+      Number(this.dsl.meta.viewport.height) > 0
+    );
+
     if (this.imgEl) {
       const calibrateSelf = () => {
-        const natW = this.imgEl.naturalWidth;
-        const natH = this.imgEl.naturalHeight;
-        if (natW > 0 && natH > 0 && (this.viewportWidth !== natW || this.viewportHeight !== natH)) {
-          this.viewportWidth = natW;
-          this.viewportHeight = natH;
-          if (this.svgEl) {
-            this.svgEl.setAttribute('viewBox', `0 0 ${natW} ${natH}`);
-          }
-          if (this.geometry) {
-            this.geometry.viewportWidth = natW;
-            this.geometry.viewportHeight = natH;
-          }
-          if (this.camera) {
-            this.camera.baseWidth = natW;
-            this.camera.baseHeight = natH;
+        if (!hasExplicitViewport) {
+          const natW = this.imgEl.naturalWidth;
+          const natH = this.imgEl.naturalHeight;
+          if (natW > 0 && natH > 0 && (this.viewportWidth !== natW || this.viewportHeight !== natH)) {
+            this.viewportWidth = natW;
+            this.viewportHeight = natH;
+            if (this.svgEl) {
+              this.svgEl.setAttribute('viewBox', `0 0 ${natW} ${natH}`);
+            }
+            if (this.geometry) {
+              this.geometry.viewportWidth = natW;
+              this.geometry.viewportHeight = natH;
+            }
+            if (this.camera) {
+              this.camera.baseWidth = natW;
+              this.camera.baseHeight = natH;
+            }
           }
         }
         this.updateStageLayout();
+        if (this.stateMachine && this.camera) {
+          const curScene = this.stateMachine.currentScene;
+          if (curScene && curScene.camera) {
+            this.camera.apply(curScene.camera, false);
+          }
+        }
       };
 
       if (this.imgEl.complete && this.imgEl.naturalWidth > 0) {
@@ -245,35 +305,38 @@ export class FocusFlowPlayer {
           <div class="focusflow-progress-fill" id="_ff_progress"></div>
         </div>
 
-        <!-- 3-Layer Visual Stack -->
-        <div class="focusflow-wrap" id="_ff_wrap">
-          <!-- Layer 0: Base Image -->
-          <img class="focusflow-img" id="_ff_img" src="${assetUrl}" crossorigin="anonymous" alt="${this.dsl.meta?.title || 'Architecture'}" />
+        <!-- 16:9 Target Aspect Viewport (Hard-locked to target ratio, handles letterbox/pillarbox and clipping) -->
+        <div class="focusflow-viewport" id="_ff_viewport">
+          <!-- 3-Layer Visual Stack -->
+          <div class="focusflow-wrap" id="_ff_wrap">
+            <!-- Layer 0: Base Image -->
+            <img class="focusflow-img" id="_ff_img" src="${assetUrl}" crossorigin="anonymous" alt="${this.dsl.meta?.title || 'Architecture'}" />
 
-          <!-- Layer 0.5: Dynamic Image Overlays -->
-          <div class="focusflow-overlay-images" id="_ff_overlay_images"></div>
+            <!-- Layer 0.5: Dynamic Image Overlays -->
+            <div class="focusflow-overlay-images" id="_ff_overlay_images"></div>
 
-          <!-- Layer 1: SVG Vector Motion Overlay -->
-          <svg class="focusflow-svg" id="_ff_svg" viewBox="0 0 ${this.viewportWidth} ${this.viewportHeight}" preserveAspectRatio="xMidYMid meet">
-            <defs>
-              <filter id="ff-glow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
-                <feGaussianBlur stdDeviation="8" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-          </svg>
+            <!-- Layer 1: SVG Vector Motion Overlay (preserveAspectRatio none binds 1:1 with base image) -->
+            <svg class="focusflow-svg" id="_ff_svg" viewBox="0 0 ${this.viewportWidth} ${this.viewportHeight}" preserveAspectRatio="none">
+              <defs>
+                <filter id="ff-glow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
 
-          <!-- Layer 2: Callout Text Layer -->
-          <div class="focusflow-callout-layer" id="_ff_callouts"></div>
+            <!-- Layer 2: Callout Text Layer -->
+            <div class="focusflow-callout-layer" id="_ff_callouts"></div>
+          </div>
         </div>
       </div>
     `;
 
     this.stageEl = this.container.querySelector('.focusflow-stage');
+    this.viewportEl = this.container.querySelector('#_ff_viewport');
     this.wrapEl = this.container.querySelector('#_ff_wrap');
     this.imgEl = this.container.querySelector('#_ff_img');
     this.overlayImagesLayerEl = this.container.querySelector('#_ff_overlay_images');
@@ -336,8 +399,10 @@ export class FocusFlowPlayer {
       rectEl.setAttribute('y', box.y);
       rectEl.setAttribute('width', box.width);
       rectEl.setAttribute('height', box.height);
-      rectEl.setAttribute('rx', box.rx || 16);
-      rectEl.setAttribute('ry', box.rx || 16);
+      rectEl.setAttribute('rx', String(box.rx || 16));
+      rectEl.setAttribute('ry', String(box.ry || box.rx || 16));
+      rectEl.setAttribute('vector-effect', 'non-scaling-stroke');
+      rectEl.setAttribute('shape-rendering', 'geometricPrecision');
 
       const stroke = box.style?.stroke || 'var(--ff-accent)';
       const strokeWidth = box.style?.strokeWidth || 6;
@@ -604,7 +669,7 @@ export class FocusFlowPlayer {
     if (this.audioEl && !isNaN(timeMs)) {
       try {
         this.audioEl.currentTime = timeMs / 1000;
-      } catch (e) {}
+      } catch {}
     }
     return res;
   }
@@ -679,10 +744,29 @@ export class FocusFlowPlayer {
     }
   }
 
+  _updateMicroProgress(elapsedMs, durationMs) {
+    if (!this.progressFillEl || !this.dsl.scenes || this.dsl.scenes.length === 0) return;
+    const total = this.dsl.scenes.length;
+    if (total <= 1) {
+      this.progressFillEl.style.width = '100%';
+      return;
+    }
+    const curIdx = this.stateMachine ? this.stateMachine.currentIndex : 0;
+    const sceneFraction = durationMs > 0 ? Math.min(1, Math.max(0, elapsedMs / durationMs)) : 0;
+    const overallProgress = Math.min(100, Math.max(0, ((curIdx + sceneFraction) / (total - 1)) * 100));
+    this.progressFillEl.style.width = `${overallProgress.toFixed(2)}%`;
+  }
+
   updateStageLayout() {
     if (!this.container || !this.wrapEl) return;
     if (this.disableCamera) {
       // In studio mode, wrap occupies 100% of container so infinite canvas controls absolute coordinates
+      if (this.viewportEl) {
+        this.viewportEl.style.width = '100%';
+        this.viewportEl.style.height = '100%';
+        this.viewportEl.style.left = '0px';
+        this.viewportEl.style.top = '0px';
+      }
       this.wrapEl.style.width = '100%';
       this.wrapEl.style.height = '100%';
       this.wrapEl.style.left = '0px';
@@ -690,24 +774,62 @@ export class FocusFlowPlayer {
       return;
     }
 
-    const stageW = this.container.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1920);
-    const stageH = this.container.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 1080);
+    const host = this.stageEl || this.container;
+    const stageW = host.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 1920);
+    const stageH = host.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 1080);
     const natW = this.viewportWidth || this.dsl.meta?.viewport?.width || 1920;
     const natH = this.viewportHeight || this.dsl.meta?.viewport?.height || 1080;
 
     if (stageW <= 0 || stageH <= 0 || natW <= 0 || natH <= 0) return;
 
-    const scale = Math.min(stageW / natW, stageH / natH);
-    const fitW = natW * scale;
-    const fitH = natH * scale;
+    // 解析目标画幅比例 (默认 16:9)
+    const aspectStr = this.dsl.meta?.viewport?.aspectRatio;
+    let targetAspect = 16 / 9;
+    if (aspectStr === '16:10') targetAspect = 16 / 10;
+    else if (aspectStr === '4:3') targetAspect = 4 / 3;
+    else if (aspectStr === '9:16') targetAspect = 9 / 16;
+    else if (natW > 0 && natH > 0 && !aspectStr) targetAspect = natW / natH;
 
-    const offsetX = (stageW - fitW) / 2;
-    const offsetY = (stageH - fitH) / 2;
+    const stageAspect = stageW / stageH;
+    let fitW, fitH, offsetX, offsetY;
+    if (stageAspect > targetAspect) {
+      fitH = stageH;
+      fitW = Math.round(stageH * targetAspect);
+      offsetX = Math.round((stageW - fitW) / 2);
+      offsetY = 0;
+    } else {
+      fitW = stageW;
+      fitH = Math.round(stageW / targetAspect);
+      offsetX = 0;
+      offsetY = Math.round((stageH - fitH) / 2);
+    }
 
-    this.wrapEl.style.width = `${fitW}px`;
-    this.wrapEl.style.height = `${fitH}px`;
-    this.wrapEl.style.left = `${offsetX}px`;
-    this.wrapEl.style.top = `${offsetY}px`;
+    // 1. 将 16:9 目标画幅硬锁在 .focusflow-viewport 裁切容器上，阻断宽屏运镜溢流
+    if (this.viewportEl) {
+      this.viewportEl.style.width = `${fitW}px`;
+      this.viewportEl.style.height = `${fitH}px`;
+      this.viewportEl.style.left = `${offsetX}px`;
+      this.viewportEl.style.top = `${offsetY}px`;
+    }
+
+    // 2. 内部 .focusflow-wrap 恒定填满 100% 视口，并在视口边界内由 CameraKinematics 放缩
+    this.wrapEl.style.width = '100%';
+    this.wrapEl.style.height = '100%';
+    this.wrapEl.style.left = '0px';
+    this.wrapEl.style.top = '0px';
+
+    if (this.imgEl) {
+      this.imgEl.style.width = '100%';
+      this.imgEl.style.height = '100%';
+    }
+    if (this.svgEl) {
+      this.svgEl.style.width = '100%';
+      this.svgEl.style.height = '100%';
+    }
+
+    if (this.camera && !this.disableCamera) {
+      this.camera.apply(this.camera.getCurrentCamera(), false);
+    }
   }
 
   clearElements() {
@@ -756,6 +878,11 @@ export class FocusFlowPlayer {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
+    }
+    if (typeof window !== 'undefined' && this._onWindowResize) {
+      window.removeEventListener('resize', this._onWindowResize);
+      window.removeEventListener('orientationchange', this._onWindowResize);
+      this._onWindowResize = null;
     }
     this.events.unbind();
     this.stateMachine.destroy();

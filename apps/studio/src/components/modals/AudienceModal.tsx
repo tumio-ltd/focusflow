@@ -386,7 +386,7 @@ export function AudienceModal({
       )}
 
       {/* 2. 核心 60FPS 渲染容器 */}
-      <div ref={containerRef} className="w-full h-full relative" />
+      <div ref={containerRef} className="w-full h-full relative flex-1 min-w-0 min-h-0" />
 
       {/* 3. 全场景统一演播控制浮岛 (PlaybackIslandReact) */}
       <PlaybackIslandReact
