@@ -7,8 +7,15 @@
 import {
   startTabRecording,
   downloadVideoBlob,
+  isNativeMp4Supported,
+  checkVideoFormatSupport,
+  resolveOptimalMimeType,
+  resolveStandardVideoResolution,
+  type VideoResolution,
   type TabRecordingOptions,
   type RecordingSession,
+  type VideoExportFormat,
+  type VideoFormatCapabilities,
 } from './canvasRecorder';
 import {
   openRecordingPiP,
@@ -33,6 +40,8 @@ export async function startCleanScreenRecording(
   const {
     fps = 60,
     audio = true,
+    format = 'auto',
+    aspectRatio = '16:9',
     totalDurationSeconds = 60,
     enablePiP = true,
     onTick,
@@ -51,6 +60,8 @@ export async function startCleanScreenRecording(
     rawSession = await startTabRecording({
       fps,
       audio,
+      format,
+      aspectRatio,
       externalAudioStream,
       onTick: (elapsed) => {
         onTick?.(elapsed);
@@ -93,6 +104,7 @@ export async function startCleanScreenRecording(
   }
 
   return {
+    format: rawSession.format,
     getStream: () => rawSession!.getStream(),
     stop: async () => {
       pipInstance?.close();
@@ -112,6 +124,13 @@ export {
   downloadVideoBlob,
   openRecordingPiP,
   isDocumentPiPSupported,
+  isNativeMp4Supported,
+  checkVideoFormatSupport,
+  resolveOptimalMimeType,
+  resolveStandardVideoResolution,
+  type VideoResolution,
+  type VideoExportFormat,
+  type VideoFormatCapabilities,
   type TabRecordingOptions,
   type RecordingSession,
   type RecordingPiPInstance,

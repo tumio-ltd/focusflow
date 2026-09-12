@@ -18,12 +18,13 @@ import { Button } from '@/components/ui';
 import { downloadStandaloneHtml } from '@/services/standalonePackager';
 import { exportProjectZip } from '@/services/zipExporter';
 import { getStoredTTSConfig } from '@/services/audio';
+import { isNativeMp4Supported, resolveStandardVideoResolution } from '@/services/screenRecorder';
 
 export interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   dsl: FocusFlowDSL;
-  onStartRecording?: () => void;
+  onStartRecording?: (format: 'mp4' | 'webm') => void;
 }
 
 export function ExportModal({
@@ -36,6 +37,17 @@ export function ExportModal({
   const [activeTab, setActiveTab] = useState<'html' | 'zip' | 'video'>('html');
   const [isExporting, setIsExporting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const mp4Supported = typeof window !== 'undefined' && isNativeMp4Supported();
+  const [videoFormat, setVideoFormat] = useState<'mp4' | 'webm'>(() => {
+    try {
+      const saved = localStorage.getItem('focusflow_video_format');
+      if (saved === 'mp4' || saved === 'webm') {
+        return saved;
+      }
+    } catch {}
+    return isNativeMp4Supported() ? 'mp4' : 'webm';
+  });
 
   if (!isOpen) return null;
 
@@ -224,12 +236,102 @@ export function ExportModal({
                 <div className="flex items-start gap-3">
                   <Video className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div>
-                    <h3 className="font-semibold text-foreground text-sm">{t('videoDescTitle', '本地 60FPS WebM 高清录制')}</h3>
+                    <h3 className="font-semibold text-foreground text-sm">{t('videoDescTitle', '本地 60FPS 高清视频录制')}</h3>
                     <p className="text-muted-foreground text-xs leading-relaxed mt-1.5">
-                      {t('videoDescText', '直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清 WebM 格式视频，带官方微型品牌角标，无需任何服务端。')}
+                      {t('videoDescText', '直接通过浏览器端 MediaRecorder API 将画布连贯运镜与流光动效录制为高清视频（支持 MP4/WebM），带官方微型品牌角标，无需任何服务端。')}
                     </p>
                     <div className="mt-2.5 p-2.5 bg-primary/10 border border-primary/20 rounded-lg text-xs text-primary leading-relaxed">
                       {t('videoTip', '💡 提示：点击后请在浏览器分享弹窗中选择【Chrome 标签页】->【当前 FocusFlow 标签页】进行录制。录制过程中鼠标静止 3 秒自动隐藏控制浮岛，右下角优雅展现官方微型角标！')}
+                    </div>
+
+                    {/* 视频格式切换选择 */}
+                    <div className="mt-3 pt-3 border-t border-border space-y-2">
+                      <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                        <span>{t('formatSelectorTitle', '视频导出格式')}</span>
+                        {(() => {
+                          const projectAspectRatio = dsl.meta?.viewport?.aspectRatio || '16:9';
+                          const targetRes = resolveStandardVideoResolution(projectAspectRatio);
+                          return (
+                            <span className="text-[11px] font-normal text-muted-foreground flex items-center gap-1">
+                              <span>{t('targetResolutionHint', '取景框比例')}:</span>
+                              <span className="font-semibold text-primary">{projectAspectRatio}</span>
+                              <span className="text-muted-foreground/80">({targetRes.width}×{targetRes.height})</span>
+                            </span>
+                          );
+                        })()}
+                      </label>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {/* MP4 Card */}
+                        <button
+                          type="button"
+                          data-testid="format-mp4-option"
+                          disabled={!mp4Supported}
+                          onClick={() => {
+                            setVideoFormat('mp4');
+                            try { localStorage.setItem('focusflow_video_format', 'mp4'); } catch {}
+                          }}
+                          className={`relative p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                            !mp4Supported
+                              ? 'opacity-50 cursor-not-allowed border-border/50 bg-muted/20'
+                              : videoFormat === 'mp4'
+                              ? 'border-primary bg-primary/10 shadow-sm'
+                              : 'border-border bg-card hover:border-border/80 hover:bg-muted/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-foreground">
+                                {t('formatMp4Title', 'MP4 (H.264)')}
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                {t('recommendedBadge', '推荐')}
+                              </span>
+                            </div>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                              videoFormat === 'mp4' ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40'
+                            }`}>
+                              {videoFormat === 'mp4' && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            {t('formatMp4Desc', '强烈推荐 · 微信/iOS/Android 手机无障碍秒开播放')}
+                          </p>
+                        </button>
+
+                        {/* WebM Card */}
+                        <button
+                          type="button"
+                          data-testid="format-webm-option"
+                          onClick={() => {
+                            setVideoFormat('webm');
+                            try { localStorage.setItem('focusflow_video_format', 'webm'); } catch {}
+                          }}
+                          className={`relative p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                            videoFormat === 'webm'
+                              ? 'border-primary bg-primary/10 shadow-sm'
+                              : 'border-border bg-card hover:border-border/80 hover:bg-muted/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-bold text-foreground">
+                              {t('formatWebmTitle', 'WebM (VP9)')}
+                            </span>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                              videoFormat === 'webm' ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40'
+                            }`}>
+                              {videoFormat === 'webm' && <div className="w-1.5 h-1.5 rounded-full bg-background" />}
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            {t('formatWebmDesc', '高画质压缩比 · 适合专业视频剪辑与网页内嵌')}
+                          </p>
+                        </button>
+                      </div>
+                      {!mp4Supported && (
+                        <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                          {t('browserNotSupportMp4', '当前浏览器不支持原生 MP4 编码，已自动回退至 WebM')}
+                        </p>
+                      )}
                     </div>
 
                     {/* 音频合流状态与提示卡片 */}
@@ -277,7 +379,7 @@ export function ExportModal({
                   data-testid="start-video-recording-btn"
                   onClick={() => {
                     onClose();
-                    onStartRecording?.();
+                    onStartRecording?.(mp4Supported ? videoFormat : 'webm');
                   }}
                   className="gap-2"
                 >

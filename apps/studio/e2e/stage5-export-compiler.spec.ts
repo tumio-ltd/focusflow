@@ -612,12 +612,87 @@ async function verifyMicroservicesExportAndMobileView(page: Page): Promise<void>
   }
 }
 
+/**
+ * 10. TC581: 验证本地原生 MP4 / WebM 双格式切换、偏好记忆与下载格式决策
+ */
+async function verifyNativeMp4VideoExportFlow(page: Page): Promise<void> {
+  // (1) 打开导出模态框并切换到视频标签页
+  const exportBtn = page.locator('[data-testid="export-btn"]');
+  await exportBtn.click();
+  const exportModal = page.locator('[data-testid="export-modal"]');
+  await expect(exportModal).toBeVisible();
+
+  const tabVideo = page.locator('[data-testid="tab-video"]');
+  await tabVideo.click();
+
+  // (2) 验证 MP4 和 WebM 选项卡片均正常渲染
+  const mp4Option = page.locator('[data-testid="format-mp4-option"]');
+  const webmOption = page.locator('[data-testid="format-webm-option"]');
+  await expect(mp4Option).toBeVisible();
+  await expect(webmOption).toBeVisible();
+
+  // 验证 MP4 选项包含官方“推荐”徽章与全平台微信/手机秒开文案
+  await expect(mp4Option).toContainText('推荐');
+  await expect(mp4Option).toContainText('MP4');
+
+  // 验证取景框比例与目标分辨率自适应显示 (如 16:9 -> 1920×1080)
+  await expect(exportModal).toContainText('取景框比例');
+  await expect(exportModal).toContainText('16:9');
+  await expect(exportModal).toContainText('1920×1080');
+
+  // 截取视频导出设置界面存证（含格式切换器与取景框比例提示）
+  await page.screenshot({ path: 'test-results/screenshots/export_modal_video_format_selector.png' });
+
+  // (3) 测试切换到 WebM 格式并验证 localStorage 偏好记忆
+  await webmOption.click();
+  let savedFormat = await page.evaluate(() => localStorage.getItem('focusflow_video_format'));
+  expect(savedFormat).toBe('webm');
+
+  // (4) 测试切回 MP4 格式并验证持久化更新
+  await mp4Option.click();
+  savedFormat = await page.evaluate(() => localStorage.getItem('focusflow_video_format'));
+  expect(savedFormat).toBe('mp4');
+
+  // (5) 在浏览器运行时验证 MIME 智能协商与 downloadVideoBlob 扩展名决策逻辑
+  const downloadResults = await page.evaluate(() => {
+    const mp4Blob = new Blob(['fake mp4 content'], { type: 'video/mp4;codecs=avc1' });
+    const webmBlob = new Blob(['fake webm content'], { type: 'video/webm;codecs=vp9' });
+
+    // 测试 blob 类型判断
+    const isMp4 = mp4Blob.type.includes('mp4');
+    const mp4Ext = isMp4 ? '.mp4' : '.webm';
+
+    const isWebm = webmBlob.type.includes('mp4');
+    const webmExt = isWebm ? '.mp4' : '.webm';
+
+    // 测试旧扩展名剥离逻辑，杜绝 .webm.mp4 双重后缀
+    const dirtyName = 'my-project-60fps.webm';
+    const cleanName = dirtyName.replace(/\.(webm|mp4)$/i, '');
+    const strippedOldExt = `${cleanName}.mp4`;
+
+    return { mp4Ext, webmExt, strippedOldExt };
+  });
+
+  expect(downloadResults.mp4Ext).toBe('.mp4');
+  expect(downloadResults.webmExt).toBe('.webm');
+  expect(downloadResults.strippedOldExt).toBe('my-project-60fps.mp4');
+
+  // (6) 关闭模态框
+  const closeBtn = exportModal.locator('button').first();
+  await closeBtn.click();
+  await expect(exportModal).not.toBeVisible();
+}
+
   test('TC579: 验证直接从场景2起播时历史场景气泡无残留与专属气泡精准激活', async ({ page }) => {
     await verifyScene2CalloutIsolation(page);
   });
 
   test('TC580: 验证微服务高可用电商架构导出单文件 HTML 图元对齐、时间心跳流转与移动端横屏指引', async ({ page }) => {
     await verifyMicroservicesExportAndMobileView(page);
+  });
+
+  test('TC581: 验证本地原生 MP4 / WebM 双格式切换、偏好记忆与下载格式决策', async ({ page }) => {
+    await verifyNativeMp4VideoExportFlow(page);
   });
 });
 

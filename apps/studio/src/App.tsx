@@ -550,7 +550,7 @@ export default function App() {
     }
   }, [dsl.meta?.title]);
 
-  const handleStartVideoRecording = useCallback(async () => {
+  const handleStartVideoRecording = useCallback(async (format: 'mp4' | 'webm' = 'mp4') => {
     try {
       // 0. 所见即所得前检：若当前音轨为伴奏且使用离线系统语音，提示出片无旁白
       const cfg = getStoredTTSConfig();
@@ -609,6 +609,8 @@ export default function App() {
       const session = await startCleanScreenRecording({
         fps: 60,
         audio: true,
+        format,
+        aspectRatio: dsl.meta?.viewport?.aspectRatio || '16:9',
         totalDurationSeconds,
         externalAudioStream: externalStream,
         onTick: (elapsed) => {
