@@ -413,10 +413,14 @@ export function AudienceModal({
         target="_blank"
         rel="noopener noreferrer"
         data-testid="focusflow-watermark-badge"
-        className={`fixed z-30 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/80 border border-sky-500/22 shadow-lg backdrop-blur-md text-decoration-none select-none transition-all duration-200 hover:bg-slate-900/95 hover:border-sky-400/55 hover:-translate-y-0.5 group ${
+        className={`ff-watermark-badge fixed z-30 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/80 border border-sky-500/22 shadow-lg backdrop-blur-md text-decoration-none select-none transition-all duration-300 hover:bg-slate-900/95 hover:border-sky-400/55 group ${
           isRecording
             ? 'bottom-6 right-6 opacity-85 pointer-events-none'
             : 'bottom-6 right-6 max-sm:bottom-[74px] max-sm:right-3 opacity-80 hover:opacity-100'
+        } ${
+          !isRecording && playbackHudMode === 'minimal' && (!isPlaying || isUserActive)
+            ? '-translate-y-[42px] hover:-translate-y-[43.5px]'
+            : 'hover:-translate-y-0.5'
         }`}
         title="FocusFlow · 动效架构演进演示 (点击探索)"
       >

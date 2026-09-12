@@ -1068,10 +1068,11 @@
        FocusFlow Official Watermark Badge (开源版官方微型水印角标)
        ========================================================================== */
     .ff-watermark-badge {
+      --ff-watermark-y: 0px;
       position: fixed;
       bottom: 24px;
       right: 24px;
-      z-index: 50;
+      z-index: 40;
       display: inline-flex;
       align-items: center;
       gap: 7px;
@@ -1085,21 +1086,33 @@
       text-decoration: none;
       user-select: none;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 0.82;
+      transform: translateY(var(--ff-watermark-y));
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .ff-watermark-badge:hover {
       opacity: 1;
       background: rgba(13, 20, 36, 0.92);
       border-color: rgba(56, 189, 248, 0.55);
-      transform: translateY(-1.5px);
+      transform: translateY(calc(var(--ff-watermark-y) - 1.5px));
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 14px rgba(56, 189, 248, 0.2);
     }
 
     .ff-watermark-badge:active {
-      transform: translateY(0);
+      transform: translateY(var(--ff-watermark-y));
       opacity: 0.95;
+    }
+
+    /* 避让右下角最小化胶囊控制器 (Scheme A: Upward Displacement) */
+    body:has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+    :has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+    .ff-watermark-badge.ff-watermark-displaced {
+      --ff-watermark-y: -42px;
     }
 
     .ff-watermark-logo-box {
@@ -1157,6 +1170,11 @@
         bottom: 74px;
         right: 12px;
         padding: 3px 8px 3px 4px;
+      }
+      body:has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+      :has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+      .ff-watermark-badge.ff-watermark-displaced {
+        --ff-watermark-y: 0px;
       }
       .ff-watermark-prefix {
         display: none;

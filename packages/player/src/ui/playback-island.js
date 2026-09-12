@@ -393,6 +393,16 @@ export class PlaybackIsland {
         this.zenIslandEl.classList.remove('ff-island-visible');
       }
     }
+
+    // Coordinate with watermark badge displacement (Scheme A: Upward Displacement)
+    const isMinimalActive = (hudMode === 'minimal') && !isRecording && (isRecording || !isPlaying || isUserActive);
+    const doc = this.options.container?.ownerDocument || (typeof document !== 'undefined' ? document : null);
+    if (doc) {
+      const watermarkEl = doc.querySelector('.ff-watermark-badge, [data-testid="focusflow-watermark-badge"]');
+      if (watermarkEl) {
+        watermarkEl.classList.toggle('ff-watermark-displaced', isMinimalActive);
+      }
+    }
   }
 
   setHudMode(mode) {
@@ -403,6 +413,13 @@ export class PlaybackIsland {
     if (this._idleTimer) {
       clearTimeout(this._idleTimer);
       this._idleTimer = null;
+    }
+    const doc = this.options.container?.ownerDocument || (typeof document !== 'undefined' ? document : null);
+    if (doc) {
+      const watermarkEl = doc.querySelector('.ff-watermark-badge, [data-testid="focusflow-watermark-badge"]');
+      if (watermarkEl) {
+        watermarkEl.classList.remove('ff-watermark-displaced');
+      }
     }
     if (this.rootEl && this.rootEl.parentNode) {
       this.rootEl.parentNode.removeChild(this.rootEl);

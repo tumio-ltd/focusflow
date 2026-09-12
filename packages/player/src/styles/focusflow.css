@@ -719,7 +719,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 40;
+  z-index: 50;
 }
 
 /* Full Island (Centered Pill) */
@@ -969,7 +969,7 @@
   color: var(--ff-island-text);
   pointer-events: auto;
   user-select: none;
-  z-index: 40;
+  z-index: 50;
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1036,7 +1036,7 @@
   cursor: pointer;
   pointer-events: auto;
   user-select: none;
-  z-index: 40;
+  z-index: 50;
   transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
               transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1061,5 +1061,42 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* ==========================================================================
+   FocusFlow Official Watermark Badge & Displacement Rules
+   ========================================================================== */
+.ff-watermark-badge {
+  --ff-watermark-y: 0px;
+  z-index: 40;
+  transform: translateY(var(--ff-watermark-y));
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ff-watermark-badge:hover {
+  transform: translateY(calc(var(--ff-watermark-y) - 1.5px));
+}
+
+.ff-watermark-badge:active {
+  transform: translateY(var(--ff-watermark-y));
+}
+
+/* 避让右下角最小化胶囊控制器 (Scheme A: Upward Displacement) */
+body:has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+:has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+.ff-watermark-badge.ff-watermark-displaced {
+  --ff-watermark-y: -42px;
+}
+
+@media (max-width: 640px) {
+  body:has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+  :has(.ff-island-minimal.ff-island-visible) .ff-watermark-badge,
+  .ff-watermark-badge.ff-watermark-displaced {
+    --ff-watermark-y: 0px;
   }
 }

@@ -213,6 +213,11 @@ async function verifyPlaybackHudTriState(page: Page): Promise<void> {
   await expect(hudMinimal).toBeVisible();
   await expect(controlsIsland).not.toBeVisible();
 
+  // 验证水印角标自适应向上浮动让位 (-translate-y-[42px])，避免遮挡最小化胶囊操作按钮
+  const watermark = audienceModal.locator('[data-testid="focusflow-watermark-badge"]');
+  await expect(watermark).toBeVisible();
+  await expect(watermark).toHaveClass(/-translate-y-\[42px\]/);
+
   // (3) 再次按下 H：切换至 zen 沉浸纯净态
   await page.keyboard.press('h');
   await expect(controlsIsland).not.toBeVisible();
