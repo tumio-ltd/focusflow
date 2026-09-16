@@ -25,6 +25,7 @@ export default {
   // Calibration Assistant
   calibrationTitle: 'Calibration Assistant (HUD)',
   baseImageRes: 'Native Resolution',
+  baseImageResTip: 'Native canvas base resolution',
   smartSnap: 'Smart Edge Snap',
   smartSnapDesc: 'Auto-align to graphic edges (Sobel algorithm)',
   laserCrosshair: 'Laser Crosshair',

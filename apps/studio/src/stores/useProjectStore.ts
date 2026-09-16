@@ -14,96 +14,17 @@ import type {
 } from '@focusflow/dsl';
 import type { ImageMeta } from '@/utils/imageDecoder';
 import { stopWebSpeech, clearAudioDecodeCache, removeSceneAudioBlob } from '@/services/audio';
+import { microservicesTemplate } from '@/templates/tpl-microservices';
+import { generateHeuristicAutoTourFromUrl } from '@/services/autoTour/heuristicTourGenerator';
+import { compressImageForVision } from '@/services/autoTour/imageCompressor';
+import { createVisionAdapter } from '@/services/autoTour/adapters';
 
 const MAX_HISTORY = 50;
 
-const defaultInitialDSL: FocusFlowDSL = {
-  meta: {
-    title: '微服务电商架构演进演示',
-    viewport: { width: 5120, height: 2880, aspectRatio: '16:9' },
-    theme: { mode: 'dark' },
-    controls: { showHUDButton: true, autoplay: false, interval: 3800, showControls: false },
-  },
-  asset: {
-    url: '/01-system_architecture_dark.png',
-  },
-  elements: {
-    boxes: [
-      {
-        id: 'box-gateway',
-        type: 'rect',
-        x: 350,
-        y: 280,
-        width: 380,
-        height: 200,
-        rx: 12,
-        ry: 12,
-        style: { stroke: '#38bdf8', strokeWidth: 3, glow: true },
-      },
-      {
-        id: 'box-order',
-        type: 'rect',
-        x: 950,
-        y: 280,
-        width: 380,
-        height: 200,
-        rx: 12,
-        ry: 12,
-        style: { stroke: '#34d399', strokeWidth: 3, glow: true },
-      },
-    ],
-    paths: [
-      {
-        id: 'path-gateway-order',
-        from: 'box-gateway.right',
-        to: 'box-order.left',
-        style: { stroke: '#38bdf8', strokeWidth: 3, mode: 'stream', flowSpeed: 1.5 },
-      },
-    ],
-    dots: [],
-    images: [],
-  },
-  scenes: [
-    {
-      id: 'scene-0',
-      title: '01 全局微服务网关入口',
-      camera: { zoom: 1.0, x: 0, y: 0, duration: 1.2 },
-      activeElements: {
-        boxes: ['box-gateway'],
-        paths: [],
-        callouts: [
-          {
-            id: 'callout-gateway',
-            targetBoxId: 'box-gateway',
-            position: { left: '380px', top: '210px' },
-            theme: 'blue',
-            title: '微服务网关集群',
-            desc: '负责全站流量路由、动态鉴权、限流熔断与灰度分流',
-          },
-        ],
-      },
-    },
-    {
-      id: 'scene-1',
-      title: '02 订单中心与分布式事务',
-      camera: { zoom: 1.7, x: 16, y: -4, duration: 1.5 },
-      activeElements: {
-        boxes: ['box-order'],
-        paths: ['path-gateway-order'],
-        callouts: [
-          {
-            id: 'callout-order',
-            targetBoxId: 'box-order',
-            position: { left: '980px', top: '210px' },
-            theme: 'green',
-            title: '订单处理引擎',
-            desc: '基于 Seata AT 模式保障高并发下单分布式事务最终一致性',
-          },
-        ],
-      },
-    },
-  ],
-};
+/**
+ * 官方 4K 矢量微服务架构标杆工程作为新用户初访默认体验草稿 (深拷贝防篡改)
+ */
+const defaultInitialDSL: FocusFlowDSL = JSON.parse(JSON.stringify(microservicesTemplate));
 
 /**
  * 清洗 DSL 中可能存在的悬空路径或失效引用（拓扑完整性自愈机制）
@@ -231,6 +152,11 @@ export interface ProjectState {
   ) => void;
   addAudioMarker: (marker: AudioMarker) => void;
   batchUpdateScenesDuration: (durations: number[]) => void;
+  applyHeuristicAutoTour: (options?: { keepExisting?: boolean; locale?: 'zh' | 'en' }) => Promise<void>;
+  applyVisionAutoTour: (options?: {
+    locale?: 'zh' | 'en';
+    onProgressStep?: (stepText: string) => void;
+  }) => Promise<void>;
   undo: () => void;
   redo: () => void;
   markSaved: () => void;
@@ -247,7 +173,7 @@ function pushHistory(state: ProjectState, nextDSL: FocusFlowDSL): Partial<Projec
   };
 }
 
-export const useProjectStore = create<ProjectState>((set) => ({
+export const useProjectStore = create<ProjectState>((set, get) => ({
   dsl: defaultInitialDSL,
   isDirty: false,
   past: [],
@@ -957,9 +883,20 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set((state) => {
       if (sceneIndex < 0 || sceneIndex >= state.dsl.scenes.length) return state;
       const scenes = [...state.dsl.scenes];
+      const targetScene = scenes[sceneIndex];
+      const isEnglish = /^[a-zA-Z0-9\s.,!?'"-]+$/.test(script.trim());
+      const langKey = isEnglish ? 'en' : 'zh';
+      const updatedI18n = targetScene.voiceoverScriptI18n
+        ? {
+            ...targetScene.voiceoverScriptI18n,
+            [langKey]: script,
+          }
+        : undefined;
+
       scenes[sceneIndex] = {
-        ...scenes[sceneIndex],
+        ...targetScene,
         voiceoverScript: script,
+        ...(updatedI18n ? { voiceoverScriptI18n: updatedI18n } : {}),
       };
       return pushHistory(state, { ...state.dsl, scenes });
     }),
@@ -1089,6 +1026,172 @@ export const useProjectStore = create<ProjectState>((set) => ({
       }));
       return pushHistory(state, { ...state.dsl, scenes });
     }),
+
+  applyHeuristicAutoTour: async (options?: { keepExisting?: boolean; locale?: 'zh' | 'en' }) => {
+    const currentDSL = get().dsl;
+    const assetUrl = currentDSL.asset?.url;
+    if (!assetUrl) {
+      console.warn('[useProjectStore] applyHeuristicAutoTour skipped: no asset URL found.');
+      return;
+    }
+
+    const currentLocale: 'zh' | 'en' =
+      options?.locale ||
+      (typeof window !== 'undefined' &&
+      (localStorage.getItem('focusflow_locale')?.startsWith('en') ||
+        document.documentElement.lang?.startsWith('en'))
+        ? 'en'
+        : 'zh');
+
+    const defaultTitle =
+      currentLocale === 'en'
+        ? 'Enterprise Architecture Evolution Tour'
+        : '企业系统架构演进导览';
+
+    const generatedDSL = await generateHeuristicAutoTourFromUrl(
+      assetUrl,
+      currentDSL.meta.viewport?.width || 1920,
+      currentDSL.meta.viewport?.height || 1080,
+      {
+        title:
+          currentDSL.meta.title &&
+          currentDSL.meta.title !== '未命名架构演示项目' &&
+          currentDSL.meta.title !== 'Untitled Architecture Showcase'
+            ? currentDSL.meta.title
+            : defaultTitle,
+        assetUrl,
+        locale: currentLocale,
+      }
+    );
+
+    // 保留用户原工程中配置的声音轨与背景音乐
+    if (currentDSL.audio) {
+      generatedDSL.audio = currentDSL.audio;
+    }
+
+    // 保留用户原工程中定制的主题色调 (若存在)
+    if (currentDSL.meta.theme?.accent) {
+      generatedDSL.meta.theme = {
+        ...generatedDSL.meta.theme,
+        accent: currentDSL.meta.theme.accent,
+      };
+    }
+
+    set((state) => pushHistory(state, sanitizeDSL(generatedDSL)));
+  },
+
+  applyVisionAutoTour: async (options?: {
+    locale?: 'zh' | 'en';
+    onProgressStep?: (stepText: string) => void;
+  }) => {
+    const currentDSL = get().dsl;
+    const assetUrl = currentDSL.asset?.url;
+    if (!assetUrl) {
+      console.warn('[useProjectStore] applyVisionAutoTour skipped: no asset URL found.');
+      return;
+    }
+
+    const currentLocale: 'zh' | 'en' =
+      options?.locale ||
+      (typeof window !== 'undefined' &&
+      (localStorage.getItem('focusflow_locale')?.startsWith('en') ||
+        document.documentElement.lang?.startsWith('en'))
+        ? 'en'
+        : 'zh');
+
+    const isEn = currentLocale === 'en';
+
+    // Step 1: Client-side downsampling
+    options?.onProgressStep?.(
+      isEn
+        ? 'Compressing architecture image locally (1536px, ~300KB)...'
+        : '正在执行端侧轻量化自适应压缩 (1536px, ~300KB)...'
+    );
+    const compressed = await compressImageForVision(assetUrl, {
+      maxDimension: 1536,
+      quality: 0.85,
+    });
+
+    // Step 2: Vision model OCR & topology analysis
+    options?.onProgressStep?.(
+      isEn
+        ? 'AI Director is performing deep OCR on services & topology...'
+        : '大模型正在深度 OCR 识别图中架构组件与网络拓扑...'
+    );
+    const adapter = createVisionAdapter();
+    const response = await adapter.analyzeArchitectureDiagram({
+      imageMeta: {
+        base64DataUrl: compressed.base64DataUrl,
+        width: currentDSL.meta.viewport?.width || 1920,
+        height: currentDSL.meta.viewport?.height || 1080,
+      },
+      language: currentLocale,
+    });
+
+    // Step 3: Storyboard & safety net validation
+    options?.onProgressStep?.(
+      isEn
+        ? 'Choreographing cinematic camera frustums & safety net...'
+        : '正在编排电影级推拉视锥并验证安全网...'
+    );
+
+    const { projectTitle, scenes, elements } = response.result;
+
+    const generatedDSL: FocusFlowDSL = {
+      $schema: 'https://focusflow.io/schema/v1.json',
+      meta: {
+        title:
+          projectTitle ||
+          (currentDSL.meta.title &&
+          currentDSL.meta.title !== '未命名架构演示项目' &&
+          currentDSL.meta.title !== 'Untitled Architecture Showcase'
+            ? currentDSL.meta.title
+            : isEn
+            ? 'System Architecture AI Showcase'
+            : '系统架构演进与技术拓扑全景'),
+        viewport: {
+          width: currentDSL.meta.viewport?.width || 1920,
+          height: currentDSL.meta.viewport?.height || 1080,
+          aspectRatio: currentDSL.meta.viewport?.aspectRatio || '16:9',
+        },
+        theme: {
+          mode: currentDSL.meta.theme?.mode || 'dark',
+          accent: currentDSL.meta.theme?.accent || '#38bdf8',
+        },
+        controls: {
+          showHUDButton: true,
+          autoplay: false,
+          interval: 4500,
+          showControls: false,
+        },
+      },
+      asset: {
+        url: assetUrl,
+      },
+      elements: {
+        boxes: elements.boxes,
+        paths: elements.paths || [],
+        dots: [],
+        images: [],
+      },
+      scenes,
+    };
+
+    // 保留用户原工程中配置的声音轨与背景音乐
+    if (currentDSL.audio) {
+      generatedDSL.audio = currentDSL.audio;
+    }
+
+    // 保留用户原工程中定制的主题色调 (若存在)
+    if (currentDSL.meta.theme?.accent) {
+      generatedDSL.meta.theme = {
+        ...generatedDSL.meta.theme,
+        accent: currentDSL.meta.theme.accent,
+      };
+    }
+
+    set((state) => pushHistory(state, sanitizeDSL(generatedDSL)));
+  },
 
   undo: () =>
     set((state) => {

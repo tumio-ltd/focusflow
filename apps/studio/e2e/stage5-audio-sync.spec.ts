@@ -554,7 +554,7 @@ async function verifyLocalWebmVideoRecording(page: Page): Promise<void> {
   await videoTab.click();
 
   // 验证视频录制卡片与启动按钮
-  await expect(exportModal).toContainText('本地 60FPS WebM 高清录制');
+  await expect(exportModal).toContainText('本地 60FPS 高清视频录制');
   const startRecordingBtn = exportModal.locator('[data-testid="start-video-recording-btn"]');
   await expect(startRecordingBtn).toBeVisible();
 
@@ -684,7 +684,7 @@ async function verifyEnglishExportModalLocalization(page: Page): Promise<void> {
   await tabVideo.click();
 
   const videoCardText = await exportModal.innerText();
-  expect(videoCardText).toContain('Local 60FPS WebM High-Definition Recording');
+  expect(videoCardText).toContain('Local 60FPS HD Video Recording');
   expect(videoCardText).toContain('Start Auto Recording');
 
   // 7. 核心断言：全量扫描 ExportModal 容器，断言绝对不含任何中文字符（零中文残留）

@@ -147,8 +147,10 @@ async function verifyCalibrationAssistantInRightInspector(page: Page): Promise<v
   await expect(calibPanel).toBeVisible();
   await expect(calibPanel).toContainText(/标定助手|Calibration HUD/i);
 
-  // 验证底图原生基准分辨率徽章
-  await expect(calibPanel).toContainText(/5120 × 2880|1920 × 1459|1920 × 1080/);
+  // 验证底图原生基准分辨率徽章在检查器顶部常驻展示 (支持 4K UHD 3840×2160 及高分画幅)
+  const resBadge = inspector.locator('[data-testid="inspector-viewport-res"]');
+  await expect(resBadge).toBeVisible();
+  await expect(resBadge).toContainText(/3840 × 2160|5120 × 2880|1920 × 1459|1920 × 1080/);
 
   // 验证十字激光准星开关切换
   const crosshairCheckbox = calibPanel.locator('input[type="checkbox"]').nth(1);
@@ -306,9 +308,9 @@ async function verifyPathTransformOverlayInteraction(page: Page): Promise<void> 
   const pathTransformOverlay = page.locator('[data-testid="path-transform-overlay"]');
   await expect(pathTransformOverlay).toBeVisible();
 
-  // 3. 在右侧属性检查器的图层列表中选中 path 连线图元 (如 path-gateway-order)
+  // 3. 在右侧属性检查器的图层列表中选中 path 连线图元 (如 path-ingress-gw)
   const inspector = page.locator('[data-testid="inspector"]');
-  const pathLayerItem = inspector.locator('[data-testid="layer-item-path-gateway-order"]');
+  const pathLayerItem = inspector.locator('[data-testid="layer-item-path-ingress-gw"]');
   await expect(pathLayerItem).toBeVisible();
   await pathLayerItem.click();
 
@@ -327,7 +329,7 @@ async function verifyPathTransformOverlayInteraction(page: Page): Promise<void> 
   await expect(toHandle).toBeAttached();
 
   // 6. 验证画布微型快捷工具栏 (展示 Path ID、统一模式切换与调色)
-  await expect(pathTransformOverlay).toContainText('path-gateway-order');
+  await expect(pathTransformOverlay).toContainText('path-ingress-gw');
   await expect(pathTransformOverlay).toContainText('流光');
   await expect(pathTransformOverlay).toContainText('绘制');
   await expect(pathTransformOverlay).toContainText('律动');
@@ -464,9 +466,9 @@ async function verifyMicroservicesPathToolbarAvoidance(page: Page): Promise<void
   await expect(scene2Card).toBeVisible({ timeout: 5000 });
   await scene2Card.click();
 
-  // (3) 在右侧 Inspector 选中 path-gw-order (即用户截图中的连线)
+  // (3) 在右侧 Inspector 选中 path-ingress-gw (即用户截图中的连线)
   const inspector = page.locator('[data-testid="inspector"]');
-  const pathItem = inspector.locator('[data-testid="layer-item-path-gw-order"]');
+  const pathItem = inspector.locator('[data-testid="layer-item-path-ingress-gw"]');
   await expect(pathItem).toBeVisible({ timeout: 5000 });
   await pathItem.click();
 

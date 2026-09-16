@@ -17,7 +17,8 @@ import {
   Play,
   Laptop,
   SlidersHorizontal,
-  Code2
+  Code2,
+  Sparkles
 } from 'lucide-react';
 import { Button, Badge, Tooltip, BrandLogo } from '@/components/ui';
 
@@ -33,6 +34,7 @@ export interface TopBarProps {
   onOpenTemplates?: () => void;
   onOpenProjects?: () => void;
   onOpenImport?: () => void;
+  onOpenAutoTour?: () => void;
   onOpenAudience?: () => void;
   onOpenDslEditor?: () => void;
   showPlayerControls?: boolean;
@@ -52,6 +54,7 @@ function TopBarComponent({
   onOpenTemplates,
   onOpenProjects,
   onOpenImport,
+  onOpenAutoTour,
   onOpenAudience,
   onOpenDslEditor,
   showPlayerControls = false,
@@ -126,10 +129,11 @@ function TopBarComponent({
         ) : (
           <div
             onClick={() => setIsEditingTitle(true)}
+            data-testid="project-title-btn"
             className="group flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-muted/60 cursor-pointer transition min-w-0 max-w-[130px] sm:max-w-[180px] md:max-w-[240px] lg:max-w-[300px]"
             title={t('editTitleTip')}
           >
-            <span className="text-xs font-medium text-foreground truncate">{currentTitle}</span>
+            <span data-testid="project-title-text" className="text-xs font-medium text-foreground truncate">{currentTitle}</span>
             <Edit3 className="w-3 h-3 text-muted-foreground group-hover:text-primary transition shrink-0" />
           </div>
         )}
@@ -244,6 +248,20 @@ function TopBarComponent({
           >
             <UploadCloud className="w-3.5 h-3.5" />
             <span className="hidden xl:inline">{t('importAsset')}</span>
+          </Button>
+        </Tooltip>
+
+        {/* ✨ AI 导览 (Auto-Tour) */}
+        <Tooltip content={t('autoTourTip', 'AI 辅助工程初始化 (Auto-Tour)')} position="bottom" align="end">
+          <Button
+            size="sm"
+            variant="outline"
+            data-testid="open-auto-tour-btn"
+            onClick={onOpenAutoTour}
+            className="gap-1.5 h-8 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 px-2 sm:px-2.5 font-medium shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden xl:inline">{t('autoTourBtn', 'AI 导览')}</span>
           </Button>
         </Tooltip>
 

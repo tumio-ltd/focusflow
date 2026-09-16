@@ -55,6 +55,7 @@ export class FocusFlowPlayer {
 
     this.viewportWidth = this.dsl.meta?.viewport?.width || 5120;
     this.viewportHeight = this.dsl.meta?.viewport?.height || 2880;
+    this.lang = options.lang || (typeof document !== 'undefined' && document.documentElement?.lang?.startsWith('en') ? 'en' : 'zh');
 
     this.listeners = new Map();
     this.audioTracks = this.dsl.audio?.tracks || [];
@@ -318,7 +319,7 @@ export class FocusFlowPlayer {
             <!-- Layer 1: SVG Vector Motion Overlay (preserveAspectRatio none binds 1:1 with base image) -->
             <svg class="focusflow-svg" id="_ff_svg" viewBox="0 0 ${this.viewportWidth} ${this.viewportHeight}" preserveAspectRatio="none">
               <defs>
-                <filter id="ff-glow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+                <filter id="ff-glow" filterUnits="userSpaceOnUse" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
                   <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
                   <feMerge>
                     <feMergeNode in="blur" />
@@ -535,9 +536,16 @@ export class FocusFlowPlayer {
           const theme = callout.theme || 'blue';
           const titleFs = callout.style?.titleFontSize ? `style="font-size: ${callout.style.titleFontSize}px"` : '';
           const descFs = callout.style?.fontSize ? `style="font-size: ${callout.style.fontSize}px; line-height: 1.45;"` : '';
+
+          const docLang = typeof document !== 'undefined' ? document.documentElement?.lang : '';
+          const currentLang = (this.lang || docLang || 'en').toLowerCase();
+          const langKey = currentLang.startsWith('zh') ? 'zh' : (currentLang.startsWith('en') ? 'en' : currentLang);
+          const title = callout.titleI18n?.[langKey] || callout.titleI18n?.en || callout.title;
+          const desc = callout.descI18n?.[langKey] || callout.descI18n?.en || callout.desc;
+
           cardEl.innerHTML = `
-            <div class="ff-badge ${theme}" ${titleFs}>${callout.title}</div>
-            <div class="ff-desc" ${descFs}>${callout.desc}</div>
+            <div class="ff-badge ${theme}" ${titleFs}>${title}</div>
+            <div class="ff-desc" ${descFs}>${desc}</div>
           `;
 
           this.calloutLayerEl.appendChild(cardEl);
@@ -851,8 +859,23 @@ export class FocusFlowPlayer {
     this.calloutsMap.clear();
   }
 
-  updateDSL(newDSL) {
+  setLanguage(lang) {
+    if (!lang || this.lang === lang) return;
+    this.lang = lang;
+    this.clearElements();
+    this.renderElements();
+    const curIdx = this.stateMachine ? this.stateMachine.currentIndex : 0;
+    const curScene = this.dsl.scenes?.[curIdx] || this.dsl.scenes?.[0];
+    if (curScene) {
+      this.applyScene(curIdx, curScene, false);
+    }
+  }
+
+  updateDSL(newDSL, options = {}) {
     if (!newDSL) return;
+    if (options.lang) {
+      this.lang = options.lang;
+    }
     this._cancelPendingActivations();
     this.dsl = newDSL;
     this.audioTracks = newDSL.audio?.tracks || [];

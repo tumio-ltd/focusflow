@@ -72,6 +72,8 @@ export class MotionAnimator {
 
         if (mode === 'stream') {
           // Flowing Dashed Stream
+          el.style.strokeDasharray = '';
+          el.style.strokeDashoffset = '';
           el.style.transition = `opacity 0.4s ease ${delay}s`;
           el.style.opacity = '0.95';
           if (meta.data.style?.flowSpeed) {
@@ -84,6 +86,7 @@ export class MotionAnimator {
           el.style.strokeDasharray = 'none';
           el.style.strokeDashoffset = '0';
           el.style.transition = `opacity 0.4s ease ${delay}s`;
+          el.style.opacity = '0.95';
           el.classList.remove('ff-stream');
           el.classList.add('active', 'ff-path-pulse');
         } else {

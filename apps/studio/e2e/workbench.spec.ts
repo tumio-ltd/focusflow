@@ -145,8 +145,8 @@ async function verifySceneTimelineNavigation(page: Page): Promise<void> {
   const timeline = page.locator('[data-testid="timeline"]');
   const sceneCards = timeline.locator('[data-testid^="scene-card-"]');
 
-  // 初始有 2 个场景，且首个场景为高亮激活态
-  await expect(sceneCards).toHaveCount(2);
+  // 初始有 5 个微服务拓扑场景，且首个场景为高亮激活态
+  await expect(sceneCards).toHaveCount(5);
   await expect(sceneCards.nth(0)).toHaveClass(/border-primary/);
 
   // 切换到第 2 个场景
@@ -158,8 +158,8 @@ async function verifySceneTimelineNavigation(page: Page): Promise<void> {
   const addSceneBtn = timeline.getByRole('button', { name: /添加新场景|Add Scene/ });
   await addSceneBtn.click();
 
-  // 验证新增后场景数为 3
-  await expect(timeline.locator('[data-testid^="scene-card-"]')).toHaveCount(3);
+  // 验证新增后场景数为 6
+  await expect(timeline.locator('[data-testid^="scene-card-"]')).toHaveCount(6);
 }
 
 /**

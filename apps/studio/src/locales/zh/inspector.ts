@@ -25,6 +25,7 @@ export default {
   // 标定助手
   calibrationTitle: '标定助手 (HUD)',
   baseImageRes: '底图原生基准',
+  baseImageResTip: '底图画布原生基准分辨率',
   smartSnap: '智能边缘吸附',
   smartSnapDesc: '框选时自动贴合图元边缘 (Sobel 算法)',
   laserCrosshair: '十字激光准星',

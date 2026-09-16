@@ -10,7 +10,12 @@ import {
   ArrowRight 
 } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
-import { ARCHITECTURE_TEMPLATES, ArchitectureTemplate } from '@/templates';
+import { 
+  ARCHITECTURE_TEMPLATES, 
+  ArchitectureTemplate,
+  getTemplateTitle,
+  getTemplateDesc 
+} from '@/templates';
 
 export interface TemplatesModalProps {
   isOpen: boolean;
@@ -23,11 +28,24 @@ export function TemplatesModal({
   onClose,
   onApplyTemplate,
 }: TemplatesModalProps) {
-  const { t } = useTranslation('templates');
+  const { t, i18n } = useTranslation('templates');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
+
+  const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
 
   const categories = [
     { id: 'all', label: t('categoryAll') },
@@ -41,9 +59,20 @@ export function TemplatesModal({
 
   const filteredTemplates = ARCHITECTURE_TEMPLATES.filter((tpl) => {
     const matchCategory = selectedCategory === 'all' || tpl.category === selectedCategory;
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return matchCategory;
+
+    const titleZh = tpl.titleI18n?.zh || tpl.title;
+    const titleEn = tpl.titleI18n?.en || '';
+    const descZh = tpl.descI18n?.zh || tpl.desc;
+    const descEn = tpl.descI18n?.en || '';
+
     const matchQuery =
-      tpl.title.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
-      tpl.desc.toLowerCase().includes(searchQuery.toLowerCase().trim());
+      titleZh.toLowerCase().includes(query) ||
+      titleEn.toLowerCase().includes(query) ||
+      descZh.toLowerCase().includes(query) ||
+      descEn.toLowerCase().includes(query);
+
     return matchCategory && matchQuery;
   });
 
@@ -66,6 +95,7 @@ export function TemplatesModal({
           </div>
           <button 
             onClick={onClose}
+            data-testid="close-templates-btn"
             className="text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg hover:bg-muted"
           >
             <X className="w-4.5 h-4.5" />
@@ -106,79 +136,93 @@ export function TemplatesModal({
 
         {/* 模板网格卡片列表 */}
         <div className="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4.5 flex-1">
-          {filteredTemplates.map((tpl) => (
-            <div
-              key={tpl.id}
-              className={`group relative flex flex-col justify-between p-4.5 rounded-xl border bg-card hover:bg-muted/30 transition-all duration-200 hover:shadow-xl ${
-                tpl.featured
-                  ? 'border-primary/60 hover:border-primary shadow-sm'
-                  : 'border-border hover:border-border'
-              }`}
-            >
-              <div>
-                {/* 封面与 Badge */}
-                <div className="relative h-36 rounded-lg overflow-hidden border border-border mb-3.5 bg-muted">
-                  <img
-                    src={tpl.coverImage}
-                    alt={tpl.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                    <Badge variant="slate" className="backdrop-blur-md bg-black/60 border-white/20 text-xs text-white">
-                      {tpl.categoryLabel}
-                    </Badge>
-                    {tpl.featured && (
-                      <Badge variant="cyan" className="backdrop-blur-md text-xs gap-1">
-                        <Flame className="w-3.5 h-3.5 fill-current text-cyan-400" />
-                        <span>{t('featuredBadge')}</span>
+          {filteredTemplates.map((tpl) => {
+            const displayTitle = getTemplateTitle(tpl, currentLang);
+            const displayDesc = getTemplateDesc(tpl, currentLang);
+            const categoryLabel = categories.find((c) => c.id === tpl.category)?.label || tpl.categoryLabel;
+            const isZhOnly = currentLang === 'en' && !tpl.titleI18n?.en;
+
+            return (
+              <div
+                key={tpl.id}
+                data-testid={`template-card-${tpl.id}`}
+                className={`group relative flex flex-col justify-between p-4.5 rounded-xl border bg-card hover:bg-muted/30 transition-all duration-200 hover:shadow-xl ${
+                  tpl.featured
+                    ? 'border-primary/60 hover:border-primary shadow-sm'
+                    : 'border-border hover:border-border'
+                }`}
+              >
+                <div>
+                  {/* 封面与 Badge */}
+                  <div className="relative h-36 rounded-lg overflow-hidden border border-border mb-3.5 bg-muted">
+                    <img
+                      src={tpl.coverImage}
+                      alt={displayTitle}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                    
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                      <Badge variant="slate" className="backdrop-blur-md bg-black/60 border-white/20 text-xs text-white">
+                        {categoryLabel}
                       </Badge>
-                    )}
+                      {tpl.featured && (
+                        <Badge variant="cyan" className="backdrop-blur-md text-xs gap-1">
+                          <Flame className="w-3.5 h-3.5 fill-current text-cyan-400" />
+                          <span>{t('featuredBadge')}</span>
+                        </Badge>
+                      )}
+                      {isZhOnly && (
+                        <Badge variant="slate" className="backdrop-blur-md bg-amber-500/20 text-amber-300 border-amber-500/40 text-[10px] px-1.5 py-0.5">
+                          {t('zhOnlyBadge')}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-xs font-mono text-white">
+                      <span className="flex items-center gap-1 bg-black/60 px-2.5 py-0.5 rounded backdrop-blur-sm border border-white/20">
+                        <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{tpl.sceneCount} {t('scenesCount')}</span>
+                      </span>
+                      <span className="flex items-center gap-1 bg-black/60 px-2.5 py-0.5 rounded backdrop-blur-sm border border-white/20">
+                        <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{tpl.estimatedDuration}s</span>
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-xs font-mono text-white">
-                    <span className="flex items-center gap-1 bg-black/60 px-2.5 py-0.5 rounded backdrop-blur-sm border border-white/20">
-                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>{tpl.sceneCount} {t('scenesCount')}</span>
-                    </span>
-                    <span className="flex items-center gap-1 bg-black/60 px-2.5 py-0.5 rounded backdrop-blur-sm border border-white/20">
-                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>{tpl.estimatedDuration}s</span>
-                    </span>
-                  </div>
+                  {/* 标题与描述 */}
+                  <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition line-clamp-1">
+                    {displayTitle}
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                    {displayDesc}
+                  </p>
                 </div>
 
-                {/* 标题与描述 */}
-                <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition line-clamp-1">
-                  {tpl.title}
-                </h4>
-                <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
-                  {tpl.desc}
-                </p>
-              </div>
+                {/* 底部克隆操作按键 */}
+                <div className="pt-3.5 mt-3.5 border-t border-border flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {tpl.dsl.meta.viewport.width} × {tpl.dsl.meta.viewport.height}
+                  </span>
 
-              {/* 底部克隆操作按键 */}
-              <div className="pt-3.5 mt-3.5 border-t border-border flex items-center justify-between">
-                <span className="text-xs text-muted-foreground font-mono">
-                  {tpl.dsl.meta.viewport.width} × {tpl.dsl.meta.viewport.height}
-                </span>
-
-                <Button
-                  size="sm"
-                  variant="cyan"
-                  onClick={() => {
-                    onApplyTemplate(tpl);
-                    onClose();
-                  }}
-                  className="h-8 text-xs gap-1.5 font-medium shadow-sm"
-                >
-                  <span>{t('applyTemplate')}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
+                  <Button
+                    size="sm"
+                    variant="cyan"
+                    data-testid={`apply-template-${tpl.id}`}
+                    onClick={() => {
+                      onApplyTemplate(tpl);
+                      onClose();
+                    }}
+                    className="h-8 text-xs gap-1.5 font-medium shadow-sm"
+                  >
+                    <span>{t('applyTemplate')}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

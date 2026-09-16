@@ -6,11 +6,12 @@ export default {
   categoryMicroservice: '微服务 & 电商',
   categoryDdd: 'DDD 领域驱动',
   categoryCloudnative: '云原生 & DevOps',
-  categoryDatabase: '分布式事务',
+  categoryDatabase: '实时计算 & 数据湖仓',
   categoryAi: 'AI 大模型 & RAG',
   scenesCount: '幕运镜演进',
   duration: '演播时长',
   applyTemplate: '应用此模板创建工程',
   featuredBadge: '经典案例升级版',
   searchPlaceholder: '搜索架构模板名称或关键词...',
+  zhOnlyBadge: '仅中文',
 } as const;

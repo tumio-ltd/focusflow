@@ -18,8 +18,9 @@ export class FocusFlowPlayer {
   toggleDebugMode(forceState?: boolean): void;
   setShowControls(show: boolean): void;
   toggleControls(): void;
+  setLanguage(lang: 'zh' | 'en' | string): void;
   clearElements(): void;
-  updateDSL(dsl: FocusFlowDSL): void;
+  updateDSL(dsl: FocusFlowDSL, options?: { lang?: string }): void;
   destroy(): void;
   get isPlaying(): boolean;
   stateMachine?: any;

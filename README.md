@@ -20,12 +20,18 @@
 [![Turborepo](https://img.shields.io/badge/Turborepo-2.0+-EF4444?logo=turborepo&logoColor=white)](https://turbo.build/repo)
 [![Vite](https://img.shields.io/badge/Vite-8.0+-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![GitHub Pages](https://img.shields.io/badge/Live_Demo-Online-success?logo=github)](https://tumio-ltd.github.io/focusflow/)
+[![GitHub Pages](https://img.shields.io/badge/Live_Demo-Online-success?logo=github)](https://focusflow.tumio.site/)
 
 <br />
 
-<a href="https://tumio-ltd.github.io/focusflow/">
+<a href="https://focusflow.tumio.site/">
   <img src="https://img.shields.io/badge/🚀_Try_Live_Demo_Online-No_Installation_Required-0284c7?style=for-the-badge&logoColor=white" alt="Try Live Demo Online" height="42" />
+</a>
+
+<br /><br />
+
+<a href="https://focusflow.tumio.site/">
+  <img src="./docs/assets/hero-demo.gif" alt="FocusFlow Hero Walkthrough Demo" width="100%" />
 </a>
 
 <br /><br />
@@ -62,17 +68,29 @@ When presenting distributed systems, microservices, or complex AI pipelines, sta
 
 ## ✨ Key Features
 
-### 🎥 1. 60fps GPU Cinematic Kinematics
-Continuous affine transforms (`scale`, `translate3d`, `rotate`) driven by viewport kinematics. Seamlessly transition from global overview to microscopic component details without aliasing or frame drops.
+### 🎥 1. 60fps GPU Cinematic Kinematics & Dynamic Bezier Flow
+Continuous affine transforms (`scale`, `translate3d`, `rotate`) driven by viewport kinematics. Seamlessly transition from global overview to microscopic component details without aliasing or frame drops, with glowing Bezier paths illuminating runtime interactions.
+
+<p align="center">
+  <img src="./docs/assets/feature-camera-flow.png" alt="60fps Cinematic Kinematics and Dynamic Bezier Flow" width="100%" />
+</p>
 
 ### 🧲 2. Sobel Edge Smart Snapping
 Equipped with a native computer-vision algorithm: drag a bounding box near any node or diagram card, and FocusFlow automatically snaps bounding boxes to the exact pixel borders in $< 1\text{ms}$.
+
+<p align="center">
+  <img src="./docs/assets/feature-sobel-snap.png" alt="Sobel Edge Smart Snapping Studio Canvas" width="100%" />
+</p>
 
 ### ⚡ 3. Dynamic Bezier Flow Routing
 Intelligent relative anchor calculation (`right ➔ left`, `bottom ➔ top`) connecting nodes with animated glowing pulses, customizable pulse colors, and directional indicators.
 
 ### 🎙️ 4. AI Voiceover & Audio-Motion Sync
 Built-in offline Web Speech API synthesizer and cloud LLM voiceover connector. Features visual audio waveform tracks, subtitle markers, and auto-computed camera dwell times.
+
+<p align="center">
+  <img src="./docs/assets/feature-audio-sync.png" alt="AI Voiceover and Audio Waveform Synchronization" width="100%" />
+</p>
 
 ### 🏝️ 5. Dynamic Island & Zen Mode
 A sleek floating HUD pill at the bottom provides chapter progress, time remaining, playback controls, and element density counters. Supports auto-hiding **Zen Mode** for clean presentation recording.
@@ -86,7 +104,7 @@ Compile your entire project—background 4K image, overlays, audio narration, mo
 
 ### 1. Try Online Live Demo
 No installation needed. Open directly in your browser:  
-👉 **[https://tumio-ltd.github.io/focusflow/](https://tumio-ltd.github.io/focusflow/)**
+👉 **[https://focusflow.tumio.site/](https://focusflow.tumio.site/)**
 
 ### 2. Local Development (Turborepo)
 

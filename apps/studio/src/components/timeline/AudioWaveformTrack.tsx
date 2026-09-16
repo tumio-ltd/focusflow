@@ -7,6 +7,7 @@ import { getStoredTTSConfig } from '@/services/audio/tts/ttsConfigStore';
 import { type SceneStep } from '@focusflow/dsl';
 import { Volume2, VolumeX, ZoomIn, ZoomOut, Trash2, Play, Pause, Download } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getSceneVoiceoverScript } from '@/templates';
 
 function generateSpeechPeaks(totalDurationMs: number, scenes: SceneStep[], sampleCount: number = 800): Float32Array {
   const peaks = new Float32Array(sampleCount * 2);
@@ -55,7 +56,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   onSelectScene,
   height = 72,
 }) => {
-  const { t } = useTranslation('audio');
+  const { t, i18n } = useTranslation('audio');
+  const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -220,7 +222,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         }
         onSelectScene?.(idx);
         const scene = scenes[idx];
-        const fullText = scene.voiceoverScript?.trim() || scene.title;
+        const fullText = getSceneVoiceoverScript(scene, currentLang);
 
         let sStartMs = 0;
         for (let i = 0; i < idx; i++) {
@@ -317,7 +319,8 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     let accum = 0;
     scenes.forEach((s, idx) => {
       accum += (s.duration || dsl.meta.controls?.interval || 3800);
-      boundaries.push({ index: idx, endMs: accum, title: s.title });
+      const title = (currentLang === 'en' && s.titleI18n?.en) ? s.titleI18n.en : s.title;
+      boundaries.push({ index: idx, endMs: accum, title });
     });
     return boundaries;
   }, [scenes, dsl.meta.controls?.interval]);
@@ -435,7 +438,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         targetStartMs = accum;
       }
       const targetScene = scenes[targetIdx];
-      const fullText = targetScene?.voiceoverScript?.trim() || targetScene?.title || '';
+      const fullText = targetScene ? getSceneVoiceoverScript(targetScene, currentLang) : '';
       if (!fullText) return;
 
       // Smart Sentence Slicing:

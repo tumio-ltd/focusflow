@@ -3,6 +3,20 @@
 All notable changes to FocusFlow will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## 1.0.2 (2026-09-16)
+
+### Features
+
+- **auto-tour**: dual-mode AI Auto-Tour generation engine with Option A (offline heuristic Sobel clustering, <200ms) and Option B (multi-provider Vision LLM Copilot)
+- **auto-tour**: resilient multi-provider adapters supporting OpenAI (`gpt-4o`), Google Gemini (`gemini-2.5-flash`), SiliconFlow (`deepseek-v3`), and Custom OpenAI-compatible endpoints
+- **auto-tour**: client-side offscreen image pre-compression pipeline (`imageCompressor.ts`), reducing token payload and transmission latency by 80%+
+- **auto-tour**: self-healing DSL sanitizer (`dslSanitizer.ts`) with truncated JSON recovery, coordinate bounding box safety clamping, and dangling reference resolution
+- **auto-tour**: unified AI Provider Vault (`aiProviderVault.ts`) with cross-module credential sharing (TTS & Vision), connection tester, and physical purge
+- **templates**: ship official 4K vector `microservicesTemplate` as the initial default project, reducing cold-start asset size by 99% (33KB) with 5-scene cinematic camera movements
+- **inspector**: eliminate redundant base resolution card from calibration assistant to save 40px vertical space, with enhanced top-right sticky badge and bilingual tooltips
+- **model-catalog**: bind model catalog to single source of truth (`modelCatalog.generated.json`), displaying max 5 mainstream models sorted chronologically newest-first
+- **e2e**: comprehensive automated Playwright test suites covering heuristic tour, vision pipeline, AI vault, and state machine rollback
+
 ## 1.0.1 (2026-09-12)
 
 ### Features

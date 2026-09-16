@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['**/generate-hero-assets.spec.ts', '**/capture-*.spec.ts'],
   timeout: 60 * 1000,
   expect: {
     timeout: 5000,

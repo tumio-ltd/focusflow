@@ -11,6 +11,7 @@ import type { ITTSProvider } from './ttsProvider';
 import { decodeAudioFile } from '../audioDecoder';
 import { getStoredTTSConfig, TTS_PRESETS, type TTSStoredConfig } from './ttsConfigStore';
 import { setSceneAudioBlob } from './masterAudioStitcher';
+import { getSceneVoiceoverScript } from '@/templates';
 
 /**
  * Instantiate appropriate TTS Provider according to active configuration
@@ -70,14 +71,15 @@ export async function synthesizeSceneVoiceover(
   provider?: ITTSProvider,
   voiceId?: string,
   speed?: number,
-  defaultInterval = 3800
+  defaultInterval = 3800,
+  lang = 'zh'
 ): Promise<{ audioBlob: Blob; durationMs: number; adaptedDuration: number }> {
   const cfg = getStoredTTSConfig();
   const activeProvider = provider || createTTSProviderFromConfig(cfg);
   const activeVoiceId = voiceId || cfg.voice;
   const activeSpeed = speed ?? cfg.speed ?? 1.0;
 
-  const text = scene.voiceoverScript?.trim() || scene.title;
+  const text = getSceneVoiceoverScript(scene, lang);
   const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
   const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs, defaultInterval);
 
@@ -97,7 +99,8 @@ export async function synthesizeAllScenesVoiceover(
   provider?: ITTSProvider,
   voiceId?: string,
   speed?: number,
-  defaultInterval = 3800
+  defaultInterval = 3800,
+  lang = 'zh'
 ): Promise<BatchVoiceoverResult> {
   const cfg = getStoredTTSConfig();
   const activeProvider = provider || createTTSProviderFromConfig(cfg);
@@ -114,17 +117,18 @@ export async function synthesizeAllScenesVoiceover(
 
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
-      const text = scene.voiceoverScript?.trim() || scene.title;
+      const text = getSceneVoiceoverScript(scene, lang);
       const res = await activeProvider.synthesize(text, activeVoiceId, activeSpeed);
 
       renderedBlobs.push(res.audioBlob);
       const adaptedDuration = adaptSceneDurationToAudio(scene, res.durationMs, defaultInterval);
       sceneDurations.push(adaptedDuration);
 
+      const sceneLabel = (lang.startsWith('en') && scene.titleI18n?.en) ? scene.titleI18n.en : scene.title;
       markers.push({
         id: `marker-scene-${i}`,
         timeMs: currentOffsetMs,
-        label: scene.title,
+        label: sceneLabel,
         sceneIndex: i,
       });
 

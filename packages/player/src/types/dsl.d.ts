@@ -140,5 +140,6 @@ export interface PlayerOptions {
   initialSceneIndex?: number;
   debug?: boolean;
   autoPlayInterval?: number;
+  lang?: 'zh' | 'en' | string;
   onSceneChange?: (sceneIndex: number, scene: SceneStep) => void;
 }

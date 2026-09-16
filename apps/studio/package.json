@@ -1,6 +1,6 @@
 {
   "name": "@focusflow/studio",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "license": "AGPL-3.0",
   "author": "Tumio Soft Technology Co., Ltd.",
@@ -13,6 +13,7 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:archive": "node -e \"const fs=require('fs');const ts=new Date().toISOString().replace(/[:.]/g,'-');if(fs.existsSync('playwright-report')){fs.cpSync('playwright-report','playwright-reports/report-'+ts,{recursive:true});console.log('Archived report to playwright-reports/report-'+ts);}\"",
     "test:cpu": "node scripts/measure-cpu.mjs",
+    "sync:models": "node ../../scripts/sync-models.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

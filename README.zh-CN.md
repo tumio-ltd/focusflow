@@ -20,12 +20,18 @@
 [![Turborepo](https://img.shields.io/badge/Turborepo-2.0+-EF4444?logo=turborepo&logoColor=white)](https://turbo.build/repo)
 [![Vite](https://img.shields.io/badge/Vite-8.0+-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![GitHub Pages](https://img.shields.io/badge/Live_Demo-在线体验站-success?logo=github)](https://tumio-ltd.github.io/focusflow/)
+[![GitHub Pages](https://img.shields.io/badge/Live_Demo-在线体验站-success?logo=github)](https://focusflow.tumio.site/)
 
 <br />
 
-<a href="https://tumio-ltd.github.io/focusflow/">
+<a href="https://focusflow.tumio.site/">
   <img src="https://img.shields.io/badge/🚀_在线试玩_Live_Demo-无需安装_秒级体验-0284c7?style=for-the-badge&logoColor=white" alt="在线体验站" height="42" />
+</a>
+
+<br /><br />
+
+<a href="https://focusflow.tumio.site/">
+  <img src="./docs/assets/hero-demo.gif" alt="FocusFlow 核心实操演示动图" width="100%" />
 </a>
 
 <br /><br />
@@ -62,17 +68,29 @@
 
 ## ✨ 核心特性
 
-### 🎥 1. 60fps GPU 视锥电影级运镜
-由运动学变换矩阵驱动的仿射平滑插值（`scale`、`translate3d`、`rotate`）。无论是全局俯瞰还是下钻到最细小的数据库表字段，均保持极致丝滑、无频闪与文字抗锯齿重采样。
+### 🎥 1. 60fps GPU 视锥电影级运镜与贝塞尔流光拓扑
+由运动学变换矩阵驱动的仿射平滑插值（`scale`、`translate3d`、`rotate`）。无论是全局俯瞰还是下钻到最细小的数据库表字段，均保持极致丝滑、无频闪与文字抗锯齿重采样，并在节点间实时渲染带方向脉冲的发光流线。
+
+<p align="center">
+  <img src="./docs/assets/feature-camera-flow.png" alt="60fps GPU 视锥电影级运镜与贝塞尔发光流光" width="100%" />
+</p>
 
 ### 🧲 2. Sobel 智能边缘吸附
 内置计算机视觉边缘梯度卷积算法：在架构图上随意拖拽标定框，算法在 $< 1\text{ms}$ 内自动检测像素边界，精准紧贴微服务容器边框。
+
+<p align="center">
+  <img src="./docs/assets/feature-sobel-snap.png" alt="Sobel 智能边缘吸附工作台画布" width="100%" />
+</p>
 
 ### ⚡ 3. 动态贝塞尔流光路由
 智能计算相对锚点空间位置（水平流向自动 `right ➔ left`，垂直流向自动 `bottom ➔ top`），支持多色发光脉冲与流向动画。
 
 ### 🎙️ 4. AI 语音解说与音画同步
 内置离线 Web Speech API 与云端大模型语音合成接口。配齐可视化音频波形轨道与字幕标定，根据台词字数自动推导镜头驻留时长。
+
+<p align="center">
+  <img src="./docs/assets/feature-audio-sync.png" alt="AI 语音解说与音频波形对齐同步" width="100%" />
+</p>
 
 ### 🏝️ 5. 灵动岛 HUD 与禅模式（Zen Mode）
 底部悬浮胶囊控制岛，实时显示章节序号、流转进度条、时长倒计时与元素密度计数。支持全屏演示时无操作自动隐藏的**禅模式**。
@@ -86,7 +104,7 @@
 
 ### 1. 在线直接体验
 无需安装任何环境，浏览器直接打开：  
-👉 **[https://tumio-ltd.github.io/focusflow/](https://tumio-ltd.github.io/focusflow/)**
+👉 **[https://focusflow.tumio.site/](https://focusflow.tumio.site/)**
 
 ### 2. 本地工程启动 (Turborepo)
 

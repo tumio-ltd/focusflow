@@ -22,7 +22,6 @@ import {
   Sparkles,
   Check,
   Copy,
-  Scan,
   RotateCcw,
   Zap,
   Gauge,
@@ -405,7 +404,11 @@ function RightInspectorComponent({
               {t('inspectorTitle', '属性检查器')}
             </span>
           </div>
-          <span className="text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded">
+          <span
+            data-testid="inspector-viewport-res"
+            title={t('baseImageResTip', '底图画布原生基准分辨率')}
+            className="text-[10px] font-mono bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded cursor-default"
+          >
             {viewport.width} × {viewport.height}
           </span>
         </div>
@@ -788,17 +791,6 @@ function RightInspectorComponent({
 
               {isCalibrationOpen && (
                 <div className="space-y-3 pt-1 animate-in fade-in duration-150">
-                  {/* 底图原生分辨率只读展示 */}
-                  <div className="flex items-center justify-between bg-muted/60 p-2 rounded-lg border border-border text-xs">
-                    <span className="text-muted-foreground flex items-center gap-1.5">
-                      <Scan className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>{t('baseImageRes', '底图原生基准')}</span>
-                    </span>
-                    <span className="font-mono text-cyan-400 font-bold">
-                      {viewport.width} × {viewport.height}
-                    </span>
-                  </div>
-
                   {/* 智能边缘贴合开关 */}
                   <div className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border/60">
                     <div className="space-y-0.5">

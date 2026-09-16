@@ -5,3 +5,4 @@ export * from './AudienceModal';
 export * from './ExportModal';
 export * from './DslEditorModal';
 export * from './AudioConflictModal';
+export * from './AutoTourModal';

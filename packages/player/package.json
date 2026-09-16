@@ -1,6 +1,6 @@
 {
   "name": "@focusflow/player",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "license": "MIT",
   "author": "Tumio Soft Technology Co., Ltd.",
   "type": "module",
@@ -17,7 +17,10 @@
     "./styles.css": "./src/styles/focusflow.css",
     "./package.json": "./package.json"
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "vite build",
     "dev": "vite",

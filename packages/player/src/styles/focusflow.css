@@ -186,7 +186,7 @@
 
 /* Streaming Dashed Flow Animation */
 .ff-stream {
-  stroke-dasharray: 14, 10;
+  stroke-dasharray: 14, 10 !important;
   animation: ffStreamMotion 1.5s linear infinite;
 }
 

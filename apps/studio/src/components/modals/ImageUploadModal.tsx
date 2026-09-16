@@ -1,4 +1,4 @@
-import React, { useState, useRef, DragEvent, ChangeEvent } from 'react';
+import React, { useState, useRef, useEffect, useCallback, DragEvent, ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   UploadCloud, 
@@ -7,7 +7,9 @@ import {
   X, 
   Loader2, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Sparkles,
+  AlertTriangle 
 } from 'lucide-react';
 import { Button, Input, Badge } from '@/components/ui';
 import { parseImageFile, parseImageUrl, formatBytes, ImageMeta } from '@/utils/imageDecoder';
@@ -15,7 +17,7 @@ import { parseImageFile, parseImageUrl, formatBytes, ImageMeta } from '@/utils/i
 export interface ImageUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (meta: ImageMeta) => void;
+  onImport: (meta: ImageMeta, options?: { enableAutoTour?: boolean }) => void;
 }
 
 export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModalProps) {
@@ -26,9 +28,35 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parsedMeta, setParsedMeta] = useState<ImageMeta | null>(null);
+  const [enableAutoTour, setEnableAutoTour] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const resetState = useCallback(() => {
+    setActiveTab('file');
+    setIsDragging(false);
+    setUrlInput('');
+    setLoading(false);
+    setError(null);
+    setParsedMeta(null);
+    setEnableAutoTour(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
+
+  // 每次打开弹窗均呈现崭新初始状态 (Clean Slate)，彻底杜绝上一次导入结果残留
+  useEffect(() => {
+    if (isOpen) {
+      resetState();
+    }
+  }, [isOpen, resetState]);
+
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    resetState();
+    onClose();
+  };
 
   const handleFileProcess = async (file: File) => {
     setError(null);
@@ -91,7 +119,10 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
 
   const handleConfirm = () => {
     if (parsedMeta) {
-      onImport(parsedMeta);
+      const meta = parsedMeta;
+      const autoTour = enableAutoTour;
+      resetState();
+      onImport(meta, { enableAutoTour: autoTour });
       onClose();
     }
   };
@@ -111,7 +142,7 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
             <h3 className="text-base font-semibold text-foreground">{t('modalTitle')}</h3>
           </div>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg hover:bg-muted"
           >
             <X className="w-4.5 h-4.5" />
@@ -181,11 +212,11 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
                   className="flex-1"
                 />
                 <Button size="sm" variant="cyan" onClick={handleUrlProcess} disabled={!urlInput.trim() || loading}>
-                  {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : '解析'}
+                  {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : t('parse', '解析')}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                可直接输入 AWS S3、OSS 或公开云存储中的高分辨率架构图链接
+                {t('urlHelpTip', '可直接输入 AWS S3、OSS 或公开云存储中的高分辨率架构图链接')}
               </p>
             </div>
           )}
@@ -227,11 +258,64 @@ export function ImageUploadModal({ isOpen, onClose, onImport }: ImageUploadModal
               </div>
             </div>
           )}
+
+          {/* AI 启发式自动导览勾选与透明短板提示卡片 */}
+          {parsedMeta && (
+            <div
+              data-testid="auto-tour-option-card"
+              onClick={() => setEnableAutoTour(!enableAutoTour)}
+              className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none space-y-2.5 ${
+                enableAutoTour
+                  ? 'bg-cyan-500/[0.08] dark:bg-cyan-950/25 border-cyan-500/40 dark:border-cyan-500/50 shadow-sm'
+                  : 'bg-muted/20 border-border/60 hover:border-border'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  data-testid="auto-tour-checkbox"
+                  checked={enableAutoTour}
+                  onChange={(e) => setEnableAutoTour(e.target.checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-0.5 h-4 w-4 rounded border-border text-cyan-500 focus:ring-cyan-500 accent-cyan-500 cursor-pointer"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+                    <span className="text-xs font-semibold text-foreground">
+                      {t('autoTourCheckbox')}
+                    </span>
+                    <Badge variant="cyan" className="text-[10px] px-1.5 py-0 h-4">
+                      {t('offlineAutonomous', '离线自治')}
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    <span className="font-semibold text-cyan-700 dark:text-cyan-400">{t('algorithmPrincipleLabel')}</span>
+                    {t('autoTourPrinciples')}
+                  </p>
+                </div>
+              </div>
+
+              {/* 局限性与短板 (Cons) 透明显性提示：采用与 AI 提词同源的高对比度无障碍配色 */}
+              {enableAutoTour && (
+                <div
+                  data-testid="auto-tour-cons-notice"
+                  className="p-2.5 rounded-lg bg-[var(--ff-ai-bg)] border border-[var(--ff-ai-border)] text-[var(--ff-ai-text)] text-[11px] leading-relaxed flex items-start gap-2 animate-in fade-in duration-150 shadow-sm"
+                >
+                  <AlertTriangle className="w-4 h-4 text-[var(--ff-ai-text)] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold text-[var(--ff-ai-text)]">{t('consNoticeLabel')}</span>
+                    <span className="ml-1 text-[var(--ff-ai-text)] opacity-95">{t('autoTourConsNotice')}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 底部按钮栏 */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-muted/40">
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
             {t('cancel')}
           </Button>
           <Button

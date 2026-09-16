@@ -553,9 +553,9 @@ async function verifyMicroservicesExportAndMobileView(page: Page): Promise<void>
     await standalonePage.goto(`file://${tempFilePath}`);
     await standalonePage.waitForTimeout(600);
 
-    // 验证 Redis 和 ShardingSphere 图元存在且无错位
-    const redisBox = standalonePage.locator('#box-redis-cluster');
-    await expect(redisBox).toBeAttached();
+    // 验证库存中台和 ShardingSphere 图元存在且无错位
+    const stockBox = standalonePage.locator('#box-stock-svc');
+    await expect(stockBox).toBeAttached();
 
     const shardingBox = standalonePage.locator('#box-db-sharding');
     await expect(shardingBox).toBeAttached();

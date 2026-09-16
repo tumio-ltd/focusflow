@@ -201,6 +201,7 @@ export interface PlayerOptions {
   showProgress?: boolean;
   showHUDButton?: boolean;
   audioSync?: boolean; // 是否启用音频主时钟锁相环同步
+  lang?: 'zh' | 'en' | string; // 播放器默认显示语言 (zh / en)
   onSceneChange?: (sceneIndex: number, scene: SceneStep) => void;
   onPlayStateChange?: (isPlaying: boolean) => void;
   onEnded?: () => void;

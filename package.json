@@ -21,7 +21,8 @@
     "typecheck": "turbo run typecheck",
     "changeset": "changeset",
     "version:packages": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "sync:models": "node scripts/sync-models.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",

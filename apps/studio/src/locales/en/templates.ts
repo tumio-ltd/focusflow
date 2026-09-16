@@ -6,11 +6,12 @@ export default {
   categoryMicroservice: 'Microservices',
   categoryDdd: 'DDD Architecture',
   categoryCloudnative: 'Cloud Native',
-  categoryDatabase: 'Distributed TX',
+  categoryDatabase: 'Streaming & Lakehouse',
   categoryAi: 'AI & LLM RAG',
   scenesCount: 'scenes animation',
   duration: 'duration',
   applyTemplate: 'Clone & Start Project',
   featuredBadge: 'Featured Classic Upgrade',
   searchPlaceholder: 'Search architecture templates...',
+  zhOnlyBadge: 'ZH Only',
 } as const;

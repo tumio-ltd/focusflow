@@ -74,7 +74,7 @@ function BottomTimelineComponent({
   onPrev,
   onSeek,
 }: BottomTimelineProps) {
-  const { t } = useTranslation(['timeline', 'audio']);
+  const { t, i18n } = useTranslation(['timeline', 'audio']);
   const { dsl, setAudioTrack, batchSetScenes } = useProjectStore();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -235,12 +235,14 @@ function BottomTimelineComponent({
     try {
       setIsSynthesizingTTS(true);
       const defaultInterval = dsl.meta.controls?.interval || 3800;
+      const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
       const res = await synthesizeAllScenesVoiceover(
         dsl.scenes,
         undefined,
         undefined,
         cfg.speed,
         defaultInterval,
+        currentLang,
       );
 
       // 批量将自适应后的分幕时长与专属物理音频同步更新到工程中

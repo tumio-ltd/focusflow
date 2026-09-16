@@ -13,6 +13,7 @@ import { PlaybackIslandReact } from '@/components/playback/PlaybackIslandReact';
 import { Button } from '@/components/ui';
 import { speakWebSpeech, stopWebSpeech, getStoredTTSConfig } from '@/services/audio';
 import { sanitizeDSL } from '@/stores/useProjectStore';
+import { getSceneVoiceoverScript } from '@/templates';
 import { useEditorStore } from '@/stores/useEditorStore';
 
 export interface AudienceModalProps {
@@ -34,7 +35,8 @@ export function AudienceModal({
   recordingElapsed = 0,
   onFinishRecording,
 }: AudienceModalProps) {
-  const { t } = useTranslation('export');
+  const { t, i18n } = useTranslation('export');
+  const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [currentSceneIdx, setCurrentSceneIdx] = useState(initialSceneIndex);
@@ -167,7 +169,8 @@ export function AudienceModal({
 
     if (isOfflineVoice || isBgmWithVoiceover) {
       const scene = activeDsl.scenes?.[sceneIndex];
-      const text = scene?.voiceoverScript?.trim() || (isOfflineVoice ? scene?.title : '');
+      const lang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+      const text = scene ? getSceneVoiceoverScript(scene, lang) : '';
       if (text) {
         speakWebSpeech(text, cfg.speed, undefined, cfg.voice);
       }
@@ -219,6 +222,7 @@ export function AudienceModal({
       const player = new FocusFlowPlayer({
         container: containerRef.current,
         dsl: sanitizedDsl,
+        lang: currentLang,
         initialSceneIndex,
         debug: false,
         showControls: false,
@@ -262,6 +266,11 @@ export function AudienceModal({
       playerRef.current = null;
     };
   }, [isOpen, sanitizedDsl, initialSceneIndex, playSceneTTS, isRecording, onFinishRecording]);
+
+  // 同步多语言切换至 Audience 播放器
+  useEffect(() => {
+    playerRef.current?.setLanguage?.(currentLang);
+  }, [currentLang]);
 
   // 录制模式下自动从第 1 幕起播
   useEffect(() => {
@@ -393,7 +402,7 @@ export function AudienceModal({
         isPlaying={isPlaying}
         currentSceneIdx={currentSceneIdx}
         totalScenes={totalScenes}
-        currentSceneTitle={currentScene?.title}
+        currentSceneTitle={(currentLang === 'en' && currentScene?.titleI18n?.en) ? currentScene.titleI18n.en : currentScene?.title}
         sceneElapsedMs={sceneElapsedMs}
         sceneDurationMs={currentSceneDurationMs}
         hudMode={playbackHudMode}

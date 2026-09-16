@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 import { FocusFlowPlayer } from '@focusflow/player';
-import type { ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem, SceneVoiceoverAudio } from '@focusflow/dsl';
+import type { FocusFlowDSL, ElementBox, ElementPath, ElementDot, ElementImage, CalloutItem, SceneVoiceoverAudio } from '@focusflow/dsl';
 import { 
   WorkbenchLayout, 
   TopBar, 
@@ -21,13 +21,15 @@ import {
   AudienceModal,
   ExportModal,
   DslEditorModal,
+  AutoTourModal,
 } from '@/components/modals';
 import { Toaster, toast } from '@/components/ui';
 import { AIVoiceoverSettingsModal } from '@/components/timeline/AIVoiceoverSettingsModal';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import { type ImageMeta, parseImageUrl } from '@/utils/imageDecoder';
-import type { ArchitectureTemplate } from '@/templates';
+import { type ArchitectureTemplate, getTemplateTitle, getSceneVoiceoverScript, getCalloutTitle, getCalloutDesc } from '@/templates';
 import { captureCanvasToCamera } from '@/utils/cameraMath';
+import { generateHeuristicAutoTourFromUrl } from '@/services/autoTour/heuristicTourGenerator';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { useStudioKeyboard } from '@/hooks/useStudioKeyboard';
 import { 
@@ -44,7 +46,7 @@ import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
 
 export default function App() {
-  const { t } = useTranslation(['audio', 'common']);
+  const { t, i18n } = useTranslation(['audio', 'common']);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -53,6 +55,7 @@ export default function App() {
   const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
+  const [isAutoTourModalOpen, setIsAutoTourModalOpen] = useState(false);
   const [isAIVoiceoverSettingsOpen, setIsAIVoiceoverSettingsOpen] = useState(false);
   const [isSingleTtsLoading, setIsSingleTtsLoading] = useState(false);
   const [ttsPreview, setTtsPreview] = useState<TTSPreviewInfo | null>(null);
@@ -113,6 +116,7 @@ export default function App() {
     setAudioTrack,
     removeAudioTrack,
     updateSceneVoiceoverAudio,
+    applyHeuristicAutoTour,
     markSaved,
   } = useProjectStore();
 
@@ -221,9 +225,11 @@ export default function App() {
 
     try {
       const initialIdx = useEditorStore.getState().activeSceneIndex || 0;
+      const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
       const player = new FocusFlowPlayer({
         container: containerRef.current,
         dsl,
+        lang: currentLang,
         initialSceneIndex: initialIdx,
         debug: false,
         disableCamera: true, // 编辑工作台内底图保持 1:1 绝对空间，运镜由 InfiniteCanvas 与 Frustum 取景框协同展现
@@ -283,9 +289,16 @@ export default function App() {
   // 3.3 当工程图元或场景激活配置变动时，实时同步刷新画布上的图元呈现
   useEffect(() => {
     if (playerRef.current) {
-      playerRef.current.updateDSL(dsl);
+      const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+      playerRef.current.updateDSL(dsl, { lang: currentLang });
     }
   }, [dsl.elements, dsl.scenes, dsl.audio]);
+
+  // 3.3.1 当多语言切换时，同步刷新播放器内部图元与 Callout 双语呈现
+  useEffect(() => {
+    const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+    playerRef.current?.setLanguage?.(currentLang);
+  }, [i18n.language]);
 
   // 3.4 演播播放联动：当处于离线原生语音模式且自动演播切幕时，自动调用系统原生播音朗读
   useEffect(() => {
@@ -479,17 +492,45 @@ export default function App() {
     if (currentProjectId) {
       await saveProject(currentProjectId, dsl);
       markSaved();
-      toast.success(t('projectSaved', '🎉 工程已实时存入本地 IndexedDB！'));
+      toast.success(t('common:projectSaved', '🎉 工程已实时存入本地 IndexedDB！'));
     }
   };
 
-  const handleAssetImported = async (meta: ImageMeta) => {
-    ingestNewAsset(meta);
-    setActiveSceneIndex(0);
+  const handleAssetImported = async (meta: ImageMeta, options?: { enableAutoTour?: boolean }) => {
+    if (options?.enableAutoTour) {
+      const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+      const defaultTitle = currentLang === 'en' ? 'New Architecture Showcase' : '全新架构演示项目';
+      const initialTitle = meta.fileName || defaultTitle;
+      const tourDSL = await generateHeuristicAutoTourFromUrl(
+        meta.url,
+        meta.width,
+        meta.height,
+        {
+          title: initialTitle,
+          assetUrl: meta.url,
+          locale: currentLang,
+        }
+      );
+      setDSL(tourDSL);
+      setActiveSceneIndex(0);
+      const newProjectId = await createProject(initialTitle, tourDSL, meta.blob);
+      console.log('Created project with auto tour:', newProjectId);
+      toast.success(t('common:autoTourSuccess', '✨ 已为您自动生成 4 幕电影级导览与流光'));
+    } else {
+      ingestNewAsset(meta);
+      setActiveSceneIndex(0);
 
-    // 立即新建并保存工程
-    const newProjectId = await createProject(meta.fileName, useProjectStore.getState().dsl, meta.blob);
-    console.log('Created project for imported asset:', newProjectId);
+      // 立即新建并保存工程
+      const newProjectId = await createProject(meta.fileName, useProjectStore.getState().dsl, meta.blob);
+      console.log('Created project for imported asset:', newProjectId);
+    }
+  };
+
+  const handleGenerateAutoTour = async () => {
+    const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+    await applyHeuristicAutoTour({ locale: currentLang });
+    setActiveSceneIndex(0);
+    toast.success(t('common:autoTourGenerated', '✨ 已成功生成 4 幕电影级导览'));
   };
 
   const handleOpenProjectById = async (id: string) => {
@@ -501,13 +542,54 @@ export default function App() {
   };
 
   const handleApplyTemplate = async (tpl: ArchitectureTemplate) => {
-    setDSL(tpl.dsl);
+    const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+    const initialTitle = getTemplateTitle(tpl, currentLang);
+
+    // 智能多语言克隆：当前语种为对应语言时初始化 scene.title、scene.voiceoverScript 与 callouts，找不到时以英文 title/desc 兜底，同时完整保留原始 *I18n 字典
+    const clonedScenes = tpl.dsl.scenes.map((scene) => {
+      const clonedCallouts = scene.activeElements?.callouts?.map((co) => ({
+        ...co,
+        title: getCalloutTitle(co, currentLang),
+        desc: getCalloutDesc(co, currentLang),
+      }));
+
+      const activeElements = {
+        ...scene.activeElements,
+        ...(clonedCallouts ? { callouts: clonedCallouts } : {}),
+      };
+
+      if (currentLang === 'en') {
+        return {
+          ...scene,
+          title: scene.titleI18n?.en || scene.title,
+          voiceoverScript: scene.voiceoverScriptI18n?.en || scene.voiceoverScript,
+          activeElements,
+        };
+      }
+      return {
+        ...scene,
+        title: scene.titleI18n?.zh || scene.title,
+        voiceoverScript: scene.voiceoverScriptI18n?.zh || scene.voiceoverScript,
+        activeElements,
+      };
+    });
+
+    const clonedDSL: FocusFlowDSL = {
+      ...tpl.dsl,
+      meta: {
+        ...tpl.dsl.meta,
+        title: initialTitle,
+      },
+      scenes: clonedScenes,
+    };
+
+    setDSL(clonedDSL);
     setActiveSceneIndex(0);
 
     // 自动嗅探模板底图真实尺寸校准 Viewport
-    if (tpl.dsl.asset?.url) {
+    if (clonedDSL.asset?.url) {
       try {
-        const meta = await parseImageUrl(tpl.dsl.asset.url, tpl.title);
+        const meta = await parseImageUrl(clonedDSL.asset.url, initialTitle);
         if (meta.width > 0 && meta.height > 0) {
           calibrateViewport({ width: meta.width, height: meta.height });
         }
@@ -517,8 +599,8 @@ export default function App() {
     }
 
     // 创建对应的新工程
-    const newProjectId = await createProject(tpl.title, useProjectStore.getState().dsl);
-    console.log('Created project from template:', newProjectId);
+    const newProjectId = await createProject(initialTitle, clonedDSL);
+    console.log('Created project from template:', newProjectId, initialTitle);
   };
 
   const handleFinishVideoRecording = useCallback(async () => {
@@ -813,6 +895,7 @@ export default function App() {
             onOpenTemplates={() => setIsTemplatesModalOpen(true)}
             onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
+            onOpenAutoTour={() => setIsAutoTourModalOpen(true)}
             onOpenAudience={() => setIsAudienceModalOpen(true)}
             onOpenDslEditor={() => setIsDslModalOpen(true)}
             onSave={handleSaveDraft}
@@ -911,9 +994,10 @@ export default function App() {
                 setIsSingleTtsLoading(true);
                 stopCurrentTtsPreview();
                 const cfg = getStoredTTSConfig();
-                const text = activeScene.voiceoverScript?.trim() || activeScene.title;
+                const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+                const text = getSceneVoiceoverScript(activeScene, currentLang);
                 const defaultInterval = dsl.meta.controls?.interval || 3800;
-                const res = await synthesizeSceneVoiceover(activeScene, undefined, undefined, cfg.speed, defaultInterval);
+                const res = await synthesizeSceneVoiceover(activeScene, undefined, undefined, cfg.speed, defaultInterval, currentLang);
 
                 const previewInfo: TTSPreviewInfo = {
                   sceneIndex: activeSceneIndex,
@@ -1066,6 +1150,12 @@ export default function App() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onImport={handleAssetImported}
+      />
+
+      <AutoTourModal
+        isOpen={isAutoTourModalOpen}
+        onClose={() => setIsAutoTourModalOpen(false)}
+        onGenerateHeuristicTour={handleGenerateAutoTour}
       />
 
       <ProjectManagerModal
