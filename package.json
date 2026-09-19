@@ -22,7 +22,12 @@
     "changeset": "changeset",
     "version:packages": "changeset version",
     "release": "changeset publish",
-    "sync:models": "node scripts/sync-models.mjs"
+    "sync:models": "node scripts/sync-models.mjs",
+    "launch:pack": "node tooling/launch-ops/scripts/bundle-launch-pack.mjs",
+    "launch:publish-ruanyf": "node tooling/launch-ops/scripts/publish-ruanyf.mjs",
+    "launch:publish-ruanyf:dry": "node tooling/launch-ops/scripts/publish-ruanyf.mjs --dry-run",
+    "launch:monitor-hn": "node tooling/launch-ops/scripts/monitor-hn.mjs",
+    "launch:monitor-reddit": "node tooling/launch-ops/scripts/monitor-reddit.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",

@@ -5,6 +5,8 @@ import { dddArchitectureTemplate } from './tpl-ddd-architecture';
 import { k8sCloudNativeTemplate } from './tpl-k8s-cloudnative';
 import { realtimeLakehouseTemplate } from './tpl-realtime-lakehouse';
 import { aiRagPipelineTemplate } from './tpl-ai-rag-pipeline';
+import { focusflowArchitectureTemplate } from './tpl-focusflow-architecture';
+import { focusflowWorkflowTemplate } from './tpl-focusflow-workflow';
 
 export interface ArchitectureTemplate {
   id: string;
@@ -13,7 +15,7 @@ export interface ArchitectureTemplate {
     zh?: string;
     en?: string;
   };
-  category: 'hotel' | 'microservice' | 'ddd' | 'cloudnative' | 'database' | 'ai';
+  category: 'hotel' | 'microservice' | 'ddd' | 'cloudnative' | 'database' | 'ai' | 'devtools';
   categoryLabel: string;
   categoryLabelI18n?: {
     zh?: string;
@@ -28,6 +30,10 @@ export interface ArchitectureTemplate {
   estimatedDuration: number;
   accentColor: string;
   coverImage: string;
+  coverImageI18n?: {
+    zh?: string;
+    en?: string;
+  };
   featured?: boolean;
   supportedLangs?: ('zh' | 'en')[];
   dsl: FocusFlowDSL;
@@ -44,6 +50,11 @@ export function getTemplateTitle(tpl: ArchitectureTemplate, lang: string = 'zh')
 export function getTemplateDesc(tpl: ArchitectureTemplate, lang: string = 'zh'): string {
   const normLang = lang.startsWith('en') ? 'en' : 'zh';
   return tpl.descI18n?.[normLang] || tpl.desc;
+}
+
+export function getTemplateCover(tpl: ArchitectureTemplate, lang: string = 'zh'): string {
+  const normLang = lang.startsWith('en') ? 'en' : 'zh';
+  return tpl.coverImageI18n?.[normLang] || tpl.coverImage;
 }
 
 export function getSceneVoiceoverScript(scene: SceneStep, lang: string = 'zh'): string {
@@ -68,6 +79,62 @@ export function getCalloutDesc(callout: CalloutItem, lang: string = 'en'): strin
 }
 
 export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
+  {
+    id: 'tpl-focusflow-workflow',
+    title: 'FocusFlow 活画布官方功能全景与痛点破局 (45s 宣传导播)',
+    titleI18n: {
+      zh: 'FocusFlow 活画布官方功能全景与痛点破局 (45s 宣传导播)',
+      en: 'FocusFlow Living Canvas · 45s Official Feature Showcase',
+    },
+    category: 'devtools',
+    categoryLabel: '官方宣传 & 活画布全景',
+    categoryLabelI18n: {
+      zh: '官方宣传 & 活画布全景',
+      en: 'Showcase & Living Canvas',
+    },
+    desc: '瑞士极简白底全景 + 传统演示三大困境破局 + 视锥取景 + 60fps 空间连续运镜 + 随时暂停交互 + 1080P/单HTML双模交付',
+    descI18n: {
+      zh: '瑞士极简白底全景 + 传统演示三大困境破局 + 视锥取景 + 60fps 空间连续运镜 + 随时暂停交互 + 1080P/单HTML双模交付',
+      en: 'Swiss Clean 4K Canvas + Paradigm Shift + Camera Frustum Framing + 60fps Spatial Continuity + Live Pause + Dual Delivery',
+    },
+    sceneCount: 5,
+    estimatedDuration: 56,
+    accentColor: '#2563eb',
+    coverImage: '/focusflow_workflow_light.png',
+    coverImageI18n: {
+      zh: '/focusflow_workflow_light.png',
+      en: '/focusflow_workflow_light_en.png',
+    },
+    featured: true,
+    supportedLangs: ['zh', 'en'],
+    dsl: focusflowWorkflowTemplate,
+  },
+  {
+    id: 'tpl-focusflow-architecture',
+    title: 'FocusFlow Studio 官方架构与 60fps 运镜演播',
+    titleI18n: {
+      zh: 'FocusFlow Studio 官方架构与 60fps 运镜演播',
+      en: 'FocusFlow Studio Architecture & 60fps Walkthrough',
+    },
+    category: 'devtools',
+    categoryLabel: '开发者工具 & 引擎架构',
+    categoryLabelI18n: {
+      zh: '开发者工具 & 架构',
+      en: 'DevTools & Architecture',
+    },
+    desc: '4K 工作台人机交互层 + 毫秒级 Sobel CV 边缘吸附 + 60fps GPU 运镜与贝塞尔流光 + 100% 离线单文件 HTML 独立编译器',
+    descI18n: {
+      zh: '4K 工作台人机交互层 + 毫秒级 Sobel CV 边缘吸附 + 60fps GPU 运镜与贝塞尔流光 + 100% 离线单文件 HTML 独立编译器',
+      en: 'Workbench Anatomy + Real-time Sobel CV Snapping + 60fps GPU Kinematics + 100% Offline Single-File HTML Compiler',
+    },
+    sceneCount: 6,
+    estimatedDuration: 102,
+    accentColor: '#06b6d4',
+    coverImage: '/focusflow_architecture_dark.png',
+    featured: true,
+    supportedLangs: ['en', 'zh'],
+    dsl: focusflowArchitectureTemplate,
+  },
   {
     id: 'tpl-hotel-pms',
     title: 'LuxeHMS 酒店 PMS 房态与高并发预订核心架构 (经典示例升级版)',

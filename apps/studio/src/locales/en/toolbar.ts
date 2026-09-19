@@ -4,5 +4,6 @@ export default {
   path: 'Bezier Stream Path (8-Anchor)',
   dot: 'Pulse Dot',
   callout: 'Callout & Badge',
-  aiExtraction: 'AI Visual Edge Extraction (Coming Soon)',
+  smartPicker: 'Smart Picker (Coming Soon · Click to detect element)',
+  aiExtraction: 'Smart Picker (Coming Soon · Click to detect element)',
 } as const;

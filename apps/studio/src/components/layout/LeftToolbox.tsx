@@ -7,7 +7,7 @@ import {
   CircleDot, 
   MessageSquare,
   Image as ImageIcon,
-  Sparkles
+  Pipette
 } from 'lucide-react';
 import { Tooltip } from '@/components/ui';
 
@@ -88,10 +88,13 @@ function LeftToolboxComponent({ activeTool, onToolChange }: LeftToolboxProps) {
 
       <div className="flex-1" />
 
-      {/* 底部 AI 辅助标定图标 */}
-      <Tooltip content={t('aiExtraction')} position="right">
-        <div className="w-10 h-10 rounded-xl bg-muted/20 border border-dashed border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/10 transition-all duration-150 ease-spring cursor-help active:scale-95">
-          <Sparkles className="w-4.5 h-4.5" />
+      {/* 底部 智能拾取 (Smart Picker) 预备占位图标 */}
+      <Tooltip content={t('smartPicker')} position="right">
+        <div 
+          data-testid="tool-smart-picker"
+          className="w-10 h-10 rounded-xl bg-muted/20 border border-dashed border-border/50 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/10 transition-all duration-150 ease-spring cursor-help active:scale-95"
+        >
+          <Pipette className="w-4.5 h-4.5" />
         </div>
       </Tooltip>
     </aside>

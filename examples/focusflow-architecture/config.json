@@ -1,0 +1,638 @@
+{
+  "$schema": "https://focusflow.io/schema/v1.json",
+  "meta": {
+    "title": "FocusFlow Studio Architecture & 60fps Walkthrough",
+    "viewport": {
+      "width": 3840,
+      "height": 2160,
+      "aspectRatio": "16:9"
+    },
+    "theme": {
+      "mode": "dark",
+      "accent": "#06b6d4"
+    },
+    "controls": {
+      "showHUDButton": true,
+      "autoplay": true,
+      "interval": 4200,
+      "showControls": true
+    }
+  },
+  "asset": {
+    "url": "./focusflow_architecture_dark.png"
+  },
+  "audio": {
+    "tracks": [
+      {
+        "id": "track-voiceover-master",
+        "name": "FocusFlow Official Voiceover Walkthrough",
+        "url": "./assets/voiceover-master.mp3",
+        "durationMs": 102000,
+        "type": "voiceover",
+        "markers": [
+          {
+            "id": "marker-scene-0",
+            "timeMs": 0,
+            "label": "01 Architecture Overview",
+            "sceneIndex": 0
+          },
+          {
+            "id": "marker-scene-1",
+            "timeMs": 20000,
+            "label": "02 Studio Workbench",
+            "sceneIndex": 1
+          },
+          {
+            "id": "marker-scene-2",
+            "timeMs": 36500,
+            "label": "03 Sobel CV Snapping",
+            "sceneIndex": 2
+          },
+          {
+            "id": "marker-scene-3",
+            "timeMs": 51000,
+            "label": "04 60fps GPU Kinematics",
+            "sceneIndex": 3
+          },
+          {
+            "id": "marker-scene-4",
+            "timeMs": 69000,
+            "label": "05 Offline HTML & 60fps Export",
+            "sceneIndex": 4
+          },
+          {
+            "id": "marker-scene-5",
+            "timeMs": 88500,
+            "label": "06 Open Source Finale",
+            "sceneIndex": 5
+          }
+        ]
+      }
+    ]
+  },
+  "elements": {
+    "boxes": [
+      {
+        "id": "box-col-workbench",
+        "type": "rect",
+        "x": 64,
+        "y": 200,
+        "width": 1146,
+        "height": 1840,
+        "rx": 28,
+        "style": {
+          "stroke": "#f97316",
+          "strokeWidth": 4,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-col-engine",
+        "type": "rect",
+        "x": 1246,
+        "y": 200,
+        "width": 1347,
+        "height": 1840,
+        "rx": 28,
+        "style": {
+          "stroke": "#06b6d4",
+          "strokeWidth": 4,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-col-runtime",
+        "type": "rect",
+        "x": 2629,
+        "y": 200,
+        "width": 1146,
+        "height": 1840,
+        "rx": 28,
+        "style": {
+          "stroke": "#10b981",
+          "strokeWidth": 4,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-workbench",
+        "type": "rect",
+        "x": 96,
+        "y": 280,
+        "width": 1082,
+        "height": 380,
+        "rx": 20,
+        "style": {
+          "stroke": "#f97316",
+          "strokeWidth": 5,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-formula",
+        "type": "rect",
+        "x": 96,
+        "y": 690,
+        "width": 1082,
+        "height": 460,
+        "rx": 20,
+        "style": {
+          "stroke": "#fb923c",
+          "strokeWidth": 5,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-sobel",
+        "type": "rect",
+        "x": 1278,
+        "y": 280,
+        "width": 1283,
+        "height": 460,
+        "rx": 20,
+        "style": {
+          "stroke": "#06b6d4",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-kinematics",
+        "type": "rect",
+        "x": 1278,
+        "y": 770,
+        "width": 1283,
+        "height": 410,
+        "rx": 20,
+        "style": {
+          "stroke": "#38bdf8",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-bezier",
+        "type": "rect",
+        "x": 1278,
+        "y": 1210,
+        "width": 1283,
+        "height": 430,
+        "rx": 20,
+        "style": {
+          "stroke": "#a855f7",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-compiler",
+        "type": "rect",
+        "x": 2661,
+        "y": 770,
+        "width": 1082,
+        "height": 400,
+        "rx": 20,
+        "style": {
+          "stroke": "#10b981",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-recorder",
+        "type": "rect",
+        "x": 2661,
+        "y": 1190,
+        "width": 1082,
+        "height": 390,
+        "rx": 20,
+        "style": {
+          "stroke": "#06b6d4",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      },
+      {
+        "id": "box-card-dsl",
+        "type": "rect",
+        "x": 2661,
+        "y": 1610,
+        "width": 1082,
+        "height": 400,
+        "rx": 20,
+        "style": {
+          "stroke": "#34d399",
+          "strokeWidth": 6,
+          "glow": true
+        }
+      }
+    ],
+    "paths": [
+      {
+        "id": "path-wb-to-sobel",
+        "from": "box-card-workbench.right",
+        "to": "box-card-sobel.left",
+        "style": {
+          "stroke": "#f97316",
+          "strokeWidth": 7,
+          "glow": true,
+          "mode": "stream",
+          "flowSpeed": 1.4
+        }
+      },
+      {
+        "id": "path-sobel-to-kinematics",
+        "from": "box-card-sobel.bottom",
+        "to": "box-card-kinematics.top",
+        "style": {
+          "stroke": "#06b6d4",
+          "strokeWidth": 7,
+          "glow": true,
+          "mode": "stream",
+          "flowSpeed": 1.5
+        }
+      },
+      {
+        "id": "path-kinematics-to-compiler",
+        "from": "box-card-kinematics.right",
+        "to": "box-card-compiler.left",
+        "style": {
+          "stroke": "#10b981",
+          "strokeWidth": 7,
+          "glow": true,
+          "mode": "stream",
+          "flowSpeed": 1.6
+        }
+      },
+      {
+        "id": "path-compiler-to-recorder",
+        "from": "box-card-compiler.bottom",
+        "to": "box-card-recorder.top",
+        "style": {
+          "stroke": "#10b981",
+          "strokeWidth": 6,
+          "glow": true,
+          "mode": "stream",
+          "flowSpeed": 1.3
+        }
+      },
+      {
+        "id": "path-recorder-to-dsl",
+        "from": "box-card-recorder.bottom",
+        "to": "box-card-dsl.top",
+        "style": {
+          "stroke": "#34d399",
+          "strokeWidth": 6,
+          "glow": true,
+          "mode": "stream",
+          "flowSpeed": 1.3
+        }
+      }
+    ],
+    "dots": []
+  },
+  "scenes": [
+    {
+      "id": "scene-1",
+      "title": "01 Global Architecture & The Dilemma",
+      "titleI18n": {
+        "en": "01 Global Architecture & The Dilemma",
+        "zh": "01 全局鸟瞰与架构痛点"
+      },
+      "duration": 20000,
+      "voiceoverScript": "We have all been there: explaining complex software architectures on a massive, static 50-box diagram. Stakeholders get lost, attention fades, and slide decks just do not do justice to distributed systems. Meet FocusFlow — the open-source camera director that brings architecture diagrams to life.",
+      "voiceoverScriptI18n": {
+        "en": "We have all been there: explaining complex software architectures on a massive, static 50-box diagram. Stakeholders get lost, attention fades, and slide decks just do not do justice to distributed systems. Meet FocusFlow — the open-source camera director that brings architecture diagrams to life.",
+        "zh": "我们都经历过这样的痛点：面对密密麻麻数十个微服务的庞大架构图，听众跟不上节奏，幻灯片难以清晰传达分布式精髓。FocusFlow — 纯前端 60fps 运镜导播引擎，让沉闷的架构图焕发生机。"
+      },
+      "camera": {
+        "zoom": 1.0,
+        "x": 0,
+        "y": 0,
+        "duration": 1.5
+      },
+      "activeElements": {
+        "boxes": ["box-col-workbench", "box-col-engine", "box-col-runtime"],
+        "paths": [],
+        "callouts": [
+          {
+            "id": "co-overview",
+            "position": {
+              "left": "28%",
+              "top": "8%"
+            },
+            "theme": "cyan",
+            "title": "FocusFlow Studio Architecture",
+            "desc": "100% Client-Side Engine · Zero-Telemetry Enterprise Privacy",
+            "titleI18n": {
+              "en": "FocusFlow Studio Architecture",
+              "zh": "FocusFlow 架构全景"
+            },
+            "descI18n": {
+              "en": "100% Client-Side Engine · Zero-Telemetry Enterprise Privacy",
+              "zh": "100% 浏览器端执行 · 零遥测企业级绝对隐私"
+            },
+            "style": {
+              "fontSize": 20,
+              "titleFontSize": 22,
+              "maxWidth": 800
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-2",
+      "title": "02 Studio Workbench & Dual-Track Timeline",
+      "titleI18n": {
+        "en": "02 Studio Workbench & Dual-Track Timeline",
+        "zh": "02 工作台人机工学与空间变换"
+      },
+      "duration": 16500,
+      "voiceoverScript": "At the heart of the Studio is a high-performance workspace designed for engineers. A dual-track timeline orchestrates camera keyframes and audio tracks simultaneously, while our sub-pixel kinematics translate gestures into silky-smooth spatial coordinates in real time.",
+      "voiceoverScriptI18n": {
+        "en": "At the heart of the Studio is a high-performance workspace designed for engineers. A dual-track timeline orchestrates camera keyframes and audio tracks simultaneously, while our sub-pixel kinematics translate gestures into silky-smooth spatial coordinates in real time.",
+        "zh": "工作台专为工程师打造：双轨时间轴同步编排镜头关键帧与音频波形轨，亚像素动力学算法将手势实时映射为丝滑平顺的空间坐标。"
+      },
+      "camera": {
+        "zoom": 2.1,
+        "x": -30.0,
+        "y": -8.0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": ["box-card-workbench", "box-card-formula"],
+        "paths": ["path-wb-to-sobel"],
+        "callouts": [
+          {
+            "id": "co-workbench",
+            "targetBoxId": "box-card-workbench",
+            "position": {
+              "left": "5%",
+              "top": "32%"
+            },
+            "theme": "amber",
+            "title": "Studio Workbench Anatomy",
+            "desc": "Dual-Track Timeline · Sub-Pixel Coordinate Kinematics",
+            "titleI18n": {
+              "en": "Studio Workbench Anatomy",
+              "zh": "工作台人机工学架构"
+            },
+            "descI18n": {
+              "en": "Dual-Track Timeline · Sub-Pixel Coordinate Kinematics",
+              "zh": "双轨时间轴 · 亚像素连续空间坐标变换"
+            },
+            "style": {
+              "fontSize": 18,
+              "titleFontSize": 20,
+              "maxWidth": 480
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-3",
+      "title": "03 Real-Time Sobel CV Edge Snapping",
+      "titleI18n": {
+        "en": "03 Real-Time Sobel CV Edge Snapping",
+        "zh": "03 毫秒级 Sobel 计算机视觉吸附"
+      },
+      "duration": 14500,
+      "voiceoverScript": "Forget tedious manual alignment. FocusFlow features an in-browser Sobel convolution kernel running on offscreen canvas. Drag any boundary near your services, and it snaps effortlessly to high-contrast edges in under one millisecond.",
+      "voiceoverScriptI18n": {
+        "en": "Forget tedious manual alignment. FocusFlow features an in-browser Sobel convolution kernel running on offscreen canvas. Drag any boundary near your services, and it snaps effortlessly to high-contrast edges in under one millisecond.",
+        "zh": "告别繁琐的手动对齐。内置离线 Canvas 运行的 Sobel 卷积核算子，拖拽边界靠近服务节点，1毫秒内瞬间磁吸贴合高对比度边缘。"
+      },
+      "camera": {
+        "zoom": 2.5,
+        "x": 0.0,
+        "y": -22.0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": ["box-card-sobel"],
+        "paths": ["path-wb-to-sobel", "path-sobel-to-kinematics"],
+        "callouts": [
+          {
+            "id": "co-sobel",
+            "targetBoxId": "box-card-sobel",
+            "position": {
+              "left": "36%",
+              "top": "34%"
+            },
+            "theme": "cyan",
+            "title": "Real-Time Sobel CV Snapping",
+            "desc": "<1ms In-Browser Convolution Kernel · Auto Magnet",
+            "titleI18n": {
+              "en": "Real-Time Sobel CV Snapping",
+              "zh": "毫秒级 Sobel 边缘吸附"
+            },
+            "descI18n": {
+              "en": "<1ms In-Browser Convolution Kernel · Auto Magnet",
+              "zh": "<1ms 离线卷积核 · 自动边界磁吸"
+            },
+            "style": {
+              "fontSize": 18,
+              "titleFontSize": 20,
+              "maxWidth": 480
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-4",
+      "title": "04 60fps Kinematics & Bezier Flow Engine",
+      "titleI18n": {
+        "en": "04 60fps Kinematics & Bezier Flow Engine",
+        "zh": "04 60fps 电影级运镜与霓虹贝塞尔流光"
+      },
+      "duration": 18000,
+      "voiceoverScript": "Hit play, and watch your diagram become a cinematic journey. Powered by hardware-accelerated 3D affine transforms, camera motions glide at flawless sixty frames per second, while dynamic Bezier flowlines visualize asynchronous RPC traffic with vivid traveling light pulses.",
+      "voiceoverScriptI18n": {
+        "en": "Hit play, and watch your diagram become a cinematic journey. Powered by hardware-accelerated 3D affine transforms, camera motions glide at flawless sixty frames per second, while dynamic Bezier flowlines visualize asynchronous RPC traffic with vivid traveling light pulses.",
+        "zh": "点击播放，见证架构图化为电影之旅。硬件加速 3D 仿射变换驱动 60fps 绝无掉帧的丝滑推拉，动态贝塞尔流线以流动光脉冲精准还原微服务异步链路。"
+      },
+      "camera": {
+        "zoom": 2.3,
+        "x": 0.0,
+        "y": 6.0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": ["box-card-kinematics", "box-card-bezier"],
+        "paths": ["path-sobel-to-kinematics", "path-kinematics-to-compiler"],
+        "callouts": [
+          {
+            "id": "co-kinematics",
+            "targetBoxId": "box-card-kinematics",
+            "position": {
+              "left": "36%",
+              "top": "54%"
+            },
+            "theme": "purple",
+            "title": "60fps GPU Kinematics & Bezier Flows",
+            "desc": "GPU-Composited Transforms · Traveling Neon Pulses",
+            "titleI18n": {
+              "en": "60fps GPU Kinematics & Bezier Flows",
+              "zh": "60fps GPU 动力学与贝塞尔流光"
+            },
+            "descI18n": {
+              "en": "GPU-Composited Transforms · Traveling Neon Pulses",
+              "zh": "GPU 3D 合成变换 · 异步链路流动光脉冲"
+            },
+            "style": {
+              "fontSize": 18,
+              "titleFontSize": 20,
+              "maxWidth": 520
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-5",
+      "title": "05 Offline Standalone HTML & In-Browser 60fps Export",
+      "titleI18n": {
+        "en": "05 Offline Standalone HTML & In-Browser 60fps Export",
+        "zh": "05 单文件离线分发与端侧 60fps 视频导出"
+      },
+      "duration": 19500,
+      "voiceoverScript": "Enterprise security is non-negotiable. Export your presentation as a single standalone HTML under five megabytes, or capture silky 60fps MP4 video right in your browser. Everything runs completely offline with zero backend uploads and total privacy.",
+      "voiceoverScriptI18n": {
+        "en": "Enterprise security is non-negotiable. Export your presentation as a single standalone HTML under five megabytes, or capture silky 60fps MP4 video right in your browser. Everything runs completely offline with zero backend uploads and total privacy.",
+        "zh": "企业数据隐私不容妥协。您可以将演播打包为小于 5MB 的独立单文件 HTML，也可以直接在浏览器内录制丝滑的 60fps MP4 视频。全部纯离线端侧运行，零后端上传，绝对私密安全。"
+      },
+      "camera": {
+        "zoom": 2.1,
+        "x": 30.0,
+        "y": -2.0,
+        "duration": 1.2
+      },
+      "activeElements": {
+        "boxes": ["box-card-compiler", "box-card-recorder", "box-card-dsl"],
+        "paths": [
+          "path-kinematics-to-compiler",
+          "path-compiler-to-recorder",
+          "path-recorder-to-dsl"
+        ],
+        "callouts": [
+          {
+            "id": "co-compiler",
+            "targetBoxId": "box-card-compiler",
+            "position": {
+              "left": "68%",
+              "top": "34%"
+            },
+            "theme": "emerald",
+            "title": "100% Offline Standalone HTML",
+            "desc": "AirDrop to Thumb Drive · Zero Backend Telemetry",
+            "titleI18n": {
+              "en": "100% Offline Standalone HTML",
+              "zh": "100% 离线单文件独立运行"
+            },
+            "descI18n": {
+              "en": "AirDrop to Thumb Drive · Zero Backend Telemetry",
+              "zh": "AirDrop 隔空投送 / U 盘即插即用 · 零后端遥测"
+            },
+            "style": {
+              "fontSize": 18,
+              "titleFontSize": 20,
+              "maxWidth": 480
+            }
+          },
+          {
+            "id": "co-recorder",
+            "targetBoxId": "box-card-recorder",
+            "position": {
+              "left": "68%",
+              "top": "56%"
+            },
+            "theme": "cyan",
+            "title": "Client-Side MediaStream Recorder",
+            "desc": "Hardware 60fps MP4 / WebM Export · Direct Local Download",
+            "titleI18n": {
+              "en": "Client-Side MediaStream Recorder",
+              "zh": "客户端原生 60fps 录制引擎"
+            },
+            "descI18n": {
+              "en": "Hardware 60fps MP4 / WebM Export · Direct Local Download",
+              "zh": "硬件加速 60fps MP4/WebM 导出 · 本地直接下载"
+            },
+            "style": {
+              "fontSize": 18,
+              "titleFontSize": 20,
+              "maxWidth": 480
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "scene-6",
+      "title": "06 Full-Canvas Finale & Open Source",
+      "titleI18n": {
+        "en": "06 Full-Canvas Finale & Open Source",
+        "zh": "06 全景升华与 GitHub 开源首发"
+      },
+      "duration": 13500,
+      "voiceoverScript": "FocusFlow is one hundred percent open-source and free to use. Transform your static architecture diagrams into unforgettable technical presentations today. Check out the live demo, and star us on GitHub.",
+      "voiceoverScriptI18n": {
+        "en": "FocusFlow is one hundred percent open-source and free to use. Transform your static architecture diagrams into unforgettable technical presentations today. Check out the live demo, and star us on GitHub.",
+        "zh": "FocusFlow 100% 完全开源免费。立即让您的静态架构图化为震撼的电影级演播。访问在线 Demo 体验，并在 GitHub 上为我们点亮 Star！"
+      },
+      "camera": {
+        "zoom": 1.0,
+        "x": 0,
+        "y": 0,
+        "duration": 1.5
+      },
+      "activeElements": {
+        "boxes": [
+          "box-col-workbench",
+          "box-col-engine",
+          "box-col-runtime",
+          "box-card-workbench",
+          "box-card-sobel",
+          "box-card-kinematics",
+          "box-card-compiler",
+          "box-card-recorder",
+          "box-card-dsl"
+        ],
+        "paths": [
+          "path-wb-to-sobel",
+          "path-sobel-to-kinematics",
+          "path-kinematics-to-compiler",
+          "path-compiler-to-recorder",
+          "path-recorder-to-dsl"
+        ],
+        "callouts": [
+          {
+            "id": "co-finale",
+            "position": {
+              "left": "28%",
+              "top": "82%"
+            },
+            "theme": "blue",
+            "title": "FocusFlow v1.0 — Open Source on GitHub",
+            "desc": "github.com/tumio-ltd/focusflow · focusflow.tumio.site",
+            "titleI18n": {
+              "en": "FocusFlow v1.0 — Open Source on GitHub",
+              "zh": "FocusFlow v1.0 — GitHub 开源首发"
+            },
+            "descI18n": {
+              "en": "github.com/tumio-ltd/focusflow · focusflow.tumio.site",
+              "zh": "github.com/tumio-ltd/focusflow · focusflow.tumio.site"
+            },
+            "style": {
+              "fontSize": 20,
+              "titleFontSize": 22,
+              "maxWidth": 800
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -44,6 +44,16 @@ export class StateMachine {
     return this.scenes.reduce((total, _, i) => total + this.getSceneDuration(i), 0);
   }
 
+  getSceneStartTime(index) {
+    if (typeof index !== 'number' || index <= 0) return 0;
+    let accum = 0;
+    const maxIdx = Math.min(index, this.scenes.length);
+    for (let i = 0; i < maxIdx; i++) {
+      accum += this.getSceneDuration(i);
+    }
+    return accum;
+  }
+
   goTo(index, animate = true) {
     if (index < 0 || index >= this.scenes.length) return;
     this.curIndex = index;
@@ -81,6 +91,8 @@ export class StateMachine {
     const isEnded = clampedTime >= totalDur && totalDur > 0;
 
     this.curIndex = targetIdx;
+    this.pausedOffset = localOffset;
+    this.sceneStartTime = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - this.pausedOffset;
     this.onStepChange(this.curIndex, this.scenes[this.curIndex], false);
 
     if (isEnded) {
@@ -88,6 +100,11 @@ export class StateMachine {
       if (this.isPlaying) {
         this.pause();
       }
+    } else if (this.isPlaying) {
+      this.startPlayTimer();
+    } else {
+      const duration = this.getSceneDuration(this.curIndex);
+      this.onTick(localOffset, duration);
     }
 
     return { index: targetIdx, localOffset, ended: isEnded };

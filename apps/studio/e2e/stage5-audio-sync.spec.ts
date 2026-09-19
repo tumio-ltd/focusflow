@@ -999,9 +999,9 @@ async function verifyGeminiTTSPresetConfigurationAndPersistence(page: Page): Pro
   const baseUrlInput = page.locator('[data-testid="tts-base-url-input"]');
   await expect(baseUrlInput).toHaveValue('https://generativelanguage.googleapis.com/v1beta');
 
-  // 4.1 验证默认模型联动为官方音频专用模型 gemini-2.0-flash，且候选仅包含真实音频模型
+  // 4.1 验证默认模型联动为官方音频专用模型 gemini-3.1-flash-tts-preview，且候选仅包含真实音频模型
   const modelInput = modal.locator('input[list="tts-model-suggestions"]');
-  await expect(modelInput).toHaveValue('gemini-2.0-flash');
+  await expect(modelInput).toHaveValue('gemini-3.1-flash-tts-preview');
   const suggestions = modal.locator('#tts-model-suggestions');
   await expect(suggestions.locator('option[value="gemini-2.0-flash"]')).toBeAttached();
   await expect(suggestions.locator('option[value="gemini-2.5-flash-preview-tts"]')).toBeAttached();
@@ -1594,6 +1594,166 @@ async function verifySceneAudioPersistenceAcrossReload(page: Page): Promise<void
   await page.unroute('**/generativelanguage.googleapis.com/**');
 }
 
+// 辅助函数：验证受众全屏演播模式在指定分幕起播时母带音频精确定位与手动切幕音画同步 (TC585)
+async function verifyAudienceSceneAudioAlignmentAndNavigation(page: Page): Promise<void> {
+  // 1. 等待时间轴分幕就绪
+  const sceneCard0 = page.locator('[data-testid="scene-card-0"]');
+  await expect(sceneCard0).toBeVisible({ timeout: 10000 });
+
+  const sceneCard1 = page.locator('[data-testid="scene-card-1"]');
+  await expect(sceneCard1).toBeVisible({ timeout: 10000 });
+
+  // 2. 注入模拟的长母带音频轨（对齐现有场景时长）
+  await page.evaluate(() => {
+    const store = (window as any).__PROJECT_STORE__;
+    if (!store) return;
+    const currentDsl = store.getState().dsl;
+    const scenes = currentDsl.scenes || [];
+    const dur0 = scenes[0]?.duration || 5000;
+    const dur1 = scenes[1]?.duration || 5000;
+    const totalMs = dur0 + dur1 + 5000;
+
+    // 创建一个模拟的静音 WAV 数据 URL 作为母带音轨
+    const sampleRate = 8000;
+    const totalSeconds = Math.ceil(totalMs / 1000);
+    const numSamples = sampleRate * totalSeconds;
+    const headerBytes = 44;
+    const buffer = new ArrayBuffer(headerBytes + numSamples);
+    const view = new DataView(buffer);
+    
+    const writeString = (offset: number, str: string) => {
+      for (let j = 0; j < str.length; j++) {
+        view.setUint8(offset + j, str.charCodeAt(j));
+      }
+    };
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + numSamples, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, 1, true); // mono
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate, true);
+    view.setUint16(32, 1, true);
+    view.setUint16(34, 8, true);
+    writeString(36, 'data');
+    view.setUint32(40, numSamples, true);
+    for (let j = 0; j < numSamples; j++) {
+      view.setUint8(44 + j, 128);
+    }
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let j = 0; j < bytes.byteLength; j++) {
+      binary += String.fromCharCode(bytes[j]);
+    }
+    const masterAudioUrl = 'data:audio/wav;base64,' + btoa(binary);
+
+    store.setState({
+      dsl: {
+        ...currentDsl,
+        audio: {
+          tracks: [
+            {
+              id: 'master-track-test',
+              name: 'Cloud TTS Master',
+              type: 'voiceover',
+              url: masterAudioUrl,
+              volume: 1.0,
+              durationMs: totalMs,
+              markers: [
+                { sceneId: scenes[0]?.id || 's0', timeMs: 0 },
+                { sceneId: scenes[1]?.id || 's1', timeMs: dur0 },
+              ],
+            },
+          ],
+        },
+      },
+    });
+  });
+
+  await page.waitForTimeout(300);
+
+  // 3. 在时间轴中选中第 2 幕 (sceneCard1)
+  await sceneCard1.click();
+  await page.waitForTimeout(200);
+
+  // 4. 点击顶栏【演播】按钮唤起受众演示模态框
+  const audienceBtn = page.locator('[data-testid="audience-btn"]');
+  await expect(audienceBtn).toBeVisible();
+  await audienceBtn.click();
+
+  const audienceModal = page.locator('[data-testid="audience-modal"]');
+  await expect(audienceModal).toBeVisible({ timeout: 5000 });
+
+  // 5. 验证受众演播顶部显示为第 2 幕 (02 /)
+  await expect(audienceModal).toContainText(/02 \//);
+
+  // 6. 获取场景 0 的时长用于精准断言
+  const scene0DurationSec = await page.evaluate(() => {
+    const store = (window as any).__PROJECT_STORE__;
+    const dur0 = store?.getState().dsl.scenes[0]?.duration || 5000;
+    return dur0 / 1000;
+  });
+
+  // 7. 核心断言：验证 FocusFlowPlayer 内部音频 currentTime 已经精准 seek 到第 2 幕的起始时间，且音频与播放器处于严格暂停待命状态（杜绝抢跑发声）
+  const playerAudioState = await page.evaluate(() => {
+    const player = (window as any).__AUDIENCE_PLAYER__;
+    if (!player) return null;
+    return {
+      currentIndex: player.getCurrentIndex(),
+      currentTime: player.audioEl ? player.audioEl.currentTime : null,
+      isAudioPaused: player.audioEl ? player.audioEl.paused : true,
+      isPlaying: player.isPlaying,
+    };
+  });
+  expect(playerAudioState).not.toBeNull();
+  expect(playerAudioState?.currentIndex).toBe(1);
+  expect(playerAudioState?.currentTime).toBeCloseTo(scene0DurationSec, 1);
+  expect(playerAudioState?.isAudioPaused).toBe(true);
+  expect(playerAudioState?.isPlaying).toBe(false);
+
+  // 8. 验证手动切幕（点击上一幕）：音频同步回跳到第 1 幕起始时间 (0.0s)
+  const prevBtn = audienceModal.locator('button').filter({ has: page.locator('svg.lucide-chevron-left') });
+  await expect(prevBtn).toBeEnabled();
+  await prevBtn.click();
+  await page.waitForTimeout(300);
+
+  await expect(audienceModal).toContainText(/01 \//);
+  const prevAudioState = await page.evaluate(() => {
+    const player = (window as any).__AUDIENCE_PLAYER__;
+    return {
+      currentIndex: player?.getCurrentIndex(),
+      currentTime: player?.audioEl?.currentTime,
+    };
+  });
+  expect(prevAudioState.currentIndex).toBe(0);
+  expect(prevAudioState.currentTime).toBeCloseTo(0.0, 1);
+
+  // 9. 验证手动切幕（点击下一幕）：音频再次同步跳到第 2 幕起始时间
+  const nextBtn = audienceModal.locator('button').filter({ has: page.locator('svg.lucide-chevron-right') });
+  await expect(nextBtn).toBeEnabled();
+  await nextBtn.click();
+  await page.waitForTimeout(300);
+
+  await expect(audienceModal).toContainText(/02 \//);
+  const nextAudioState = await page.evaluate(() => {
+    const player = (window as any).__AUDIENCE_PLAYER__;
+    return {
+      currentIndex: player?.getCurrentIndex(),
+      currentTime: player?.audioEl?.currentTime,
+    };
+  });
+  expect(nextAudioState.currentIndex).toBe(1);
+  expect(nextAudioState.currentTime).toBeCloseTo(scene0DurationSec, 1);
+
+  // 10. 安全关闭演播模态框
+  const closeBtn = page.locator('[data-testid="close-audience-btn"]');
+  await expect(closeBtn).toBeVisible();
+  await closeBtn.click();
+  await expect(audienceModal).not.toBeVisible();
+}
+
 // 主测试套件：it() / test() 块内调用独立 async helper 函数
 test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -1694,6 +1854,10 @@ test.describe('FocusFlow Studio Stage 5.6 Audio Sync & Voiceover Suite', () => {
 
   test('TC584: 验证分幕独立音频在浏览器刷新 (Reload) 后的会话保鲜与母带无缝合流，彻底杜绝 ERR_FILE_NOT_FOUND', async ({ page }) => {
     await verifySceneAudioPersistenceAcrossReload(page);
+  });
+
+  test('TC585: 验证受众全屏演播模式在指定分幕起播时母带音频精确定位与手动切幕音画同步', async ({ page }) => {
+    await verifyAudienceSceneAudioAlignmentAndNavigation(page);
   });
 });
 

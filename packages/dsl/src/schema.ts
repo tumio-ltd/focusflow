@@ -33,6 +33,11 @@ export interface FocusFlowDSL {
   };
   asset: {
     url: string; // 图像相对路径、绝对路径或 Base64
+    urlI18n?: {
+      zh?: string;
+      en?: string;
+      [lang: string]: string | undefined;
+    };
   };
   elements: {
     boxes: ElementBox[];

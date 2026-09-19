@@ -61,6 +61,7 @@ export class FocusFlowPlayer {
     this.audioTracks = this.dsl.audio?.tracks || [];
     this.audioSync = options.audioSync !== undefined ? !!options.audioSync : true;
     this.audioEl = null;
+    this._pendingSeekSec = undefined;
 
     this.elementsMap = new Map(); // id -> Element metadata & DOM reference
     this.calloutsMap = new Map(); // id -> DOM Element
@@ -124,6 +125,14 @@ export class FocusFlowPlayer {
           this.audioEl.src = srcUrl;
           this.audioEl.volume = mainTrack.volume !== undefined ? mainTrack.volume : 1.0;
           this.audioEl.muted = !!mainTrack.muted;
+          this.audioEl.addEventListener('loadedmetadata', () => {
+            if (this._pendingSeekSec !== undefined && this.audioEl) {
+              try {
+                this.audioEl.currentTime = this._pendingSeekSec;
+              } catch {}
+              this._pendingSeekSec = undefined;
+            }
+          });
           this.audioEl.addEventListener('error', (err) => {
             console.warn('[FocusFlow] Audio playback element error (continuing visual mode):', err);
           }, { once: true });
@@ -230,7 +239,12 @@ export class FocusFlowPlayer {
     }
 
     // Go to initial step immediately (respects options.initialSceneIndex)
-    this.goToStep(this.initialSceneIndex, false);
+    if (this.initialSceneIndex > 0 && this.initialSceneIndex < (this.dsl.scenes || []).length) {
+      const initialTimeMs = this.stateMachine.getSceneStartTime(this.initialSceneIndex);
+      this.seekTo(initialTimeMs);
+    } else {
+      this.goToStep(this.initialSceneIndex, false);
+    }
 
     // Auto-calibrate viewport to base image natural dimensions if mismatched
     // 铁律：若 DSL 已经显式声明了 meta.viewport.width 与 height，以 DSL 为唯一真理源（Single Source of Truth），
@@ -659,9 +673,27 @@ export class FocusFlowPlayer {
     }
   }
 
+  // Internal helper for audio track synchronization
+  _syncAudioTime(timeMs) {
+    if (!this.audioEl || isNaN(timeMs)) return;
+    const targetSec = Math.max(0, timeMs / 1000);
+    if (this.audioEl.readyState >= 1) {
+      try {
+        this.audioEl.currentTime = targetSec;
+      } catch {}
+      this._pendingSeekSec = undefined;
+    } else {
+      this._pendingSeekSec = targetSec;
+    }
+  }
+
   // Public APIs
   goToStep(index, animate = true) {
     this.stateMachine.goTo(index, animate);
+    if (this.audioEl) {
+      const timeMs = this.stateMachine.getSceneStartTime(index);
+      this._syncAudioTime(timeMs);
+    }
   }
 
   goTo(index, animate = true) {
@@ -674,11 +706,7 @@ export class FocusFlowPlayer {
 
   seekTo(timeMs) {
     const res = this.stateMachine.seekTo(timeMs);
-    if (this.audioEl && !isNaN(timeMs)) {
-      try {
-        this.audioEl.currentTime = timeMs / 1000;
-      } catch {}
-    }
+    this._syncAudioTime(timeMs);
     return res;
   }
 
@@ -708,10 +736,18 @@ export class FocusFlowPlayer {
 
   next() {
     this.stateMachine.next();
+    if (this.audioEl) {
+      const timeMs = this.stateMachine.getSceneStartTime(this.stateMachine.currentIndex);
+      this._syncAudioTime(timeMs);
+    }
   }
 
   prev() {
     this.stateMachine.prev();
+    if (this.audioEl) {
+      const timeMs = this.stateMachine.getSceneStartTime(this.stateMachine.currentIndex);
+      this._syncAudioTime(timeMs);
+    }
   }
 
   play() {
@@ -911,6 +947,7 @@ export class FocusFlowPlayer {
     this.stateMachine.destroy();
     if (this.hud) this.hud.destroy();
     if (this.audioEl) {
+      this._pendingSeekSec = undefined;
       this.audioEl.pause();
       this.audioEl = null;
     }

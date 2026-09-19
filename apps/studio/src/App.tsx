@@ -300,6 +300,29 @@ export default function App() {
     playerRef.current?.setLanguage?.(currentLang);
   }, [i18n.language]);
 
+  // 3.3.2 当多语言切换时，若当前工程支持多语言底图 (urlI18n)，自动无缝切换当前底图资源
+  useEffect(() => {
+    const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
+    const currentDSL = useProjectStore.getState().dsl;
+    if (currentDSL?.asset?.urlI18n) {
+      const targetUrl = currentDSL.asset.urlI18n[currentLang];
+      const knownUrls = Object.values(currentDSL.asset.urlI18n).filter(Boolean) as string[];
+      if (
+        targetUrl &&
+        (knownUrls.includes(currentDSL.asset.url) || !currentDSL.asset.url) &&
+        currentDSL.asset.url !== targetUrl
+      ) {
+        setDSL({
+          ...currentDSL,
+          asset: {
+            ...currentDSL.asset,
+            url: targetUrl,
+          },
+        });
+      }
+    }
+  }, [i18n.language, setDSL]);
+
   // 3.4 演播播放联动：当处于离线原生语音模式且自动演播切幕时，自动调用系统原生播音朗读
   useEffect(() => {
     const player = playerRef.current;
@@ -574,11 +597,21 @@ export default function App() {
       };
     });
 
+    // 根据当前语种解析对应的底图资源路径 (支持模板 asset.urlI18n 智能多语言回退)
+    const targetAssetUrl =
+      (currentLang === 'en' && tpl.dsl.asset?.urlI18n?.en)
+        ? tpl.dsl.asset.urlI18n.en
+        : (tpl.dsl.asset?.urlI18n?.[currentLang] || tpl.dsl.asset?.url);
+
     const clonedDSL: FocusFlowDSL = {
       ...tpl.dsl,
       meta: {
         ...tpl.dsl.meta,
         title: initialTitle,
+      },
+      asset: {
+        ...tpl.dsl.asset,
+        url: targetAssetUrl,
       },
       scenes: clonedScenes,
     };
@@ -748,10 +781,19 @@ export default function App() {
     };
   }, []);
 
+  const handleOpenAudience = useCallback(() => {
+    if (isPlaying) {
+      playerRef.current?.pause();
+      setIsPlaying(false);
+      stopCurrentTtsPreview();
+    }
+    setIsAudienceModalOpen(true);
+  }, [isPlaying, stopCurrentTtsPreview]);
+
   useStudioKeyboard({
     onExport: () => setIsExportModalOpen(true),
     onSave: handleSaveDraft,
-    onPresent: () => setIsAudienceModalOpen(true),
+    onPresent: handleOpenAudience,
     onOpenTemplates: () => setIsTemplatesModalOpen(true),
     onOpenProjects: () => setIsProjectsModalOpen(true),
     onOpenImport: () => setIsUploadModalOpen(true),
@@ -896,7 +938,7 @@ export default function App() {
             onOpenProjects={() => setIsProjectsModalOpen(true)}
             onOpenImport={() => setIsUploadModalOpen(true)}
             onOpenAutoTour={() => setIsAutoTourModalOpen(true)}
-            onOpenAudience={() => setIsAudienceModalOpen(true)}
+            onOpenAudience={handleOpenAudience}
             onOpenDslEditor={() => setIsDslModalOpen(true)}
             onSave={handleSaveDraft}
             onExport={() => setIsExportModalOpen(true)}

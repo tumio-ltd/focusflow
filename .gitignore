@@ -56,6 +56,9 @@ test-results/
 *LOCAL_AGENT_ENV*.md
 design/LOCAL_AGENT_ENV.md
 .local/
+.env
+.env.*
+!.env.example
 
 #
 temp/

@@ -227,6 +227,7 @@ export function AudienceModal({
         debug: false,
         showControls: false,
         enableKeyboard: false, // 由 AudienceModal 统一拦截并调度快捷键，防止与播放内核双重触发
+        autoplay: false, // 显式禁用内核底层自动起播，完全由 AudienceModal 受控调度
         onSceneChange: (index: number) => {
           setCurrentSceneIdx(index);
           currentSceneIdxRef.current = index;
@@ -236,32 +237,36 @@ export function AudienceModal({
             playSceneTTS(index);
           }
         },
-      });
-
-      player.on?.('playStateChange', (playing: boolean) => {
-        setIsPlaying(playing);
-        isPlayingRef.current = playing;
-        if (!playing) {
+        onPlayStateChange: (playing: boolean) => {
+          setIsPlaying(playing);
+          isPlayingRef.current = playing;
+          if (!playing) {
+            stopWebSpeech();
+          }
+        },
+        onEnded: () => {
+          setIsPlaying(false);
+          isPlayingRef.current = false;
           stopWebSpeech();
-        }
-      });
-
-      player.on?.('ended', () => {
-        setIsPlaying(false);
-        isPlayingRef.current = false;
-        stopWebSpeech();
-        if (isRecording) {
-          onFinishRecording?.();
-        }
+          if (isRecording) {
+            onFinishRecording?.();
+          }
+        },
       });
 
       playerRef.current = player;
+      if (typeof window !== 'undefined') {
+        (window as any).__AUDIENCE_PLAYER__ = player;
+      }
     } catch (err) {
       console.warn('Audience player init error:', err);
     }
 
     return () => {
       stopWebSpeech();
+      if (typeof window !== 'undefined') {
+        delete (window as any).__AUDIENCE_PLAYER__;
+      }
       playerRef.current?.destroy();
       playerRef.current = null;
     };

@@ -14,7 +14,8 @@ import {
   ARCHITECTURE_TEMPLATES, 
   ArchitectureTemplate,
   getTemplateTitle,
-  getTemplateDesc 
+  getTemplateDesc,
+  getTemplateCover 
 } from '@/templates';
 
 export interface TemplatesModalProps {
@@ -139,6 +140,7 @@ export function TemplatesModal({
           {filteredTemplates.map((tpl) => {
             const displayTitle = getTemplateTitle(tpl, currentLang);
             const displayDesc = getTemplateDesc(tpl, currentLang);
+            const displayCover = getTemplateCover(tpl, currentLang);
             const categoryLabel = categories.find((c) => c.id === tpl.category)?.label || tpl.categoryLabel;
             const isZhOnly = currentLang === 'en' && !tpl.titleI18n?.en;
 
@@ -156,7 +158,7 @@ export function TemplatesModal({
                   {/* 封面与 Badge */}
                   <div className="relative h-36 rounded-lg overflow-hidden border border-border mb-3.5 bg-muted">
                     <img
-                      src={tpl.coverImage}
+                      src={displayCover}
                       alt={displayTitle}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
                     />
