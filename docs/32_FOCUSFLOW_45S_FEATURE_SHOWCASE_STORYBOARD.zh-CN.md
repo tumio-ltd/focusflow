@@ -1,9 +1,11 @@
+<p align="right"><a href="./32_FOCUSFLOW_45S_FEATURE_SHOWCASE_STORYBOARD.md">English</a> • <strong>简体中文</strong></p>
+
 # FocusFlow 官方功能宣传导播脚本与分镜手册 (自然节奏完整版)
 ## FocusFlow Official Feature Showcase Storyboard & Voiceover Guide
 
 > **版本 (Version)**: 1.2.0  
 > **更新日期 (Date)**: 2026-09-18  
-> **归档路径 (Path)**: `docs/FOCUSFLOW_45S_FEATURE_SHOWCASE_STORYBOARD.md`  
+> **归档路径 (Path)**: `docs/32_FOCUSFLOW_45S_FEATURE_SHOWCASE_STORYBOARD.zh-CN.md`  
 > **时长策略**: 解除固定 45 秒严格限制，升级为**约 56 秒的自然呼吸感与充沛留白节奏（Natural Pacing Master）**，确保每个镜头推轨与核心痛点均能深讲讲透。  
 > **尾幕升级**: 场景五终章正上方 Callout 正式呈现**项目官方网站链接与 GitHub 开源仓库地址**。  
 > **适用底图 (Visual Canvas)**: 

@@ -1,3 +1,5 @@
+<p align="right"><a href="./31_TEMPLATE_OPTIMIZATION_SPEC.md">English</a> • <strong>简体中文</strong></p>
+
 # FocusFlow 官方架构模板体系优化与双语国际化技术规范 (Official Templates Optimization & i18n Spec)
 
 > **文档版本**: v1.0.0  

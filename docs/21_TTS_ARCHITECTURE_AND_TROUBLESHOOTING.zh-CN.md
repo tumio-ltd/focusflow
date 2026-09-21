@@ -1,7 +1,11 @@
+<p align="right">
+  <a href="./21_TTS_ARCHITECTURE_AND_TROUBLESHOOTING.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow AI 语音合成 (TTS) 与音频同步架构技术总结与排障全景手册
 
 > **文档版本**: 1.0.0  
-> **归档路径**: `docs/TTS_ARCHITECTURE_AND_TROUBLESHOOTING.md`  
+> **归档路径**: `docs/21_TTS_ARCHITECTURE_AND_TROUBLESHOOTING.zh-CN.md`  
 > **所属模块**: `@focusflow/studio` & `@focusflow/player` (Stage 5.6 & Stage 5.7)  
 > **运行环境**: macOS (Sonoma / Sequoia / Ventura), Chromium (Chrome / Edge), WebKit (Safari)
 
@@ -77,7 +81,7 @@ flowchart TD
    - 针对离线 Web Speech，播放器不通过 `<audio>` 播放纯静音占位 WAV，而是由全局音频调度中心直接驱动 `speakWebSpeech`。
 5. **单幕独立应用 vs 全分幕智能合流双模型**：
    - 台词与分幕时长分场景独立自治；
-   - 物理母带音轨支持“检查器单幕快速替换”与“时间轴一键全分幕智能缝合”，详见专篇规范文档 [`SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.md`](./SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.md)。
+   - 物理母带音轨支持“检查器单幕快速替换”与“时间轴一键全分幕智能缝合”，详见专篇规范文档 [`23_SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.zh-CN.md`](./23_SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.zh-CN.md)。
 
 ---
 

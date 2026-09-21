@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="./01_USAGE_GUIDE.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # 🎨 FocusFlow Studio · 用户操作实战与全功能使用指南
 
 ## FocusFlow Studio Official User Manual & Tuning Guide
@@ -8,7 +12,7 @@
 | **更新日期**     | `2026-08-31`                                                       |
 | **适用对象**     | 架构师、技术布道师、产品经理、研发 Leader、技术方案演示者          |
 | **系统定位**     | 新一代 0 依赖、纯前端、工业级架构演进动态可视化演播系统            |
-| **MVP 历史指南** | 参见历史备份手册 [`docs/MVP_USAGE_GUIDE.md`](./MVP_USAGE_GUIDE.md) |
+| **MVP 历史指南** | 参见历史备份手册 [`docs-internal/06_MVP_USAGE_GUIDE.md`](../docs-internal/06_MVP_USAGE_GUIDE.md) |
 
 ---
 
@@ -280,7 +284,7 @@ FocusFlow Studio 采用工业级五栏式工作台布局，所有操作区域各
 
 1. 选中该场景卡片，在右侧面板输入修改后的台词；
 2. 点击台词下方的 **【🎙️ 生成 TTS 试听并拉伸时长】** 按钮；
-3. 系统将仅针对当前幕生成语音，计算建议分幕时长，支持随时打断试听与一键确认应用（详细架构模型与单幕 vs 全分幕合流差异请参考 [`SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.md`](./SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.md)）。
+3. 系统将仅针对当前幕生成语音，计算建议分幕时长，支持随时打断试听与一键确认应用（详细架构模型与单幕 vs 全分幕合流差异请参考 [`23_SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.zh-CN.md`](./23_SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.zh-CN.md)）。
 
 ---
 

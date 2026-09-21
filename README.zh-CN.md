@@ -163,11 +163,11 @@ focusflow/
 
 详尽的工程架构与算法推导文档可查阅 [`docs/`](docs/) 目录：
 
-* 📘 [**工作台使用与调镜实战指南**](docs/USAGE_GUIDE.md)：从拖图建项目到导出单文件的 3 步全流程指引。
-* 📐 [**Sobel 边缘吸附算法原理**](docs/EDGE_SNAPPER_ALGORITHM.md)：像素级卷积梯度算子与坐标投影推导。
-* 🎵 [**音频播放与导出仲裁矩阵**](docs/AUDIO_PLAYBACK_AND_EXPORT_MATRIX.md)：离线与云端双引擎解说设计规范。
-* 📹 [**60fps WebM 纯前端录制方案**](docs/LOCAL_60FPS_WEBM_RECORDING_PLAN.md)：浏览器虚拟时钟与低开销视频压制管线。
-* 🛠️ [**PNPM 脚本统一调度速查**](docs/PNPM_SCRIPTS.md)：Monorepo 常用任务指令清单。
+* 📘 [**工作台使用与调镜实战指南**](docs/01_USAGE_GUIDE.zh-CN.md)：从拖图建项目到导出单文件的 3 步全流程指引。
+* 📐 [**Sobel 边缘吸附算法原理**](docs/10_EDGE_SNAPPER_ALGORITHM.zh-CN.md)：像素级卷积梯度算子与坐标投影推导。
+* 🎵 [**音频播放与导出仲裁矩阵**](docs/20_AUDIO_PLAYBACK_AND_EXPORT_MATRIX.zh-CN.md)：离线与云端双引擎解说设计规范。
+* 📹 [**60fps WebM 纯前端录制方案**](docs/22_LOCAL_60FPS_WEBM_RECORDING_PLAN.zh-CN.md)：浏览器虚拟时钟与低开销视频压制管线。
+* 🛠️ [**PNPM 脚本统一调度速查**](docs/00_PNPM_SCRIPTS.zh-CN.md)：Monorepo 常用任务指令清单。
 
 ---
 

@@ -1,8 +1,12 @@
+<p align="right">
+  <a href="./20_AUDIO_PLAYBACK_AND_EXPORT_MATRIX.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow 全场景音频播放、录制与导出技术全景手册
 
 > **文档版本**: 1.2.0  
 > **更新日期**: 2026-09-17  
-> **归档路径**: `docs/AUDIO_PLAYBACK_AND_EXPORT_MATRIX.md`  
+> **归档路径**: `docs/20_AUDIO_PLAYBACK_AND_EXPORT_MATRIX.zh-CN.md`  
 > **所属模块**: `@focusflow/studio`, `@focusflow/player`, `@focusflow/dsl`  
 > **目标读者**: 核心架构师、前端开发工程师、音视频研发工程师、内容创作者  
 

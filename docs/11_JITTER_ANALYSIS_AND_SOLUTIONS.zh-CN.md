@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="./11_JITTER_ANALYSIS_AND_SOLUTIONS.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow 全栈四层防抖治理架构体系与根因深度剖析
 
 > **文档版本**: 3.1.0 (全景深化与高阶缩放频闪治理终局版)  

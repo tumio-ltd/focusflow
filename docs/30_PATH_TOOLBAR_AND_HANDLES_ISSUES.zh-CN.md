@@ -1,3 +1,5 @@
+<p align="right"><a href="./30_PATH_TOOLBAR_AND_HANDLES_ISSUES.md">English</a> • <strong>简体中文</strong></p>
+
 # FocusFlow 路径浮动工具条与端点手柄交互缺陷分析与治理方案
 
 > **文档版本**: 1.0.0  

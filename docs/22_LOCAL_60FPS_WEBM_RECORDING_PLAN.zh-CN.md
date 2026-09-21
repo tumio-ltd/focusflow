@@ -1,8 +1,12 @@
+<p align="right">
+  <a href="./22_LOCAL_60FPS_WEBM_RECORDING_PLAN.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow 本地 60FPS WebM 高清视频录制技术方案与实施规划
 
 > **文档版本**: 1.0.0  
 > **更新时间**: 2026-09-07  
-> **归档路径**: `docs/LOCAL_60FPS_WEBM_RECORDING_PLAN.md`  
+> **归档路径**: `docs/22_LOCAL_60FPS_WEBM_RECORDING_PLAN.zh-CN.md`  
 > **所属模块**: `@focusflow/studio` (Stage 5 导出中心 & 受众全屏演播)  
 > **运行环境**: Chromium (Chrome / Edge 107+), WebKit (Safari), 现代桌面浏览器
 

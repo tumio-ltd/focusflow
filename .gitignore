@@ -54,6 +54,7 @@ test-results/
 
 # Local Machine Private Agent Configurations & Paths
 *LOCAL_AGENT_ENV*.md
+design/26_LOCAL_AGENT_ENV.md
 design/LOCAL_AGENT_ENV.md
 .local/
 .env

@@ -1,8 +1,12 @@
+<p align="right">
+  <a href="./23_SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow 分幕旁白台词与音轨应用架构规范 (Scene Voiceover & Audio Track Architecture)
 
 > **文档版本**: 1.1.0  
 > **更新日期**: 2026-09-17  
-> **归档路径**: `docs/SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.md`  
+> **归档路径**: `docs/23_SCENE_VOICEOVER_AND_AUDIO_TRACK_MODELS.zh-CN.md`  
 > **所属模块**: `@focusflow/studio` & `@focusflow/player` (Stage 5.6 ~ Stage 5.8, Master Track Splicing)  
 > **相关代码**: `apps/studio/src/services/audio/tts/aiTtsSynthesizer.ts`, `apps/studio/src/services/audio/tts/masterAudioStitcher.ts`, `apps/studio/src/components/layout/RightInspector.tsx`, `apps/studio/src/components/layout/BottomTimeline.tsx`, `apps/studio/src/App.tsx`
 

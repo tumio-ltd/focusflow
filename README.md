@@ -163,11 +163,11 @@ focusflow/
 
 Detailed architectural and algorithmic specifications are available in the [`docs/`](docs/) directory:
 
-* 📘 [**Studio Usage Guide**](docs/USAGE_GUIDE.md): Step-by-step tutorial on creating and exporting projects.
-* 📐 [**Sobel Edge Snapper Algorithm**](docs/EDGE_SNAPPER_ALGORITHM.md): Mathematics of convolutional gradient bounding box extraction.
-* 🎵 [**Audio Sync & Export Matrix**](docs/AUDIO_PLAYBACK_AND_EXPORT_MATRIX.md): Dual-engine audio synchronization and recording architecture.
-* 📹 [**60fps WebM Recording Architecture**](docs/LOCAL_60FPS_WEBM_RECORDING_PLAN.md): In-browser zero-jitter video encoding pipeline.
-* 🛠️ [**PNPM Scripts Reference**](docs/PNPM_SCRIPTS.md): Monorepo task orchestration reference.
+* 📘 [**Studio Usage Guide**](docs/01_USAGE_GUIDE.md): Step-by-step tutorial on creating and exporting projects.
+* 📐 [**Sobel Edge Snapper Algorithm**](docs/10_EDGE_SNAPPER_ALGORITHM.md): Mathematics of convolutional gradient bounding box extraction.
+* 🎵 [**Audio Sync & Export Matrix**](docs/20_AUDIO_PLAYBACK_AND_EXPORT_MATRIX.md): Dual-engine audio synchronization and recording architecture.
+* 📹 [**60fps WebM Recording Architecture**](docs/22_LOCAL_60FPS_WEBM_RECORDING_PLAN.md): In-browser zero-jitter video encoding pipeline.
+* 🛠️ [**PNPM Scripts Reference**](docs/00_PNPM_SCRIPTS.md): Monorepo task orchestration reference.
 
 ---
 

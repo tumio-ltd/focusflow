@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="./24_AI_VOICEOVER_AND_AUDIO_SYNC_WALKTHROUGH.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # AI 提词音频自适应、离线演播发音与音画同步技术文档
 
 ## 一、方案落地与核心设计准则
@@ -23,7 +27,7 @@ FocusFlow Studio Stage 5.6 引入了智能 AI 提词、母带音频轨管理与�
 - **时间轴批量 AI 提词自适应全分幕**：
   点击时间轴 `[🤖 AI 提词]` 时，离线模式下遍历所有分幕执行智能自适应计算，将各分幕最新时长（含留白与延展）一次性同步持久化到工程 DSL 与时间轴卡片。
 - **高保真独立母带音轨（云端模式）**：
-  若用户需要生成独立母带音频文件（WAV/MP3）与高保真波形轨，可无缝切换至云端模式（Google Gemini 官方 TTS、OpenAI、硅基流动等，输入 Key），支持 Gemini 专用 TTS 模型（如 `gemini-3.1-flash-tts-preview`）与 30+ 专属人声音色，批量合成高保真真人音频并导出母带文件。底层音频封装与波形排障细节详见 [`TTS_ARCHITECTURE_AND_TROUBLESHOOTING.md`](./TTS_ARCHITECTURE_AND_TROUBLESHOOTING.md)。
+  若用户需要生成独立母带音频文件（WAV/MP3）与高保真波形轨，可无缝切换至云端模式（Google Gemini 官方 TTS、OpenAI、硅基流动等，输入 Key），支持 Gemini 专用 TTS 模型（如 `gemini-3.1-flash-tts-preview`）与 30+ 专属人声音色，批量合成高保真真人音频并导出母带文件。底层音频封装与波形排障细节详见 [`21_TTS_ARCHITECTURE_AND_TROUBLESHOOTING.zh-CN.md`](./21_TTS_ARCHITECTURE_AND_TROUBLESHOOTING.zh-CN.md)。
 
 ---
 

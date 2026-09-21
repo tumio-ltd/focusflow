@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="./10_EDGE_SNAPPER_ALGORITHM.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow 智能边缘吸附算法原理与进阶演进方案
 ## Edge Snapper Algorithm Specification & Evolution Proposals
 

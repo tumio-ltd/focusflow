@@ -1,8 +1,12 @@
+<p align="right">
+  <a href="./12_VIEWPORT_AND_ASPECT_RATIO_QNA.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # FocusFlow 坐标流水线、viewBox 与画幅比例技术问答录 (Q&A)
 
 > **文档定位**: 记录开发过程中关于渲染流水线空间映射、SVG `viewBox` 原生分辨率、`.focusflow-viewport` 裁切容器以及工程 `aspectRatio` 的深度讨论与架构对齐。  
 > **归档日期**: 2026-09-12  
-> **关联文档**: [`design/ELEMENTS_DESIGN_AND_ARCHITECTURE.md`](../design/ELEMENTS_DESIGN_AND_ARCHITECTURE.md), [`design/STAGE_MATCH_WYSIWYG_ENGINEERING_SPEC.md`](../design/STAGE_MATCH_WYSIWYG_ENGINEERING_SPEC.md)
+> **关联文档**: [`design/02_ELEMENTS_DESIGN_AND_ARCHITECTURE.md`](../design/02_ELEMENTS_DESIGN_AND_ARCHITECTURE.md), [`design/14_STAGE_MATCH_WYSIWYG_ENGINEERING_SPEC.md`](../design/14_STAGE_MATCH_WYSIWYG_ENGINEERING_SPEC.md)
 
 ---
 
@@ -360,7 +364,7 @@ $$y_{\text{camera}} = v \times H_{\text{view}} = \frac{y - Y_f}{H_f} \times H_{\
 
 #### 1. MVP 阶段已经做到的（一脉相承的核心机制）
 
-在 `design/MVP_SPEC.md` 的 Stage 2 设计中，以下核心机制从第一天起就定下了基调：
+在 `design/36_MVP_SPEC.md` 的 Stage 2 设计中，以下核心机制从第一天起就定下了基调：
 
 1. **底图绝对坐标规范（World Space）**：
    MVP 一开始就明确：DSL 里 Box 的 `x, y, width, height` 必须是基于底图原始物理分辨率的绝对像素，**禁止将响应式百分比直接写入数据层**；

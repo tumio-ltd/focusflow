@@ -1,3 +1,7 @@
+<p align="right">
+  <a href="./00_PNPM_SCRIPTS.md">English</a> • <strong>简体中文</strong>
+</p>
+
 # 🛠️ FocusFlow · pnpm 脚本与工程开发指令全景指南
 
 | 元数据项 | 说明 |
