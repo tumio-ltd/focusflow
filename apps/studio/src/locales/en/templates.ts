@@ -1,7 +1,8 @@
 export default {
   modalTitle: 'Architecture Templates Library',
-  subtitle: 'Curated 6 production-grade architecture presets covering Microservices, Cloud Native & AI pipelines',
+  subtitle: 'Curated 5 production-grade architecture presets covering Microservices, Lakehouse & Living Canvas',
   categoryAll: 'All Templates',
+  categoryDevtools: 'Showcase & Living Canvas',
   categoryHotel: 'Hotel & Scheduling',
   categoryMicroservice: 'Microservices',
   categoryDdd: 'DDD Architecture',

@@ -36,6 +36,7 @@ export interface ArchitectureTemplate {
   };
   featured?: boolean;
   supportedLangs?: ('zh' | 'en')[];
+  hidden?: boolean; // 标记是否在模板选择器中下架隐藏 (未完善/待重构模板)
   dsl: FocusFlowDSL;
 }
 
@@ -79,6 +80,81 @@ export function getCalloutDesc(callout: CalloutItem, lang: string = 'en'): strin
 }
 
 export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
+  {
+    id: 'tpl-microservices',
+    title: '微服务高可用电商中台演进架构',
+    titleI18n: {
+      zh: '微服务高可用电商中台演进架构',
+      en: 'Cloud-Native High-Availability Microservices Topology',
+    },
+    category: 'microservice',
+    categoryLabel: '微服务 & 电商中台',
+    categoryLabelI18n: {
+      zh: '微服务 & 电商',
+      en: 'Microservices',
+    },
+    desc: 'APISIX 网关集群 + 订单状态机 + Redis Lua 库存防超卖 + Seata AT 2PC 分布式事务',
+    descI18n: {
+      zh: 'APISIX 网关集群 + 订单状态机 + Redis Lua 库存防超卖 + Seata AT 2PC 分布式事务',
+      en: 'APISIX Gateway Cluster + Order State Machine + Redis Lua Anti-Overselling + Seata AT 2PC Transaction',
+    },
+    sceneCount: 5,
+    estimatedDuration: 7.2,
+    accentColor: '#34d399',
+    coverImage: './templates/microservices-architecture.svg',
+    supportedLangs: ['zh', 'en'],
+    dsl: microservicesTemplate,
+  },
+  {
+    id: 'tpl-realtime-lakehouse',
+    title: '实时流批一体湖仓与智能分析拓扑',
+    titleI18n: {
+      zh: '实时流批一体湖仓与智能分析拓扑',
+      en: 'Real-Time Lakehouse & Streaming Analytics Topology',
+    },
+    category: 'database',
+    categoryLabel: '实时计算 & 数据湖仓',
+    categoryLabelI18n: {
+      zh: '实时计算 & 数据湖仓',
+      en: 'Streaming & Lakehouse',
+    },
+    desc: 'Debezium CDC 增量采集 + Kafka 3.7 KRaft 削峰 + Flink 1.19 状态计算 + Apache Iceberg 湖仓与 ClickHouse OLAP',
+    descI18n: {
+      zh: 'Debezium CDC 增量采集 + Kafka 3.7 KRaft 削峰 + Flink 1.19 状态计算 + Apache Iceberg 湖仓与 ClickHouse OLAP',
+      en: 'Debezium CDC + Kafka 3.7 KRaft + Flink Stateful Stream + Apache Iceberg ACID Lakehouse & ClickHouse',
+    },
+    sceneCount: 5,
+    estimatedDuration: 9.4,
+    accentColor: '#34d399',
+    coverImage: './templates/realtime-lakehouse.svg',
+    supportedLangs: ['zh', 'en'],
+    dsl: realtimeLakehouseTemplate,
+  },
+  {
+    id: 'tpl-ai-rag-pipeline',
+    title: '企业级大模型 RAG 检索增强生成全链路架构',
+    titleI18n: {
+      zh: '企业级大模型 RAG 检索增强生成全链路架构',
+      en: 'Enterprise LLM RAG Pipeline & Semantic Retrieval',
+    },
+    category: 'ai',
+    categoryLabel: 'AI 大模型 & RAG',
+    categoryLabelI18n: {
+      zh: 'AI 大模型 & RAG',
+      en: 'AI & LLM RAG',
+    },
+    desc: '知识库递归切片 + Milvus 密集向量检索 + Cross-Encoder 重排 + Prompt 组装与 LLM 溯源推理',
+    descI18n: {
+      zh: '知识库递归切片 + Milvus 密集向量检索 + Cross-Encoder 重排 + Prompt 组装与 LLM 溯源推理',
+      en: 'Document Ingestion + Milvus Vector Search + Cross-Encoder Rerank + Grounded LLM Reasoning',
+    },
+    sceneCount: 5,
+    estimatedDuration: 9.4,
+    accentColor: '#a855f7',
+    coverImage: './templates/ai-rag-pipeline.svg',
+    supportedLangs: ['zh', 'en'],
+    dsl: aiRagPipelineTemplate,
+  },
   {
     id: 'tpl-focusflow-workflow',
     title: 'FocusFlow 活画布官方功能全景与痛点破局 (45s 宣传导播)',
@@ -146,32 +222,8 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
     accentColor: '#38bdf8',
     coverImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
     featured: true,
+    hidden: true,
     dsl: hotelPmsTemplate,
-  },
-  {
-    id: 'tpl-microservices',
-    title: '微服务高可用电商中台演进架构',
-    titleI18n: {
-      zh: '微服务高可用电商中台演进架构',
-      en: 'Cloud-Native High-Availability Microservices Topology',
-    },
-    category: 'microservice',
-    categoryLabel: '微服务 & 电商中台',
-    categoryLabelI18n: {
-      zh: '微服务 & 电商',
-      en: 'Microservices',
-    },
-    desc: 'APISIX 网关集群 + 订单状态机 + Redis Lua 库存防超卖 + Seata AT 2PC 分布式事务',
-    descI18n: {
-      zh: 'APISIX 网关集群 + 订单状态机 + Redis Lua 库存防超卖 + Seata AT 2PC 分布式事务',
-      en: 'APISIX Gateway Cluster + Order State Machine + Redis Lua Anti-Overselling + Seata AT 2PC Transaction',
-    },
-    sceneCount: 5,
-    estimatedDuration: 7.2,
-    accentColor: '#34d399',
-    coverImage: './templates/microservices-architecture.svg',
-    supportedLangs: ['zh', 'en'],
-    dsl: microservicesTemplate,
   },
   {
     id: 'tpl-ddd-architecture',
@@ -183,6 +235,7 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
     estimatedDuration: 2.6,
     accentColor: '#fbbf24',
     coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+    hidden: true,
     dsl: dddArchitectureTemplate,
   },
   {
@@ -195,56 +248,7 @@ export const ARCHITECTURE_TEMPLATES: ArchitectureTemplate[] = [
     estimatedDuration: 2.6,
     accentColor: '#0ea5e9',
     coverImage: 'https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?auto=format&fit=crop&w=600&q=80',
+    hidden: true,
     dsl: k8sCloudNativeTemplate,
-  },
-  {
-    id: 'tpl-realtime-lakehouse',
-    title: '实时流批一体湖仓与智能分析拓扑',
-    titleI18n: {
-      zh: '实时流批一体湖仓与智能分析拓扑',
-      en: 'Real-Time Lakehouse & Streaming Analytics Topology',
-    },
-    category: 'database',
-    categoryLabel: '实时计算 & 数据湖仓',
-    categoryLabelI18n: {
-      zh: '实时计算 & 数据湖仓',
-      en: 'Streaming & Lakehouse',
-    },
-    desc: 'Debezium CDC 增量采集 + Kafka 3.7 KRaft 削峰 + Flink 1.19 状态计算 + Apache Iceberg 湖仓与 ClickHouse OLAP',
-    descI18n: {
-      zh: 'Debezium CDC 增量采集 + Kafka 3.7 KRaft 削峰 + Flink 1.19 状态计算 + Apache Iceberg 湖仓与 ClickHouse OLAP',
-      en: 'Debezium CDC + Kafka 3.7 KRaft + Flink Stateful Stream + Apache Iceberg ACID Lakehouse & ClickHouse',
-    },
-    sceneCount: 5,
-    estimatedDuration: 9.4,
-    accentColor: '#34d399',
-    coverImage: './templates/realtime-lakehouse.svg',
-    supportedLangs: ['zh', 'en'],
-    dsl: realtimeLakehouseTemplate,
-  },
-  {
-    id: 'tpl-ai-rag-pipeline',
-    title: '企业级大模型 RAG 检索增强生成全链路架构',
-    titleI18n: {
-      zh: '企业级大模型 RAG 检索增强生成全链路架构',
-      en: 'Enterprise LLM RAG Pipeline & Semantic Retrieval',
-    },
-    category: 'ai',
-    categoryLabel: 'AI 大模型 & RAG',
-    categoryLabelI18n: {
-      zh: 'AI 大模型 & RAG',
-      en: 'AI & LLM RAG',
-    },
-    desc: '知识库递归切片 + Milvus 密集向量检索 + Cross-Encoder 重排 + Prompt 组装与 LLM 溯源推理',
-    descI18n: {
-      zh: '知识库递归切片 + Milvus 密集向量检索 + Cross-Encoder 重排 + Prompt 组装与 LLM 溯源推理',
-      en: 'Document Ingestion + Milvus Vector Search + Cross-Encoder Rerank + Grounded LLM Reasoning',
-    },
-    sceneCount: 5,
-    estimatedDuration: 9.4,
-    accentColor: '#a855f7',
-    coverImage: './templates/ai-rag-pipeline.svg',
-    supportedLangs: ['zh', 'en'],
-    dsl: aiRagPipelineTemplate,
   },
 ];

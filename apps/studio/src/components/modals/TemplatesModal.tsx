@@ -48,17 +48,24 @@ export function TemplatesModal({
 
   const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
 
-  const categories = [
+  const allCategoryDefinitions = [
     { id: 'all', label: t('categoryAll') },
-    { id: 'hotel', label: t('categoryHotel') },
     { id: 'microservice', label: t('categoryMicroservice') },
-    { id: 'ddd', label: t('categoryDdd') },
-    { id: 'cloudnative', label: t('categoryCloudnative') },
     { id: 'database', label: t('categoryDatabase') },
     { id: 'ai', label: t('categoryAi') },
+    { id: 'devtools', label: t('categoryDevtools') },
+    { id: 'hotel', label: t('categoryHotel') },
+    { id: 'ddd', label: t('categoryDdd') },
+    { id: 'cloudnative', label: t('categoryCloudnative') },
   ];
 
-  const filteredTemplates = ARCHITECTURE_TEMPLATES.filter((tpl) => {
+  const visibleTemplates = ARCHITECTURE_TEMPLATES.filter((tpl) => !tpl.hidden);
+  const activeCategories = new Set<string>(visibleTemplates.map((tpl) => tpl.category));
+  const categories = allCategoryDefinitions.filter(
+    (cat) => cat.id === 'all' || activeCategories.has(cat.id)
+  );
+
+  const filteredTemplates = visibleTemplates.filter((tpl) => {
     const matchCategory = selectedCategory === 'all' || tpl.category === selectedCategory;
     const query = searchQuery.toLowerCase().trim();
     if (!query) return matchCategory;

@@ -31,6 +31,7 @@ async function verifyEnglishTemplatesModalDisplay(page: Page): Promise<void> {
 
   // 验证分类按钮为英文
   await expect(modal.getByRole('button', { name: 'All Templates' })).toBeVisible();
+  await expect(modal.getByRole('button', { name: 'Showcase & Living Canvas' })).toBeVisible();
   await expect(modal.getByRole('button', { name: 'Microservices' })).toBeVisible();
   await expect(modal.getByRole('button', { name: 'AI & LLM RAG' })).toBeVisible();
   await expect(modal.getByRole('button', { name: 'Streaming & Lakehouse' })).toBeVisible();
@@ -40,8 +41,10 @@ async function verifyEnglishTemplatesModalDisplay(page: Page): Promise<void> {
   await expect(modal.getByText('Enterprise LLM RAG Pipeline & Semantic Retrieval')).toBeVisible();
   await expect(modal.getByText('Real-Time Lakehouse & Streaming Analytics Topology')).toBeVisible();
 
-  // 验证单语言模板（如酒店 PMS 或 DDD）在英文界面下展示 ZH Only 语言提示徽章
-  await expect(modal.getByText('ZH Only').first()).toBeVisible();
+  // 验证未完善模板已被隐藏下架
+  await expect(modal.locator('[data-testid="template-card-tpl-hotel-pms"]')).toBeHidden();
+  await expect(modal.locator('[data-testid="template-card-tpl-ddd-architecture"]')).toBeHidden();
+  await expect(modal.locator('[data-testid="template-card-tpl-k8s-cloudnative"]')).toBeHidden();
 
   // 关闭弹窗
   const closeBtn = page.locator('[data-testid="close-templates-btn"]');

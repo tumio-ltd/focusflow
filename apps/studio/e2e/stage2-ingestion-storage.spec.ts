@@ -26,7 +26,7 @@ async function verifyImageUploadModalInteraction(page: Page): Promise<void> {
 }
 
 /**
- * 2. 验证模板中心 6 大工业级模板浏览、分类过滤与一键应用
+ * 2. 验证模板中心工业级模板浏览、分类过滤与一键应用
  */
 async function verifyTemplatesModalAndApplication(page: Page): Promise<void> {
   const openTemplatesBtn = page.locator('[data-testid="open-templates-btn"]');
@@ -36,22 +36,22 @@ async function verifyTemplatesModalAndApplication(page: Page): Promise<void> {
   const modal = page.locator('[data-testid="templates-modal"]');
   await expect(modal).toBeVisible();
 
-  // 验证经典升级版 LuxeHMS 酒店 PMS 模板存在
-  await expect(modal.getByText(/LuxeHMS 酒店 PMS 房态/)).toBeVisible();
+  // 验证未完善模板已下架隐藏，微服务标杆模板可见
+  await expect(modal.locator('[data-testid="template-card-tpl-hotel-pms"]')).toBeHidden();
   await expect(modal.getByText(/微服务高可用电商中台/)).toBeVisible();
 
-  // 测试分类过滤：点击“酒店 & 调度系统”
-  const hotelCategoryBtn = modal.getByRole('button', { name: /酒店 & 调度系统|Hotel & Scheduling/ });
-  await hotelCategoryBtn.click();
-  await expect(modal.getByText(/LuxeHMS 酒店 PMS 房态/)).toBeVisible();
+  // 测试分类过滤：点击“微服务 & 电商”
+  const microCategoryBtn = modal.getByRole('button', { name: /微服务 & 电商|Microservices/ });
+  await microCategoryBtn.click();
+  await expect(modal.getByText(/微服务高可用电商中台/)).toBeVisible();
 
   // 点击“应用此模板创建工程”
-  const applyBtn = modal.getByRole('button', { name: /应用此模板创建工程|Clone & Start Project/ }).first();
+  const applyBtn = modal.locator('[data-testid="apply-template-tpl-microservices"]');
   await applyBtn.click();
 
   // 验证应用后弹窗关闭且画布项目标题更新
   await expect(modal).not.toBeVisible();
-  await expect(page.locator('header')).toContainText(/LuxeHMS/);
+  await expect(page.locator('header')).toContainText(/微服务|Microservices/);
 }
 
 /**

@@ -26,8 +26,11 @@
     "launch:pack": "node tooling/launch-ops/scripts/bundle-launch-pack.mjs",
     "launch:publish-ruanyf": "node tooling/launch-ops/scripts/publish-ruanyf.mjs",
     "launch:publish-ruanyf:dry": "node tooling/launch-ops/scripts/publish-ruanyf.mjs --dry-run",
+    "launch:postiz": "node tooling/launch-ops/scripts/sync-to-postiz.mjs",
+    "launch:postiz:dry": "node tooling/launch-ops/scripts/sync-to-postiz.mjs --dry-run",
     "launch:monitor-hn": "node tooling/launch-ops/scripts/monitor-hn.mjs",
-    "launch:monitor-reddit": "node tooling/launch-ops/scripts/monitor-reddit.mjs"
+    "launch:monitor-reddit": "node tooling/launch-ops/scripts/monitor-reddit.mjs",
+    "launch:reply": "node tooling/launch-ops/scripts/reply-copilot.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.0",

@@ -1,7 +1,8 @@
 export default {
   modalTitle: '工业级架构演进模板中心',
-  subtitle: '精选 6 套生产级高并发微服务、云原生与大模型全链路架构，一键克隆开箱即用',
+  subtitle: '精选 5 套生产级高并发微服务、实时湖仓与活画布官方全链路架构，一键克隆开箱即用',
   categoryAll: '全部模板',
+  categoryDevtools: '官方宣传 & 活画布',
   categoryHotel: '酒店 & 调度系统',
   categoryMicroservice: '微服务 & 电商',
   categoryDdd: 'DDD 领域驱动',
