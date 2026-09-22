@@ -31,7 +31,7 @@
 <br /><br />
 
 <a href="https://focusflow.tumio.site/">
-  <img src="./docs/assets/hero-demo.gif" alt="FocusFlow Hero Walkthrough Demo" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/hero-demo.gif" alt="FocusFlow Hero Walkthrough Demo" width="100%" />
 </a>
 
 <br /><br />
@@ -43,9 +43,9 @@
 
 When presenting distributed systems, microservices, or complex AI pipelines, static architecture diagrams have fundamental flaws:
 
-* **Cognitive Overload**: A static 4K diagram dumps hundreds of nodes at once. Audiences lose context within 30 seconds.
-* **Slides & Screen Recordings Fall Short**: Slide decks crop out surrounding connections; recorded videos cannot be paused for interactive inspection or zooming into node details.
-* **Production Friction**: High-end motion graphics typically require Adobe After Effects or complex video production tools.
+- **Cognitive Overload**: A static 4K diagram with 100+ microservices and crisscrossing lines overwhelms the audience within 30 seconds.
+- **Slides vs. Videos Dilemma**: Slide decks fragment the architectural topology into disjointed screenshots; screen recordings cannot be paused to inspect or zoom into specific service configs.
+- **Prohibitive Animation Costs**: Crafting smooth motion graphics requires days of manual keyframing in After Effects.
 
 **FocusFlow bridges this gap.** It lets you direct your architecture diagram like a movie camera:
 - Smoothly pans, zooms, and rotates across nodes at **60fps GPU acceleration**.
@@ -72,14 +72,14 @@ When presenting distributed systems, microservices, or complex AI pipelines, sta
 Continuous affine transforms (`scale`, `translate3d`, `rotate`) driven by viewport kinematics. Seamlessly transition from global overview to microscopic component details without aliasing or frame drops, with glowing Bezier paths illuminating runtime interactions.
 
 <p align="center">
-  <img src="./docs/assets/feature-camera-flow.png" alt="60fps Cinematic Kinematics and Dynamic Bezier Flow" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/feature-camera-flow.png" alt="60fps Cinematic Kinematics and Dynamic Bezier Flow" width="100%" />
 </p>
 
 ### 🧲 2. Sobel Edge Smart Snapping
 Equipped with a native computer-vision algorithm: drag a bounding box near any node or diagram card, and FocusFlow automatically snaps bounding boxes to the exact pixel borders in $< 1\text{ms}$.
 
 <p align="center">
-  <img src="./docs/assets/feature-sobel-snap.png" alt="Sobel Edge Smart Snapping Studio Canvas" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/feature-sobel-snap.png" alt="Sobel Edge Smart Snapping Studio Canvas" width="100%" />
 </p>
 
 ### ⚡ 3. Dynamic Bezier Flow Routing
@@ -89,7 +89,7 @@ Intelligent relative anchor calculation (`right ➔ left`, `bottom ➔ top`) con
 Built-in offline Web Speech API synthesizer and cloud LLM voiceover connector. Features visual audio waveform tracks, subtitle markers, and auto-computed camera dwell times.
 
 <p align="center">
-  <img src="./docs/assets/feature-audio-sync.png" alt="AI Voiceover and Audio Waveform Synchronization" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/feature-audio-sync.png" alt="AI Voiceover and Audio Waveform Synchronization" width="100%" />
 </p>
 
 ### 🏝️ 5. Dynamic Island & Zen Mode

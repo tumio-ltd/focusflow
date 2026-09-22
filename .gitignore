@@ -61,6 +61,10 @@ design/LOCAL_AGENT_ENV.md
 .env.*
 !.env.example
 
-#
+# Temporary scratch files
 temp/
-launches/
+
+# ==========================================
+# Unified Media & Heavy Assets (Managed via Cloudflare R2 & Zero Trust)
+# ==========================================
+media/

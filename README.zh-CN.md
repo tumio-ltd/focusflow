@@ -31,7 +31,7 @@
 <br /><br />
 
 <a href="https://focusflow.tumio.site/">
-  <img src="./docs/assets/hero-demo.gif" alt="FocusFlow 核心实操演示动图" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/hero-demo.gif" alt="FocusFlow 核心实操演示动图" width="100%" />
 </a>
 
 <br /><br />
@@ -72,14 +72,14 @@
 由运动学变换矩阵驱动的仿射平滑插值（`scale`、`translate3d`、`rotate`）。无论是全局俯瞰还是下钻到最细小的数据库表字段，均保持极致丝滑、无频闪与文字抗锯齿重采样，并在节点间实时渲染带方向脉冲的发光流线。
 
 <p align="center">
-  <img src="./docs/assets/feature-camera-flow.png" alt="60fps GPU 视锥电影级运镜与贝塞尔发光流光" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/feature-camera-flow.png" alt="60fps GPU 视锥电影级运镜与贝塞尔发光流光" width="100%" />
 </p>
 
 ### 🧲 2. Sobel 智能边缘吸附
 内置计算机视觉边缘梯度卷积算法：在架构图上随意拖拽标定框，算法在 $< 1\text{ms}$ 内自动检测像素边界，精准紧贴微服务容器边框。
 
 <p align="center">
-  <img src="./docs/assets/feature-sobel-snap.png" alt="Sobel 智能边缘吸附工作台画布" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/feature-sobel-snap.png" alt="Sobel 智能边缘吸附工作台画布" width="100%" />
 </p>
 
 ### ⚡ 3. 动态贝塞尔流光路由
@@ -89,7 +89,7 @@
 内置离线 Web Speech API 与云端大模型语音合成接口。配齐可视化音频波形轨道与字幕标定，根据台词字数自动推导镜头驻留时长。
 
 <p align="center">
-  <img src="./docs/assets/feature-audio-sync.png" alt="AI 语音解说与音频波形对齐同步" width="100%" />
+  <img src="https://assets.tumio.site/focusflow/docs/feature-audio-sync.png" alt="AI 语音解说与音频波形对齐同步" width="100%" />
 </p>
 
 ### 🏝️ 5. 灵动岛 HUD 与禅模式（Zen Mode）
