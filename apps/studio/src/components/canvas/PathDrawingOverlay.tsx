@@ -151,29 +151,45 @@ export function PathDrawingOverlay({
         const isSelectedStart = dragStartAnchor?.boxId === anchor.boxId && dragStartAnchor?.anchorName === anchor.anchorName;
 
         return (
-          <g key={`${anchor.boxId}-${anchor.anchorName}-${idx}`} className="transition-transform duration-100">
-            {/* 外圈发光波纹 */}
+          <g key={`${anchor.boxId}-${anchor.anchorName}-${idx}`} className="pointer-events-none">
+            {/* 外圈发光波纹：采用纯 SVG 原生几何半径与透明度扩散，绝对锁定圆心，彻底消除向右下方暴射漂移 */}
             {(isHovered || isSelectedStart) && (
               <circle
                 cx={anchor.x}
                 cy={anchor.y}
-                r="12"
+                r="8"
                 fill="none"
                 stroke="#38bdf8"
-                strokeWidth="2"
-                className="animate-ping opacity-60"
-              />
+                strokeWidth="2.5"
+                data-testid="anchor-hover-radar"
+              >
+                <animate
+                  attributeName="r"
+                  from="8"
+                  to="24"
+                  dur="1.2s"
+                  repeatCount="indefinite"
+                />
+                <animate
+                  attributeName="opacity"
+                  from="0.9"
+                  to="0"
+                  dur="1.2s"
+                  repeatCount="indefinite"
+                />
+              </circle>
             )}
 
-            {/* 核心锚点圆球 */}
+            {/* 核心锚点圆球：严禁使用任何 CSS scale 或 hover:scale，其尺寸完全由 isHovered 驱动 SVG 几何属性 r，圆心严格锁定在 (anchor.x, anchor.y) */}
             <circle
               cx={anchor.x}
               cy={anchor.y}
               r={isHovered || isSelectedStart ? 6 : 4}
               fill={isHovered || isSelectedStart ? '#38bdf8' : '#0284c7'}
               stroke="#ffffff"
-              strokeWidth="2"
-              className="cursor-pointer hover:scale-125 transition-transform"
+              strokeWidth={isHovered || isSelectedStart ? 2.5 : 2}
+              data-testid="anchor-core-dot"
+              className="pointer-events-none drop-shadow-sm"
             />
           </g>
         );

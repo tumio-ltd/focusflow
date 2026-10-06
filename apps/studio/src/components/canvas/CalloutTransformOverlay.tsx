@@ -299,15 +299,31 @@ export function CalloutTransformOverlay({
               />
             );
           })()}
-          {/* 框元中心锚定圆环 */}
+          {/* 框元中心锚定圆环：采用纯 SVG 原生几何半径与透明度扩散，绝对锁定圆心，彻底消除向右下方暴射漂移 */}
           <circle
             cx={targetBox.x + targetBox.width / 2}
             cy={targetBox.y + targetBox.height / 2}
-            r="5"
-            fill={currentTheme.dot}
-            className="animate-ping"
-            opacity="0.6"
-          />
+            r="4"
+            fill="none"
+            stroke={currentTheme.dot}
+            strokeWidth="2"
+            data-testid="callout-target-anchor-radar"
+          >
+            <animate
+              attributeName="r"
+              from="4"
+              to="16"
+              dur="1.2s"
+              repeatCount="indefinite"
+            />
+            <animate
+              attributeName="opacity"
+              from="0.8"
+              to="0"
+              dur="1.2s"
+              repeatCount="indefinite"
+            />
+          </circle>
           <circle
             cx={targetBox.x + targetBox.width / 2}
             cy={targetBox.y + targetBox.height / 2}

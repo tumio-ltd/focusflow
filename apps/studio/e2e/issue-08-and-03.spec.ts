@@ -74,6 +74,63 @@ async function verifyPathEndpointAnchorSnapRadarAnimation(page: Page): Promise<v
 }
 
 /**
+ * 2. 验证激活 Path 连线绘制工具（十字光标模式）时，悬停可选连接锚点呈现原生 SVG animate 雷达波扩散动效，彻底杜绝 animate-ping 暴射漂移
+ */
+async function verifyPathDrawingToolAnchorHoverRadarAnimation(page: Page): Promise<void> {
+  const toolbox = page.locator('[data-testid="toolbox"]');
+  await expect(toolbox).toBeVisible();
+
+  // 1. 选中左侧工具栏中的 Path 连线工具 (tool-path)
+  const toolPathBtn = page.locator('[data-testid="tool-path"]');
+  await expect(toolPathBtn).toBeVisible();
+  await toolPathBtn.click();
+
+  // 2. 验证挂载 PathDrawingOverlay 且鼠标呈现十字光标
+  const pathDrawingOverlay = page.locator('[data-testid="path-drawing-overlay"]');
+  await expect(pathDrawingOverlay).toBeVisible();
+  await expect(pathDrawingOverlay).toHaveClass(/cursor-crosshair/);
+
+  // 3. 验证此时画布上没有任何遗留的 animate-ping 类
+  const pingElements = pathDrawingOverlay.locator('.animate-ping');
+  await expect(pingElements).toHaveCount(0);
+
+  // 4. 定位首个可选连线圆点 (circle)，获取其坐标并模拟鼠标光标悬停贴近
+  const firstAnchorDot = pathDrawingOverlay.locator('[data-testid="anchor-core-dot"]').first();
+  await expect(firstAnchorDot).toBeVisible();
+
+  const dotBox = await firstAnchorDot.boundingBox();
+  expect(dotBox).not.toBeNull();
+
+  if (dotBox) {
+    const dotCenterX = dotBox.x + dotBox.width / 2;
+    const dotCenterY = dotBox.y + dotBox.height / 2;
+
+    // 移动十字光标至可连线圆点中心
+    await page.mouse.move(dotCenterX, dotCenterY);
+
+    // 5. 验证外圈发光波纹触发并挂载 anchor-hover-radar
+    const hoverRadar = pathDrawingOverlay.locator('[data-testid="anchor-hover-radar"]');
+    await expect(hoverRadar).toBeVisible();
+
+    // 核心验证：确保雷达圆圈使用原生 SVG <animate> 动画标签进行半径与透明度扩散，绝对锁定圆心坐标
+    const animRadius = hoverRadar.locator('animate[attributeName="r"]');
+    await expect(animRadius).toBeAttached();
+    await expect(animRadius).toHaveAttribute('from', '8');
+    await expect(animRadius).toHaveAttribute('to', '24');
+
+    const animOpacity = hoverRadar.locator('animate[attributeName="opacity"]');
+    await expect(animOpacity).toBeAttached();
+    await expect(animOpacity).toHaveAttribute('from', '0.9');
+    await expect(animOpacity).toHaveAttribute('to', '0');
+
+    // 再次确认悬停激活后依然零 animate-ping、零 scale-125 以及零 transition-transform 漂移类
+    await expect(pathDrawingOverlay.locator('.animate-ping')).toHaveCount(0);
+    await expect(pathDrawingOverlay.locator('[class*="scale-125"]')).toHaveCount(0);
+    await expect(pathDrawingOverlay.locator('[class*="transition-transform"]')).toHaveCount(0);
+  }
+}
+
+/**
  * 2. 验证属性检查器 5 大图元头部交互式 ID 复制胶囊徽章、剪贴板写入与 Sonner Toast 联动
  */
 async function verifyCopyableIdBadgeAndToastFeedback(page: Page): Promise<void> {
@@ -245,6 +302,10 @@ test.describe('ISSUE-08 & ISSUE-03 Studio Craftsmanship & Interaction E2E Suites
 
   test('TC801: 验证 Path 端点拖拽吸附原生 SVG animate 雷达波扩散动效与无 animate-ping 漂移', async ({ page }) => {
     await verifyPathEndpointAnchorSnapRadarAnimation(page);
+  });
+
+  test('TC802: 验证激活 Path 连线绘制工具 (cursor-crosshair) 时，悬停目标圆点呈现绝对锁定雷达波且无 animate-ping 暴射漂移', async ({ page }) => {
+    await verifyPathDrawingToolAnchorHoverRadarAnimation(page);
   });
 
   test('TC301: 验证属性检查器 ID 复制胶囊徽章微交互、绿勾状态与全局 Sonner Toast 联动', async ({ page }) => {
