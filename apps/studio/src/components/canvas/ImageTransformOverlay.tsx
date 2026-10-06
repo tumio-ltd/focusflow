@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import type { ElementImage } from '@focusflow/dsl';
 import { useEditorStore, useProjectStore } from '@/stores';
 import { Trash2, X, Move, Lock, Unlock, Image as ImageIcon } from 'lucide-react';
+import { CopyableIdBadge } from '@/components/ui';
 
 export interface ImageTransformOverlayProps {
   contentWidth: number;
@@ -323,10 +324,13 @@ export function ImageTransformOverlay({
             className="absolute -top-10 left-0 flex items-center gap-1.5 bg-panel/95 border border-pink-500/40 px-2 py-1 rounded-lg shadow-xl z-30"
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <span className="text-[10px] font-mono text-pink-400 font-bold pr-1 border-r border-border flex items-center gap-1">
-              <ImageIcon className="w-3 h-3 text-pink-400" />
-              <span>{selectedImage.id}</span>
-            </span>
+            <div className="pr-1 border-r border-border">
+              <CopyableIdBadge
+                id={selectedImage.id}
+                maxTextWidth="max-w-[100px]"
+                className="bg-pink-950/60 border-pink-500/30 text-pink-300"
+              />
+            </div>
 
             {/* Dimensions readout */}
             <span className="text-[10px] font-mono text-muted-foreground px-1">

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { ElementBox, CalloutItem } from '@focusflow/dsl';
 import { Trash2, X, Move, MessageSquare, Link as LinkIcon } from 'lucide-react';
+import { CopyableIdBadge } from '@/components/ui';
 import { useEditorStore, useProjectStore } from '@/stores';
 import { useCanvasTransform } from './InfiniteCanvas';
 
@@ -433,10 +434,11 @@ export function CalloutTransformOverlay({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-center gap-1 pr-1 border-r border-slate-700">
-                  <MessageSquare className="w-3 h-3 text-sky-400" />
-                  <span className="text-[10px] font-mono text-sky-300 font-bold">
-                    {selectedCallout.id}
-                  </span>
+                  <CopyableIdBadge
+                    id={selectedCallout.id}
+                    maxTextWidth="max-w-[100px]"
+                    className="bg-sky-950/60 border-sky-500/30 text-sky-300"
+                  />
                 </div>
 
                 {/* 快速调色 */}

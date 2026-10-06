@@ -152,130 +152,89 @@ header, aside, footer, main {
     transform: translateY(0.5px) scale(0.985);
   }
 
-  /* --- FocusFlow Sonner Toast Optimization (Solid Background & Precision Button Row) --- */
-  [data-sonner-toaster] {
-    --width: 440px !important;
+  /* ==========================================================================
+     FocusFlow Linear 4K Unified Sonner Toast System (HMS Contract Alignment)
+     ========================================================================== */
+
+  /* 1. 全局层级与容器 */
+  [data-sonner-toaster],
+  ol[data-sonner-toaster],
+  section[data-sonner-toaster],
+  .toaster {
+    position: fixed !important;
+    z-index: 999999 !important;
     font-family: inherit !important;
   }
 
+  /* 2. 基础通知卡片自适应单行流 (尊重 Sonner 原生 richColors 底色与字色) */
   [data-sonner-toast].focusflow-toast {
     display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: flex-start !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
     position: relative !important;
     box-sizing: border-box !important;
-    width: var(--width, 440px) !important;
-    max-width: calc(100vw - 32px) !important;
-    padding: 14px 16px !important;
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: 420px !important;
+    padding: 10px 36px 10px 14px !important;
     border-radius: 12px !important;
-    background-color: var(--ff-bg-card, #111827) !important;
-    color: var(--ff-text-primary, #f8fafc) !important;
-    border: 1px solid var(--ff-border, #1e293b) !important;
-    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: none !important;
+    box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.1), 0 4px 12px -2px rgba(15, 23, 42, 0.05) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     opacity: 1 !important;
+    gap: 8px !important;
   }
 
-  :root:not(.dark) [data-sonner-toast].focusflow-toast {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+  /* 3. 多行信息与双按钮诊断场景自然展开 (Level 3 / Level 3B) */
+  [data-sonner-toast].focusflow-toast:has([data-description]),
+  [data-sonner-toast].focusflow-toast:has([data-cancel]) {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    padding: 14px 16px !important;
+    gap: 0 !important;
   }
 
-  .dark [data-sonner-toast].focusflow-toast {
-    background-color: #0d131f !important;
-    color: #f8fafc !important;
-    border: 1px solid #1e293b !important;
-    box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07) !important;
-  }
-
-  /* Status Type Accents */
-  [data-sonner-toast].focusflow-toast[data-type="error"] {
-    border-left: 4px solid #f43f5e !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="error"] {
-    background-color: #fffafb !important;
-    border-color: #fecdd3 !important;
-    border-left: 4px solid #e11d48 !important;
-  }
-  .dark [data-sonner-toast].focusflow-toast[data-type="error"] {
-    background-color: #111420 !important;
-    border-color: rgba(244, 63, 94, 0.35) !important;
-    border-left: 4px solid #f43f5e !important;
-  }
-
-  [data-sonner-toast].focusflow-toast[data-type="success"] {
-    border-left: 4px solid #10b981 !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="success"] {
-    background-color: #f0fdf4 !important;
-    border-color: #bbf7d0 !important;
-    border-left: 4px solid #059669 !important;
-  }
-  .dark [data-sonner-toast].focusflow-toast[data-type="success"] {
-    background-color: #0b1713 !important;
-    border-color: rgba(16, 185, 129, 0.35) !important;
-    border-left: 4px solid #10b981 !important;
-  }
-
-  [data-sonner-toast].focusflow-toast[data-type="info"] {
-    border-left: 4px solid #0284c7 !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="info"] {
-    background-color: #f0f9ff !important;
-    border-color: #bae6fd !important;
-    border-left: 4px solid #0284c7 !important;
-  }
-  .dark [data-sonner-toast].focusflow-toast[data-type="info"] {
-    background-color: #0c1524 !important;
-    border-color: rgba(2, 132, 199, 0.35) !important;
-    border-left: 4px solid #0284c7 !important;
-  }
-
-  /* Icon */
+  /* 4. 状态图标 */
   [data-sonner-toast].focusflow-toast [data-icon] {
     flex-shrink: 0 !important;
-    margin-top: 2px !important;
-    margin-right: 10px !important;
+    margin-top: 0 !important;
+    margin-right: 4px !important;
     margin-left: 0 !important;
-    width: 18px !important;
-    height: 18px !important;
+    width: 16px !important;
+    height: 16px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
   }
-  [data-sonner-toast].focusflow-toast[data-type="error"] [data-icon] {
-    color: #f43f5e !important;
-  }
-  [data-sonner-toast].focusflow-toast[data-type="success"] [data-icon] {
-    color: #10b981 !important;
-  }
-  [data-sonner-toast].focusflow-toast[data-type="info"] [data-icon] {
-    color: #0284c7 !important;
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-icon] {
+    margin-top: 2px !important;
+    margin-right: 10px !important;
   }
 
-  /* Content (Title & Description take full width on Row 1) */
+  /* 5. 文本内容排版 */
   [data-sonner-toast].focusflow-toast [data-content] {
-    flex: 1 1 calc(100% - 32px) !important;
+    flex: 1 1 auto !important;
     min-width: 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    gap: 2px !important;
+    padding-right: 0 !important;
+  }
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-content],
+  [data-sonner-toast].focusflow-toast:has([data-cancel]) [data-content] {
+    flex: 1 1 calc(100% - 28px) !important;
     gap: 4px !important;
-    padding-right: 22px !important;
+    padding-right: 20px !important;
   }
 
   [data-sonner-toast].focusflow-toast [data-title] {
     font-size: 13px !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     line-height: 1.4 !important;
     color: inherit !important;
   }
-  [data-sonner-toast].focusflow-toast[data-type="error"] [data-title] {
-    color: #fda4af !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast[data-type="error"] [data-title] {
-    color: #be123c !important;
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-title] {
+    font-weight: 600 !important;
   }
 
   [data-sonner-toast].focusflow-toast [data-description] {
@@ -283,47 +242,50 @@ header, aside, footer, main {
     line-height: 1.55 !important;
     word-break: break-word !important;
     white-space: normal !important;
-    color: #cbd5e1 !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-description] {
-    color: #475569 !important;
+    color: inherit !important;
+    opacity: 0.85 !important;
   }
 
-  /* Close button in top-right */
+  /* 6. 关闭按钮 */
   [data-sonner-toast].focusflow-toast [data-close-button] {
     position: absolute !important;
-    top: 10px !important;
-    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    right: 8px !important;
     left: unset !important;
-    transform: none !important;
-    width: 22px !important;
-    height: 22px !important;
+    width: 20px !important;
+    height: 20px !important;
     border-radius: 6px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: transparent !important;
     border: none !important;
-    color: #94a3b8 !important;
+    color: currentColor !important;
+    opacity: 0.55 !important;
     cursor: pointer !important;
     transition: all 0.15s ease !important;
   }
-  [data-sonner-toast].focusflow-toast [data-close-button]:hover {
-    background: rgba(148, 163, 184, 0.15) !important;
-    color: #f8fafc !important;
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-close-button],
+  [data-sonner-toast].focusflow-toast:has([data-cancel]) [data-close-button] {
+    top: 10px !important;
+    right: 10px !important;
+    transform: none !important;
   }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-close-button]:hover {
-    background: #e2e8f0 !important;
-    color: #0f172a !important;
+  [data-sonner-toast].focusflow-toast [data-close-button]:hover {
+    opacity: 1 !important;
+    background: rgba(148, 163, 184, 0.15) !important;
   }
 
-  /* Action Buttons (Row 2 - 独立换行靠右排布) */
+  /* 7. 统一操作按钮系统 (Action & Cancel Buttons) */
+  /* 基础按钮共用微规格 */
   [data-sonner-toast].focusflow-toast [data-button] {
-    margin-top: 10px !important;
+    margin-top: 0 !important;
     margin-bottom: 0 !important;
     margin-right: 0 !important;
-    height: 28px !important;
-    padding: 0 12px !important;
+    margin-left: auto !important;
+    height: 26px !important;
+    padding: 0 10px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
     border-radius: 6px !important;
@@ -336,46 +298,54 @@ header, aside, footer, main {
     flex-shrink: 0 !important;
   }
 
-  /* 按钮组自动靠右排列 */
-  [data-sonner-toast].focusflow-toast [data-button]:first-of-type {
+  /* 多行诊断模式：按钮组自然换行并靠右沉底 */
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-button],
+  [data-sonner-toast].focusflow-toast:has([data-cancel]) [data-button] {
+    margin-top: 12px !important;
+  }
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-button]:first-of-type,
+  [data-sonner-toast].focusflow-toast:has([data-cancel]) [data-button]:first-of-type {
     margin-left: auto !important;
   }
-  [data-sonner-toast].focusflow-toast [data-button] + [data-button] {
+  [data-sonner-toast].focusflow-toast:has([data-description]) [data-button] + [data-button],
+  [data-sonner-toast].focusflow-toast:has([data-cancel]) [data-button] + [data-button] {
     margin-left: 8px !important;
   }
 
-  /* 次要取消/配置按钮 (data-cancel) */
-  [data-sonner-toast].focusflow-toast [data-cancel] {
-    background: #1e293b !important;
-    color: #cbd5e1 !important;
-    border: 1px solid #334155 !important;
-  }
-  [data-sonner-toast].focusflow-toast [data-cancel]:hover {
-    background: #334155 !important;
-    color: #ffffff !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-cancel] {
-    background: #f1f5f9 !important;
-    color: #334155 !important;
-    border: 1px solid #cbd5e1 !important;
-  }
-  :root:not(.dark) [data-sonner-toast].focusflow-toast [data-cancel]:hover {
-    background: #e2e8f0 !important;
-    color: #0f172a !important;
-  }
-
-  /* 主要操作按钮 (data-action / [⚡ 转为离线]) */
+  /* 主操作按钮（Action: 撤销 / ⚡转为离线）- 通用淡雅微胶囊 */
   [data-sonner-toast].focusflow-toast [data-action],
   [data-sonner-toast].focusflow-toast [data-button]:not([data-cancel]) {
-    background: #0284c7 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+    background: rgba(2, 132, 199, 0.08) !important;
+    color: #0284c7 !important;
+    border: 1px solid rgba(2, 132, 199, 0.25) !important;
+    box-shadow: none !important;
+  }
+  .dark [data-sonner-toast].focusflow-toast [data-action],
+  .dark [data-sonner-toast].focusflow-toast [data-button]:not([data-cancel]) {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.35) !important;
   }
   [data-sonner-toast].focusflow-toast [data-action]:hover,
   [data-sonner-toast].focusflow-toast [data-button]:not([data-cancel]):hover {
-    background: #0369a1 !important;
-    filter: brightness(1.08) !important;
+    background: rgba(2, 132, 199, 0.16) !important;
+  }
+  .dark [data-sonner-toast].focusflow-toast [data-action]:hover,
+  .dark [data-sonner-toast].focusflow-toast [data-button]:not([data-cancel]):hover {
+    background: rgba(56, 189, 248, 0.28) !important;
+    color: #ffffff !important;
+  }
+
+  /* 次要操作按钮 (Cancel: 配音设置) - 幽灵文字按钮 */
+  [data-sonner-toast].focusflow-toast [data-cancel] {
+    background: transparent !important;
+    color: inherit !important;
+    opacity: 0.75 !important;
+    border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  }
+  [data-sonner-toast].focusflow-toast [data-cancel]:hover {
+    opacity: 1 !important;
+    background: rgba(148, 163, 184, 0.1) !important;
   }
 }
 

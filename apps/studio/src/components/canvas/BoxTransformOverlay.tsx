@@ -3,6 +3,7 @@ import type { ElementBox } from '@focusflow/dsl';
 import { useEditorStore, useProjectStore } from '@/stores';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
 import { Trash2, X, Move, Sparkles } from 'lucide-react';
+import { CopyableIdBadge } from '@/components/ui';
 
 export interface BoxTransformOverlayProps {
   contentWidth: number;
@@ -288,9 +289,9 @@ export function BoxTransformOverlay({
             className="absolute -top-10 left-0 flex items-center gap-1.5 bg-panel/95 border border-primary/40 px-2 py-1 rounded-lg shadow-xl z-30"
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <span className="text-[10px] font-mono text-primary font-bold pr-1 border-r border-border">
-              {selectedBox.id}
-            </span>
+            <div className="pr-1 border-r border-border">
+              <CopyableIdBadge id={selectedBox.id} maxTextWidth="max-w-[120px]" className="border-primary/40 bg-background/80" />
+            </div>
 
             {/* Quick Color Palette */}
             <div className="flex items-center gap-1 px-1">

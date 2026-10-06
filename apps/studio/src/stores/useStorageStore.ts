@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import type { FocusFlowDSL } from '@focusflow/dsl';
-import { 
-  getProjectIndex, 
-  getProjectRecord, 
-  saveProjectRecord, 
-  deleteProjectRecord, 
-  getCurrentProjectId, 
+import {
+  type ProjectMetaIndex,
+  type ProjectRecord,
+  type StorageMode,
+  getStorageRepository,
+  getActiveStorageMode,
+  setActiveStorageMode,
+  getCurrentProjectId,
   setCurrentProjectId,
-  ProjectMetaIndex, 
-  ProjectRecord 
+  promoteLocalProjectToCloud,
 } from '@/services/storage';
 import { setSceneAudioBlob, getSceneAudioBlob } from '@/services/audio';
 
@@ -17,8 +18,10 @@ export interface StorageState {
   projectList: ProjectMetaIndex[];
   isSaving: boolean;
   isLoading: boolean;
+  storageMode: StorageMode;
 
   // Actions
+  setStorageMode: (mode: StorageMode) => Promise<void>;
   loadProjects: () => Promise<void>;
   createProject: (title: string, dsl: FocusFlowDSL, imageBlob?: Blob, audioBlob?: Blob) => Promise<string>;
   openProject: (id: string) => Promise<ProjectRecord | null>;
@@ -26,6 +29,7 @@ export interface StorageState {
   renameProject: (id: string, newTitle: string) => Promise<void>;
   duplicateProject: (id: string) => Promise<string>;
   deleteProject: (id: string) => Promise<void>;
+  promoteToCloud: (id: string) => Promise<ProjectRecord>;
 }
 
 export const useStorageStore = create<StorageState>((set, get) => ({
@@ -33,13 +37,23 @@ export const useStorageStore = create<StorageState>((set, get) => ({
   projectList: [],
   isSaving: false,
   isLoading: false,
+  storageMode: getActiveStorageMode(),
+
+  setStorageMode: async (mode: StorageMode) => {
+    setActiveStorageMode(mode);
+    set({ storageMode: mode });
+    await get().loadProjects();
+  },
 
   loadProjects: async () => {
     set({ isLoading: true });
     try {
-      const list = await getProjectIndex();
+      const repo = getStorageRepository(get().storageMode);
+      const list = await repo.listProjects();
       const currentId = await getCurrentProjectId();
       set({ projectList: list, currentProjectId: currentId });
+    } catch (err) {
+      console.error('[StorageStore] Failed to load projects:', err);
     } finally {
       set({ isLoading: false });
     }
@@ -88,17 +102,27 @@ export const useStorageStore = create<StorageState>((set, get) => ({
       imageBlob,
       audioBlob: resolvedAudioBlob,
       sceneAudioBlobs: resolvedSceneAudioBlobs,
+      isCloud: get().storageMode === 'cloud',
     };
 
-    await saveProjectRecord(record);
-    await setCurrentProjectId(id);
-    const list = await getProjectIndex();
-    set({ currentProjectId: id, projectList: list });
-    return id;
+    const repo = getStorageRepository(get().storageMode);
+    await repo.saveProject(record);
+    await setCurrentProjectId(record.id);
+    const list = await repo.listProjects();
+    set({ currentProjectId: record.id, projectList: list });
+    return record.id;
   },
 
   openProject: async (id) => {
-    const record = await getProjectRecord(id);
+    const repo = getStorageRepository(get().storageMode);
+    let record = await repo.loadProject(id);
+
+    // Fallback: If in cloud mode but project exists locally in IndexedDB, fetch from local
+    if (!record && get().storageMode === 'cloud') {
+      const localRepo = getStorageRepository('indexeddb');
+      record = await localRepo.loadProject(id);
+    }
+
     if (record) {
       // 关键会话保鲜机制：若工程包含持久化的底层二进制图片 (imageBlob)，自动在当前会话中重新生成有效的 ObjectURL
       if (record.imageBlob && record.dsl?.asset) {
@@ -145,7 +169,8 @@ export const useStorageStore = create<StorageState>((set, get) => ({
   saveProject: async (id, dsl, imageBlob, audioBlob) => {
     set({ isSaving: true });
     try {
-      const existing = await getProjectRecord(id);
+      const repo = getStorageRepository(get().storageMode);
+      const existing = await repo.loadProject(id);
       const now = Date.now();
 
       // 智能提取待持久化的主音轨 audioBlob
@@ -163,7 +188,6 @@ export const useStorageStore = create<StorageState>((set, get) => ({
           }
         }
       } else {
-        // Track was removed
         resolvedAudioBlob = undefined;
       }
 
@@ -201,7 +225,7 @@ export const useStorageStore = create<StorageState>((set, get) => ({
               setSceneAudioBlob(scene.id, b);
             }
           } catch {
-            // 保留已存在的旧 blob
+            // Keep existing
           }
         }
       }
@@ -217,10 +241,14 @@ export const useStorageStore = create<StorageState>((set, get) => ({
         audioBlob: resolvedAudioBlob,
         sceneAudioBlobs: resolvedSceneAudioBlobs,
         thumbnail: existing?.thumbnail,
+        isCloud: get().storageMode === 'cloud',
+        workspaceId: existing?.workspaceId,
+        slug: existing?.slug,
+        versionNo: existing?.versionNo,
       };
 
-      await saveProjectRecord(record);
-      const list = await getProjectIndex();
+      await repo.saveProject(record);
+      const list = await repo.listProjects();
       set({ projectList: list });
     } finally {
       set({ isSaving: false });
@@ -228,65 +256,44 @@ export const useStorageStore = create<StorageState>((set, get) => ({
   },
 
   renameProject: async (id, newTitle) => {
-    const existing = await getProjectRecord(id);
-    if (!existing) return;
-
-    existing.title = newTitle;
-    existing.dsl.meta.title = newTitle;
-    existing.updatedAt = Date.now();
-
-    await saveProjectRecord(existing);
-    const list = await getProjectIndex();
+    const repo = getStorageRepository(get().storageMode);
+    await repo.renameProject(id, newTitle);
+    const list = await repo.listProjects();
     set({ projectList: list });
   },
 
   duplicateProject: async (id) => {
-    const target = await getProjectRecord(id);
-    if (!target) throw new Error('Target project not found');
-
-    const newId = `proj_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const now = Date.now();
-    const newRecord: ProjectRecord = {
-      ...JSON.parse(JSON.stringify(target)),
-      id: newId,
-      title: `${target.title} (副本)`,
-      createdAt: now,
-      updatedAt: now,
-      imageBlob: target.imageBlob,
-      audioBlob: target.audioBlob,
-      sceneAudioBlobs: target.sceneAudioBlobs ? { ...target.sceneAudioBlobs } : undefined,
-    };
-    newRecord.dsl.meta.title = newRecord.title;
-    if (newRecord.imageBlob && newRecord.dsl?.asset) {
-      newRecord.dsl.asset.url = URL.createObjectURL(newRecord.imageBlob);
-    }
-    if (newRecord.audioBlob && newRecord.dsl?.audio?.tracks?.[0]) {
-      newRecord.dsl.audio.tracks[0].url = URL.createObjectURL(newRecord.audioBlob);
-    }
-    if (newRecord.sceneAudioBlobs && newRecord.dsl?.scenes) {
-      for (const s of newRecord.dsl.scenes) {
-        const b = newRecord.sceneAudioBlobs[s.id];
-        if (b && s.voiceoverAudio) {
-          s.voiceoverAudio.url = URL.createObjectURL(b);
-        }
-      }
-    }
-
-    await saveProjectRecord(newRecord);
-    const list = await getProjectIndex();
+    const repo = getStorageRepository(get().storageMode);
+    const newId = await repo.duplicateProject(id);
+    const list = await repo.listProjects();
     set({ projectList: list });
     return newId;
   },
 
   deleteProject: async (id) => {
-    await deleteProjectRecord(id);
-    const list = await getProjectIndex();
+    const repo = getStorageRepository(get().storageMode);
+    await repo.deleteProject(id);
+    const list = await repo.listProjects();
     const currentId = get().currentProjectId;
     const nextCurrentId = currentId === id ? (list[0]?.id || null) : currentId;
     if (nextCurrentId) {
       await setCurrentProjectId(nextCurrentId);
     }
     set({ projectList: list, currentProjectId: nextCurrentId });
+  },
+
+  promoteToCloud: async (id) => {
+    const promotedRecord = await promoteLocalProjectToCloud(id);
+    setActiveStorageMode('cloud');
+    await setCurrentProjectId(promotedRecord.id);
+    const cloudRepo = getStorageRepository('cloud');
+    const list = await cloudRepo.listProjects();
+    set({
+      storageMode: 'cloud',
+      currentProjectId: promotedRecord.id,
+      projectList: list,
+    });
+    return promotedRecord;
   },
 }));
 

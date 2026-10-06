@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { ElementDot } from '@focusflow/dsl';
 import { Trash2, X, Move } from 'lucide-react';
+import { CopyableIdBadge } from '@/components/ui';
 import { useEditorStore, useProjectStore } from '@/stores';
 
 export interface DotTransformOverlayProps {
@@ -202,6 +203,11 @@ export function DotTransformOverlay({
             className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-slate-900/95 border border-amber-500/40 rounded-lg px-2 py-1 shadow-2xl pointer-events-auto z-30 animate-in fade-in duration-100"
             onClick={(e) => e.stopPropagation()}
           >
+            <CopyableIdBadge
+              id={selectedDot.id}
+              maxTextWidth="max-w-[80px]"
+              className="bg-amber-950/60 border-amber-500/30 text-amber-300"
+            />
             <span className="text-[10px] font-mono text-amber-300 font-bold px-1 border-r border-slate-700">
               {currentCx}, {currentCy}
             </span>

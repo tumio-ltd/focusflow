@@ -9,20 +9,29 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./jobs": {
       "types": "./dist/jobs.d.ts",
-      "import": "./dist/jobs.js"
-    }
+      "import": "./dist/jobs.js",
+      "default": "./dist/jobs.js"
+    },
+    "./schema.json": "./dsl-schema.json"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/export-schema.mjs",
     "dev": "tsc --watch",
+    "export:schema": "tsc && node scripts/export-schema.mjs",
+    "test": "node dist/test-validator.js && node dist/test-migration.js",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@focusflow/config-typescript": "workspace:*",
-    "typescript": "^5.5.0"
+    "typescript": "^6.0.3",
+    "zod-to-json-schema": "^3.25.2"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
   }
 }

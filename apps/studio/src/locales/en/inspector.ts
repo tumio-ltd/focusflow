@@ -34,6 +34,9 @@ export default {
   copyCoordsTip: 'Copy Cursor Coords JSON',
   clickToCopyOrShortcut: 'Click or press shortcut to copy coordinates JSON',
   copiedJson: 'Coords Copied',
+  copyIdTip: 'Click to copy full ID: {{id}}',
+  copiedIdToast: 'Copied element ID: {{id}}',
+  copyFailedToast: 'Failed to copy, please copy manually: {{id}}',
 
   // Polymorphic Element Cards
   noElementSelected: 'No Element Selected',

@@ -34,6 +34,9 @@ export default {
   copyCoordsTip: '复制光标坐标 JSON',
   clickToCopyOrShortcut: '点击或按快捷键复制当前坐标 JSON',
   copiedJson: '坐标已复制',
+  copyIdTip: '点击复制完整 ID: {{id}}',
+  copiedIdToast: '已复制图元 ID: {{id}}',
+  copyFailedToast: '复制失败，请尝试手动复制: {{id}}',
 
   // 多态图元专属卡片
   noElementSelected: '未选中图元',

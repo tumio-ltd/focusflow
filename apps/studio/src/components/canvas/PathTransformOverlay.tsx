@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { ElementBox, ElementPath } from '@focusflow/dsl';
 import { Trash2, X, Activity, Waves, PenTool } from 'lucide-react';
+import { CopyableIdBadge } from '@/components/ui';
 import { useEditorStore, useProjectStore } from '@/stores';
 import { useCanvasScale } from './InfiniteCanvas';
 import { PATH_FLOW_MODES } from '@/utils/pathModes';
@@ -184,34 +185,69 @@ export function PathTransformOverlay({
                 dragState.targetAnchor?.anchorName === anchor.anchorName;
 
               return (
-                <g key={`anchor-${anchor.boxId}-${anchor.anchorName}-${idx}`}>
-                  {/* Subtle target ring */}
-                  <circle
-                    cx={anchor.x}
-                    cy={anchor.y}
-                    r={isTarget ? 14 : 7}
-                    fill={isTarget ? '#38bdf8' : '#0f172a'}
-                    stroke={isTarget ? '#ffffff' : '#38bdf8'}
-                    strokeWidth={isTarget ? 3 : 1.5}
-                    strokeOpacity={isTarget ? 1 : 0.6}
-                    className={isTarget ? 'animate-ping' : ''}
-                  />
-                  <circle
-                    cx={anchor.x}
-                    cy={anchor.y}
-                    r={isTarget ? 8 : 4}
-                    fill={isTarget ? '#ffffff' : '#38bdf8'}
-                  />
+                <g
+                  key={`anchor-${anchor.boxId}-${anchor.anchorName}-${idx}`}
+                  data-testid={`anchor-group-${anchor.boxId}-${anchor.anchorName}`}
+                  data-anchor-target={isTarget ? 'true' : undefined}
+                >
+                  {isTarget ? (
+                    <g data-testid="anchor-target-active">
+                      {/* 1. 原地雷达水波圈：直接扩散几何半径 r 与透明度，圆心绝对锁定 (anchor.x, anchor.y) */}
+                      <circle
+                        cx={anchor.x}
+                        cy={anchor.y}
+                        r={12}
+                        fill="none"
+                        stroke="#38bdf8"
+                        strokeWidth={2.5}
+                      >
+                        <animate
+                          attributeName="r"
+                          from="8"
+                          to="24"
+                          dur="1.2s"
+                          repeatCount="indefinite"
+                        />
+                        <animate
+                          attributeName="opacity"
+                          from="1"
+                          to="0"
+                          dur="1.2s"
+                          repeatCount="indefinite"
+                        />
+                      </circle>
+                      {/* 2. 核心吸附实心点 */}
+                      <circle
+                        cx={anchor.x}
+                        cy={anchor.y}
+                        r={6}
+                        fill="#ffffff"
+                        stroke="#38bdf8"
+                        strokeWidth={2}
+                      />
+                    </g>
+                  ) : (
+                    /* 未命中备选锚点：低调微型点 */
+                    <circle
+                      cx={anchor.x}
+                      cy={anchor.y}
+                      r={5}
+                      fill="#0f172a"
+                      stroke="#38bdf8"
+                      strokeWidth={1.5}
+                      strokeOpacity={0.5}
+                    />
+                  )}
                   {isTarget && (
                     <text
                       x={anchor.x}
-                      y={anchor.y - 18}
+                      y={anchor.y - 16}
                       textAnchor="middle"
                       fill="#38bdf8"
-                      fontSize="12"
+                      fontSize="11"
                       fontFamily="monospace"
                       fontWeight="bold"
-                      className="drop-shadow-md"
+                      className="drop-shadow-md select-none"
                     >
                       {anchor.boxId}.{anchor.anchorName}
                     </text>
@@ -465,13 +501,12 @@ export function PathTransformOverlay({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-1 bg-slate-900/95 border border-cyan-500/40 rounded-xl px-2 py-1 shadow-2xl backdrop-blur-md text-xs">
-              {/* Path ID Badge - 限制最大宽度并截字，支持 hover 查看全称 */}
-              <span
-                className="text-[10px] font-mono text-cyan-300 font-bold px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30 max-w-[96px] truncate"
-                title={selectedPath.id}
-              >
-                {selectedPath.id}
-              </span>
+              {/* Path ID Badge - 交互式可复制胶囊徽章 */}
+              <CopyableIdBadge
+                id={selectedPath.id}
+                maxTextWidth="max-w-[96px]"
+                className="bg-cyan-950/60 border-cyan-500/30 text-cyan-300"
+              />
 
               <div className="w-px h-3.5 bg-slate-700 mx-0.5 shrink-0" />
 

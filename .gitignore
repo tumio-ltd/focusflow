@@ -60,6 +60,8 @@ design/LOCAL_AGENT_ENV.md
 .env
 .env.*
 !.env.example
+!.env.local.example
+!.env.production.example
 
 # Temporary scratch files
 temp/

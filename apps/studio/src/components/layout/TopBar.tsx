@@ -18,7 +18,8 @@ import {
   Laptop,
   SlidersHorizontal,
   Code2,
-  Sparkles
+  Sparkles,
+  Share2,
 } from 'lucide-react';
 import { Button, Badge, Tooltip, BrandLogo } from '@/components/ui';
 
@@ -36,6 +37,7 @@ export interface TopBarProps {
   onOpenImport?: () => void;
   onOpenAutoTour?: () => void;
   onOpenAudience?: () => void;
+  onOpenShare?: () => void;
   onOpenDslEditor?: () => void;
   showPlayerControls?: boolean;
   onTogglePlayerControls?: () => void;
@@ -56,6 +58,7 @@ function TopBarComponent({
   onOpenImport,
   onOpenAutoTour,
   onOpenAudience,
+  onOpenShare,
   onOpenDslEditor,
   showPlayerControls = false,
   onTogglePlayerControls,
@@ -316,6 +319,20 @@ function TopBarComponent({
           <Button size="sm" variant="secondary" onClick={onSave} className="gap-1.5 h-8 px-2 sm:px-2.5">
             <Save className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="hidden xl:inline">{t('saveDraft')}</span>
+          </Button>
+        </Tooltip>
+
+        {/* 云端分享与知识库嵌入 (WBS 10.2) */}
+        <Tooltip content="生成只读分享短链与 iframe 知识库嵌入代码" position="bottom" align="end">
+          <Button 
+            size="sm" 
+            variant="outline" 
+            data-testid="share-btn"
+            onClick={onOpenShare} 
+            className="gap-1.5 h-8 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 px-2.5 font-medium shadow-sm"
+          >
+            <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">分享</span>
           </Button>
         </Tooltip>
 

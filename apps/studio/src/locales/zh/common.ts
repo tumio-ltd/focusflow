@@ -113,6 +113,10 @@ export default {
   selectPresetModel: '选择预设模型',
   securityPromiseTitle: 'FocusFlow 端侧零信任凭据安全承诺',
   confirmPurge: '确认抹除',
+  sceneDeletedToast: '已删除场景 "{{title}}"',
+  sceneDuplicatedToast: '已复制场景为 "{{title}} (副本)"',
+  sceneRestored: '已恢复场景',
+  duplicateUndone: '已撤销复制',
 } as const;
 
 

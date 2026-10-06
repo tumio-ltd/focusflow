@@ -22,7 +22,9 @@ import {
   ExportModal,
   DslEditorModal,
   AutoTourModal,
+  ShareModal,
 } from '@/components/modals';
+import { AudiencePlayerView } from '@/components/player/AudiencePlayerView';
 import { Toaster, toast } from '@/components/ui';
 import { AIVoiceoverSettingsModal } from '@/components/timeline/AIVoiceoverSettingsModal';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
@@ -45,7 +47,7 @@ import { startCleanScreenRecording, downloadVideoBlob, type RecordingSession } f
 import type { TTSPreviewInfo } from '@/components/layout/RightInspector';
 import '@focusflow/player/styles.css';
 
-export default function App() {
+function StudioWorkbench() {
   const { t, i18n } = useTranslation(['audio', 'common']);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<FocusFlowPlayer | null>(null);
@@ -53,6 +55,7 @@ export default function App() {
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
   const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false);
   const [isAudienceModalOpen, setIsAudienceModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
   const [isAutoTourModalOpen, setIsAutoTourModalOpen] = useState(false);
@@ -457,6 +460,46 @@ export default function App() {
       playerRef.current.goTo(index);
     }
   };
+
+  const handleDuplicateScene = useCallback((idx: number) => {
+    const targetScene = dsl.scenes[idx];
+    const sceneTitle = targetScene?.title || `0${idx + 1}`;
+    duplicateScene(idx);
+    setActiveSceneIndex(idx + 1);
+
+    toast(t('common:sceneDuplicatedToast', { title: sceneTitle, defaultValue: `已复制场景为 "${sceneTitle} (副本)"` }), {
+      duration: 4000,
+      action: {
+        label: t('common:undo', '撤销'),
+        onClick: () => {
+          useProjectStore.getState().undo();
+          setActiveSceneIndex(idx);
+          toast.success(t('common:duplicateUndone', '已撤销复制'));
+        },
+      },
+    });
+  }, [dsl.scenes, duplicateScene, t]);
+
+  const handleDeleteScene = useCallback((idx: number) => {
+    const targetScene = dsl.scenes[idx];
+    const sceneTitle = targetScene?.title || `0${idx + 1}`;
+    deleteScene(idx);
+    if (activeSceneIndex >= dsl.scenes.length - 1) {
+      setActiveSceneIndex(Math.max(0, dsl.scenes.length - 2));
+    }
+
+    toast(t('common:sceneDeletedToast', { title: sceneTitle, defaultValue: `已删除场景 "${sceneTitle}"` }), {
+      duration: 5000,
+      action: {
+        label: t('common:undo', '撤销'),
+        onClick: () => {
+          useProjectStore.getState().undo();
+          setActiveSceneIndex(idx);
+          toast.success(t('common:sceneRestored', '已恢复场景'));
+        },
+      },
+    });
+  }, [dsl.scenes, deleteScene, activeSceneIndex, t]);
 
   const handleSeek = (timeMs: number) => {
     if (playerRef.current) {
@@ -939,6 +982,7 @@ export default function App() {
             onOpenImport={() => setIsUploadModalOpen(true)}
             onOpenAutoTour={() => setIsAutoTourModalOpen(true)}
             onOpenAudience={handleOpenAudience}
+            onOpenShare={() => setIsShareModalOpen(true)}
             onOpenDslEditor={() => setIsDslModalOpen(true)}
             onSave={handleSaveDraft}
             onExport={() => setIsExportModalOpen(true)}
@@ -997,13 +1041,8 @@ export default function App() {
             activeSceneIndex={activeSceneIndex}
             onSelectScene={handleSelectScene}
             onAddScene={handleAddScene}
-            onDuplicateScene={duplicateScene}
-            onDeleteScene={(idx) => {
-              deleteScene(idx);
-              if (activeSceneIndex >= dsl.scenes.length - 1) {
-                setActiveSceneIndex(Math.max(0, dsl.scenes.length - 2));
-              }
-            }}
+            onDuplicateScene={handleDuplicateScene}
+            onDeleteScene={handleDeleteScene}
             onReorderScenes={(source, target) => {
               reorderScenes(source, target);
               setActiveSceneIndex(target);
@@ -1249,6 +1288,63 @@ export default function App() {
         isOpen={isAIVoiceoverSettingsOpen}
         onClose={() => setIsAIVoiceoverSettingsOpen(false)}
       />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        projectId={currentProjectId || 'local'}
+        projectTitle={dsl.meta.title}
+      />
     </>
   );
+}
+
+export default function App() {
+  const [routeInfo, setRouteInfo] = useState<{
+    view: 'workbench' | 'share' | 'embed' | 'shortlink';
+    paramId?: string;
+  }>(() => {
+    if (typeof window === 'undefined') return { view: 'workbench' };
+    const path = window.location.pathname;
+    if (path.startsWith('/share/')) {
+      return { view: 'share', paramId: path.replace(/^\/share\//, '') };
+    }
+    if (path.startsWith('/embed/')) {
+      return { view: 'embed', paramId: path.replace(/^\/embed\//, '') };
+    }
+    if (path.startsWith('/s/')) {
+      return { view: 'shortlink', paramId: path.replace(/^\/s\//, '') };
+    }
+    return { view: 'workbench' };
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path.startsWith('/share/')) {
+        setRouteInfo({ view: 'share', paramId: path.replace(/^\/share\//, '') });
+      } else if (path.startsWith('/embed/')) {
+        setRouteInfo({ view: 'embed', paramId: path.replace(/^\/embed\//, '') });
+      } else if (path.startsWith('/s/')) {
+        setRouteInfo({ view: 'shortlink', paramId: path.replace(/^\/s\//, '') });
+      } else {
+        setRouteInfo({ view: 'workbench' });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  if (routeInfo.view === 'share') {
+    return <AudiencePlayerView projectId={routeInfo.paramId} isEmbed={false} />;
+  }
+  if (routeInfo.view === 'embed') {
+    return <AudiencePlayerView slug={routeInfo.paramId} isEmbed={true} />;
+  }
+  if (routeInfo.view === 'shortlink') {
+    return <AudiencePlayerView slug={routeInfo.paramId} isEmbed={false} />;
+  }
+
+  return <StudioWorkbench />;
 }

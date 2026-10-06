@@ -18,7 +18,15 @@ export function Toaster({ position = 'bottom-right' }: ToasterProps) {
       position={position}
       expand={false}
       closeButton
+      richColors
       offset={{ bottom: 90, right: 24 }}
+      style={{
+        '--normal-bg': 'var(--popover)',
+        '--normal-text': 'var(--popover-foreground)',
+        '--normal-border': 'var(--border)',
+        '--border-radius': '12px',
+        '--z-index': '999999',
+      } as React.CSSProperties}
       toastOptions={{
         className: 'focusflow-toast font-sans text-xs',
       }}

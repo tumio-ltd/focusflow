@@ -35,7 +35,7 @@ import {
   Mic,
   Settings2,
 } from 'lucide-react';
-import { Input, Slider, Button } from '@/components/ui';
+import { Input, Slider, Button, CopyableIdBadge } from '@/components/ui';
 import { coordinateBus } from '@/utils/coordinateBus';
 import { calculateAdaptiveCalloutStyle } from '@/utils/calloutTypography';
 import { PATH_FLOW_MODES } from '@/utils/pathModes';
@@ -338,7 +338,9 @@ function RightInspectorComponent({
                   >
                     <div className="flex items-center gap-2 truncate flex-1 min-w-0 pr-2">
                       {getElementIcon(el.type)}
-                      <span className="truncate">{el.name}</span>
+                      <span className="truncate font-mono select-text cursor-text" title={el.id}>
+                        {el.name}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 shrink-0">
@@ -889,9 +891,7 @@ function RightInspectorComponent({
                     <span>{t('boxSettings', '方框属性')}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                      {selectedBox.id}
-                    </span>
+                    <CopyableIdBadge id={selectedBox.id} />
                     {onDeleteElement && (
                       <button
                         type="button"
@@ -906,18 +906,18 @@ function RightInspectorComponent({
                 </div>
 
                 {/* 尺寸与坐标读数 */}
-                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-background/80 p-2 rounded-lg border border-border text-muted-foreground">
+                <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono bg-background/80 p-2 rounded-lg border border-border text-muted-foreground select-text">
                   <div>
-                    X: <span className="text-foreground font-semibold">{selectedBox.x}px</span>
+                    X: <span className="text-foreground font-semibold cursor-text">{selectedBox.x}px</span>
                   </div>
                   <div>
-                    Y: <span className="text-foreground font-semibold">{selectedBox.y}px</span>
+                    Y: <span className="text-foreground font-semibold cursor-text">{selectedBox.y}px</span>
                   </div>
                   <div>
-                    W: <span className="text-foreground font-semibold">{selectedBox.width}px</span>
+                    W: <span className="text-foreground font-semibold cursor-text">{selectedBox.width}px</span>
                   </div>
                   <div>
-                    H: <span className="text-foreground font-semibold">{selectedBox.height}px</span>
+                    H: <span className="text-foreground font-semibold cursor-text">{selectedBox.height}px</span>
                   </div>
                 </div>
 
@@ -975,9 +975,19 @@ function RightInspectorComponent({
                     <Zap className="w-3.5 h-3.5 text-primary" />
                     <span>{t('pathSettings', '连线高级参数')}</span>
                   </div>
-                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                    {selectedPath.id}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <CopyableIdBadge id={selectedPath.id} />
+                    {onDeleteElement && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteElement(selectedPath.id)}
+                        className="p-1 hover:bg-destructive/20 text-muted-foreground hover:text-destructive rounded transition cursor-pointer"
+                        title={t('deleteElement', '删除图元')}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* 动画流动模式选择 */}
@@ -1097,9 +1107,7 @@ function RightInspectorComponent({
                     <span>{t('dotSettings', '脉冲圆点属性')}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                      {selectedDot.id}
-                    </span>
+                    <CopyableIdBadge id={selectedDot.id} />
                     {onDeleteElement && (
                       <button
                         type="button"
@@ -1212,9 +1220,7 @@ function RightInspectorComponent({
                     <span>{t('calloutSettings', '解说气泡属性')}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                      {selectedCallout.id}
-                    </span>
+                    <CopyableIdBadge id={selectedCallout.id} />
                     {onDeleteElement && (
                       <button
                         type="button"
@@ -1481,9 +1487,7 @@ function RightInspectorComponent({
                     <span>{t('imageSettings', '动态插图属性')}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                      {selectedImage.id}
-                    </span>
+                    <CopyableIdBadge id={selectedImage.id} />
                     {onDeleteElement && (
                       <button
                         type="button"

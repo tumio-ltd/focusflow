@@ -113,6 +113,10 @@ export default {
   selectPresetModel: 'Select Preset Model',
   securityPromiseTitle: 'FocusFlow Local Zero-Trust Security Guarantee',
   confirmPurge: 'Confirm Purge',
+  sceneDeletedToast: 'Scene "{{title}}" deleted',
+  sceneDuplicatedToast: 'Scene duplicated as "{{title}} (Copy)"',
+  sceneRestored: 'Scene restored',
+  duplicateUndone: 'Duplication undone',
 } as const;
 
 

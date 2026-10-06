@@ -411,7 +411,7 @@ function BottomTimelineComponent({
                   onSelectScene(idx);
                   useEditorStore.getState().triggerFocusCamera();
                 }}
-                className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all duration-150 ease-spring shrink-0 min-w-[180px] ${
+                className={`group relative flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all duration-150 ease-spring shrink-0 min-w-[135px] ${
                   isDragging ? 'opacity-40 scale-95 border-dashed border-primary' : ''
                 } ${isOver ? 'ring-2 ring-primary scale-105' : ''} ${
                   isActive
@@ -431,7 +431,7 @@ function BottomTimelineComponent({
                 </div>
 
                 {/* 标题与时长 */}
-                <div className="flex flex-col gap-0.5 truncate flex-1 min-w-0">
+                <div className="flex flex-col gap-0.5 truncate flex-1 min-w-0 pr-1">
                   {isEditing ? (
                     <div className="flex items-center gap-1">
                       <input
@@ -476,22 +476,30 @@ function BottomTimelineComponent({
                   </div>
                 </div>
 
-                {/* 悬停快捷操作组 (改名 / 复制 / 删除) */}
-                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition">
+                {/* 悬停快捷操作组 (改名 / 复制 / 删除) - 脱离文档流，绝对定位渐变浮层 */}
+                <div
+                  className={`absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-0.5 pl-4 pr-1 py-1 rounded-r-xl transition-opacity duration-150 pointer-events-none ${
+                    isActive
+                      ? 'bg-gradient-to-l from-card via-card/90 to-transparent'
+                      : 'bg-gradient-to-l from-muted via-muted/90 to-transparent'
+                  }`}
+                >
                   <button
+                    data-testid={`rename-scene-${idx}`}
                     onClick={(e) => handleStartEditing(idx, scene.title, e)}
-                    className="p-1 text-muted-foreground hover:text-primary transition"
+                    className="p-1 text-muted-foreground hover:text-primary transition rounded hover:bg-background/60 pointer-events-auto"
                     title="重命名场景"
                   >
                     <Edit3 className="w-3 h-3" />
                   </button>
 
                   <button
+                    data-testid={`duplicate-scene-${idx}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onDuplicateScene?.(idx);
                     }}
-                    className="p-1 text-muted-foreground hover:text-primary transition"
+                    className="p-1 text-muted-foreground hover:text-primary transition rounded hover:bg-background/60 pointer-events-auto"
                     title={t('duplicateScene')}
                   >
                     <Copy className="w-3 h-3" />
@@ -499,11 +507,12 @@ function BottomTimelineComponent({
 
                   {scenes.length > 1 && (
                     <button
+                      data-testid={`delete-scene-${idx}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteScene?.(idx);
                       }}
-                      className="p-1 text-muted-foreground hover:text-destructive transition"
+                      className="p-1 text-muted-foreground hover:text-destructive transition rounded hover:bg-destructive/10 pointer-events-auto"
                       title="删除场景"
                     >
                       <Trash2 className="w-3 h-3" />

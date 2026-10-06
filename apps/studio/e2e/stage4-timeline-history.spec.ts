@@ -145,6 +145,76 @@ async function verifySmartCameraInheritanceAndPlaybackKinematics(page: Page): Pr
   await page.waitForTimeout(300);
 }
 
+/**
+ * 7. 验证时间轴卡片悬停渐变浮层与紧凑尺寸 (ISSUE-06)
+ */
+async function verifyTimelineCardHoverOverlay(page: Page): Promise<void> {
+  const firstCard = page.locator('[data-testid="scene-card-0"]');
+  await expect(firstCard).toBeVisible();
+
+  // 验证卡片包含紧凑样式 min-w-[135px]
+  await expect(firstCard).toHaveClass(/min-w-\[135px\]/);
+
+  // 鼠标悬停卡片后：操作按钮浮层可见
+  await firstCard.hover();
+  const deleteBtn = firstCard.locator('[data-testid="delete-scene-0"]');
+  await expect(deleteBtn).toBeVisible();
+  const duplicateBtn = firstCard.locator('[data-testid="duplicate-scene-0"]');
+  await expect(duplicateBtn).toBeVisible();
+  const renameBtn = firstCard.locator('[data-testid="rename-scene-0"]');
+  await expect(renameBtn).toBeVisible();
+}
+
+/**
+ * 8. 验证场景删除与复制触发 5 秒可撤销 Toast 与一键复原 (ISSUE-07)
+ */
+async function verifySceneDeleteAndDuplicateUndoableToast(page: Page): Promise<void> {
+  const initialCards = page.locator('[data-testid^="scene-card-"]');
+  const countBefore = await initialCards.count();
+  expect(countBefore).toBeGreaterThanOrEqual(2);
+
+  // 1. 测试删除场景与 Toast 撤销
+  const cardToDelete = page.locator(`[data-testid="scene-card-${countBefore - 1}"]`);
+  await cardToDelete.hover();
+  const deleteBtn = cardToDelete.locator(`[data-testid="delete-scene-${countBefore - 1}"]`);
+  await deleteBtn.click();
+
+  // 断言场景数量减少 1
+  await expect(page.locator('[data-testid^="scene-card-"]')).toHaveCount(countBefore - 1);
+
+  // 断言弹出带 [撤销] 动作的 Toast
+  const deleteToast = page.locator('[data-sonner-toast]').filter({ hasText: /已删除场景|deleted/i });
+  await expect(deleteToast).toBeVisible();
+
+  // 点击 Toast 中的撤销按钮
+  const undoAction = deleteToast.locator('button', { hasText: /撤销|Undo/i });
+  await expect(undoAction).toBeVisible();
+  await undoAction.click();
+
+  // 断言场景被完整恢复，卡片数量恢复原样
+  await expect(page.locator('[data-testid^="scene-card-"]')).toHaveCount(countBefore);
+
+  // 2. 测试复制场景与 Toast 撤销
+  const firstCard = page.locator('[data-testid="scene-card-0"]');
+  await firstCard.hover();
+  const duplicateBtn = firstCard.locator('[data-testid="duplicate-scene-0"]');
+  await duplicateBtn.click();
+
+  // 断言场景数量增加 1
+  await expect(page.locator('[data-testid^="scene-card-"]')).toHaveCount(countBefore + 1);
+
+  // 断言复制 Toast 弹出并支持撤销
+  const dupToast = page.locator('[data-sonner-toast]').filter({ hasText: /已复制场景|duplicated/i });
+  await expect(dupToast).toBeVisible();
+
+  const undoDupAction = dupToast.locator('button', { hasText: /撤销|Undo/i });
+  await expect(undoDupAction).toBeVisible();
+  await undoDupAction.click();
+
+  // 断言撤销后副本被移除，数量还原
+  await expect(page.locator('[data-testid^="scene-card-"]')).toHaveCount(countBefore);
+}
+
 // 主测试套件：it() / test() 块调用抽离的 async helper 函数
 test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
   test.beforeEach(async ({ page }) => {
@@ -173,5 +243,13 @@ test.describe('FocusFlow Studio Stage 4 E2E Timeline & History Suite', () => {
 
   test('TC406: 验证新建场景智能继承当前视口与 Studio 画布播放平滑联动运镜', async ({ page }) => {
     await verifySmartCameraInheritanceAndPlaybackKinematics(page);
+  });
+
+  test('TC407: 验证时间轴卡片悬停渐变浮层与紧凑尺寸 (ISSUE-06)', async ({ page }) => {
+    await verifyTimelineCardHoverOverlay(page);
+  });
+
+  test('TC408: 验证场景删除与复制触发 5 秒可撤销 Toast 与一键复原 (ISSUE-07)', async ({ page }) => {
+    await verifySceneDeleteAndDuplicateUndoableToast(page);
   });
 });
