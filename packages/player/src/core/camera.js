@@ -68,4 +68,99 @@ export class CameraKinematics {
   getCurrentCamera() {
     return { ...this.currentCamera };
   }
+
+  /**
+   * Build cubic-bezier evaluation solver for standard CSS easing
+   */
+  static createCubicBezierSolver(x1, y1, x2, y2) {
+    const cx = 3.0 * x1;
+    const bx = 3.0 * (x2 - x1) - cx;
+    const ax = 1.0 - cx - bx;
+    const cy = 3.0 * y1;
+    const by = 3.0 * (y2 - y1) - cy;
+    const ay = 1.0 - cy - by;
+
+    function sampleX(t) { return ((ax * t + bx) * t + cx) * t; }
+    function sampleY(t) { return ((ay * t + by) * t + cy) * t; }
+    function sampleDerivativeX(t) { return (3.0 * ax * t + 2.0 * bx) * t + cx; }
+
+    return function solve(x) {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      let t = x;
+      for (let i = 0; i < 8; i++) {
+        const xEst = sampleX(t) - x;
+        if (Math.abs(xEst) < 1e-6) return sampleY(t);
+        const dX = sampleDerivativeX(t);
+        if (Math.abs(dX) < 1e-6) break;
+        t -= xEst / dX;
+      }
+      let t0 = 0.0, t1 = 1.0;
+      t = x;
+      while (t0 < t1) {
+        const xEst = sampleX(t);
+        if (Math.abs(xEst - x) < 1e-6) return sampleY(t);
+        if (x > xEst) t0 = t;
+        else t1 = t;
+        t = (t1 + t0) * 0.5;
+      }
+      return sampleY(t);
+    };
+  }
+
+  /**
+   * Standard FocusFlow Easing Curve: cubic-bezier(0.4, 0.0, 0.2, 1.0)
+   */
+  static defaultEase = CameraKinematics.createCubicBezierSolver(0.4, 0.0, 0.2, 1.0);
+
+  /**
+   * Interpolate camera transformation parameters with easing
+   * @param {Object} fromCamera - Source camera state
+   * @param {Object} toCamera - Target camera state
+   * @param {number} progress - Normalized progression [0, 1]
+   * @param {Function} [easingFn] - Easing function (defaults to cubic-bezier(0.4, 0.0, 0.2, 1.0))
+   */
+  static interpolate(fromCamera, toCamera, progress, easingFn = CameraKinematics.defaultEase) {
+    const clampedProgress = Math.max(0, Math.min(1, progress));
+    const p = easingFn(clampedProgress);
+
+    const fZoom = Math.max(1.0, Math.min(3.5, fromCamera?.zoom || 1.0));
+    const tZoom = Math.max(1.0, Math.min(3.5, toCamera?.zoom || 1.0));
+    const zoom = fZoom + (tZoom - fZoom) * p;
+
+    const fX = fromCamera?.x || 0;
+    const tX = toCamera?.x || 0;
+    const x = fX + (tX - fX) * p;
+
+    const fY = fromCamera?.y || 0;
+    const tY = toCamera?.y || 0;
+    const y = fY + (tY - fY) * p;
+
+    return { zoom, x, y };
+  }
+
+  /**
+   * Apply frame-accurate interpolated camera without CSS transition delay
+   */
+  applyInterpolated(fromCamera, toCamera, progress, easingFn) {
+    if (this.disabled) {
+      this.wrap.style.transform = 'none';
+      this.wrap.style.setProperty('--ff-camera-zoom', '1');
+      return;
+    }
+    const interpolated = CameraKinematics.interpolate(fromCamera, toCamera, progress, easingFn);
+    const clamped = this.clampCamera(interpolated.zoom, interpolated.x, interpolated.y);
+
+    this.currentCamera = {
+      zoom: interpolated.zoom,
+      x: clamped.x,
+      y: clamped.y,
+      duration: 0,
+    };
+
+    this.wrap.style.transition = 'none';
+    this.wrap.style.transform = `scale(${interpolated.zoom.toFixed(4)}) translate(${-clamped.x}%, ${-clamped.y}%)`;
+    this.wrap.style.setProperty('--ff-camera-zoom', interpolated.zoom.toFixed(3));
+  }
 }
+

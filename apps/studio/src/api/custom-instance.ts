@@ -47,7 +47,7 @@ export function setActiveWorkspaceId(workspaceId: string): void {
 export const AXIOS_INSTANCE = axios.create({
   baseURL: (typeof process !== 'undefined' && process.env?.VITE_API_URL) ||
            (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL) ||
-           'http://localhost:3000',
+           'http://localhost:4000',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',

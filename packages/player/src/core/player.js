@@ -602,11 +602,16 @@ export class FocusFlowPlayer {
           this._activateRafInner = null;
           if (this._sceneTransitionToken !== currentToken) return;
 
-          this.animator.activate(scene.activeElements);
+          // If animate is true, or if camera has a defined duration > 0, wait for camera stabilization
+          const rawDuration = scene.camera?.duration !== undefined ? scene.camera.duration : 1.2;
+          const cameraDuration = animate ? rawDuration : (rawDuration > 0 ? rawDuration : 0);
+          this.animator.activate(scene.activeElements, { cameraDuration, animate });
         });
       });
     } else {
-      this.animator.activate(scene.activeElements);
+      const rawDuration = scene.camera?.duration !== undefined ? scene.camera.duration : 1.2;
+      const cameraDuration = animate ? rawDuration : (rawDuration > 0 ? rawDuration : 0);
+      this.animator.activate(scene.activeElements, { cameraDuration, animate });
     }
 
     // 4. Update UI Tab & Progress Bar

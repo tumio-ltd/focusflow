@@ -27,6 +27,8 @@ import {
 import { AudiencePlayerView } from '@/components/player/AudiencePlayerView';
 import { Toaster, toast } from '@/components/ui';
 import { AIVoiceoverSettingsModal } from '@/components/timeline/AIVoiceoverSettingsModal';
+import { SubscriptionModal } from '@/components/billing';
+import { getActiveWorkspaceId } from '@/api/custom-instance';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import { type ImageMeta, parseImageUrl } from '@/utils/imageDecoder';
 import { type ArchitectureTemplate, getTemplateTitle, getSceneVoiceoverScript, getCalloutTitle, getCalloutDesc } from '@/templates';
@@ -60,6 +62,22 @@ function StudioWorkbench() {
   const [isDslModalOpen, setIsDslModalOpen] = useState(false);
   const [isAutoTourModalOpen, setIsAutoTourModalOpen] = useState(false);
   const [isAIVoiceoverSettingsOpen, setIsAIVoiceoverSettingsOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const sp = new URLSearchParams(window.location.search);
+      return (
+        path === '/pricing' ||
+        path === '/checkout' ||
+        sp.has('pricing') ||
+        sp.has('subscription') ||
+        sp.has('upgrade') ||
+        sp.has('checkout') ||
+        sp.has('preview_region')
+      );
+    }
+    return false;
+  });
   const [isSingleTtsLoading, setIsSingleTtsLoading] = useState(false);
   const [ttsPreview, setTtsPreview] = useState<TTSPreviewInfo | null>(null);
   const [isRecordingVideo, setIsRecordingVideo] = useState(false);
@@ -984,6 +1002,7 @@ function StudioWorkbench() {
             onOpenAudience={handleOpenAudience}
             onOpenShare={() => setIsShareModalOpen(true)}
             onOpenDslEditor={() => setIsDslModalOpen(true)}
+            onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
             onSave={handleSaveDraft}
             onExport={() => setIsExportModalOpen(true)}
           />
@@ -1295,6 +1314,16 @@ function StudioWorkbench() {
         projectId={currentProjectId || 'local'}
         projectTitle={dsl.meta.title}
       />
+
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        workspaceId={getActiveWorkspaceId() || 'ws_default'}
+        onClose={() => setIsSubscriptionModalOpen(false)}
+        onSuccess={() => {
+          toast.success('商业套餐订购成功！专属特权已即刻生效。');
+          setIsSubscriptionModalOpen(false);
+        }}
+      />
     </>
   );
 }
@@ -1308,6 +1337,9 @@ export default function App() {
     const path = window.location.pathname;
     if (path.startsWith('/share/')) {
       return { view: 'share', paramId: path.replace(/^\/share\//, '') };
+    }
+    if (path.startsWith('/p/')) {
+      return { view: 'share', paramId: path.replace(/^\/p\//, '') };
     }
     if (path.startsWith('/embed/')) {
       return { view: 'embed', paramId: path.replace(/^\/embed\//, '') };
@@ -1323,6 +1355,8 @@ export default function App() {
       const path = window.location.pathname;
       if (path.startsWith('/share/')) {
         setRouteInfo({ view: 'share', paramId: path.replace(/^\/share\//, '') });
+      } else if (path.startsWith('/p/')) {
+        setRouteInfo({ view: 'share', paramId: path.replace(/^\/p\//, '') });
       } else if (path.startsWith('/embed/')) {
         setRouteInfo({ view: 'embed', paramId: path.replace(/^\/embed\//, '') });
       } else if (path.startsWith('/s/')) {

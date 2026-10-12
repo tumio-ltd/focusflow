@@ -20,6 +20,7 @@ import {
   Code2,
   Sparkles,
   Share2,
+  Crown,
 } from 'lucide-react';
 import { Button, Badge, Tooltip, BrandLogo } from '@/components/ui';
 
@@ -39,6 +40,7 @@ export interface TopBarProps {
   onOpenAudience?: () => void;
   onOpenShare?: () => void;
   onOpenDslEditor?: () => void;
+  onOpenSubscription?: () => void;
   showPlayerControls?: boolean;
   onTogglePlayerControls?: () => void;
   isSaved?: boolean;
@@ -60,6 +62,7 @@ function TopBarComponent({
   onOpenAudience,
   onOpenShare,
   onOpenDslEditor,
+  onOpenSubscription,
   showPlayerControls = false,
   onTogglePlayerControls,
   isSaved = true,
@@ -323,18 +326,34 @@ function TopBarComponent({
         </Tooltip>
 
         {/* 云端分享与知识库嵌入 (WBS 10.2) */}
-        <Tooltip content="生成只读分享短链与 iframe 知识库嵌入代码" position="bottom" align="end">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            data-testid="share-btn"
-            onClick={onOpenShare} 
-            className="gap-1.5 h-8 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 px-2.5 font-medium shadow-sm"
-          >
-            <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">分享</span>
-          </Button>
-        </Tooltip>
+        {/* 推送到 github 前先隐藏 */}
+        {/*<Tooltip content="生成只读分享短链与 iframe 知识库嵌入代码" position="bottom" align="end">*/}
+        {/*  <Button */}
+        {/*    size="sm" */}
+        {/*    variant="outline" */}
+        {/*    data-testid="share-btn"*/}
+        {/*    onClick={onOpenShare} */}
+        {/*    className="gap-1.5 h-8 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:border-cyan-400 px-2.5 font-medium shadow-sm"*/}
+        {/*  >*/}
+        {/*    <Share2 className="w-3.5 h-3.5 text-cyan-400" />*/}
+        {/*    <span className="hidden sm:inline">分享</span>*/}
+        {/*  </Button>*/}
+        {/*</Tooltip>*/}
+
+        {/* 商业套餐与订阅 (WBS 16) */}
+        {/* 推送到 github 前先隐藏 */}
+        {/*<Tooltip content="选购商业套餐与专属配额扩容" position="bottom" align="end">*/}
+        {/*  <Button*/}
+        {/*    size="sm"*/}
+        {/*    variant="outline"*/}
+        {/*    data-testid="subscription-btn"*/}
+        {/*    onClick={onOpenSubscription}*/}
+        {/*    className="gap-1.5 h-8 border-amber-500/40 text-amber-400 hover:bg-amber-500/10 hover:border-amber-400 px-2 sm:px-2.5 font-medium shadow-sm"*/}
+        {/*  >*/}
+        {/*    <Crown className="w-3.5 h-3.5 text-amber-400" />*/}
+        {/*    <span className="hidden sm:inline">商业套餐</span>*/}
+        {/*  </Button>*/}
+        {/*</Tooltip>*/}
 
         {/* 导出中心 */}
         <Tooltip content={t('exportHtmlTip')} shortcut="⌘E" position="bottom" align="end">

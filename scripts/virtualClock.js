@@ -53,6 +53,24 @@
     return virtualTimeMs;
   };
 
+  // Set virtual time directly for chunk-based seeking
+  window.__setVirtualTime = function (targetTimeMs) {
+    virtualTimeMs = targetTimeMs;
+
+    const currentCallbacks = Array.from(rafCallbacks.entries());
+    rafCallbacks.clear();
+
+    for (const [_, cb] of currentCallbacks) {
+      try {
+        cb(virtualTimeMs);
+      } catch (err) {
+        console.error('[VirtualClock] Error executing rAF callback:', err);
+      }
+    }
+
+    return virtualTimeMs;
+  };
+
   window.__getVirtualTime = function () {
     return virtualTimeMs;
   };

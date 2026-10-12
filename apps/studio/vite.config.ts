@@ -14,6 +14,16 @@ export default defineConfig({
   },
   server: {
     port: 5174,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:4000',
+        ws: true,
+      },
+    },
     headers: {
       'Content-Security-Policy': "frame-ancestors 'self' https://*.feishu.cn https://*.notion.so https://*.yuque.com http://localhost:* http://127.0.0.1:*",
     },

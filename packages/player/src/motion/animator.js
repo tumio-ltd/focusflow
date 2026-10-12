@@ -45,9 +45,11 @@ export class MotionAnimator {
   /**
    * Activates elements for the current scene step
    * @param {Object} activeElements - { boxes?: string[], paths?: string[], dots?: string[], images?: string[], callouts?: Object[] }
+   * @param {Object} [options] - Optional transition parameters { cameraDuration?: number, animate?: boolean }
    */
-  activate(activeElements = {}) {
+  activate(activeElements = {}, options = {}) {
     const { boxes = [], paths = [], dots = [], images = [], callouts = [] } = activeElements;
+    const { cameraDuration = 1.2, animate = true } = options;
 
     // 1. Animate Active Boxes
     boxes.forEach((boxId, index) => {
@@ -132,13 +134,17 @@ export class MotionAnimator {
       }
     });
 
-    // 5. Staggered Callouts Arrival
+    // 5. Staggered Callouts Arrival (Camera-First Orchestration)
+    // When camera is moving/transitioning, delay callouts until camera settles (T_base = cameraDuration)
+    // If no camera duration (e.g. 0s or instantaneous jump), use an immediate crisp delay (0.15s)
+    const baseCalloutDelay = cameraDuration > 0 ? cameraDuration : 0.15;
+
     callouts.forEach((calloutData, index) => {
       const calloutId = typeof calloutData === 'string' ? calloutData : calloutData?.id;
       const meta = this.calloutsMap.get(calloutId);
       if (meta && meta.dom) {
         const el = meta.dom;
-        const delay = 0.45 + index * 0.25; // Stagger formula: T_delay = T_base + i * Delta_T
+        const delay = Number((baseCalloutDelay + index * 0.2).toFixed(3)); // Stagger formula: T_delay = T_camera + i * Delta_T
 
         // Check if position is near right edge (left > 70%) and adjust origin
         const rawLeft = meta.data?.position?.left || (typeof calloutData === 'object' ? calloutData?.position?.left : '50%');
@@ -149,7 +155,8 @@ export class MotionAnimator {
           el.style.transformOrigin = 'left center';
         }
 
-        el.style.transition = `opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
+        // Crisp 0.4s fade-in & slide-up once camera motion has fully stabilized
+        el.style.transition = `opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
         el.classList.add('active');
         el.style.opacity = '1';
       }

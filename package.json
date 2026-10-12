@@ -32,18 +32,7 @@
     "changeset": "changeset",
     "version:packages": "changeset version",
     "release": "changeset publish",
-    "sync:models": "node scripts/sync-models.mjs",
-    "sync:r2": "node scripts/sync-r2.mjs",
-    "sync:r2:dry": "node scripts/sync-r2.mjs --dry-run",
-    "sync:r2:all": "node scripts/sync-r2.mjs --all",
-    "launch:pack": "node tooling/launch-ops/scripts/bundle-launch-pack.mjs",
-    "launch:publish-ruanyf": "node tooling/launch-ops/scripts/publish-ruanyf.mjs",
-    "launch:publish-ruanyf:dry": "node tooling/launch-ops/scripts/publish-ruanyf.mjs --dry-run",
-    "launch:postiz": "node tooling/launch-ops/scripts/sync-to-postiz.mjs",
-    "launch:postiz:dry": "node tooling/launch-ops/scripts/sync-to-postiz.mjs --dry-run",
-    "launch:monitor-hn": "node tooling/launch-ops/scripts/monitor-hn.mjs",
-    "launch:monitor-reddit": "node tooling/launch-ops/scripts/monitor-reddit.mjs",
-    "launch:reply": "node tooling/launch-ops/scripts/reply-copilot.mjs"
+    "sync:models": "node scripts/sync-models.mjs"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1136.0",

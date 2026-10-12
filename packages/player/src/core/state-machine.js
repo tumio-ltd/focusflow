@@ -18,6 +18,7 @@ export class StateMachine {
     this.sceneStartTime = 0;
     this.pausedOffset = 0;
     this.tickTimer = null;
+    this._hasInitialized = false;
   }
 
   get currentScene() {
@@ -56,6 +57,7 @@ export class StateMachine {
 
   goTo(index, animate = true) {
     if (index < 0 || index >= this.scenes.length) return;
+    this._hasInitialized = true;
     this.curIndex = index;
     this.pausedOffset = 0;
     this.sceneStartTime = 0;
@@ -90,10 +92,15 @@ export class StateMachine {
     const totalDur = accum;
     const isEnded = clampedTime >= totalDur && totalDur > 0;
 
+    const sceneChanged = this.curIndex !== targetIdx || !this._hasInitialized;
+    this._hasInitialized = true;
     this.curIndex = targetIdx;
     this.pausedOffset = localOffset;
     this.sceneStartTime = (typeof performance !== 'undefined' ? performance.now() : Date.now()) - this.pausedOffset;
-    this.onStepChange(this.curIndex, this.scenes[this.curIndex], false);
+
+    if (sceneChanged) {
+      this.onStepChange(this.curIndex, this.scenes[this.curIndex], false);
+    }
 
     if (isEnded) {
       this.onEnded();
@@ -210,5 +217,6 @@ export class StateMachine {
     this.stopPlayTimer();
     this.pausedOffset = 0;
     this.sceneStartTime = 0;
+    this._hasInitialized = false;
   }
 }
