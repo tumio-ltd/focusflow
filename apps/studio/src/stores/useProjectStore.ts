@@ -72,13 +72,16 @@ export function sanitizeDSL(dsl: FocusFlowDSL): FocusFlowDSL {
 
 export interface ProjectState {
   dsl: FocusFlowDSL;
+  activeProjectId: string | null;
   isDirty: boolean;
   past: FocusFlowDSL[];
   future: FocusFlowDSL[];
 
   // Actions
+  loadProjectDSL: (projectId: string, dsl: FocusFlowDSL) => void;
+  resetHistory: () => void;
   setDSL: (dsl: FocusFlowDSL) => void;
-  ingestNewAsset: (meta: ImageMeta) => void;
+  ingestNewAsset: (meta: ImageMeta, newProjectId?: string) => void;
   updateMetaTitle: (title: string) => void;
   updateSceneCamera: (sceneIndex: number, camera: Partial<SceneStep['camera']>) => void;
   updateSceneTitle: (sceneIndex: number, title: string) => void;
@@ -104,7 +107,7 @@ export interface ProjectState {
   ) => void;
   updateBoxBounds: (
     boxId: string,
-    bounds: { x: number; y: number; width: number; height: number },
+    bounds: { x: number; y: number; width: number; height: number; rx?: number; ry?: number },
   ) => void;
   updateDotPosition: (dotId: string, position: { cx: number; cy: number }) => void;
   updateCallout: (calloutId: string, updates: Partial<CalloutItem>) => void;
@@ -174,10 +177,26 @@ function pushHistory(state: ProjectState, nextDSL: FocusFlowDSL): Partial<Projec
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
+  activeProjectId: null,
   dsl: defaultInitialDSL,
   isDirty: false,
   past: [],
   future: [],
+
+  loadProjectDSL: (projectId, dsl) =>
+    set(() => ({
+      activeProjectId: projectId,
+      dsl: sanitizeDSL(dsl),
+      past: [],
+      future: [],
+      isDirty: false,
+    })),
+
+  resetHistory: () =>
+    set(() => ({
+      past: [],
+      future: [],
+    })),
 
   setDSL: (dsl) => set((state) => pushHistory(state, sanitizeDSL(dsl))),
 
@@ -221,8 +240,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       return pushHistory(state, nextDSL);
     }),
 
-  ingestNewAsset: (meta) =>
-    set((state) => {
+  ingestNewAsset: (meta, newProjectId) =>
+    set(() => {
       const nextDSL: FocusFlowDSL = {
         meta: {
           title: meta.fileName || '全新架构演示项目',
@@ -252,7 +271,13 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
           },
         ],
       };
-      return pushHistory(state, nextDSL);
+      return {
+        activeProjectId: newProjectId || null,
+        dsl: nextDSL,
+        past: [],
+        future: [],
+        isDirty: false,
+      };
     }),
 
   updateMetaTitle: (title) =>
@@ -671,6 +696,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
                 y: Math.round(bounds.y),
                 width: Math.round(bounds.width),
                 height: Math.round(bounds.height),
+                ...(bounds.rx !== undefined ? { rx: bounds.rx, ry: bounds.ry ?? bounds.rx } : {}),
               }
             : b,
         ) || [];

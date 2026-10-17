@@ -28,6 +28,8 @@ import { AudiencePlayerView } from '@/components/player/AudiencePlayerView';
 import { Toaster, toast } from '@/components/ui';
 import { AIVoiceoverSettingsModal } from '@/components/timeline/AIVoiceoverSettingsModal';
 import { SubscriptionModal } from '@/components/billing';
+import { PricingPage } from '@/pages/pricing';
+import { BillingPage } from '@/pages/billing';
 import { getActiveWorkspaceId } from '@/api/custom-instance';
 import { useEditorStore, useProjectStore, useStorageStore } from '@/stores';
 import { type ImageMeta, parseImageUrl } from '@/utils/imageDecoder';
@@ -99,7 +101,6 @@ function StudioWorkbench() {
   const setActiveSceneIndex = useEditorStore((s) => s.setActiveSceneIndex);
   const isPlaying = useEditorStore((s) => s.isPlaying);
   const setIsPlaying = useEditorStore((s) => s.setIsPlaying);
-  const togglePlay = useEditorStore((s) => s.togglePlay);
   const isSmartSnapEnabled = useEditorStore((s) => s.isSmartSnapEnabled);
   const toggleSmartSnap = useEditorStore((s) => s.toggleSmartSnap);
   const isCrosshairEnabled = useEditorStore((s) => s.isCrosshairEnabled);
@@ -114,6 +115,7 @@ function StudioWorkbench() {
     undo,
     redo,
     setDSL,
+    loadProjectDSL,
     ingestNewAsset,
     updateMetaTitle,
     updateSceneCamera,
@@ -158,16 +160,17 @@ function StudioWorkbench() {
       if (storageState.currentProjectId) {
         const record = await openProject(storageState.currentProjectId);
         if (record?.dsl) {
-          setDSL(record.dsl);
+          loadProjectDSL(record.id, record.dsl);
         }
       } else if (storageState.projectList.length === 0) {
         // 创建初始示范工程
         const currentDSL = useProjectStore.getState().dsl;
         const initialId = await createProject(currentDSL.meta.title, currentDSL);
+        loadProjectDSL(initialId, currentDSL);
         console.log('Initialized first local project:', initialId);
       }
     });
-  }, [loadProjects, openProject, createProject, setDSL]);
+  }, [loadProjects, openProject, createProject, loadProjectDSL]);
 
   // 2. 500ms 防抖自动存盘至 IndexedDB
   useEffect(() => {
@@ -178,6 +181,15 @@ function StudioWorkbench() {
     }
 
     saveTimeoutRef.current = setTimeout(async () => {
+      // 🌟 安全熔断门禁：确保当前正在保存的 DSL 确实归属于当前 currentProjectId，彻底避免跨工程覆盖
+      const storeActiveId = useProjectStore.getState().activeProjectId;
+      if (storeActiveId && storeActiveId !== currentProjectId) {
+        console.warn(
+          `[Security Interceptor] Auto-save aborted: Project ID mismatch! Store has "${storeActiveId}", Storage has "${currentProjectId}".`
+        );
+        return;
+      }
+
       await saveProject(currentProjectId, dsl);
       markSaved();
       console.log('Auto-saved project to IndexedDB at', new Date().toLocaleTimeString());
@@ -574,6 +586,13 @@ function StudioWorkbench() {
 
   const handleSaveDraft = async () => {
     if (currentProjectId) {
+      const storeActiveId = useProjectStore.getState().activeProjectId;
+      if (storeActiveId && storeActiveId !== currentProjectId) {
+        console.warn(
+          `[Security Interceptor] Manual save aborted: Project ID mismatch! Store has "${storeActiveId}", Storage has "${currentProjectId}".`
+        );
+        return;
+      }
       await saveProject(currentProjectId, dsl);
       markSaved();
       toast.success(t('common:projectSaved', '🎉 工程已实时存入本地 IndexedDB！'));
@@ -581,6 +600,18 @@ function StudioWorkbench() {
   };
 
   const handleAssetImported = async (meta: ImageMeta, options?: { enableAutoTour?: boolean }) => {
+    // 1. 若当前旧工程有未落盘修改，立即清除防抖定时器并同步 flush 保存旧工程
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const currentId = useStorageStore.getState().currentProjectId;
+    const isDirty = useProjectStore.getState().isDirty;
+    if (isDirty && currentId) {
+      await saveProject(currentId, useProjectStore.getState().dsl);
+      markSaved();
+    }
+
     if (options?.enableAutoTour) {
       const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
       const defaultTitle = currentLang === 'en' ? 'New Architecture Showcase' : '全新架构演示项目';
@@ -595,17 +626,18 @@ function StudioWorkbench() {
           locale: currentLang,
         }
       );
-      setDSL(tourDSL);
-      setActiveSceneIndex(0);
       const newProjectId = await createProject(initialTitle, tourDSL, meta.blob);
+      loadProjectDSL(newProjectId, tourDSL);
+      setActiveSceneIndex(0);
       console.log('Created project with auto tour:', newProjectId);
       toast.success(t('common:autoTourSuccess', '✨ 已为您自动生成 4 幕电影级导览与流光'));
     } else {
       ingestNewAsset(meta);
       setActiveSceneIndex(0);
 
-      // 立即新建并保存工程
+      // 立即新建并保存工程，然后绑定 ID 刷新纯净状态
       const newProjectId = await createProject(meta.fileName, useProjectStore.getState().dsl, meta.blob);
+      loadProjectDSL(newProjectId, useProjectStore.getState().dsl);
       console.log('Created project for imported asset:', newProjectId);
     }
   };
@@ -618,14 +650,39 @@ function StudioWorkbench() {
   };
 
   const handleOpenProjectById = async (id: string) => {
+    // 1. 若当前旧工程有未入库修改，立即清除防抖定时器并同步 flush 保存旧工程
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const currentId = useStorageStore.getState().currentProjectId;
+    const isDirty = useProjectStore.getState().isDirty;
+    if (isDirty && currentId) {
+      await saveProject(currentId, useProjectStore.getState().dsl);
+      markSaved();
+    }
+
+    // 2. 打开新工程并清空历史栈
     const record = await openProject(id);
     if (record?.dsl) {
-      setDSL(record.dsl);
+      loadProjectDSL(record.id, record.dsl);
       setActiveSceneIndex(0);
     }
   };
 
   const handleApplyTemplate = async (tpl: ArchitectureTemplate) => {
+    // 1. 若当前工程有未入库修改，立即清除防抖定时器并同步 flush 保存旧工程
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+    const currentId = useStorageStore.getState().currentProjectId;
+    const isDirty = useProjectStore.getState().isDirty;
+    if (isDirty && currentId) {
+      await saveProject(currentId, useProjectStore.getState().dsl);
+      markSaved();
+    }
+
     const currentLang = (i18n.language || 'zh').startsWith('en') ? 'en' : 'zh';
     const initialTitle = getTemplateTitle(tpl, currentLang);
 
@@ -677,7 +734,9 @@ function StudioWorkbench() {
       scenes: clonedScenes,
     };
 
-    setDSL(clonedDSL);
+    // 2. 先创建新工程获得 ID，再用 loadProjectDSL 初始化为全新工程并彻底重置历史栈
+    const newProjectId = await createProject(initialTitle, clonedDSL);
+    loadProjectDSL(newProjectId, clonedDSL);
     setActiveSceneIndex(0);
 
     // 自动嗅探模板底图真实尺寸校准 Viewport
@@ -692,8 +751,6 @@ function StudioWorkbench() {
       }
     }
 
-    // 创建对应的新工程
-    const newProjectId = await createProject(initialTitle, clonedDSL);
     console.log('Created project from template:', newProjectId, initialTitle);
   };
 
@@ -1330,11 +1387,17 @@ function StudioWorkbench() {
 
 export default function App() {
   const [routeInfo, setRouteInfo] = useState<{
-    view: 'workbench' | 'share' | 'embed' | 'shortlink';
+    view: 'workbench' | 'share' | 'embed' | 'shortlink' | 'pricing' | 'billing';
     paramId?: string;
   }>(() => {
     if (typeof window === 'undefined') return { view: 'workbench' };
     const path = window.location.pathname;
+    if (path === '/pricing' || path.startsWith('/pricing/')) {
+      return { view: 'pricing' };
+    }
+    if (path === '/billing' || path.startsWith('/billing/')) {
+      return { view: 'billing' };
+    }
     if (path.startsWith('/share/')) {
       return { view: 'share', paramId: path.replace(/^\/share\//, '') };
     }
@@ -1353,7 +1416,11 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path.startsWith('/share/')) {
+      if (path === '/pricing' || path.startsWith('/pricing/')) {
+        setRouteInfo({ view: 'pricing' });
+      } else if (path === '/billing' || path.startsWith('/billing/')) {
+        setRouteInfo({ view: 'billing' });
+      } else if (path.startsWith('/share/')) {
         setRouteInfo({ view: 'share', paramId: path.replace(/^\/share\//, '') });
       } else if (path.startsWith('/p/')) {
         setRouteInfo({ view: 'share', paramId: path.replace(/^\/p\//, '') });
@@ -1370,6 +1437,12 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  if (routeInfo.view === 'pricing') {
+    return <PricingPage />;
+  }
+  if (routeInfo.view === 'billing') {
+    return <BillingPage />;
+  }
   if (routeInfo.view === 'share') {
     return <AudiencePlayerView projectId={routeInfo.paramId} isEmbed={false} />;
   }

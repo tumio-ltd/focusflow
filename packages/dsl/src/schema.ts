@@ -90,6 +90,19 @@ export interface DslNodeStyle {
  * 几何高亮选框节点 (DslNode / ElementBox)
  * 支持矩形、圆形、多边形
  */
+export interface DslBoxLevel {
+  level: number; // 0: 叶子卡片, 1: 父级容器
+  id?: string;
+  type?: 'rect';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rx?: number;
+  ry?: number;
+  label?: string;
+}
+
 export interface DslNode {
   id: string; // 唯一图元标识，如 "box-auth-service"
   type: 'rect' | 'circle' | 'polygon';
@@ -100,6 +113,7 @@ export interface DslNode {
   rx?: number; // X 轴圆角半径
   ry?: number; // Y 轴圆角半径
   style?: DslNodeStyle;
+  levels?: DslBoxLevel[]; // 阶段 1.7：父子多层级容器吸附候选层级
 }
 export type ElementBox = DslNode;
 export type DslBox = DslNode;

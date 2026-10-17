@@ -67,6 +67,13 @@ export function BoxDrawingOverlay({
     setDragRect((prev) => (prev ? { ...prev, currentX: coords.x, currentY: coords.y } : null));
   };
 
+  const lastClickSnapRef = useRef<{
+    time: number;
+    x: number;
+    y: number;
+    levelIndex: number;
+  } | null>(null);
+
   const handlePointerUp = (e: React.PointerEvent) => {
     if (!isDrawing || !dragRect) return;
 
@@ -82,17 +89,44 @@ export function BoxDrawingOverlay({
 
     // 单击吸附判定 (移动距离 < 10px)
     if (rawW < 10 && rawH < 10 && isSmartSnapEnabled) {
-      const snapped = globalEdgeSnapper.snapPoint(rawX, rawY);
+      const now = Date.now();
+      const last = lastClickSnapRef.current;
+      const isReclick =
+        last !== null &&
+        now - last.time < 800 &&
+        Math.hypot(rawX - last.x, rawY - last.y) <= 8;
+
+      // 阶段 1.7 特性二：快捷键修饰符直达父容器 (macOS ⌥+⇧+Click / Win Alt+Shift+Click)
+      const isForceParent = (e.altKey && e.shiftKey) || (e.metaKey && e.shiftKey);
+      const snapped = globalEdgeSnapper.snapPoint(rawX, rawY, { forceParent: isForceParent });
+
       if (snapped) {
+        let activeLevel = 0;
+        if (isForceParent && snapped.levels && snapped.levels.length > 1) {
+          activeLevel = 1;
+        } else if (isReclick && snapped.levels && snapped.levels.length > 1) {
+          activeLevel = (last.levelIndex + 1) % snapped.levels.length;
+        }
+
+        const targetData = (snapped.levels && snapped.levels[activeLevel]) || snapped;
+
+        lastClickSnapRef.current = {
+          time: now,
+          x: rawX,
+          y: rawY,
+          levelIndex: activeLevel,
+        };
+
         const newBox: ElementBox = {
-          id: snapped.id,
+          id: targetData.id,
           type: 'rect',
-          x: Math.round(snapped.x),
-          y: Math.round(snapped.y),
-          width: Math.round(snapped.width),
-          height: Math.round(snapped.height),
-          rx: 16,
-          ry: 16,
+          x: Math.round(targetData.x),
+          y: Math.round(targetData.y),
+          width: Math.round(targetData.width),
+          height: Math.round(targetData.height),
+          rx: targetData.rx ?? 16,
+          ry: targetData.rx ?? 16,
+          levels: snapped.levels,
           style: { stroke: activeDrawingColor || '#38bdf8', strokeWidth: 4, glow: true },
         };
         onBoxCreated(newBox);
@@ -102,20 +136,35 @@ export function BoxDrawingOverlay({
 
     // 拖拽矩形选框
     if (rawW >= 30 && rawH >= 20) {
-      let finalBounds = { x: rawX, y: rawY, width: rawW, height: rawH };
+      const rawBounds = { x: rawX, y: rawY, width: rawW, height: rawH };
 
-      // 若开启了智能吸附且未按住 Option / Alt，则触发自适应四边独立边缘极大值贴合
+      // 若开启了智能吸附且未按住 Option / Alt，则触发模式一增强：粗选框自适应磁吸与智能圆角拟合 (Rubberband Drag-to-Snap)
       if (isSmartSnapEnabled && !e.altKey) {
-        finalBounds = globalEdgeSnapper.snapRectBounds(finalBounds);
+        const isForceParent = (e.altKey && e.shiftKey) || (e.metaKey && e.shiftKey);
+        const snapped = globalEdgeSnapper.snapBoxBounds(rawBounds, { forceParent: isForceParent });
+        const newBox: ElementBox = {
+          id: snapped.id,
+          type: 'rect',
+          x: Math.round(snapped.x),
+          y: Math.round(snapped.y),
+          width: Math.round(snapped.width),
+          height: Math.round(snapped.height),
+          rx: snapped.rx ?? 16,
+          ry: snapped.rx ?? 16,
+          levels: snapped.levels,
+          style: { stroke: activeDrawingColor || '#38bdf8', strokeWidth: 4, glow: true },
+        };
+        onBoxCreated(newBox);
+        return;
       }
 
       const newBox: ElementBox = {
         id: `box-${Date.now().toString().slice(-4)}`,
         type: 'rect',
-        x: Math.round(finalBounds.x),
-        y: Math.round(finalBounds.y),
-        width: Math.round(finalBounds.width),
-        height: Math.round(finalBounds.height),
+        x: Math.round(rawBounds.x),
+        y: Math.round(rawBounds.y),
+        width: Math.round(rawBounds.width),
+        height: Math.round(rawBounds.height),
         rx: 16,
         ry: 16,
         style: { stroke: activeDrawingColor || '#38bdf8', strokeWidth: 4, glow: true },

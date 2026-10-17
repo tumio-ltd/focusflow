@@ -7,6 +7,8 @@ import projects from './projects';
 import templates from './templates';
 import exportLocales from './export';
 import audio from './audio';
+import pricing from './pricing';
+import billing from './billing';
 
 export default {
   common,
@@ -18,4 +20,6 @@ export default {
   templates,
   export: exportLocales,
   audio,
+  pricing,
+  billing,
 };

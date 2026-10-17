@@ -264,9 +264,16 @@ export function ProjectManagerModal({
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(t('deleteConfirm'))) {
-                          deleteProject(p.id);
+                          const wasCurrent = isCurrent;
+                          await deleteProject(p.id);
+                          if (wasCurrent) {
+                            const nextId = useStorageStore.getState().currentProjectId;
+                            if (nextId) {
+                              onSelectProject(nextId);
+                            }
+                          }
                         }
                       }}
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"

@@ -230,3 +230,26 @@ By combining Human-Computer Interaction (HCI) with Computer Vision (CV), the ult
 3. **Phase 3: Narrow-Band Auto-Refine on Drag (✅ Fully Production-Ready)**:
    * Integrated $\pm 24\text{px}$ narrow-band gradient optimizer inside [`src/hud/box-picker.js`](../src/hud/box-picker.js) on `mouseup`;
    * Delivers instantaneous ($< 1\text{ms}$), leak-proof, zero-friction bounding box snapping for all architecture diagram styles.
+
+---
+
+## 7. Operator Runtime Lifecycle & Anti-Jitter Engineering
+
+To achieve both mathematical precision and silky interaction performance, FocusFlow strictly confines the Sobel operator to **discrete event boundaries**, isolating it completely from the continuous frame render pipeline:
+
+### 7.1 Event-Driven On-Demand Execution & Deep Dormancy
+- **Transient Micro-Execution**: The Sobel operator is awakened exclusively upon discrete intent triggers (e.g., clicking a card with `Alt/Option`, or releasing a rough drag-select rectangle). The operator finishes localized sampling and gradient convolution within $< 5\text{ms}$, returning bounding box $[X, Y, W, H]$;
+- **State Crystallization & Immediate Dormancy**: Once coordinates are persisted into the DSL state store, **the Sobel operator immediately enters deep dormancy (0% CPU usage)**. Subsequent canvas pan, zoom, 60fps camera roaming, and fullscreen playback directly consume pure geometric scalars. The underlying pixel buffer (`Uint8ClampedArray`) is never touched during camera travel, ensuring zero steady-state runtime overhead.
+
+### 7.2 Differential Manipulation Strategies & Anti-Jitter Guarantees
+When transforming or repositioning canvas elements, the engine enforces strict semantic bifurcation:
+
+1. **Non-Focus Elements (Callouts, Arrows, Text, Step Badges)**:
+   - **100% Pure Geometric Planar Translation**: Movement is governed purely by pointer delta ($x_{\text{new}} = x_{\text{old}} + \Delta x, y_{\text{new}} = y_{\text{old}} + \Delta y$). **Sobel is never called**. These elements act as floating communicative props decoupled from base image gradients.
+2. **Focus Box (`ElementBox` / Rect)**:
+   - **During Pointer Drag (`pointerMove`) — Pure 1:1 Response without Jitter**:
+     - Computing Sobel gradient snapping per frame while dragging creates severe artificial magnetic resistance and jerky motion (jitter);
+     - Therefore, during active dragging, the bounding box follows pointer coordinates 1:1 with **Sobel completely silent**, guaranteeing buttery 60fps responsiveness;
+   - **On Pointer Release (`pointerUp`) — Narrow-Band Micro-Refinement**:
+     - Exclusively upon pointer release, if Smart Snap is enabled and not suppressed by holding `Alt`, a one-shot narrow-band refinement probe (`globalEdgeSnapper.snapRectBounds`) fires;
+     - It samples within $\pm 10\text{px}$ to seamlessly snap onto the nearest exterior physical border in $< 1\text{ms}$, after which the operator returns to deep dormancy.

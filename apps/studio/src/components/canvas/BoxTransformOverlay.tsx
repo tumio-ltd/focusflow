@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import type { ElementBox } from '@focusflow/dsl';
 import { useEditorStore, useProjectStore } from '@/stores';
 import { globalEdgeSnapper } from '@/utils/edgeSnapper';
-import { Trash2, X, Move, Sparkles } from 'lucide-react';
+import { Trash2, X, Move } from 'lucide-react';
 import { CopyableIdBadge } from '@/components/ui';
 
 export interface BoxTransformOverlayProps {
@@ -80,12 +80,30 @@ export function BoxTransformOverlay({
         e.preventDefault();
         deleteElement('boxes', selectedElementId);
         setSelectedElementId(null);
+      } else if (e.key === 'Tab' && selectedBox?.levels && selectedBox.levels.length > 1) {
+        e.preventDefault();
+        const currentLvl = selectedBox.levels.findIndex(
+          (lvl) =>
+            Math.abs(lvl.x - selectedBox.x) < 4 &&
+            Math.abs(lvl.y - selectedBox.y) < 4 &&
+            Math.abs(lvl.width - selectedBox.width) < 4
+        );
+        const nextLvlIndex = (currentLvl === -1 ? 0 : currentLvl + 1) % selectedBox.levels.length;
+        const nextLvl = selectedBox.levels[nextLvlIndex];
+        updateBoxBounds(selectedBox.id, {
+          x: nextLvl.x,
+          y: nextLvl.y,
+          width: nextLvl.width,
+          height: nextLvl.height,
+          rx: nextLvl.rx,
+          ry: nextLvl.rx,
+        });
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [active, selectedElementId, setSelectedElementId, deleteElement]);
+  }, [active, selectedElementId, selectedBox, setSelectedElementId, deleteElement, updateBoxBounds]);
 
   // Click on background to deselect
   const handleBackgroundPointerDown = (e: React.PointerEvent) => {
