@@ -117,6 +117,24 @@ export default {
   sceneDuplicatedToast: '已复制场景为 "{{title}} (副本)"',
   sceneRestored: '已恢复场景',
   duplicateUndone: '已撤销复制',
+
+  // TopBar 资产、工具、Pro与分享模块
+  projectAssets: '工程资产',
+  myProjects: '我的项目列表',
+  featuredTemplates: '官方精选模板',
+  newDiagramProject: '新建底图工程',
+  devToolsTip: '开发者与调试工具',
+  dslCodeEditor: '实时 DSL 代码编辑器',
+  detachedPlayerControls: '独立播放控制浮条',
+  proTitleDisabled: '云端商业与算力中心仅在云端服务模式下可用',
+  proTitleEnabled: 'FocusFlow 商业特权与算力中心',
+  commercialMenuHeader: 'FOCUSFLOW 商业服务',
+  upgradeProPricing: '升级 Pro / 定价',
+  usageDashboard: '算力与用量水表',
+  quickCheckout: '极速收银台弹窗',
+  share: '分享',
+  shareTipDisabled: '云端只读短链与嵌入仅在 Mode B 模式下生效',
+  shareTipEnabled: '生成只读分享短链与知识库嵌入代码',
 } as const;
 
 

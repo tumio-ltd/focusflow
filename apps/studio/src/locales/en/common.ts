@@ -117,6 +117,24 @@ export default {
   sceneDuplicatedToast: 'Scene duplicated as "{{title}} (Copy)"',
   sceneRestored: 'Scene restored',
   duplicateUndone: 'Duplication undone',
+
+  // TopBar Assets, Tools, Pro and Share Modules
+  projectAssets: 'Assets',
+  myProjects: 'My Projects',
+  featuredTemplates: 'Official Templates',
+  newDiagramProject: 'New Diagram Project',
+  devToolsTip: 'Developer & Debug Tools',
+  dslCodeEditor: 'Live DSL Code Editor',
+  detachedPlayerControls: 'Detached Player Controls',
+  proTitleDisabled: 'Cloud Pro & compute center is only available in Mode B (Cloud)',
+  proTitleEnabled: 'FocusFlow Pro Privileges & Compute Center',
+  commercialMenuHeader: 'FOCUSFLOW COMMERCIAL',
+  upgradeProPricing: 'Upgrade Pro / Pricing',
+  usageDashboard: 'Compute & Usage Meter',
+  quickCheckout: 'Instant Checkout Modal',
+  share: 'Share',
+  shareTipDisabled: 'Cloud read-only shortlinks & embeds only work in Mode B',
+  shareTipEnabled: 'Generate read-only share link & knowledge base embed',
 } as const;
 
 

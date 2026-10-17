@@ -230,12 +230,12 @@ function TopBarComponent({
             className="h-8 gap-1.5 px-2.5 text-xs text-foreground hover:bg-muted font-medium"
           >
             <Box className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="hidden md:inline">工程资产</span>
+            <span className="hidden md:inline">{t('projectAssets', '工程资产')}</span>
             <ChevronDown className="w-3 h-3 text-muted-foreground opacity-70" />
           </Button>
 
           {isAssetsDropdownOpen && (
-            <div className="absolute right-0 mt-1.5 w-36 rounded-xl bg-card border border-border shadow-elevation-modal py-1.5 z-50 text-xs animate-in fade-in duration-100 whitespace-nowrap">
+            <div className="absolute right-0 mt-1.5 min-w-[150px] w-auto rounded-xl bg-card border border-border shadow-elevation-modal py-1.5 z-50 text-xs animate-in fade-in duration-100 whitespace-nowrap">
               <button
                 onClick={() => {
                   setIsAssetsDropdownOpen(false);
@@ -244,7 +244,7 @@ function TopBarComponent({
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground hover:bg-muted/70 transition-colors text-left cursor-pointer"
               >
                 <FolderGit2 className="w-3.5 h-3.5 text-primary" />
-                <span>我的项目列表</span>
+                <span>{t('myProjects', '我的项目列表')}</span>
               </button>
               <button
                 onClick={() => {
@@ -254,7 +254,7 @@ function TopBarComponent({
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground hover:bg-muted/70 transition-colors text-left cursor-pointer"
               >
                 <LayoutTemplate className="w-3.5 h-3.5 text-primary" />
-                <span>官方精选模板</span>
+                <span>{t('featuredTemplates', '官方精选模板')}</span>
               </button>
               <button
                 onClick={() => {
@@ -264,7 +264,7 @@ function TopBarComponent({
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground hover:bg-muted/70 transition-colors text-left cursor-pointer"
               >
                 <UploadCloud className="w-3.5 h-3.5 text-primary" />
-                <span>更换底图资产</span>
+                <span>{t('newDiagramProject', '新建底图工程')}</span>
               </button>
             </div>
           )}
@@ -272,7 +272,7 @@ function TopBarComponent({
 
         {/* 3.2 高级工具与控制显隐组 (Tools & Controls) */}
         <div className="relative" ref={toolsRef}>
-          <Tooltip content="开发者与调试工具" position="bottom">
+          <Tooltip content={t('devToolsTip', '开发者与调试工具')} position="bottom">
             <Button
               size="sm"
               variant="outline"
@@ -293,7 +293,7 @@ function TopBarComponent({
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-foreground hover:bg-muted/70 transition-colors text-left cursor-pointer"
               >
                 <Code2 className="w-3.5 h-3.5 text-cyan-500" />
-                <span>实时 DSL 代码编辑器</span>
+                <span>{t('dslCodeEditor', '实时 DSL 代码编辑器')}</span>
               </button>
               <button
                 onClick={() => {
@@ -304,7 +304,7 @@ function TopBarComponent({
               >
                 <div className="flex items-center gap-2.5">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-amber-500" />
-                  <span>独立播放控制浮条</span>
+                  <span>{t('detachedPlayerControls', '独立播放控制浮条')}</span>
                 </div>
                 {showPlayerControls && <Check className="w-3.5 h-3.5 text-primary" />}
               </button>
@@ -337,7 +337,7 @@ function TopBarComponent({
                 setIsProDropdownOpen(!isProDropdownOpen);
               }
             }}
-            title={!modeB ? '云端商业与算力中心仅在云端服务模式下可用' : 'FocusFlow 商业特权与算力中心'}
+            title={!modeB ? t('proTitleDisabled', '云端商业与算力中心仅在云端服务模式下可用') : t('proTitleEnabled', 'FocusFlow 商业特权与算力中心')}
             className={`gap-1.5 h-8 px-2.5 font-medium shadow-sm transition-all ${
               !modeB
                 ? 'opacity-40 cursor-not-allowed border-border text-muted-foreground'
@@ -352,7 +352,7 @@ function TopBarComponent({
           {isProDropdownOpen && modeB && (
             <div className="absolute right-0 mt-1.5 w-52 rounded-xl bg-card border border-border shadow-elevation-modal py-1.5 z-50 text-xs animate-in fade-in duration-100">
               <div className="px-3 py-1.5 border-b border-border/60 text-[10px] text-muted-foreground font-mono">
-                FOCUSFLOW COMMERCIAL
+                {t('commercialMenuHeader', 'FOCUSFLOW 商业服务')}
               </div>
               <button
                 onClick={() => {
@@ -363,7 +363,7 @@ function TopBarComponent({
               >
                 <div className="flex items-center gap-2">
                   <Crown className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="font-semibold">升级 Pro / 定价</span>
+                  <span className="font-semibold">{t('upgradeProPricing', '升级 Pro / 定价')}</span>
                 </div>
                 <ExternalLink className="w-3 h-3 text-muted-foreground" />
               </button>
@@ -376,7 +376,7 @@ function TopBarComponent({
               >
                 <div className="flex items-center gap-2">
                   <Gauge className="w-3.5 h-3.5 text-primary" />
-                  <span>算力与用量水表</span>
+                  <span>{t('usageDashboard', '算力与用量水表')}</span>
                 </div>
                 <span className="text-[10px] px-1.5 py-0.2 rounded bg-primary/10 text-primary font-mono">4K/TTS</span>
               </button>
@@ -388,7 +388,7 @@ function TopBarComponent({
                 className="w-full flex items-center gap-2 px-3 py-2 text-foreground hover:bg-muted/70 transition-colors text-left cursor-pointer"
               >
                 <CreditCard className="w-3.5 h-3.5 text-emerald-500" />
-                <span>极速收银台弹窗</span>
+                <span>{t('quickCheckout', '极速收银台弹窗')}</span>
               </button>
             </div>
           )}
@@ -396,7 +396,7 @@ function TopBarComponent({
 
         {/* 3.5 云端分享 (Mode B Managed) */}
         <Tooltip
-          content={!modeB ? '云端只读短链与嵌入仅在 Mode B 模式下生效' : '生成只读分享短链与知识库嵌入代码'}
+          content={!modeB ? t('shareTipDisabled', '云端只读短链与嵌入仅在 Mode B 模式下生效') : t('shareTipEnabled', '生成只读分享短链与知识库嵌入代码')}
           position="bottom"
           align="end"
         >
@@ -413,7 +413,7 @@ function TopBarComponent({
             }`}
           >
             <Share2 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline">分享</span>
+            <span className="hidden sm:inline">{t('share', '分享')}</span>
           </Button>
         </Tooltip>
 
